@@ -25,6 +25,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
   uint256 public _vaultsMinted;
   uint256 public _tokensRegistered;
 
+  uint256 public _totalBaseLiability;
+  uint256 public _lastBaseLiability;
 
   // usdi owed = _interestFactor * baseLiability;
   // this is the interest factor * 1e18
@@ -48,6 +50,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     _vaultsMinted = 0;
     _tokensRegistered = 0;
     _e18_interestFactor = 1e18; // initialize at 1e18;
+
+    _totalBaseLiability = 0;
   }
 
   function mint_vault() public returns (address){
@@ -102,6 +106,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     Exp memory interest_factor = Exp({mantissa: _e18_interestFactor});
     uint256 base_amount = ExponentialNoError.div_(amount,interest_factor);
     uint256 base_liability = vault.increase_liability(base_amount);
+    _totalBaseLiability = _totalBaseLiability + base_amount;
     uint256 usdi_liability = ExponentialNoError.mul_ScalarTruncate(interest_factor, base_liability);
     uint256 total_liquidity_value = get_vault_collateral_value(vault);
     bool solvency = (total_liquidity_value >= usdi_liability);
@@ -117,6 +122,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
     Exp memory interest_factor = Exp({mantissa: _e18_interestFactor});
     uint256 base_amount = ExponentialNoError.div_(amount, interest_factor);
+    _totalBaseLiability = _totalBaseLiability - base_amount;
     require(base_amount <= vault.getBaseLiability(),"cannot repay more than is borrowed");
 
     vault.decrease_liability(base_amount);
@@ -206,5 +212,11 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
       }
     }
     return total_liquidity_value;
+  }
+  function pay_interest() private {
+    if(_lastBaseLiability > _totalBaseLiability){
+    _usdi.vault_master_donate(_lastBaseLiability - _totalBaseLiability);
+    _lastBaseLiability = _totalBaseLiability;
+    }
   }
 }
