@@ -234,14 +234,20 @@ describe("TOKEN-DEPOSITS", () =>{
   before('token deposits', tokenDeposits);
   it(`bob should have ${Bob_WETH} deposited`, async() =>{
     expect(await bob_vault.connect(Bob).getBalances(weth.address)).to.eq(Bob_WETH)
+    console.log('bob value:',(await vaultmaster.account_collateral_value(1)).toString())
   })
   it(`carol should have ${Carol_COMP} deposited`, async() =>{
     expect(await carol_vault.connect(Carol).getBalances(comp.address)).to.eq(Carol_COMP)
+    console.log('carol value:',(await vaultmaster.account_collateral_value(2)).toString())
   })
 })
 describe("TOKEN-DEPOSITS", () =>{
   it(`bob should not be able to borrow 2*${Bob_WETH} usdi`, async ()=>{
-    await expect( (vaultmaster.connect(Bob).borrow_usdi(1,Bob_WETH.times(2)))).to.be.reverted
+    await expect( (vaultmaster.connect(Bob).borrow_usdi(1,Bob_WETH.mul(2)))).to.be.reverted
+  })
+
+  it(`bob should able to borrow ${Bob_WETH.div(1e8)} usdi`, async ()=>{
+    await expect( (vaultmaster.connect(Bob).borrow_usdi(1,Bob_WETH.div(1e8)))).to.not.be.reverted
   })
 })
 

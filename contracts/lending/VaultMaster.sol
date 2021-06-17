@@ -97,7 +97,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     return (total_liquidity_value >= usdi_liability );
   }
 
-  function account_collateral_value(uint256 id) public view returns (uint256) {
+  function account_collateral_value(uint256 id) external view returns (uint256) {
     return get_vault_collateral_value(IVault(_vaultId_vaultAddress[id]));
   }
 
@@ -149,7 +149,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     require(vault_address != address(0x0), "vault does not exist");
     uint256 total_liquidity_value = 0;
     IVault vault = IVault(vault_address);
-    for(uint256 i = 0; i < _tokensRegistered; i++){
+    for(uint256 i = 1; i <= _tokensRegistered; i++){
       address token_address = _enabledTokens[i];
       uint256 raw_price = uint256(_oracleMaster.get_live_price(token_address));
       if(raw_price != 0){
@@ -205,7 +205,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
   function get_vault_collateral_value(IVault vault) private view returns (uint256){
     uint256 total_liquidity_value = 0;
-    for(uint256 i = 0; i < _tokensRegistered; i++){
+    for(uint256 i = 1; i <= _tokensRegistered; i++){
       address token_address = _enabledTokens[i];
       uint256 raw_price = uint256(_oracleMaster.get_live_price(token_address));
       if(raw_price != 0){
