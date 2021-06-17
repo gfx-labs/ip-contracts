@@ -26,7 +26,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
   uint256 public _tokensRegistered;
 
   uint256 public _totalBaseLiability;
-  uint256 public _lastBaseLiability;
+
+  uint256 public _lastInterestTime;
 
   // usdi owed = _interestFactor * baseLiability;
   // this is the interest factor * 1e18
@@ -50,8 +51,9 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     _vaultsMinted = 0;
     _tokensRegistered = 0;
     _e18_interestFactor = 1e18; // initialize at 1e18;
-
     _totalBaseLiability = 0;
+
+    _lastInterestTime = block.timestamp;
   }
 
   function mint_vault() public returns (address){
@@ -186,11 +188,11 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     uint256 remaining = total_proceeds - usdi_to_repurchase;
     //   uint256 liquidator_cost = (total_proceeds - _e4_liquidatorShare * remaining / 1e4);
 
-    if((total_proceeds - _e4_liquidatorShare * remaining / 1e4) > 0){
+    if( (total_proceeds - _e4_liquidatorShare * remaining / 1e4) > 0 ){
       _usdi.vault_master_burn(msg.sender, (total_proceeds - _e4_liquidatorShare * remaining / 1e4));
     }
 
-    if( ((1e4 - _e4_liquidatorShare) * remaining / 1e4) > 0){
+    if( ((1e4 - _e4_liquidatorShare) * remaining / 1e4) > 0 ){
       _usdi.vault_master_donate(((1e4 - _e4_liquidatorShare) * remaining / 1e4));
     }
 
@@ -214,9 +216,24 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     return total_liquidity_value;
   }
   function pay_interest() private {
-    if(_lastBaseLiability > _totalBaseLiability){
-    _usdi.vault_master_donate(_lastBaseLiability - _totalBaseLiability);
-    _lastBaseLiability = _totalBaseLiability;
+    uint256 timeDifference = block.timestamp - _lastInterestTime;
+    _lastInterestTime = block.timestamp;
+    uint256 e18_reserve_ratio = _usdi.reserveRatio();
+    uint e18_curve = 1e17;
+    if(e18_reserve_ratio < (1e17 * 4) ){
+      e18_curve = 19 * 1e16 + 9 * 1e18 * e18_reserve_ratio / 20e18;
     }
+    if(e18_reserve_ratio < (1e17 * 2) ){
+      e18_curve = 19 * 1e17 + 9 * 1e18 * e18_reserve_ratio / 1e18;
+    }
+    uint256 e18_factor_increase = ExponentialNoError.mul_ScalarTruncate(
+      Exp({mantissa:timeDifference * 1e18 / (365 days + 6 hours
+                                            )}),e18_curve);
+    uint256 interest_increase = ExponentialNoError.mul_ScalarTruncate(
+      Exp({mantissa:timeDifference * 1e18 / (365 days + 6 hours)
+    }),e18_curve) * _totalBaseLiability / 1e18;
+
+    _e18_interestFactor = _e18_interestFactor + e18_factor_increase;
+    _usdi.vault_master_donate(interest_increase);
   }
 }

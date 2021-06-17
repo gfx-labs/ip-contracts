@@ -19,7 +19,6 @@ contract USDI is UFragments, IUSDI{
     _;
   }
 
-
   event Deposit(address indexed _from, uint256 _value);
   event Withdraw(address indexed _from, uint256 _value);
   event Mint(address to, uint256 _value);
@@ -101,6 +100,10 @@ contract USDI is UFragments, IUSDI{
     }
     _gonsPerFragment = _totalGons / _totalSupply;
     emit Donation(msg.sender, amount, _totalSupply);
+  }
+
+  function reserveRatio() override external view returns (uint256 e18_reserve_ratio){
+    e18_reserve_ratio = _reserve.balanceOf(address(this)) * 1e18 / _totalSupply;
   }
 
 }

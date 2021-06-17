@@ -14,5 +14,6 @@ interface IUSDI {
   function vault_master_burn(address target, uint256 amount) external;
   function vault_master_mint(address target, uint256 amount) external;
   function vault_master_donate(uint256 amount) external;
+  function reserveRatio() external view returns (uint256);
 
 }
