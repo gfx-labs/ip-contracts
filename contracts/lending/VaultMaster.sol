@@ -150,7 +150,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     uint256 total_liquidity_value = 0;
     IVault vault = IVault(vault_address);
     for(uint256 i = 1; i <= _tokensRegistered; i++){
-      address token_address = _enabledTokens[i];
+      address token_address = _enabledTokens[i-1];
       uint256 raw_price = uint256(_oracleMaster.get_live_price(token_address));
       if(raw_price != 0){
         uint256 token_value = ExponentialNoError.mul_ScalarTruncate(Exp({mantissa: raw_price}),vault.getBalances(token_address)) * //
@@ -206,7 +206,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
   function get_vault_collateral_value(IVault vault) private view returns (uint256){
     uint256 total_liquidity_value = 0;
     for(uint256 i = 1; i <= _tokensRegistered; i++){
-      address token_address = _enabledTokens[i];
+      address token_address = _enabledTokens[i-1];
       uint256 raw_price = uint256(_oracleMaster.get_live_price(token_address));
       if(raw_price != 0){
         uint256 balance = vault.getBalances(token_address);

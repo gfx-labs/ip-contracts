@@ -116,8 +116,10 @@ const setupVaults = async () => {
   vaultmaster = await VaultMaster.deploy();
   await vaultmaster.connect(Frank).register_usdi(usdi.address);
   await vaultmaster.connect(Frank).register_oracle_master(oraclemaster.address);
-  await vaultmaster.connect(Frank).register_erc20(weth_address,600,weth_address);
-  await vaultmaster.connect(Frank).register_erc20(comp_address,400,comp_address);
+  await vaultmaster.connect(Frank).register_erc20(weth_address,6000,weth_address);
+  await vaultmaster.connect(Frank).register_erc20(comp_address,4000,comp_address);
+
+  await usdi.connect(Frank).setVaultMaster(vaultmaster.address);
 
   await vaultmaster.connect(Bob).mint_vault();
   const bob_vault_addr = await vaultmaster._vaultId_vaultAddress(1);
@@ -246,8 +248,8 @@ describe("TOKEN-DEPOSITS", () =>{
     await expect( (vaultmaster.connect(Bob).borrow_usdi(1,Bob_WETH.mul(2)))).to.be.reverted
   })
 
-  it(`bob should able to borrow ${Bob_WETH.div(1e8)} usdi`, async ()=>{
-    await expect( (vaultmaster.connect(Bob).borrow_usdi(1,Bob_WETH.div(1e8)))).to.not.be.reverted
+  it(`bob should able to borrow ${100} usdi`, async ()=>{
+    await expect( (vaultmaster.connect(Bob).borrow_usdi(1,100))).to.not.be.reverted
   })
 })
 
