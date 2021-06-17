@@ -117,11 +117,22 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     require(solvency, "this borrow would make your account insolvent");
 
     _usdi.vault_master_mint(msg.sender,amount);
+
+    pay_interest();
   }
-  function repay_usdi(uint256 id, uint256 amount) override external{
+
+  function get_account_liability(uint256 id) override external view returns (uint256) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
+    IVault vault = IVault(vault_address);
 
+    return vault.getBaseLiability() * _e18_interestFactor / 1e18;
+  }
+
+  function repay_usdi(uint256 id, uint256 amount) override external{
+    pay_interest();
+    address vault_address = _vaultId_vaultAddress[id];
+    require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
 
     Exp memory interest_factor = Exp({mantissa: _e18_interestFactor});
@@ -131,9 +142,11 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
     vault.decrease_liability(base_amount);
     _usdi.vault_master_burn(msg.sender,base_amount);
+
   }
 
   function repay_all_usdi(uint256 id) override external{
+    pay_interest();
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
@@ -216,6 +229,10 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
       }
     }
     return total_liquidity_value;
+  }
+
+  function calculate_interest() override external{
+    pay_interest();
   }
   function pay_interest() private {
     uint256 timeDifference = block.timestamp - _lastInterestTime;
