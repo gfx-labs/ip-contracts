@@ -221,10 +221,10 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     uint256 e18_reserve_ratio = _usdi.reserveRatio();
     uint256 e18_curve = 1e17;
     if(e18_reserve_ratio < (1e17 * 4) ){
-      e18_curve = 19 * 1e16 + 9 * 1e18 * e18_reserve_ratio / 20e18;
+      e18_curve = 19 * 1e16 - 9 * 1e18 * e18_reserve_ratio / 20e18;
     }
     if(e18_reserve_ratio < (1e17 * 2) ){
-      e18_curve = 19 * 1e17 + 9 * 1e18 * e18_reserve_ratio / 1e18;
+      e18_curve = 19 * 1e17 - 9 * 1e18 * e18_reserve_ratio / 1e18;
     }
     uint256 e18_factor_increase = ExponentialNoError.mul_ScalarTruncate(
       Exp({mantissa:timeDifference * 1e18 / (365 days + 6 hours
