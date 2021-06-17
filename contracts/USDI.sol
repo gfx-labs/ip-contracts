@@ -92,7 +92,6 @@ contract USDI is UFragments, IUSDI{
   }
 
   function vault_master_donate(uint256 amount) override external onlyVaultMaster{
-    require(amount > 0,'Cannot donate 0');
     _totalSupply = _totalSupply + amount;
     if (_totalSupply > MAX_SUPPLY) {
       _totalSupply = MAX_SUPPLY;

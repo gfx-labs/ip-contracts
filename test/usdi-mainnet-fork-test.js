@@ -248,18 +248,18 @@ describe("TOKEN-DEPOSITS", async () =>{
     await expect( (vaultmaster.connect(Bob).borrow_usdi(1,Bob_WETH.mul(2)))).to.be.reverted
   })
 
-  it(`bob should able to borrow ${1000e6} usdi`, async ()=>{
-    await expect( (vaultmaster.connect(Bob).borrow_usdi(1,1000e6))).to.not.be.reverted
+  it(`bob should able to borrow ${10e6} usdi`, async ()=>{
+    await expect( (vaultmaster.connect(Bob).borrow_usdi(1,10e6))).to.not.be.reverted
   })
 
-  it(`after a few days, bob should have a liability greater than ${1000e6}`, async ()=>{
+  it(`after a few days, bob should have a liability greater than ${10e6}`, async ()=>{
     await hre.network.provider.request({
       method: "evm_increaseTime",
-      params: [60*24*7]
+      params: [60*60*24*7]
     })
     await vaultmaster.connect(Frank).calculate_interest();
     const liability_amount = await  vaultmaster.connect(Bob).get_account_liability(1)
-    expect(liability_amount).to.be.gt(1000e6);
+    expect(liability_amount).to.be.gt(10e6);
     console.log("bob_liability:",liability_amount.toString());
   })
 

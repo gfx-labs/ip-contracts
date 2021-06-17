@@ -11,7 +11,6 @@ import "./IVault.sol";
 import "../_external/Ownable.sol";
 import "../_external/compound/ExponentialNoError.sol";
 
-
 contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
   address[] public _enabledTokens;
@@ -244,6 +243,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     if(e18_reserve_ratio < (1e17 * 2) ){
       e18_curve = 19 * 1e17 - 9 * 1e18 * e18_reserve_ratio / 1e18;
     }
+
     uint256 e18_factor_increase = ExponentialNoError.mul_ScalarTruncate(
       Exp({mantissa:timeDifference * 1e18 / (365 days + 6 hours
                                             )}),e18_curve) * _e18_interestFactor / 1e18;
@@ -251,8 +251,9 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     uint256 valueBefore = _totalBaseLiability * _e18_interestFactor / 1e18;
     _e18_interestFactor = _e18_interestFactor + e18_factor_increase;
     uint256 valueAfter = _totalBaseLiability  * _e18_interestFactor / 1e18;
-
-    _usdi.vault_master_donate(valueAfter - valueBefore);
+    if(valueAfter > valueBefore){
+      _usdi.vault_master_donate(valueAfter - valueBefore);
+    }
 
     _lastInterestTime = block.timestamp;
     emit Interest(block.timestamp,e18_factor_increase);
