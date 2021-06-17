@@ -241,6 +241,7 @@ describe("TOKEN-DEPOSITS", () =>{
 })
 describe("TOKEN-DEPOSITS", () =>{
   it(`bob should not be able to borrow 2*${Bob_WETH} usdi`, async ()=>{
+    await expect( (vaultmaster.connect(Bob).borrow_usdi(1,Bob_WETH.times(2)))).to.be.reverted
   })
 })
 

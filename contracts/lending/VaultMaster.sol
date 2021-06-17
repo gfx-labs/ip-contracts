@@ -238,6 +238,6 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     _usdi.vault_master_donate(valueAfter - valueBefore);
 
     _lastInterestTime = block.timestamp;
-    Interest(block.timestamp,e18_factor_increase);
+    emit Interest(block.timestamp,e18_factor_increase);
   }
 }
