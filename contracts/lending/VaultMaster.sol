@@ -236,7 +236,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
   function pay_interest() private {
     uint256 timeDifference = block.timestamp - _lastInterestTime;
     uint256 e18_reserve_ratio = _usdi.reserveRatio();
-    uint256 e18_curve = 1e17;
+    uint256 e18_curve = 1e16;
     if(e18_reserve_ratio < (1e17 * 4) ){
       e18_curve = 19 * 1e16 - 9 * 1e18 * e18_reserve_ratio / 20e18;
     }
