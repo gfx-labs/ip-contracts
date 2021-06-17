@@ -231,9 +231,9 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
       Exp({mantissa:timeDifference * 1e18 / (365 days + 6 hours
                                             )}),e18_curve) * _e18_interestFactor / 1e18;
 
-    uint256 valueBefore = _totalBaseLiability * _e18_interestFactor;
+    uint256 valueBefore = _totalBaseLiability * _e18_interestFactor / 1e18;
     _e18_interestFactor = _e18_interestFactor + e18_factor_increase;
-    uint256 valueAfter = _totalBaseLiability  * _e18_interestFactor;
+    uint256 valueAfter = _totalBaseLiability  * _e18_interestFactor / 1e18;
 
     _usdi.vault_master_donate(valueAfter - valueBefore);
 
