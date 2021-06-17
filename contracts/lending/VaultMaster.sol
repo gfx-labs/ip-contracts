@@ -35,6 +35,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
   uint256 public _e4_liquidatorShare;
 
+  event Interest(uint256 epoch, uint256 amount);
+
   // mapping of vault id to vault address
   mapping(uint256 => address) public _vaultId_vaultAddress;
 
@@ -217,7 +219,6 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
   }
   function pay_interest() private {
     uint256 timeDifference = block.timestamp - _lastInterestTime;
-    _lastInterestTime = block.timestamp;
     uint256 e18_reserve_ratio = _usdi.reserveRatio();
     uint256 e18_curve = 1e17;
     if(e18_reserve_ratio < (1e17 * 4) ){
@@ -231,9 +232,11 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
                                             )}),e18_curve);
     uint256 interest_increase = ExponentialNoError.mul_ScalarTruncate(
       Exp({mantissa:timeDifference * 1e18 / (365 days + 6 hours)
-    }),e18_curve) * _totalBaseLiability / 1e18;
+    }),e18_curve) * _totalBaseLiability * _e18_interestFactor / 1e36;
 
-    _e18_interestFactor = _e18_interestFactor + e18_factor_increase;
+    _lastInterestTime = block.timestamp;
+    _e18_interestFactor = _e18_interestFactor + _e18_interestFactor *  e18_factor_increase / 1e18;
     _usdi.vault_master_donate(interest_increase);
+    Interest(block.timestamp,interest_increase);
   }
 }
