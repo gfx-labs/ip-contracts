@@ -19,7 +19,4 @@ interface IVault {
   function decrease_liability(uint256 base_amount) external returns (uint256);
 
   function increase_liability(uint256 base_amount) external returns (uint256);
-
-
-
 }
