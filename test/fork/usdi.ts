@@ -69,6 +69,8 @@ const setupInitial = async () => {
     Mainnet.wethAddress,
     Bob_WETH
   ).catch(console.log);
+
+  await con.VaultMaster!.connect(Frank).register_usdi(con.USDI!.address)
 };
 
 let bob_vault: any;
@@ -123,7 +125,7 @@ describe("ORACLES:Init", () => {
   before("deploy contracts", setupInitial);
   it("comp price should be nonzero", async () => {
     const price = await con.Oracle!.get_live_price(Mainnet.compAddress);
-    console.log("comp:", price.toLocaleString());
+    //console.log("comp:", price.toLocaleString());
     expect(price).to.not.eq(0);
   });
 });
@@ -178,8 +180,10 @@ describe("TOKEN-DEPOSITS", () => {
 });
 describe("TOKEN-DEPOSITS", async () => {
   it(`bob should not be able to borrow 2*${Bob_WETH} usdi`, async () => {
+
     await expect(con.VaultMaster!.connect(Bob).borrow_usdi(1, Bob_WETH.mul(2)))
-      .to.be.reverted;
+      .to.be.revertedWith("this borrow would make your account insolvent");
+
   });
 
   it(`bob should able to borrow ${10e6} usdi`, async () => {
@@ -196,4 +200,5 @@ describe("TOKEN-DEPOSITS", async () => {
     expect(liability_amount).to.be.gt(10e6);
     console.log("bob_liability:", liability_amount.toString());
   });
+
 });

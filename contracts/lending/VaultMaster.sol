@@ -11,6 +11,8 @@ import "./IVault.sol";
 import "../_external/Ownable.sol";
 import "../_external/compound/ExponentialNoError.sol";
 
+import "hardhat/console.sol";
+
 contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
   address[] public _enabledTokens;
@@ -115,6 +117,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     bool solvency = (total_liquidity_value >= usdi_liability);
     require(solvency, "this borrow would make your account insolvent");
 
+  
     _usdi.vault_master_mint(msg.sender,amount);
 
     pay_interest();

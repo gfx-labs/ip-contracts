@@ -1,5 +1,6 @@
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
+import "hardhat-watcher";
 
 import "@typechain/hardhat";
 import { HardhatUserConfig } from "hardhat/types";
@@ -28,6 +29,15 @@ const config: HardhatUserConfig = {
         runs: 200,
       },
     },
+  },
+  watcher: {
+    compilation: { //npx hardhat watch compilation -- auto compile on change
+      tasks: ["compile"],
+    },
+    test: {//npx hardhat watch test -- run test when a file is saved
+      tasks: [{ command: 'test', params: { testFiles: ['./test/fork/usdi.ts'] } }], //test this file
+      files: ['./test/fork/usdi.ts'] //test when this file is saved
+    }
   },
   paths: {
     sources: "./contracts",
