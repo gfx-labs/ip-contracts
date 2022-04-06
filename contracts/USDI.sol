@@ -64,6 +64,7 @@ contract USDI is UFragments, IUSDI{
   }
 
   function mint(uint256 amount) override external onlyOwner {
+    console.log("MINT");
     require(amount > 0, 'Cannot mint 0');
     _gonBalances[msg.sender] = _gonBalances[msg.sender] + amount * _gonsPerFragment;
     _totalSupply = _totalSupply + amount;
@@ -72,6 +73,7 @@ contract USDI is UFragments, IUSDI{
   }
 
   function burn(uint256 amount) override external onlyOwner {
+    console.log("BURN");
     require(amount > 0, 'Cannot burn 0');
     _gonBalances[msg.sender] = _gonBalances[msg.sender] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
@@ -80,6 +82,7 @@ contract USDI is UFragments, IUSDI{
   }
 
   function vault_master_mint(address target, uint256 amount) override external onlyVaultMaster {
+    console.log("VAULT MASTER MINT");
     _gonBalances[target] = _gonBalances[target] + amount * _gonsPerFragment;
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
@@ -87,7 +90,6 @@ contract USDI is UFragments, IUSDI{
   }
 
   function vault_master_burn(address target, uint256 amount) override external onlyVaultMaster {
-    console.log("BURN");
     require(_gonBalances[target] > (amount * _gonsPerFragment),"USDI: not enough balance");
     _gonBalances[target] = _gonBalances[target] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;

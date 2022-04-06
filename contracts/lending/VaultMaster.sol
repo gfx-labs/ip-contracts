@@ -174,8 +174,6 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             base_amount <= vault.getBaseLiability(),
             "cannot repay more than is borrowed"
         );
-        console.log("Base Amount: ", base_amount);
-
 
         vault.decrease_liability(base_amount);
 

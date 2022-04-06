@@ -1,10 +1,11 @@
-import { expect } from "chai";
+import { expect, assert } from "chai";
 import { ethers } from "hardhat";
 import { Mainnet } from "../util/addresser";
 import { fastForward } from "../util/block";
 import { Deployment } from "../util/contractor";
 import { stealMoney } from "../util/money";
 import { utils } from "ethers";
+//import { assert } from "console";
 
 let con = Deployment;
 
@@ -100,7 +101,8 @@ const tokenDeposits = async () => {
     .connect(Carol)
     .deposit_erc20(Mainnet.compAddress, Carol_COMP);
 };
-
+require('chai')
+  .should()
 describe("USDI-TOKEN:Init", () => {
   before("deploy contracts", setupInitial);
   it("Should return the right name, symbol, and decimals", async () => {
@@ -208,7 +210,7 @@ describe("Checking interest generation", () => {
     await fastForward(60 * 60 * 24 * 7 * 52);//1 year
 
     //calculate and pay interest
-    let result:any = await con.VaultMaster!.calculate_interest()
+    let result: any = await con.VaultMaster!.calculate_interest()
     result = await result.wait()
     let args = result.events![result.events!.length - 1].args
 
@@ -217,14 +219,14 @@ describe("Checking interest generation", () => {
     //check for yeild    
     let balance = await con.USDI!.balanceOf(Dave.address)
     expect(balance > initBalance)
-    
+
   })
 })
 /**
  untested functions: 
-	repay_usdi + repay_all_usdi
-	liquidate_account
-	check_account
+  repay_usdi + repay_all_usdi
+  liquidate_account
+  check_account
   getInterestFactor
  */
 
@@ -244,12 +246,16 @@ describe("Testing repay", () => {
     const vaultId = 1
     const initBalance = await con.USDI!.balanceOf(Bob.address)
     console.log("Bob's Initial Balance: ", initBalance.toString())
+    await con.VaultMaster!.connect(Bob).repay_usdi(vaultId, partialLiability)
 
+    let updatedLiability = await bob_vault.connect(Bob).getBaseLiability()
+    let balance = await con.USDI!.balanceOf(Bob.address)
 
-    await con.VaultMaster!.repay_usdi(vaultId, partialLiability)
-
-
-
+    console.log(liability.toString())
+    console.log((liability-partialLiability).toString())
+    console.log(updatedLiability.toString())
+    
+    //assert.equal(updatedLiability.toString(), partialLiability.toString(), "Half of liability has been filled")
 
   })
   it("complete repay", async () => {
