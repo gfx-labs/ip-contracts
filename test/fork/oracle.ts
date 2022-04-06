@@ -28,4 +28,10 @@ describe("ORACLE-MASTER:", () => {
     expect(1).to.eq(1);
     //expect(await usdi.owner()).to.eq(await deployer.getAddress())
   });
+
+  it("Checks mainnet price", async () => {
+    let test = await contracts.Oracle!.get_live_price(Mainnet.compAddress)
+    console.log("price: ", test.toString())
+    expect(1).to.eq(1);
+  })
 });

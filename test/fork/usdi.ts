@@ -4,6 +4,7 @@ import { Mainnet } from "../util/addresser";
 import { fastForward } from "../util/block";
 import { Deployment } from "../util/contractor";
 import { stealMoney } from "../util/money";
+import { utils } from "ethers";
 
 let con = Deployment;
 
@@ -69,8 +70,6 @@ const setupInitial = async () => {
     Mainnet.wethAddress,
     Bob_WETH
   ).catch(console.log);
-
-  await con.VaultMaster!.connect(Frank).register_usdi(con.USDI!.address)
 };
 
 let bob_vault: any;
@@ -192,13 +191,72 @@ describe("TOKEN-DEPOSITS", async () => {
   });
 
   it(`after a few days, bob should have a liability greater than ${10e6}`, async () => {
-    await fastForward(60 * 60 * 24 * 7);
+    await fastForward(60 * 60 * 24 * 7);//1 week
     await con.VaultMaster!.connect(Frank).calculate_interest();
     const liability_amount = await con
       .VaultMaster!.connect(Bob)
       .get_account_liability(1);
     expect(liability_amount).to.be.gt(10e6);
-    console.log("bob_liability:", liability_amount.toString());
+    //console.log("bob_liability:", liability_amount.toString());
   });
 
 });
+describe("Checking interest generation", () => {
+  it("check change in balance over a long period of time", async () => {
+    const initBalance = await con.USDI!.balanceOf(Dave.address)
+    //fastForward
+    await fastForward(60 * 60 * 24 * 7 * 52);//1 year
+
+    //calculate and pay interest
+    let result:any = await con.VaultMaster!.calculate_interest()
+    result = await result.wait()
+    let args = result.events![result.events!.length - 1].args
+
+    //console.log(args)
+
+    //check for yeild    
+    let balance = await con.USDI!.balanceOf(Dave.address)
+    expect(balance > initBalance)
+    
+  })
+})
+/**
+ untested functions: 
+	repay_usdi + repay_all_usdi
+	liquidate_account
+	check_account
+  getInterestFactor
+ */
+
+describe("Testing repay", () => {
+  const borrowAmount = 10e6
+  before(async () => {
+    await setupInitial()
+    await setupVaults()
+  })
+  it(`bob should able to borrow ${borrowAmount} usdi`, async () => {
+    await expect(con.VaultMaster!.connect(Bob).borrow_usdi(1, borrowAmount)).to.not.be
+      .reverted;
+  });
+  it("partial repay", async () => {
+    const liability = await bob_vault.connect(Bob).getBaseLiability()
+    const partialLiability = liability / 2 //half
+    const vaultId = 1
+    const initBalance = await con.USDI!.balanceOf(Bob.address)
+    console.log("Bob's Initial Balance: ", initBalance.toString())
+
+
+    await con.VaultMaster!.repay_usdi(vaultId, partialLiability)
+
+
+
+
+  })
+  it("complete repay", async () => {
+
+  })
+})
+
+
+
+

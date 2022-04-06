@@ -6,6 +6,9 @@ import './token/IUSDI.sol';
 import './token/UFragments.sol';
 import './_external/IERC20.sol';
 
+import "hardhat/console.sol";
+
+
 contract USDI is UFragments, IUSDI{
 
   address public _reserveAddress;
@@ -84,7 +87,8 @@ contract USDI is UFragments, IUSDI{
   }
 
   function vault_master_burn(address target, uint256 amount) override external onlyVaultMaster {
-    require(_gonBalances[target] > (amount * _gonsPerFragment),"not enough balance");
+    console.log("BURN");
+    require(_gonBalances[target] > (amount * _gonsPerFragment),"USDI: not enough balance");
     _gonBalances[target] = _gonBalances[target] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - amount * _gonsPerFragment;

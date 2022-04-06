@@ -91,6 +91,7 @@ export class TestContracts {
       4000,
       this.book.compAddress
     );
+    await this.VaultMaster!.connect(deployer).register_usdi(this.USDI!.address)
   }
 }
 
