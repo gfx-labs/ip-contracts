@@ -255,11 +255,20 @@ describe("Testing repay", () => {
     console.log((liability-partialLiability).toString())
     console.log(updatedLiability.toString())
     
+    //TODO - TEST MATH
     //assert.equal(updatedLiability.toString(), partialLiability.toString(), "Half of liability has been filled")
+    //assert.equal(balance.toString(), (initBalance.toNumber() - partialLiability).toString(), "Balances are correct")
 
   })
   it("complete repay", async () => {
+    const vaultId = 1
+    const initBalance = await con.USDI!.balanceOf(Bob.address)
+    const liability = await bob_vault.connect(Bob).getBaseLiability()
 
+    await con.VaultMaster!.connect(Bob).repay_all_usdi(vaultId)
+
+    let updatedLiability = await bob_vault.connect(Bob).getBaseLiability()
+    assert.equal(updatedLiability.toNumber(), 0, "Liability is now 0")
   })
 })
 
