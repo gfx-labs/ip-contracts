@@ -168,7 +168,10 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         IVault vault = IVault(vault_address);
 
         Exp memory interest_factor = Exp({mantissa: _e18_interestFactor});
+        console.log("Amount: ", amount);
+        console.log("e18 IF: ", _e18_interestFactor);
         uint256 base_amount = ExponentialNoError.div_(amount, interest_factor);
+        console.log("Base Amount: ", base_amount);
         _totalBaseLiability = _totalBaseLiability - base_amount;
         require(
             base_amount <= vault.getBaseLiability(),
