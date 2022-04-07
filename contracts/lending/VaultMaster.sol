@@ -9,6 +9,7 @@ import "./Vault.sol";
 import "./IVault.sol";
 
 import "../_external/Ownable.sol";
+import "../_external/IERC20.sol";
 import "../_external/compound/ExponentialNoError.sol";
 
 import "hardhat/console.sol";
@@ -139,7 +140,10 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             interest_factor,
             base_liability
         );
+        //console.log("amount passed to borrow_usdi: ", amount);
+        //console.log("usdi_liability: ", usdi_liability);
         uint256 total_liquidity_value = get_vault_collateral_value(vault);
+        //console.log("total_liquidity_value: ", total_liquidity_value);
         bool solvency = (total_liquidity_value >= usdi_liability);
         require(solvency, "this borrow would make your account insolvent");
 
@@ -168,10 +172,10 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         IVault vault = IVault(vault_address);
 
         Exp memory interest_factor = Exp({mantissa: _e18_interestFactor});
-        console.log("Amount: ", amount);
-        console.log("e18 IF: ", _e18_interestFactor);
+        //console.log("Amount: ", amount);
+        //console.log("e18 IF: ", _e18_interestFactor);
         uint256 base_amount = ExponentialNoError.div_(amount, interest_factor);
-        console.log("Base Amount: ", base_amount);
+        //console.log("Base Amount: ", base_amount);
         _totalBaseLiability = _totalBaseLiability - base_amount;
         require(
             base_amount <= vault.getBaseLiability(),
@@ -223,7 +227,10 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         // now, if this balance is greater than the usdi liability, we just return 0 (nothing to liquidate);
         uint256 usdi_liability = (vault.getBaseLiability() *
             _e18_interestFactor) / 1e18;
+        console.log("LIQUIDATION CHECK");
+        console.log(total_liquidity_value, usdi_liability);
         if (total_liquidity_value >= usdi_liability) {
+            console.log("BALANCE NOT GREATER THAN LIABILITY");
             return 0;
         }
         // however, if it is a positive number, then we can begin the liquidation process
@@ -261,7 +268,14 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         vault.decrease_liability(usdi_to_repurchase);
 
         // of the remaining, lets give the reward to the miner and donate the extra
-        uint256 remaining = total_proceeds - usdi_to_repurchase;
+
+        console.log("total_proceeds: ", total_proceeds);
+        console.log("usdi_to_repurchase: ", usdi_to_repurchase);
+        uint256 remaining;
+        //BUG UNDERFLOW - catch underflow error, remaining should be 0
+        if (!(total_proceeds < usdi_to_repurchase)) {
+            remaining = total_proceeds - usdi_to_repurchase;
+        }
         //   uint256 liquidator_cost = (total_proceeds - _e4_liquidatorShare * remaining / 1e4);
 
         if ((total_proceeds - (_e4_liquidatorShare * remaining) / 1e4) > 0) {
@@ -278,11 +292,33 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         }
 
         // finally, we deliver the tokens to the liquidator
-        IERC20(asset_address).transferFrom(
-            address(this),
-            msg.sender,
-            tokens_to_liquidate
+
+        //approval?
+        IERC20(asset_address).approve(vault_address, tokens_to_liquidate);
+        //console.log(address(this));
+        //console.log("tokens_to_liquidate: ", tokens_to_liquidate);
+
+        console.log("ASSET ADDRESS: ", asset_address);
+        console.log(
+            "AVAILABLE BALANCE IN VAULT: ",
+            IERC20(asset_address).balanceOf(vault_address)
         );
+        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
+
+
+        //address vault_address = _vaultId_vaultAddress[id];
+
+
+        //BUG - VAULT is what holds the tokens, need to send from there, still reverting
+        require(
+            IERC20(asset_address).transferFrom(
+                vault_address,
+                msg.sender,
+                tokens_to_liquidate
+            ),
+            "Liquidate: Transfer Failed"
+        );
+
         return tokens_to_liquidate;
     }
 

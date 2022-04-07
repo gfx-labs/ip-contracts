@@ -229,38 +229,13 @@ describe("Checking interest generation", () => {
   check_account
   getInterestFactor
  */
-describe("Testing liquidations", () => {
-  const borrowAmount = 10e6
-  before(async () => {
-    await setupInitial()
-    await setupVaults()
-  })
-  it(`bob should have ${Bob_WETH} deposited`, async () => {
-    expect(await bob_vault.connect(Bob).getBalances(con.WETH!.address)).to.eq(
-      Bob_WETH
-    );
-   /**
-     console.log(
-      "bob value:",
-      (await con.VaultMaster!.account_collateral_value(1)).toString()
-    );
-    */
-  });
-  it("Does the first thing", async () => {
-    const liability = await bob_vault.connect(Bob).getBaseLiability()
-    const vaultID = 1
-    const accountLiability = await con.VaultMaster!.get_account_liability(vaultID)
-    const account_collateral_value = await con.VaultMaster!.account_collateral_value(vaultID)
-    console.log(accountLiability.toString())
-    console.log(liability.toString())
-    console.log(account_collateral_value.toString())
-  })
-})
+
+
 describe("Testing repay", () => {
   const borrowAmount = 10e6
   before(async () => {
-    await setupInitial()
-    await setupVaults()
+    //await setupInitial()
+    //await setupVaults()
   })
   it(`bob should able to borrow ${borrowAmount} usdi`, async () => {
     await expect(con.VaultMaster!.connect(Bob).borrow_usdi(1, borrowAmount)).to.not.be
@@ -271,15 +246,15 @@ describe("Testing repay", () => {
     const partialLiability = liability / 2 //half
     const vaultId = 1
     const initBalance = await con.USDI!.balanceOf(Bob.address)
-    console.log("Bob's Initial Balance: ", initBalance.toString())
+    //console.log("Bob's Initial Balance: ", initBalance.toString())
     await con.VaultMaster!.connect(Bob).repay_usdi(vaultId, partialLiability)
 
     let updatedLiability = await bob_vault.connect(Bob).getBaseLiability()
     let balance = await con.USDI!.balanceOf(Bob.address)
 
-    console.log("Partial liability: ", partialLiability.toString())
-    console.log("Balance after repay", balance.toString())
-    console.log("Updated Liability after repay: ", updatedLiability.toString())
+    //console.log("Partial liability: ", partialLiability.toString())
+    //console.log("Balance after repay", balance.toString())
+    //console.log("Updated Liability after repay: ", updatedLiability.toString())
     
     //TODO - TEST MATH
     //assert.equal(updatedLiability.toString(), partialLiability.toString(), "Half of liability has been filled")
@@ -297,10 +272,48 @@ describe("Testing repay", () => {
     assert.equal(updatedLiability.toNumber(), 0, "Liability is now 0")
 
     let balance = await con.USDI!.balanceOf(Bob.address)
-    console.log("Balance after complete repay: ", balance.toString())
+    //console.log("Balance after complete repay: ", balance.toString())
   })
 })
 
+describe("Testing liquidations ///////////////////////////////", () => {
+  before(async () => {
+    //await setupInitial()
+    //await setupVaults()
+  })
+  it(`bob should have ${Bob_WETH} deposited`, async () => {
+    expect(await bob_vault.connect(Bob).getBalances(con.WETH!.address)).to.eq(
+      Bob_WETH
+    );
+   /**
+     console.log(
+      "bob value:",
+      (await con.VaultMaster!.account_collateral_value(1)).toString()
+    );
+    */
+  });
+  it("borrow maximum and liquidate", async () => {
+
+    //BUG FOUND = need to transfer from vault instead of from vaultMaster in liquidation 
+    const vaultID = 1
+    const max_usdi = 1e5
+    const accountLiability = await con.VaultMaster!.get_account_liability(vaultID)
+    const account_collateral_value = await con.VaultMaster!.account_collateral_value(vaultID)
+    const initBalance = await con.USDI!.balanceOf(Bob.address)
+
+
+    //console.log("InitBalance: ", initBalance.toString())
+    //console.log("accountLiability: ", accountLiability.toString())
+    //console.log("account_collateral_value ==> total_liquidity_value: ", account_collateral_value.toString())
+
+    let borrowAmount = account_collateral_value
+    await con.VaultMaster!.connect(Bob).borrow_usdi(1, borrowAmount)
+    console.log("wETH ADDRESS: ", Mainnet.wethAddress)
+    
+    const result = await con.VaultMaster!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, 5000)
+    
+  })
+})
 
 
 
