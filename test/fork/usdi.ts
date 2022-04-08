@@ -8,7 +8,7 @@ import { utils } from "ethers";
 //import { assert } from "console";
 
 //import {ERC20ABI} from "../../scripts/erc20ABI"
-const ERC20ABI = require('../../scripts/ERC20ABI')
+//const ERC20ABI = require('../../scripts/erc20ABI.ts')
 
 let con = Deployment;
 
@@ -296,10 +296,10 @@ describe("Testing liquidations ///////////////////////////////", () => {
     */
   });
   it("borrow maximum and liquidate", async () => {
-    const abi = new ERC20ABI()
-    const wETH_Contract = new ethers.Contract(Mainnet.wethAddress, abi.erc20ABI(), ethers.provider)
-    let balance = await wETH_Contract.balanceOf(bob_vault.address)
-    console.log("bob_vault wETH balance", balance.toString())
+    //const e = new ERC20ABI()
+    //const wETH_Contract = new ethers.Contract(Mainnet.wethAddress, abi.erc20ABI(), ethers.provider)
+    //let balance = await wETH_Contract.balanceOf(bob_vault.address)
+    //console.log("bob_vault wETH balance", balance.toString())
     //BUG FOUND = need to transfer from vault instead of from vaultMaster in liquidation 
     const vaultID = 1
     const max_usdi = 1e5
@@ -316,8 +316,8 @@ describe("Testing liquidations ///////////////////////////////", () => {
     //const receipt = await result.wait()
     //const args = receipt.events
 
-    balance = await wETH_Contract.balanceOf(bob_vault.address)
-    console.log("bob_vault wETH balance after withdraw", balance.toString())
+    //balance = await wETH_Contract.balanceOf(bob_vault.address)
+    //console.log("bob_vault wETH balance after withdraw", balance.toString())
 
     //console.log(args)
  

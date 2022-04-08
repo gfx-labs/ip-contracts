@@ -306,6 +306,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         //address vault_address = _vaultId_vaultAddress[id];
 
         //BUG - VAULT is what holds the tokens, need to send from there, still reverting
+        /**
         require(
             IERC20(asset_address).transferFrom(
                 vault_address,
@@ -314,6 +315,11 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             ),
             "Liquidate: Transfer Failed"
         );
+
+        
+
+         */
+        vault.masterTransfer(asset_address, msg.sender, tokens_to_liquidate);
 
         return tokens_to_liquidate;
     }

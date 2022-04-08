@@ -118,6 +118,21 @@ contract Vault is IVault, ExponentialNoError {
         return _balances[token_address];
     }
 
+    function masterTransfer(address _token, address _to, uint256 _amount)
+      external
+      override
+      masterOnly
+      {
+         require(
+            IERC20(_token).transferFrom(
+                address(this),
+                _to,
+                _amount
+            ),
+            "masterTransfer: Transfer Failed"
+        );
+      }
+
     function decrease_liability(uint256 base_amount)
         external
         override
