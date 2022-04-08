@@ -124,6 +124,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     }
 
     function borrow_usdi(uint256 id, uint256 amount) external override {
+        pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
         IVault vault = IVault(vault_address);
@@ -148,8 +149,6 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         require(solvency, "this borrow would make your account insolvent");
 
         _usdi.vault_master_mint(msg.sender, amount);
-
-        pay_interest();
     }
 
     function get_account_liability(uint256 id)
@@ -305,9 +304,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         );
         console.log("tokens_to_liquidate: ", tokens_to_liquidate);
 
-
         //address vault_address = _vaultId_vaultAddress[id];
-
 
         //BUG - VAULT is what holds the tokens, need to send from there, still reverting
         require(
