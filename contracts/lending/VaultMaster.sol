@@ -174,7 +174,6 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         //console.log("Amount: ", amount);
         //console.log("e18 IF: ", _e18_interestFactor);
         uint256 base_amount = ExponentialNoError.div_(amount, interest_factor);
-        //console.log("Base Amount: ", base_amount);
         _totalBaseLiability = _totalBaseLiability - base_amount;
         require(
             base_amount <= vault.getBaseLiability(),

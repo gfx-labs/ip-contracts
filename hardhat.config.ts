@@ -11,6 +11,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
         url: "https://mainnet.rpc.gfx.xyz",
+        blockNumber: 14546835 
       },
     },
     ropsten: {

@@ -13,6 +13,10 @@ import * as Contracts from ".";
 declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
+      name: "IAggregator",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IAggregator__factory>;
+    getContractFactory(
       name: "ERC20Detailed",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20Detailed__factory>;
@@ -32,6 +36,22 @@ declare module "hardhat/types/runtime" {
       name: "IUniswapV3PoolDerivedState",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IUniswapV3PoolDerivedState__factory>;
+    getContractFactory(
+      name: "CurveMaster",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.CurveMaster__factory>;
+    getContractFactory(
+      name: "ICurveMaster",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ICurveMaster__factory>;
+    getContractFactory(
+      name: "ICurveSlave",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ICurveSlave__factory>;
+    getContractFactory(
+      name: "ThreeLines0_100",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ThreeLines0_100__factory>;
     getContractFactory(
       name: "IVault",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -53,6 +73,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Migrations__factory>;
     getContractFactory(
+      name: "ChainlinkOracleRelay",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ChainlinkOracleRelay__factory>;
+    getContractFactory(
+      name: "UniswapV3OracleRelay",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.UniswapV3OracleRelay__factory>;
+    getContractFactory(
       name: "IOracleMaster",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IOracleMaster__factory>;
@@ -61,13 +89,13 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IOracleRelay__factory>;
     getContractFactory(
+      name: "AnchoredViewRelay",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.AnchoredViewRelay__factory>;
+    getContractFactory(
       name: "OracleMaster",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.OracleMaster__factory>;
-    getContractFactory(
-      name: "UniswapV3OracleRelay",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.UniswapV3OracleRelay__factory>;
     getContractFactory(
       name: "BeaconProxy",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -122,6 +150,11 @@ declare module "hardhat/types/runtime" {
     ): Promise<Contracts.USDI__factory>;
 
     getContractAt(
+      name: "IAggregator",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IAggregator>;
+    getContractAt(
       name: "ERC20Detailed",
       address: string,
       signer?: ethers.Signer
@@ -146,6 +179,26 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IUniswapV3PoolDerivedState>;
+    getContractAt(
+      name: "CurveMaster",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.CurveMaster>;
+    getContractAt(
+      name: "ICurveMaster",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ICurveMaster>;
+    getContractAt(
+      name: "ICurveSlave",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ICurveSlave>;
+    getContractAt(
+      name: "ThreeLines0_100",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ThreeLines0_100>;
     getContractAt(
       name: "IVault",
       address: string,
@@ -172,6 +225,16 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.Migrations>;
     getContractAt(
+      name: "ChainlinkOracleRelay",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ChainlinkOracleRelay>;
+    getContractAt(
+      name: "UniswapV3OracleRelay",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.UniswapV3OracleRelay>;
+    getContractAt(
       name: "IOracleMaster",
       address: string,
       signer?: ethers.Signer
@@ -182,15 +245,15 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IOracleRelay>;
     getContractAt(
+      name: "AnchoredViewRelay",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.AnchoredViewRelay>;
+    getContractAt(
       name: "OracleMaster",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.OracleMaster>;
-    getContractAt(
-      name: "UniswapV3OracleRelay",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.UniswapV3OracleRelay>;
     getContractAt(
       name: "BeaconProxy",
       address: string,

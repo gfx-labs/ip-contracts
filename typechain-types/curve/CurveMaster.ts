@@ -4,6 +4,7 @@
 import type {
   BaseContract,
   BigNumber,
+  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -25,39 +26,39 @@ import type {
   OnEvent,
 } from "../common";
 
-export interface OracleMasterInterface extends utils.Interface {
+export interface CurveMasterInterface extends utils.Interface {
   functions: {
+    "_curves(address)": FunctionFragment;
     "_paused(address)": FunctionFragment;
-    "_relays(address)": FunctionFragment;
-    "get_live_price(address)": FunctionFragment;
+    "get_value_at(address,int256)": FunctionFragment;
     "owner()": FunctionFragment;
-    "pause_relay(address,bool)": FunctionFragment;
+    "pause_curve(address,bool)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
-    "set_relay(address,address)": FunctionFragment;
+    "set_curve(address,address)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "_curves"
       | "_paused"
-      | "_relays"
-      | "get_live_price"
+      | "get_value_at"
       | "owner"
-      | "pause_relay"
+      | "pause_curve"
       | "renounceOwnership"
-      | "set_relay"
+      | "set_curve"
       | "transferOwnership"
   ): FunctionFragment;
 
+  encodeFunctionData(functionFragment: "_curves", values: [string]): string;
   encodeFunctionData(functionFragment: "_paused", values: [string]): string;
-  encodeFunctionData(functionFragment: "_relays", values: [string]): string;
   encodeFunctionData(
-    functionFragment: "get_live_price",
-    values: [string]
+    functionFragment: "get_value_at",
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "pause_relay",
+    functionFragment: "pause_curve",
     values: [string, boolean]
   ): string;
   encodeFunctionData(
@@ -65,7 +66,7 @@ export interface OracleMasterInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "set_relay",
+    functionFragment: "set_curve",
     values: [string, string]
   ): string;
   encodeFunctionData(
@@ -73,22 +74,22 @@ export interface OracleMasterInterface extends utils.Interface {
     values: [string]
   ): string;
 
+  decodeFunctionResult(functionFragment: "_curves", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_paused", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "_relays", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "get_live_price",
+    functionFragment: "get_value_at",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "pause_relay",
+    functionFragment: "pause_curve",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "set_relay", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "set_curve", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
@@ -113,12 +114,12 @@ export type OwnershipTransferredEvent = TypedEvent<
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
 
-export interface OracleMaster extends BaseContract {
+export interface CurveMaster extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: OracleMasterInterface;
+  interface: CurveMasterInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -140,18 +141,19 @@ export interface OracleMaster extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    _curves(arg0: string, overrides?: CallOverrides): Promise<[string]>;
+
     _paused(arg0: string, overrides?: CallOverrides): Promise<[boolean]>;
 
-    _relays(arg0: string, overrides?: CallOverrides): Promise<[string]>;
-
-    get_live_price(
-      token_address: string,
+    get_value_at(
+      curve_address: string,
+      x_value: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
-    pause_relay(
+    pause_curve(
       token_address: string,
       state: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -161,9 +163,9 @@ export interface OracleMaster extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    set_relay(
+    set_curve(
       token_address: string,
-      relay_address: string,
+      curve_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -173,18 +175,19 @@ export interface OracleMaster extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
+  _curves(arg0: string, overrides?: CallOverrides): Promise<string>;
+
   _paused(arg0: string, overrides?: CallOverrides): Promise<boolean>;
 
-  _relays(arg0: string, overrides?: CallOverrides): Promise<string>;
-
-  get_live_price(
-    token_address: string,
+  get_value_at(
+    curve_address: string,
+    x_value: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
-  pause_relay(
+  pause_curve(
     token_address: string,
     state: boolean,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -194,9 +197,9 @@ export interface OracleMaster extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  set_relay(
+  set_curve(
     token_address: string,
-    relay_address: string,
+    curve_address: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -206,18 +209,19 @@ export interface OracleMaster extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    _curves(arg0: string, overrides?: CallOverrides): Promise<string>;
+
     _paused(arg0: string, overrides?: CallOverrides): Promise<boolean>;
 
-    _relays(arg0: string, overrides?: CallOverrides): Promise<string>;
-
-    get_live_price(
-      token_address: string,
+    get_value_at(
+      curve_address: string,
+      x_value: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
-    pause_relay(
+    pause_curve(
       token_address: string,
       state: boolean,
       overrides?: CallOverrides
@@ -225,9 +229,9 @@ export interface OracleMaster extends BaseContract {
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
-    set_relay(
+    set_curve(
       token_address: string,
-      relay_address: string,
+      curve_address: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -249,18 +253,19 @@ export interface OracleMaster extends BaseContract {
   };
 
   estimateGas: {
+    _curves(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+
     _paused(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    _relays(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    get_live_price(
-      token_address: string,
+    get_value_at(
+      curve_address: string,
+      x_value: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
-    pause_relay(
+    pause_curve(
       token_address: string,
       state: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -270,9 +275,9 @@ export interface OracleMaster extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    set_relay(
+    set_curve(
       token_address: string,
-      relay_address: string,
+      curve_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -283,24 +288,25 @@ export interface OracleMaster extends BaseContract {
   };
 
   populateTransaction: {
+    _curves(
+      arg0: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     _paused(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    _relays(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    get_live_price(
-      token_address: string,
+    get_value_at(
+      curve_address: string,
+      x_value: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    pause_relay(
+    pause_curve(
       token_address: string,
       state: boolean,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -310,9 +316,9 @@ export interface OracleMaster extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    set_relay(
+    set_curve(
       token_address: string,
-      relay_address: string,
+      curve_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

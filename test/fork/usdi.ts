@@ -7,6 +7,9 @@ import { stealMoney } from "../util/money";
 import { utils } from "ethers";
 //import { assert } from "console";
 
+//import {ERC20ABI} from "../../scripts/erc20ABI"
+const ERC20ABI = require('../../scripts/ERC20ABI')
+
 let con = Deployment;
 
 let Frank: any; // frank is the Frank and master of USDI
@@ -243,7 +246,7 @@ describe("Testing repay", () => {
   });
   it("partial repay", async () => {
     const liability = await bob_vault.connect(Bob).getBaseLiability()
-    const partialLiability = liability / 2 //half
+    const partialLiability = liability.div(2) //half
     const vaultId = 1
     const initBalance = await con.USDI!.balanceOf(Bob.address)
     //console.log("Bob's Initial Balance: ", initBalance.toString())
@@ -281,7 +284,7 @@ describe("Testing liquidations ///////////////////////////////", () => {
     //await setupInitial()
     //await setupVaults()
   })
-  it(`bob should have ${Bob_WETH} deposited`, async () => {
+  it(`bob should have ${Bob_WETH} wETH deposited`, async () => {
     expect(await bob_vault.connect(Bob).getBalances(con.WETH!.address)).to.eq(
       Bob_WETH
     );
@@ -293,24 +296,36 @@ describe("Testing liquidations ///////////////////////////////", () => {
     */
   });
   it("borrow maximum and liquidate", async () => {
-
+    const abi = new ERC20ABI()
+    const wETH_Contract = new ethers.Contract(Mainnet.wethAddress, abi.erc20ABI(), ethers.provider)
+    let balance = await wETH_Contract.balanceOf(bob_vault.address)
+    console.log("bob_vault wETH balance", balance.toString())
     //BUG FOUND = need to transfer from vault instead of from vaultMaster in liquidation 
     const vaultID = 1
     const max_usdi = 1e5
-    const accountLiability = await con.VaultMaster!.get_account_liability(vaultID)
-    const account_collateral_value = await con.VaultMaster!.account_collateral_value(vaultID)
     const initBalance = await con.USDI!.balanceOf(Bob.address)
 
-
-    //console.log("InitBalance: ", initBalance.toString())
-    //console.log("accountLiability: ", accountLiability.toString())
-    //console.log("account_collateral_value ==> total_liquidity_value: ", account_collateral_value.toString())
-
-    let borrowAmount = account_collateral_value
-    await con.VaultMaster!.connect(Bob).borrow_usdi(1, borrowAmount)
-    console.log("wETH ADDRESS: ", Mainnet.wethAddress)
     
-    const result = await con.VaultMaster!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, 5000)
+    //borrow maximum - borrow amount == collateral value 
+    const account_collateral_value = await con.VaultMaster!.account_collateral_value(vaultID)
+    console.log("account_collateral_value", account_collateral_value.toString())
+    await con.VaultMaster!.connect(Bob).borrow_usdi(1, account_collateral_value)
+
+    //withdraw collateral, vault is below liquidation threshold 
+    //const result = await bob_vault.connect(Bob).withdraw_erc20(Mainnet.wethAddress, 1e9) 
+    //const receipt = await result.wait()
+    //const args = receipt.events
+
+    balance = await wETH_Contract.balanceOf(bob_vault.address)
+    console.log("bob_vault wETH balance after withdraw", balance.toString())
+
+    //console.log(args)
+ 
+    //calculate interest to update protocol, vault is now able to be liquidated 
+    await con.VaultMaster!.calculate_interest()
+
+    //liquidate account
+    await con.VaultMaster!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, 5000)
     
   })
 })

@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as external from "./_external";
+export * as curve from "./curve";
 export * as lending from "./lending";
 export * as oracle from "./oracle";
 export * as ozproxy from "./ozproxy";
