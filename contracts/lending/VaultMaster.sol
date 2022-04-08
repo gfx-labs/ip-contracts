@@ -231,6 +231,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             console.log("BALANCE NOT GREATER THAN LIABILITY");
             return 0;
         }
+        console.log("DIFFERENCE");
+        console.log(usdi_liability - total_liquidity_value);
         // however, if it is a positive number, then we can begin the liquidation process
 
         // now get the price of the asset
@@ -266,7 +268,6 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         vault.decrease_liability(usdi_to_repurchase);
 
         // of the remaining, lets give the reward to the miner and donate the extra
-
         console.log("total_proceeds: ", total_proceeds);
         console.log("usdi_to_repurchase: ", usdi_to_repurchase);
         uint256 remaining;
@@ -289,36 +290,9 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             );
         }
 
+        console.log("_e4_liquidatorShare: ", _e4_liquidatorShare);
+
         // finally, we deliver the tokens to the liquidator
-
-        //approval?
-        IERC20(asset_address).approve(vault_address, tokens_to_liquidate);
-        //console.log(address(this));
-        //console.log("tokens_to_liquidate: ", tokens_to_liquidate);
-
-        console.log("ASSET ADDRESS: ", asset_address);
-        console.log(
-            "AVAILABLE BALANCE IN VAULT: ",
-            IERC20(asset_address).balanceOf(vault_address)
-        );
-        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
-
-        //address vault_address = _vaultId_vaultAddress[id];
-
-        //BUG - VAULT is what holds the tokens, need to send from there, still reverting
-        /**
-        require(
-            IERC20(asset_address).transferFrom(
-                vault_address,
-                msg.sender,
-                tokens_to_liquidate
-            ),
-            "Liquidate: Transfer Failed"
-        );
-
-        
-
-         */
         vault.masterTransfer(asset_address, msg.sender, tokens_to_liquidate);
 
         return tokens_to_liquidate;

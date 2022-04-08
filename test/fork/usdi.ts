@@ -8,7 +8,7 @@ import { utils } from "ethers";
 //import { assert } from "console";
 
 //import {ERC20ABI} from "../../scripts/erc20ABI"
-//const ERC20ABI = require('../../scripts/erc20ABI.ts')
+const ERC20ABI = require('../../scripts/erc20ABI.ts')
 
 let con = Deployment;
 
@@ -279,7 +279,7 @@ describe("Testing repay", () => {
   })
 })
 
-describe("Testing liquidations ///////////////////////////////", () => {
+describe("Testing liquidations", () => {
   before(async () => {
     //await setupInitial()
     //await setupVaults()
@@ -296,10 +296,22 @@ describe("Testing liquidations ///////////////////////////////", () => {
     */
   });
   it("borrow maximum and liquidate", async () => {
-    //const e = new ERC20ABI()
-    //const wETH_Contract = new ethers.Contract(Mainnet.wethAddress, abi.erc20ABI(), ethers.provider)
-    //let balance = await wETH_Contract.balanceOf(bob_vault.address)
-    //console.log("bob_vault wETH balance", balance.toString())
+    /**
+     * LIQUIDATE QUESTIONS
+     * what is max_usdi for? 
+     * seems like usdi_to_repurchase is total_proceeds + 1, so a guaranteed underflow if we do total_proceeds - usdi_to_repurchase
+     *  ** this is unless usdi_to_repurchase is limited by the above max-usdi arg, what scenario is this for? Partial liquidation? 
+     * 
+     * is that if you borrow up to your max (account_collateral_value) your total_liquidity_value will be usdi_liability + 1 but only until pay_interest() happens again, at which point you will be insolvent even if the price of collateral doesn't move
+     * 
+     * _e4_liquidatorShare is never set? 
+     * 
+     * vault.claim_erc20() is master only, there is no function to call this on vaultMaster? 
+     */
+    const abi = new ERC20ABI()
+    const wETH_Contract = new ethers.Contract(Mainnet.wethAddress, abi.erc20ABI(), ethers.provider)
+    let balance = await wETH_Contract.balanceOf(bob_vault.address)
+    console.log("bob_vault wETH balance", balance.toString())
     //BUG FOUND = need to transfer from vault instead of from vaultMaster in liquidation 
     const vaultID = 1
     const max_usdi = 1e5
@@ -312,7 +324,7 @@ describe("Testing liquidations ///////////////////////////////", () => {
     await con.VaultMaster!.connect(Bob).borrow_usdi(1, account_collateral_value)
 
     //withdraw collateral, vault is below liquidation threshold 
-    //const result = await bob_vault.connect(Bob).withdraw_erc20(Mainnet.wethAddress, 1e9) 
+    //const result = await bob_vault.connect(Bob).withdraw_erc20(Mainnet.wethAddress, 1e8) 
     //const receipt = await result.wait()
     //const args = receipt.events
 
@@ -325,7 +337,7 @@ describe("Testing liquidations ///////////////////////////////", () => {
     await con.VaultMaster!.calculate_interest()
 
     //liquidate account
-    await con.VaultMaster!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, 5000)
+    await con.VaultMaster!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, max_usdi)
     
   })
 })
