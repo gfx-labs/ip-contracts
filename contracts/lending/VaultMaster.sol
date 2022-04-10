@@ -50,8 +50,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     //mapping of tokenId to its corresponding oracleAddress (which are addresses)
     mapping(uint256 => address) public _tokenId_oracleAddress;
 
-    //mapping of tokenId to its corresponding liquidation incentive
-    mapping(uint256 => address) public _tokenId_liquidationIncentive;
+    //mapping of token address to its corresponding liquidation incentive
+    mapping(address => uint256) public _tokenAddress_liquidationIncentive;
 
     constructor() Ownable() {
         _vaultsMinted = 0;
@@ -107,7 +107,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         _tokenId_oracleAddress[_tokensRegistered] = oracle_address;
         _enabledTokens.push(token_address);
         _tokenId_tokenLTVe4[_tokensRegistered] = LTVe4;
-        _tokenId_liquidationIncentive[_tokensRegistered] = liquidationIncentive;
+        _tokenAddress_liquidationIncentive[token_address] = liquidationIncentive;
     }
 
     function check_account(uint256 id) external view override returns (bool) {
@@ -242,7 +242,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         //lower price to give liquidator incentive
         uint256 asset_price_with_incentive = ExponentialNoError.mul_ScalarTruncate(
             price,
-            _tokenId_liquidationIncentive
+            _tokenAddress_liquidationIncentive[asset_address]
         )
         //solve for ideal amount
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
