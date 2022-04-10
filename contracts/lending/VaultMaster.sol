@@ -110,6 +110,25 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         _tokenAddress_liquidationIncentive[token_address] = liquidationIncentive;
     }
 
+    function update_registered_erc20(
+        address token_address,
+        uint256 LTVe4,
+        address oracle_address,
+        uint256 liquidationIncentive
+    ) external onlyOwner {
+        require(
+            _oracleMaster._relays(oracle_address) != address(0x0),
+            "oracle does not exist"
+        );
+        require(
+            _tokenAddress_tokenId[token_address] != 0,
+            "token is not registered"
+        );
+        _tokenId_oracleAddress[_tokensRegistered] = oracle_address;
+        _tokenId_tokenLTVe4[_tokensRegistered] = LTVe4;
+        _tokenAddress_liquidationIncentive[token_address] = liquidationIncentive;
+    }
+
     function check_account(uint256 id) external view override returns (bool) {
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
