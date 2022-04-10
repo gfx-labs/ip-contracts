@@ -161,7 +161,7 @@ contract Vault is IVault, ExponentialNoError {
         return _baseLiability;
     }
 
-    function _delegateCompLikeTo(address compLikeDelegatee, address CompLikeToken)
+    function delegate_Comp_Like_To(address compLikeDelegatee, address CompLikeToken)
         external
         override
         minterOnly
