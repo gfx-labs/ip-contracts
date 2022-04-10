@@ -9,6 +9,10 @@ import "./IVaultMaster.sol";
 
 import "hardhat/console.sol";
 
+interface CompLike {
+  function delegate(address delegatee) external;
+}
+
 // the mantissa for ExponentialNoError is 1e18
 // so to store 5, you store 5e18
 
@@ -157,4 +161,13 @@ contract Vault is IVault, ExponentialNoError {
         return _baseLiability;
     }
 
+    function _delegateCompLikeTo(address compLikeDelegatee, address CompLikeToken)
+        external
+        override
+        minterOnly
+    {
+        CompLike(CompLikeToken).delegate(compLikeDelegatee);
+    }
+
 }
+
