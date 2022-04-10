@@ -50,6 +50,9 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     //mapping of tokenId to its corresponding oracleAddress (which are addresses)
     mapping(uint256 => address) public _tokenId_oracleAddress;
 
+    //mapping of tokenId to its corresponding liquidation incentive
+    mapping(uint256 => address) public _tokenId_liquidationIncentive;
+
     constructor() Ownable() {
         _vaultsMinted = 0;
         _tokensRegistered = 0;
@@ -88,7 +91,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     function register_erc20(
         address token_address,
         uint256 LTVe4,
-        address oracle_address
+        address oracle_address,
+        uint256 liquidationIncentive
     ) external onlyOwner {
         require(
             _oracleMaster._relays(oracle_address) != address(0x0),
@@ -103,24 +107,25 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         _tokenId_oracleAddress[_tokensRegistered] = oracle_address;
         _enabledTokens.push(token_address);
         _tokenId_tokenLTVe4[_tokensRegistered] = LTVe4;
+        _tokenId_liquidationIncentive[_tokensRegistered] = liquidationIncentive;
     }
 
     function check_account(uint256 id) external view override returns (bool) {
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
         IVault vault = IVault(vault_address);
-        uint256 total_liquidity_value = get_vault_collateral_value(vault);
+        uint256 total_liquidity_value = get_vault_borrowing_power(vault);
         uint256 usdi_liability = (vault.getBaseLiability() *
             _e18_interestFactor) / 1e18;
         return (total_liquidity_value >= usdi_liability);
     }
 
-    function account_collateral_value(uint256 id)
+    function account_borrowing_power(uint256 id)
         external
         view
         returns (uint256)
     {
-        return get_vault_collateral_value(IVault(_vaultId_vaultAddress[id]));
+        return get_vault_borrowing_power(IVault(_vaultId_vaultAddress[id]));
     }
 
     function borrow_usdi(uint256 id, uint256 amount) external override {
@@ -143,7 +148,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         );
         //console.log("amount passed to borrow_usdi: ", amount);
         //console.log("usdi_liability: ", usdi_liability);
-        uint256 total_liquidity_value = get_vault_collateral_value(vault);
+        uint256 total_liquidity_value = get_vault_borrowing_power(vault);
         //console.log("total_liquidity_value: ", total_liquidity_value);
         bool solvency = (total_liquidity_value >= usdi_liability);
         require(solvency, "this borrow would make your account insolvent");
@@ -205,100 +210,70 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         address asset_address,
         uint256 max_usdi
     ) external override returns (uint256) {
+        pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
-        uint256 total_liquidity_value = 0;
         IVault vault = IVault(vault_address);
-        for (uint256 i = 1; i <= _tokensRegistered; i++) {
-            address token_address = _enabledTokens[i - 1];
-            uint256 raw_price = uint256(
-                _oracleMaster.get_live_price(token_address)
-            );
-            if (raw_price != 0) {
-                uint256 token_value = (ExponentialNoError.mul_ScalarTruncate(
-                    Exp({mantissa: raw_price}),
-                    vault.getBalances(token_address)
-                ) * _tokenId_tokenLTVe4[i]) / 1e4; // //
-                total_liquidity_value = total_liquidity_value + token_value;
-            }
-        }
-        // now, if this balance is greater than the usdi liability, we just return 0 (nothing to liquidate);
+        uint256 vault_borrowing_power = get_vault_borrowing_power(vault)
+        //if this balance is greater than the usdi liability, we just return 0 (nothing to liquidate);
         uint256 usdi_liability = (vault.getBaseLiability() *
             _e18_interestFactor) / 1e18;
         console.log("LIQUIDATION CHECK");
-        console.log(total_liquidity_value, usdi_liability);
-        if (total_liquidity_value >= usdi_liability) {
+        console.log(vault_borrowing_power, usdi_liability);
+        if (vault_borrowing_power >= usdi_liability) {
             console.log("BALANCE NOT GREATER THAN LIABILITY");
             return 0;
         }
         console.log("DIFFERENCE");
-        console.log(usdi_liability - total_liquidity_value);
+        console.log(usdi_liability - vault_borrowing_power);
         // however, if it is a positive number, then we can begin the liquidation process
-
-        // now get the price of the asset
+        // we liquidate the user until their total value = total borrow
+        uint256 usdi_to_repurchase = usdi_liability - vault_borrowing_power;
+        //check for partial fill
+        if (usdi_to_repurchase > max_usdi) {
+            usdi_to_repurchase = max_usdi;
+        }
+        //get the price of the asset
         uint256 asset_price = uint256(
             _oracleMaster.get_live_price(asset_address)
         );
         require(asset_price != 0, "no oracle price");
         Exp memory price = Exp({mantissa: asset_price}); // remember that our prices are all in 1e18 terms
-
-        // we liquidate the user until their total value = total borrow
-        uint256 usdi_to_repurchase = usdi_liability - total_liquidity_value;
-        if (usdi_to_repurchase > max_usdi) {
-            usdi_to_repurchase = max_usdi;
-        }
+        //lower price to give liquidator incentive
+        uint256 asset_price_with_incentive = ExponentialNoError.mul_ScalarTruncate(
+            price,
+            _tokenId_liquidationIncentive
+        )
+        //solve for ideal amount
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
             usdi_to_repurchase,
-            price
+            asset_price_with_incentive
         );
+
         uint256 vault_balance = vault.getBalances(asset_address);
+        //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > vault_balance) {
             tokens_to_liquidate = vault_balance;
             usdi_to_repurchase = ExponentialNoError.mul_ScalarTruncate(
-                price,
+                asset_price_with_incentive,
                 tokens_to_liquidate
             );
         }
-        // upon liquidating all this, we first must find out how much usdi we have to work with.
-        uint256 total_proceeds = ExponentialNoError.mul_ScalarTruncate(
-            price,
-            tokens_to_liquidate
-        );
+
+        console.log("usdi_to_repurchase: ", usdi_to_repurchase);
+        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
+        console.log("asset_price_with_incentive: ", asset_price_with_incentive);
+        //decrease liquidators balance usdi
+        _usdi.vault_master_burn(msg.sender,usdi_to_repurchase);
         // then lets get the vault back to a healthy ratio
         vault.decrease_liability(usdi_to_repurchase);
-
-        // of the remaining, lets give the reward to the miner and donate the extra
-        console.log("total_proceeds: ", total_proceeds);
-        console.log("usdi_to_repurchase: ", usdi_to_repurchase);
-        uint256 remaining;
-        //BUG UNDERFLOW - catch underflow error, remaining should be 0
-        if (!(total_proceeds < usdi_to_repurchase)) {
-            remaining = total_proceeds - usdi_to_repurchase;
-        }
-        //   uint256 liquidator_cost = (total_proceeds - _e4_liquidatorShare * remaining / 1e4);
-
-        if ((total_proceeds - (_e4_liquidatorShare * remaining) / 1e4) > 0) {
-            _usdi.vault_master_burn(
-                msg.sender,
-                (total_proceeds - (_e4_liquidatorShare * remaining) / 1e4)
-            );
-        }
-
-        if ((((1e4 - _e4_liquidatorShare) * remaining) / 1e4) > 0) {
-            _usdi.vault_master_donate(
-                (((1e4 - _e4_liquidatorShare) * remaining) / 1e4)
-            );
-        }
-
-        console.log("_e4_liquidatorShare: ", _e4_liquidatorShare);
-
         // finally, we deliver the tokens to the liquidator
         vault.masterTransfer(asset_address, msg.sender, tokens_to_liquidate);
 
         return tokens_to_liquidate;
     }
 
-    function get_vault_collateral_value(IVault vault)
+    function get_vault_borrowing_power(IVault vault)
         private
         view
         returns (uint256)

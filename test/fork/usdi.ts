@@ -169,7 +169,7 @@ describe("TOKEN-DEPOSITS", () => {
     );
     console.log(
       "bob value:",
-      (await con.VaultMaster!.account_collateral_value(1)).toString()
+      (await con.VaultMaster!.account_borrowing_power(1)).toString()
     );
   });
   it(`carol should have ${Carol_COMP} deposited`, async () => {
@@ -178,7 +178,7 @@ describe("TOKEN-DEPOSITS", () => {
     ).to.eq(Carol_COMP);
     console.log(
       "carol value:",
-      (await con.VaultMaster!.account_collateral_value(2)).toString()
+      (await con.VaultMaster!.account_borrowing_power(2)).toString()
     );
   });
 });
@@ -291,7 +291,7 @@ describe("Testing liquidations", () => {
    /**
      console.log(
       "bob value:",
-      (await con.VaultMaster!.account_collateral_value(1)).toString()
+      (await con.VaultMaster!.account_borrowing_power(1)).toString()
     );
     */
   });
@@ -302,7 +302,7 @@ describe("Testing liquidations", () => {
      * seems like usdi_to_repurchase is total_proceeds + 1, so a guaranteed underflow if we do total_proceeds - usdi_to_repurchase
      *  ** this is unless usdi_to_repurchase is limited by the above max-usdi arg, what scenario is this for? Partial liquidation? 
      * 
-     * is that if you borrow up to your max (account_collateral_value) your total_liquidity_value will be usdi_liability + 1 but only until pay_interest() happens again, at which point you will be insolvent even if the price of collateral doesn't move
+     * is that if you borrow up to your max (account_borrowing_power) your total_liquidity_value will be usdi_liability + 1 but only until pay_interest() happens again, at which point you will be insolvent even if the price of collateral doesn't move
      * 
      * _e4_liquidatorShare is never set? 
      * 
@@ -319,9 +319,9 @@ describe("Testing liquidations", () => {
 
     
     //borrow maximum - borrow amount == collateral value 
-    const account_collateral_value = await con.VaultMaster!.account_collateral_value(vaultID)
-    console.log("account_collateral_value", account_collateral_value.toString())
-    await con.VaultMaster!.connect(Bob).borrow_usdi(1, account_collateral_value)
+    const account_borrowing_power = await con.VaultMaster!.account_borrowing_power(vaultID)
+    console.log("account_borrowing_power", account_borrowing_power.toString())
+    await con.VaultMaster!.connect(Bob).borrow_usdi(1, account_borrowing_power)
 
     //withdraw collateral, vault is below liquidation threshold 
     //const result = await bob_vault.connect(Bob).withdraw_erc20(Mainnet.wethAddress, 1e8) 

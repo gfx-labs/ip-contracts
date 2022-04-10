@@ -41,7 +41,7 @@ export interface VaultMasterInterface extends utils.Interface {
     "_usdiAddress()": FunctionFragment;
     "_vaultId_vaultAddress(uint256)": FunctionFragment;
     "_vaultsMinted()": FunctionFragment;
-    "account_collateral_value(uint256)": FunctionFragment;
+    "account_borrowing_power(uint256)": FunctionFragment;
     "borrow_usdi(uint256,uint256)": FunctionFragment;
     "calculate_interest()": FunctionFragment;
     "check_account(uint256)": FunctionFragment;
@@ -74,7 +74,7 @@ export interface VaultMasterInterface extends utils.Interface {
       | "_usdiAddress"
       | "_vaultId_vaultAddress"
       | "_vaultsMinted"
-      | "account_collateral_value"
+      | "account_borrowing_power"
       | "borrow_usdi"
       | "calculate_interest"
       | "check_account"
@@ -145,7 +145,7 @@ export interface VaultMasterInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "account_collateral_value",
+    functionFragment: "account_borrowing_power",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -259,7 +259,7 @@ export interface VaultMasterInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "account_collateral_value",
+    functionFragment: "account_borrowing_power",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -414,7 +414,7 @@ export interface VaultMaster extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    account_collateral_value(
+    account_borrowing_power(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
@@ -533,7 +533,7 @@ export interface VaultMaster extends BaseContract {
 
   _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
-  account_collateral_value(
+  account_borrowing_power(
     id: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
@@ -649,7 +649,7 @@ export interface VaultMaster extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
-    account_collateral_value(
+    account_borrowing_power(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -777,7 +777,7 @@ export interface VaultMaster extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
-    account_collateral_value(
+    account_borrowing_power(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -905,7 +905,7 @@ export interface VaultMaster extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    account_collateral_value(
+    account_borrowing_power(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
