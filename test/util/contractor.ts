@@ -84,12 +84,14 @@ export class TestContracts {
     await this.VaultMaster.connect(deployer).register_erc20(
       this.book.wethAddress,
       6000,
-      this.book.wethAddress
+      this.book.wethAddress,
+      950000000000000000
     );
     await this.VaultMaster!.connect(deployer).register_erc20(
       this.book.compAddress,
       4000,
-      this.book.compAddress
+      this.book.compAddress,
+      950000000000000000
     );
     await this.VaultMaster!.connect(deployer).register_usdi(this.USDI!.address)
   }
