@@ -246,20 +246,22 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             (_tokenAddress_liquidationIncentivee4[asset_address] -
                 _tokenId_tokenLTVe4[token_Id])
         );
+        console.log("scaled_down_price: ", scaled_down_price);
     }
 
     function getUsdiToRepurchase(
         Exp memory price,
         address asset_address,
         uint256 tokens_to_liquidate
-    ) internal view returns(uint256 usdi_to_repurchase)
-    {
-        usdi_to_repurchase = (
-            ExponentialNoError.mul_ScalarTruncate(
-                price,
-                _tokenAddress_liquidationIncentivee4[asset_address]
-            )
-        ) * tokens_to_liquidate;
+    ) internal view returns (uint256 usdi_to_repurchase) {
+        usdi_to_repurchase =
+            (
+                ExponentialNoError.mul_ScalarTruncate(
+                    price,
+                    _tokenAddress_liquidationIncentivee4[asset_address]
+                )
+            ) *
+            tokens_to_liquidate;
     }
 
     function liquidate_account(
@@ -292,13 +294,19 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         uint256 token_Id = _tokenAddress_tokenId[asset_address];
         //uint256 scaled_down_price = getScaledPrice(price, asset_address, token_Id);
 
+        console.log("deficit: ", deficit);
+
         //solve for ideal amount
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
-            deficit,
-            getScaledPrice(price, asset_address, token_Id)
+            getScaledPrice(price, asset_address, token_Id),
+            deficit
         );
 
-        uint256 usdi_to_repurchase = getUsdiToRepurchase(price, asset_address, tokens_to_liquidate);    
+        uint256 usdi_to_repurchase = getUsdiToRepurchase(
+            price,
+            asset_address,
+            tokens_to_liquidate
+        );
         console.log("DIVIDE");
         console.log("usdi_to_repurchase: ", usdi_to_repurchase);
         console.log("tokens_to_liquidate: ", tokens_to_liquidate);
