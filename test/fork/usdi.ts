@@ -361,13 +361,13 @@ describe("Testing liquidations", () => {
     console.log("Dave ether balance end: ", utils.formatEther(balance.toString()))
 
     balance = await wETH_Contract.balanceOf(bob_vault.address)
-    //console.log("bob_vault wETH balance after liquidation", balance.toString())
+    console.log("bob_vault wETH balance after liquidation", balance.toString())
 
     balance = await con.USDI!.balanceOf(Dave.address)
-    //console.log("Dave ending USDI balance: ", balance.toString())
+    console.log("Dave ending USDI balance: ", balance.toString())
 
     balance = await wETH_Contract.balanceOf(Dave.address)
-    //console.log("Dave wETH balance end: ", balance.toString())
+    console.log("Dave wETH balance end: ", balance.toString())
     
   })
 })
