@@ -263,13 +263,17 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             price,
             _tokenAddress_liquidationIncentive[asset_address]
         );
+
+        console.log("asset_price_with_incentive: ", asset_price_with_incentive);
         //solve for ideal amount
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
-            usdi_to_repurchase,
-            asset_price_with_incentive
+            asset_price_with_incentive,
+            usdi_to_repurchase
         );
 
         uint256 vault_balance = vault.getBalances(asset_address);
+
+
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > vault_balance) {
             tokens_to_liquidate = vault_balance;
@@ -285,7 +289,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
         //decrease liquidators balance usdi
         _usdi.vault_master_burn(msg.sender,usdi_to_repurchase);
-        
+
         // finally, we deliver the tokens to the liquidator
         vault.masterTransfer(asset_address, msg.sender, tokens_to_liquidate);
 
