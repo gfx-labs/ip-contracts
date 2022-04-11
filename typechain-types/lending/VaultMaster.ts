@@ -33,7 +33,7 @@ export interface VaultMasterInterface extends utils.Interface {
     "_enabledTokens(uint256)": FunctionFragment;
     "_lastInterestTime()": FunctionFragment;
     "_oracleMasterAddress()": FunctionFragment;
-    "_tokenAddress_liquidationIncentive(address)": FunctionFragment;
+    "_tokenAddress_liquidationIncentivee4(address)": FunctionFragment;
     "_tokenAddress_tokenId(address)": FunctionFragment;
     "_tokenId_oracleAddress(uint256)": FunctionFragment;
     "_tokenId_tokenLTVe4(uint256)": FunctionFragment;
@@ -68,7 +68,7 @@ export interface VaultMasterInterface extends utils.Interface {
       | "_enabledTokens"
       | "_lastInterestTime"
       | "_oracleMasterAddress"
-      | "_tokenAddress_liquidationIncentive"
+      | "_tokenAddress_liquidationIncentivee4"
       | "_tokenAddress_tokenId"
       | "_tokenId_oracleAddress"
       | "_tokenId_tokenLTVe4"
@@ -117,7 +117,7 @@ export interface VaultMasterInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "_tokenAddress_liquidationIncentive",
+    functionFragment: "_tokenAddress_liquidationIncentivee4",
     values: [string]
   ): string;
   encodeFunctionData(
@@ -239,7 +239,7 @@ export interface VaultMasterInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "_tokenAddress_liquidationIncentive",
+    functionFragment: "_tokenAddress_liquidationIncentivee4",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -422,7 +422,7 @@ export interface VaultMaster extends BaseContract {
 
     _oracleMasterAddress(overrides?: CallOverrides): Promise<[string]>;
 
-    _tokenAddress_liquidationIncentive(
+    _tokenAddress_liquidationIncentivee4(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
@@ -499,7 +499,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
-      liquidationIncentive: BigNumberish,
+      liquidationIncentivee4: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -537,7 +537,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
-      liquidationIncentive: BigNumberish,
+      liquidationIncentivee4: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
@@ -555,7 +555,7 @@ export interface VaultMaster extends BaseContract {
 
   _oracleMasterAddress(overrides?: CallOverrides): Promise<string>;
 
-  _tokenAddress_liquidationIncentive(
+  _tokenAddress_liquidationIncentivee4(
     arg0: string,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
@@ -629,7 +629,7 @@ export interface VaultMaster extends BaseContract {
     token_address: string,
     LTVe4: BigNumberish,
     oracle_address: string,
-    liquidationIncentive: BigNumberish,
+    liquidationIncentivee4: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -667,7 +667,7 @@ export interface VaultMaster extends BaseContract {
     token_address: string,
     LTVe4: BigNumberish,
     oracle_address: string,
-    liquidationIncentive: BigNumberish,
+    liquidationIncentivee4: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -685,7 +685,7 @@ export interface VaultMaster extends BaseContract {
 
     _oracleMasterAddress(overrides?: CallOverrides): Promise<string>;
 
-    _tokenAddress_liquidationIncentive(
+    _tokenAddress_liquidationIncentivee4(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -758,7 +758,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
-      liquidationIncentive: BigNumberish,
+      liquidationIncentivee4: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -791,7 +791,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
-      liquidationIncentive: BigNumberish,
+      liquidationIncentivee4: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -842,7 +842,7 @@ export interface VaultMaster extends BaseContract {
 
     _oracleMasterAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _tokenAddress_liquidationIncentive(
+    _tokenAddress_liquidationIncentivee4(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -919,7 +919,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
-      liquidationIncentive: BigNumberish,
+      liquidationIncentivee4: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -957,7 +957,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
-      liquidationIncentive: BigNumberish,
+      liquidationIncentivee4: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
@@ -982,7 +982,7 @@ export interface VaultMaster extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    _tokenAddress_liquidationIncentive(
+    _tokenAddress_liquidationIncentivee4(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1061,7 +1061,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
-      liquidationIncentive: BigNumberish,
+      liquidationIncentivee4: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1099,7 +1099,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
-      liquidationIncentive: BigNumberish,
+      liquidationIncentivee4: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

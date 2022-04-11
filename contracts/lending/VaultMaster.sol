@@ -37,7 +37,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     uint256 public _e4_liquidatorShare;
 
     event Liquidate(
-        uint256 vaultId, 
+        uint256 vaultId,
         address asset_address,
         uint256 max_usdi,
         uint256 usdi_to_repurchase,
@@ -115,7 +115,9 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         _tokenId_oracleAddress[_tokensRegistered] = oracle_address;
         _enabledTokens.push(token_address);
         _tokenId_tokenLTVe4[_tokensRegistered] = LTVe4;
-        _tokenAddress_liquidationIncentivee4[token_address] = liquidationIncentivee4;
+        _tokenAddress_liquidationIncentivee4[
+            token_address
+        ] = liquidationIncentivee4;
     }
 
     function update_registered_erc20(
@@ -134,7 +136,9 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         );
         _tokenId_oracleAddress[_tokensRegistered] = oracle_address;
         _tokenId_tokenLTVe4[_tokensRegistered] = LTVe4;
-        _tokenAddress_liquidationIncentivee4[token_address] = liquidationIncentivee4;
+        _tokenAddress_liquidationIncentivee4[
+            token_address
+        ] = liquidationIncentivee4;
     }
 
     function check_account(uint256 id) external view override returns (bool) {
@@ -232,6 +236,32 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         _usdi.vault_master_burn(msg.sender, usdi_liability);
     }
 
+    function getScaledPrice(
+        Exp memory price,
+        address asset_address,
+        uint256 token_Id
+    ) internal view returns (uint256 scaled_down_price) {
+        scaled_down_price = ExponentialNoError.mul_ScalarTruncate(
+            price,
+            (_tokenAddress_liquidationIncentivee4[asset_address] -
+                _tokenId_tokenLTVe4[token_Id])
+        );
+    }
+
+    function getUsdiToRepurchase(
+        Exp memory price,
+        address asset_address,
+        uint256 tokens_to_liquidate
+    ) internal view returns(uint256 usdi_to_repurchase)
+    {
+        usdi_to_repurchase = (
+            ExponentialNoError.mul_ScalarTruncate(
+                price,
+                _tokenAddress_liquidationIncentivee4[asset_address]
+            )
+        ) * tokens_to_liquidate;
+    }
+
     function liquidate_account(
         uint256 id,
         address asset_address,
@@ -260,42 +290,36 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         Exp memory price = Exp({mantissa: asset_price}); // remember that our prices are all in 1e18 terms
         //lower price to give liquidator incentive
         uint256 token_Id = _tokenAddress_tokenId[asset_address];
-        uint256 scaled_down_price = ExponentialNoError.mul_ScalarTruncate(
-            price,
-            (_tokenAddress_liquidationIncentivee4[asset_address]-_tokenId_tokenLTVe4[token_Id])
-        );
+        //uint256 scaled_down_price = getScaledPrice(price, asset_address, token_Id);
 
         //solve for ideal amount
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
             deficit,
-            scaled_down_price
+            getScaledPrice(price, asset_address, token_Id)
         );
 
-        uint256 usdi_to_repurchase = (ExponentialNoError.mul_ScalarTruncate(
-            price,
-            _tokenAddress_liquidationIncentivee4[asset_address]
-        )) * tokens_to_liquidate;
+        uint256 usdi_to_repurchase = getUsdiToRepurchase(price, asset_address, tokens_to_liquidate);    
 
         uint256 liquidate_price = ExponentialNoError.div_(
             usdi_to_repurchase,
             tokens_to_liquidate
-           );
+        );
         //check for partial fill
         if (usdi_to_repurchase > max_usdi) {
             usdi_to_repurchase = max_usdi;
 
             tokens_to_liquidate = ExponentialNoError.div_(
-            usdi_to_repurchase,
-            liquidate_price
-        );
+                usdi_to_repurchase,
+                liquidate_price
+            );
         }
 
-        uint256 vault_balance = vault.getBalances(asset_address);
+        //uint256 vault_balance = vault.getBalances(asset_address);
 
         //if ideal amount isnt possible update with vault balance
-        if (tokens_to_liquidate > vault_balance) {
-            tokens_to_liquidate = vault_balance;
-            usdi_to_repurchase = (liquidate_price * tokens_to_liquidate)/1e18;
+        if (tokens_to_liquidate > vault.getBalances(asset_address)) {
+            tokens_to_liquidate = vault.getBalances(asset_address);
+            usdi_to_repurchase = (liquidate_price * tokens_to_liquidate) / 1e18;
         }
 
         //console.log("usdi_to_repurchase: ", usdi_to_repurchase);
@@ -306,12 +330,18 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         vault.decrease_liability(usdi_to_repurchase);
 
         //decrease liquidators balance usdi
-        _usdi.vault_master_burn(msg.sender,usdi_to_repurchase);
+        _usdi.vault_master_burn(msg.sender, usdi_to_repurchase);
 
         // finally, we deliver the tokens to the liquidator
         vault.masterTransfer(asset_address, msg.sender, tokens_to_liquidate);
 
-        emit Liquidate(id, asset_address, max_usdi, usdi_to_repurchase, tokens_to_liquidate);
+        emit Liquidate(
+            id,
+            asset_address,
+            max_usdi,
+            usdi_to_repurchase,
+            tokens_to_liquidate
+        );
 
         return tokens_to_liquidate;
     }
