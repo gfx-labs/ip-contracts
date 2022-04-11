@@ -375,7 +375,9 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
                 ) * _tokenId_tokenLTVe4[i]) / 1e4; // //
                 total_liquidity_value = total_liquidity_value + token_value;
             }
+            console.log("raw_price: ", raw_price);
         }
+        
         return total_liquidity_value;
     }
 

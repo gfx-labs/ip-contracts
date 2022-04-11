@@ -354,7 +354,7 @@ describe("Testing liquidations", () => {
     let args = liquidateEvent.args
     assert.equal(liquidateEvent.event, "Liquidate", "Correct event captured and emitted")
     //assert.equal(args!.asset_address.toString(), Mainnet.wethAddress.toString(), "Asset address is correct")
-    console.log(liquidateEvent)
+    //console.log(liquidateEvent)
 
     /******** check ending balances ********/
 

@@ -14,6 +14,7 @@ describe("ORACLE-RELAY-UNISWAP:", () => {
   before("deploy contracts", first);
   it("fetch eth price", async () => {
     let dog = await contracts.UniswapRelayEthUsdc!.currentValue();
+    console.log(dog.toString())
     console.log("eth price:", dog.div(1e4).toNumber() / 100);
     expect(1).to.eq(1);
     //expect(await usdi.owner()).to.eq(await deployer.getAddress())
