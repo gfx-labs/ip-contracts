@@ -298,8 +298,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
         //solve for ideal amount
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
-            getScaledPrice(price, asset_address, token_Id),
-            deficit
+            getScaledPrice(price, asset_address, token_Id), //numerator (big number)
+            deficit //denominator (small number)
         );
 
         uint256 usdi_to_repurchase = getUsdiToRepurchase(
