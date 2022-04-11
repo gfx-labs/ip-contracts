@@ -237,14 +237,10 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         //if this balance is greater than the usdi liability, we just return 0 (nothing to liquidate);
         uint256 usdi_liability = (vault.getBaseLiability() *
             _e18_interestFactor) / 1e18;
-        console.log("LIQUIDATION CHECK");
-        console.log(vault_borrowing_power, usdi_liability);
         if (vault_borrowing_power >= usdi_liability) {
             console.log("BALANCE NOT GREATER THAN LIABILITY");
             return 0;
         }
-        console.log("DIFFERENCE");
-        console.log(usdi_liability - vault_borrowing_power);
         // however, if it is a positive number, then we can begin the liquidation process
         // we liquidate the user until their total value = total borrow
         uint256 usdi_to_repurchase = usdi_liability - vault_borrowing_power;
@@ -264,7 +260,6 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             _tokenAddress_liquidationIncentive[asset_address]
         );
 
-        console.log("asset_price_with_incentive: ", asset_price_with_incentive);
         //solve for ideal amount
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
             asset_price_with_incentive,
@@ -273,16 +268,15 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
         uint256 vault_balance = vault.getBalances(asset_address);
 
-
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > vault_balance) {
             tokens_to_liquidate = vault_balance;
             usdi_to_repurchase = (asset_price_with_incentive * tokens_to_liquidate)/1e18;
         }
 
-        console.log("usdi_to_repurchase: ", usdi_to_repurchase);
-        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
-        console.log("asset_price_with_incentive: ", asset_price_with_incentive);
+        //console.log("usdi_to_repurchase: ", usdi_to_repurchase);
+        //console.log("tokens_to_liquidate: ", tokens_to_liquidate);
+        //console.log("asset_price_with_incentive: ", asset_price_with_incentive);
 
         //get the vault back to a healthy ratio
         vault.decrease_liability(usdi_to_repurchase);

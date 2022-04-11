@@ -167,19 +167,23 @@ describe("TOKEN-DEPOSITS", () => {
     expect(await bob_vault.connect(Bob).getBalances(con.WETH!.address)).to.eq(
       Bob_WETH
     );
-    console.log(
+    /**
+     console.log(
       "bob value:",
       (await con.VaultMaster!.account_borrowing_power(1)).toString()
     );
+     */
   });
   it(`carol should have ${Carol_COMP} deposited`, async () => {
     expect(
       await carol_vault.connect(Carol).getBalances(con.COMP!.address)
     ).to.eq(Carol_COMP);
-    console.log(
+    /**
+     console.log(
       "carol value:",
       (await con.VaultMaster!.account_borrowing_power(2)).toString()
     );
+     */
   });
 });
 describe("TOKEN-DEPOSITS", async () => {
@@ -313,16 +317,16 @@ describe("Testing liquidations", () => {
     const vaultID = 1
     const max_usdi = 1e5
     const initBalance = await con.USDI!.balanceOf(Bob.address)
-    console.log("Bob starting USDI balance: ", initBalance.toString())
+    //console.log("Bob starting USDI balance: ", initBalance.toString())
 
 
     let balance = await wETH_Contract.balanceOf(bob_vault.address)
-    console.log("bob_vault wETH balance initially", balance.toString())
+    //console.log("bob_vault wETH balance initially", balance.toString())
     balance = await con.USDI!.balanceOf(Dave.address)
-    console.log("Dave starting USDI balance: ", balance.toString())
+    //console.log("Dave starting USDI balance: ", balance.toString())
 
     balance = await wETH_Contract.balanceOf(Dave.address)
-    console.log("Dave wETH balance init: ", balance.toString())
+    //console.log("Dave wETH balance init: ", balance.toString())
 
 
     //BUG FOUND = need to transfer from vault instead of from vaultMaster in liquidation 
@@ -331,7 +335,7 @@ describe("Testing liquidations", () => {
     
     //borrow maximum - borrow amount == collateral value 
     const account_borrowing_power = await con.VaultMaster!.account_borrowing_power(vaultID)
-    console.log("account_borrowing_power", account_borrowing_power.toString())
+    //console.log("account_borrowing_power", account_borrowing_power.toString())
     await con.VaultMaster!.connect(Bob).borrow_usdi(1, account_borrowing_power)
 
     //withdraw collateral, vault is below liquidation threshold 
@@ -347,7 +351,7 @@ describe("Testing liquidations", () => {
     //calculate interest to update protocol, vault is now able to be liquidated 
     await con.VaultMaster!.calculate_interest()
     balance = await ethers.provider.getBalance(Dave.address)
-    console.log("Dave ether balance inits: ", utils.formatEther(balance.toString()))
+    //console.log("Dave ether balance inits: ", utils.formatEther(balance.toString()))
 
 
     //liquidate account
@@ -358,16 +362,16 @@ describe("Testing liquidations", () => {
     //check ending balances
 
     balance = await ethers.provider.getBalance(Dave.address)
-    console.log("Dave ether balance end: ", utils.formatEther(balance.toString()))
+    //console.log("Dave ether balance end: ", utils.formatEther(balance.toString()))
 
     balance = await wETH_Contract.balanceOf(bob_vault.address)
-    console.log("bob_vault wETH balance after liquidation", balance.toString())
+    //console.log("bob_vault wETH balance after liquidation", balance.toString())
 
     balance = await con.USDI!.balanceOf(Dave.address)
-    console.log("Dave ending USDI balance: ", balance.toString())
+    //console.log("Dave ending USDI balance: ", balance.toString())
 
     balance = await wETH_Contract.balanceOf(Dave.address)
-    console.log("Dave wETH balance end: ", balance.toString())
+    //console.log("Dave wETH balance end: ", balance.toString())
     
   })
 })
