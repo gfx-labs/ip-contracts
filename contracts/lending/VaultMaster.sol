@@ -259,10 +259,10 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         require(asset_price != 0, "no oracle price");
         Exp memory price = Exp({mantissa: asset_price}); // remember that our prices are all in 1e18 terms
         //lower price to give liquidator incentive
-        let token_Id = _tokenAddress_tokenId[asset_address]
+        uint256 token_Id = _tokenAddress_tokenId[asset_address];
         uint256 scaled_down_price = ExponentialNoError.mul_ScalarTruncate(
             price,
-            (_tokenAddress_liquidationIncentivee4[asset_address]-_tokenId_tokenLTVe4[token_Id]))
+            (_tokenAddress_liquidationIncentivee4[asset_address]-_tokenId_tokenLTVe4[token_Id])
         );
 
         //solve for ideal amount
