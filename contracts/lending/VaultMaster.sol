@@ -255,17 +255,21 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         scaledAmount = amount * 1e12;
     }
 
+    ///@dev - result must be scaled up to decimal 18
+    ///@param price - decimal 6 USDC price
     function getScaledPrice(
         Exp memory price,
         address asset_address,
         uint256 token_Id
-    ) internal view returns (uint256 scaled_down_price) {
-        scaled_down_price = ExponentialNoError.mul_ScalarTruncate(
+    ) internal view returns (uint256 price18) {
+        price18 = ExponentialNoError.mul_ScalarTruncate(
             price,
             (_tokenAddress_liquidationIncentivee4[asset_address] -
                 _tokenId_tokenLTVe4[token_Id])
         );
-        console.log("getScaledPrice: ", scaled_down_price);
+
+        //price18 = scaleUSDC(price18);//scale price to decimal 18? 
+        console.log("price18: ", price18);
     }
 
     function getUsdiToRepurchase(
@@ -292,6 +296,15 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         require(price18 != 0, "no oracle price");
     }
 
+    function _divide(uint256 numerator, uint256 denominator)
+        internal
+        pure
+        returns (uint256 quotient, uint256 remainder)
+    {
+        quotient = numerator / denominator;
+        remainder = numerator - denominator * quotient;
+    }
+
     function liquidate_account(
         uint256 id,
         address asset_address,
@@ -309,29 +322,33 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             console.log("BALANCE NOT GREATER THAN LIABILITY");
             return 0;
         }
-        // however, if it is a positive number, then we can begin the liquidation process
-        // we liquidate the user until their total value = total borrow
 
+
+        // we liquidate the user until their total value = total borrow
         uint256 deficit = scaleUSDC(usdi_liability - vault_borrowing_power);
         console.log("deficit: ", deficit);
         //get the price of the asset scaled to decimal 18
-        uint256 asset_price = scaleUSDC(_oracleMaster.get_live_price(asset_address));
+        uint256 asset_price = scaleUSDC(
+            _oracleMaster.get_live_price(asset_address)
+        );
 
         Exp memory price = Exp({mantissa: asset_price}); // remember that our prices are all in 1e18 terms
-        //console.log("price.mantissa: ", price.mantissa);
 
-        //console.log("asset_price: ", asset_price);
 
         //lower price to give liquidator incentive
         uint256 token_Id = _tokenAddress_tokenId[asset_address];
-        //uint256 scaled_down_price = getScaledPrice(price, asset_address, token_Id);
 
         //NEED TO FIX SCALING, ALL SHOULD BE SCALED TO 18 DECIMALS
-        //solve for ideal amount
+        //solve for ideal amount        
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
             deficit, //numerator (big number)
             getScaledPrice(price, asset_address, token_Id) //denominator (small number)
         );
+         
+
+
+
+
         console.log("tokens_to_liquidate: ", tokens_to_liquidate);
         uint256 usdi_to_repurchase = getUsdiToRepurchase(
             price,
@@ -385,6 +402,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         return tokens_to_liquidate;
     }
 
+    ///@dev total_liquidity_value is USDC - decimal 6
     function get_vault_borrowing_power(IVault vault)
         private
         view
@@ -405,6 +423,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
                 total_liquidity_value = total_liquidity_value + token_value;
             }
         }
+
+        console.log("borrow power: total_liquidity_value: ", total_liquidity_value);
 
         return total_liquidity_value;
     }

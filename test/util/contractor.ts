@@ -83,9 +83,9 @@ export class TestContracts {
     //register tokens
     await this.VaultMaster.connect(deployer).register_erc20(
       this.book.wethAddress,
-      6000,
+      6000, //max ltv ratio
       this.book.wethAddress,
-      BigNumber.from("9500")
+      BigNumber.from("9500") //liquidation incentive
     );
     await this.VaultMaster!.connect(deployer).register_erc20(
       this.book.compAddress,

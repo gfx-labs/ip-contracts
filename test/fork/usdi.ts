@@ -336,7 +336,12 @@ describe("Testing liquidations", () => {
      * 
      * vault.claim_erc20() is master only, there is no function to call this on vaultMaster? Looks like this sends from vault to vault master, what is the use case for this? 
      * 
+     * deficit is USDC denominated? How much USDC underwater is the vault? 
+     * tokens_to_liquidate = deficit / getScaledPrice()
+     * both deficit and getScaledPrice() should be the same decimal, 18? 
      * 
+     * 
+     * borrow against multiple assets? 
      * 
      */
     const abi = new ERC20ABI()
