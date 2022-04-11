@@ -299,7 +299,9 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         );
 
         uint256 usdi_to_repurchase = getUsdiToRepurchase(price, asset_address, tokens_to_liquidate);    
-
+        console.log("DIVIDE");
+        console.log("usdi_to_repurchase: ", usdi_to_repurchase);
+        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
         uint256 liquidate_price = ExponentialNoError.div_(
             usdi_to_repurchase,
             tokens_to_liquidate
