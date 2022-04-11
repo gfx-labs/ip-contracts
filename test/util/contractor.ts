@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, BigNumber } from "ethers";
 import { ethers as hethers } from "hardhat";
 
 import {
@@ -85,13 +85,13 @@ export class TestContracts {
       this.book.wethAddress,
       6000,
       this.book.wethAddress,
-      950000000000000000
+      BigNumber.from("950000000000000000")
     );
     await this.VaultMaster!.connect(deployer).register_erc20(
       this.book.compAddress,
       4000,
       this.book.compAddress,
-      950000000000000000
+      BigNumber.from("950000000000000000")
     );
     await this.VaultMaster!.connect(deployer).register_usdi(this.USDI!.address)
   }
