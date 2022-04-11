@@ -307,70 +307,69 @@ describe("Testing liquidations", () => {
      *  ** this is unless usdi_to_repurchase is limited by the above max-usdi arg, what scenario is this for? Partial liquidation? 
      * 
      * is that if you borrow up to your max (account_borrowing_power) your total_liquidity_value will be usdi_liability + 1 but only until pay_interest() happens again, at which point you will be insolvent even if the price of collateral doesn't move
+     * to this end, it may be possible to borrow maximum, then withdraw some amount of collateral before pay_interest()
      * 
      * _e4_liquidatorShare is never set? 
      * 
-     * vault.claim_erc20() is master only, there is no function to call this on vaultMaster? 
+     * vault.claim_erc20() is master only, there is no function to call this on vaultMaster? Looks like this sends from vault to vault master, what is the use case for this? 
+     * 
+     * 
+     * 
      */
     const abi = new ERC20ABI()
     const wETH_Contract = new ethers.Contract(Mainnet.wethAddress, abi.erc20ABI(), ethers.provider)
     const vaultID = 1
     const max_usdi = 1e5
-    const initBalance = await con.USDI!.balanceOf(Bob.address)
+    const initBalanceBob = await con.USDI!.balanceOf(Bob.address)
+    const initBalanceDave = await con.USDI!.balanceOf(Dave.address)
+    const initWethBalanceDave = await wETH_Contract.balanceOf(Dave.address)
     //console.log("Bob starting USDI balance: ", initBalance.toString())
-
-
-    let balance = await wETH_Contract.balanceOf(bob_vault.address)
-    //console.log("bob_vault wETH balance initially", balance.toString())
-    balance = await con.USDI!.balanceOf(Dave.address)
-    //console.log("Dave starting USDI balance: ", balance.toString())
-
-    balance = await wETH_Contract.balanceOf(Dave.address)
-    //console.log("Dave wETH balance init: ", balance.toString())
-
-
-    //BUG FOUND = need to transfer from vault instead of from vaultMaster in liquidation 
+    const bobVaultInit = await wETH_Contract.balanceOf(bob_vault.address)
     
-
     
     //borrow maximum - borrow amount == collateral value 
     const account_borrowing_power = await con.VaultMaster!.account_borrowing_power(vaultID)
     //console.log("account_borrowing_power", account_borrowing_power.toString())
     await con.VaultMaster!.connect(Bob).borrow_usdi(1, account_borrowing_power)
 
+    /******** CHECK WITHDRAW BEFORE CALCULATE INTEREST ********/
     //withdraw collateral, vault is below liquidation threshold 
     //const result = await bob_vault.connect(Bob).withdraw_erc20(Mainnet.hh wethAddress, 1e8) 
     //const receipt = await result.wait()
     //const args = receipt.events
-
-    //balance = await wETH_Contract.balanceOf(bob_vault.address)
-    //console.log("bob_vault wETH balance after withdraw", balance.toString())
-
-    //console.log(args)
  
+
+
     //calculate interest to update protocol, vault is now able to be liquidated 
     await con.VaultMaster!.calculate_interest()
-    balance = await ethers.provider.getBalance(Dave.address)
-    //console.log("Dave ether balance inits: ", utils.formatEther(balance.toString()))
 
 
     //liquidate account
     const result = await con.VaultMaster!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, max_usdi)
     const receipt = await result.wait()
-    let args = receipt.events![receipt.events!.length - 1]
-    //console.log(args)
-    //check ending balances
+    let interestEvent = receipt.events![1]
+    assert.equal(interestEvent.event, "Interest", "Correct event captured and emitted")
 
-    balance = await ethers.provider.getBalance(Dave.address)
-    //console.log("Dave ether balance end: ", utils.formatEther(balance.toString()))
+    let liquidateEvent = receipt.events![receipt.events!.length - 1]
+    let args = liquidateEvent.args
+    assert.equal(liquidateEvent.event, "Liquidate", "Correct event captured and emitted")
+    //assert.equal(args!.asset_address.toString(), Mainnet.wethAddress.toString(), "Asset address is correct")
+    console.log(liquidateEvent)
 
-    balance = await wETH_Contract.balanceOf(bob_vault.address)
-    //console.log("bob_vault wETH balance after liquidation", balance.toString())
+    /******** check ending balances ********/
 
+    //Bob's vault has less collateral than before
+    let balance = await wETH_Contract.balanceOf(bob_vault.address)
+    let difference = bobVaultInit.sub(balance)
+    expect(difference.toNumber()).to.be.greaterThan(0)
+
+    //Dave spent USDi to liquidate
     balance = await con.USDI!.balanceOf(Dave.address)
-    //console.log("Dave ending USDI balance: ", balance.toString())
+    expect(balance.toNumber()).to.be.lessThan(initBalanceDave.toNumber())
 
+    //Dave received wETH
     balance = await wETH_Contract.balanceOf(Dave.address)
+    expect(balance.toNumber()).to.be.greaterThan(initWethBalanceDave.toNumber())
     //console.log("Dave wETH balance end: ", balance.toString())
     
   })

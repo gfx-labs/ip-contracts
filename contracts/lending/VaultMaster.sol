@@ -36,6 +36,14 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
     uint256 public _e4_liquidatorShare;
 
+    event Liquidate(
+        uint256 vaultId, 
+        address asset_address,
+        uint256 max_usdi,
+        uint256 usdi_to_repurchase,
+        uint256 tokens_to_liquidate
+    );
+
     event Interest(uint256 epoch, uint256 amount);
 
     // mapping of vault id to vault address
@@ -286,6 +294,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
         // finally, we deliver the tokens to the liquidator
         vault.masterTransfer(asset_address, msg.sender, tokens_to_liquidate);
+
+        emit Liquidate(id, asset_address, max_usdi, usdi_to_repurchase, tokens_to_liquidate);
 
         return tokens_to_liquidate;
     }
