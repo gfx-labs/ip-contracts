@@ -233,7 +233,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
         IVault vault = IVault(vault_address);
-        uint256 vault_borrowing_power = get_vault_borrowing_power(vault)
+        uint256 vault_borrowing_power = get_vault_borrowing_power(vault);
         //if this balance is greater than the usdi liability, we just return 0 (nothing to liquidate);
         uint256 usdi_liability = (vault.getBaseLiability() *
             _e18_interestFactor) / 1e18;
@@ -262,7 +262,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         uint256 asset_price_with_incentive = ExponentialNoError.mul_ScalarTruncate(
             price,
             _tokenAddress_liquidationIncentive[asset_address]
-        )
+        );
         //solve for ideal amount
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
             usdi_to_repurchase,
@@ -273,10 +273,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > vault_balance) {
             tokens_to_liquidate = vault_balance;
-            usdi_to_repurchase = ExponentialNoError.mul_ScalarTruncate(
-                asset_price_with_incentive,
-                tokens_to_liquidate
-            );
+            usdi_to_repurchase = (asset_price_with_incentive * tokens_to_liquidate)/1e18;
         }
 
         console.log("usdi_to_repurchase: ", usdi_to_repurchase);

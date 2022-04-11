@@ -54,6 +54,24 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
+        name: "compLikeDelegatee",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "CompLikeToken",
+        type: "address",
+      },
+    ],
+    name: "delegate_Comp_Like_To",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
         name: "token_address",
         type: "address",
       },

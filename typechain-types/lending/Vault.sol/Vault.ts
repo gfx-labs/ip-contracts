@@ -20,10 +20,14 @@ import type {
   TypedEvent,
   TypedListener,
   OnEvent,
-} from "../common";
+} from "../../common";
 
-export interface IVaultInterface extends utils.Interface {
+export interface VaultInterface extends utils.Interface {
   functions: {
+    "_baseLiability()": FunctionFragment;
+    "_id()": FunctionFragment;
+    "_masterAddress()": FunctionFragment;
+    "_minter()": FunctionFragment;
     "claim_erc20(address,uint256)": FunctionFragment;
     "decrease_liability(uint256)": FunctionFragment;
     "delegate_Comp_Like_To(address,address)": FunctionFragment;
@@ -38,6 +42,10 @@ export interface IVaultInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "_baseLiability"
+      | "_id"
+      | "_masterAddress"
+      | "_minter"
       | "claim_erc20"
       | "decrease_liability"
       | "delegate_Comp_Like_To"
@@ -50,6 +58,16 @@ export interface IVaultInterface extends utils.Interface {
       | "withdraw_erc20"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "_baseLiability",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "_id", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "_masterAddress",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "_minter", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "claim_erc20",
     values: [string, BigNumberish]
@@ -85,6 +103,16 @@ export interface IVaultInterface extends utils.Interface {
     values: [string, BigNumberish]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "_baseLiability",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "_id", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "_masterAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "_minter", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "claim_erc20",
     data: BytesLike
@@ -126,12 +154,12 @@ export interface IVaultInterface extends utils.Interface {
   events: {};
 }
 
-export interface IVault extends BaseContract {
+export interface Vault extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: IVaultInterface;
+  interface: VaultInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -153,6 +181,14 @@ export interface IVault extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    _baseLiability(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    _id(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    _masterAddress(overrides?: CallOverrides): Promise<[string]>;
+
+    _minter(overrides?: CallOverrides): Promise<[string]>;
+
     claim_erc20(
       token_address: string,
       amount: BigNumberish,
@@ -176,7 +212,7 @@ export interface IVault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    getBalances(arg1: string, overrides?: CallOverrides): Promise<[BigNumber]>;
+    getBalances(addr: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getBaseLiability(overrides?: CallOverrides): Promise<[BigNumber]>;
 
@@ -201,6 +237,14 @@ export interface IVault extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
+  _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
+
+  _id(overrides?: CallOverrides): Promise<BigNumber>;
+
+  _masterAddress(overrides?: CallOverrides): Promise<string>;
+
+  _minter(overrides?: CallOverrides): Promise<string>;
+
   claim_erc20(
     token_address: string,
     amount: BigNumberish,
@@ -224,7 +268,7 @@ export interface IVault extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  getBalances(arg1: string, overrides?: CallOverrides): Promise<BigNumber>;
+  getBalances(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   getBaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -249,6 +293,14 @@ export interface IVault extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _id(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _masterAddress(overrides?: CallOverrides): Promise<string>;
+
+    _minter(overrides?: CallOverrides): Promise<string>;
+
     claim_erc20(
       token_address: string,
       amount: BigNumberish,
@@ -272,7 +324,7 @@ export interface IVault extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    getBalances(arg1: string, overrides?: CallOverrides): Promise<BigNumber>;
+    getBalances(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     getBaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -300,6 +352,14 @@ export interface IVault extends BaseContract {
   filters: {};
 
   estimateGas: {
+    _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _id(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _masterAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _minter(overrides?: CallOverrides): Promise<BigNumber>;
+
     claim_erc20(
       token_address: string,
       amount: BigNumberish,
@@ -323,7 +383,7 @@ export interface IVault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    getBalances(arg1: string, overrides?: CallOverrides): Promise<BigNumber>;
+    getBalances(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     getBaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -349,6 +409,14 @@ export interface IVault extends BaseContract {
   };
 
   populateTransaction: {
+    _baseLiability(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _id(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _masterAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _minter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     claim_erc20(
       token_address: string,
       amount: BigNumberish,
@@ -373,7 +441,7 @@ export interface IVault extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getBalances(
-      arg1: string,
+      addr: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
