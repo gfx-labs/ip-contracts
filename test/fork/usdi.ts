@@ -310,12 +310,23 @@ describe("Testing liquidations", () => {
      */
     const abi = new ERC20ABI()
     const wETH_Contract = new ethers.Contract(Mainnet.wethAddress, abi.erc20ABI(), ethers.provider)
-    let balance = await wETH_Contract.balanceOf(bob_vault.address)
-    console.log("bob_vault wETH balance", balance.toString())
-    //BUG FOUND = need to transfer from vault instead of from vaultMaster in liquidation 
     const vaultID = 1
     const max_usdi = 1e5
     const initBalance = await con.USDI!.balanceOf(Bob.address)
+    console.log("Bob starting USDI balance: ", initBalance.toString())
+
+
+    let balance = await wETH_Contract.balanceOf(bob_vault.address)
+    console.log("bob_vault wETH balance initially", balance.toString())
+    balance = await con.USDI!.balanceOf(Dave.address)
+    console.log("Dave starting USDI balance: ", balance.toString())
+
+    balance = await wETH_Contract.balanceOf(Dave.address)
+    console.log("Dave wETH balance init: ", balance.toString())
+
+
+    //BUG FOUND = need to transfer from vault instead of from vaultMaster in liquidation 
+    
 
     
     //borrow maximum - borrow amount == collateral value 
@@ -324,7 +335,7 @@ describe("Testing liquidations", () => {
     await con.VaultMaster!.connect(Bob).borrow_usdi(1, account_borrowing_power)
 
     //withdraw collateral, vault is below liquidation threshold 
-    //const result = await bob_vault.connect(Bob).withdraw_erc20(Mainnet.wethAddress, 1e8) 
+    //const result = await bob_vault.connect(Bob).withdraw_erc20(Mainnet.hh wethAddress, 1e8) 
     //const receipt = await result.wait()
     //const args = receipt.events
 
@@ -335,9 +346,28 @@ describe("Testing liquidations", () => {
  
     //calculate interest to update protocol, vault is now able to be liquidated 
     await con.VaultMaster!.calculate_interest()
+    balance = await ethers.provider.getBalance(Dave.address)
+    console.log("Dave ether balance inits: ", utils.formatEther(balance.toString()))
+
 
     //liquidate account
-    await con.VaultMaster!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, max_usdi)
+    const result = await con.VaultMaster!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, max_usdi)
+    const receipt = await result.wait()
+    let args = receipt.events![receipt.events!.length - 1]
+    //console.log(args)
+    //check ending balances
+
+    balance = await ethers.provider.getBalance(Dave.address)
+    console.log("Dave ether balance end: ", utils.formatEther(balance.toString()))
+
+    balance = await wETH_Contract.balanceOf(bob_vault.address)
+    //console.log("bob_vault wETH balance after liquidation", balance.toString())
+
+    balance = await con.USDI!.balanceOf(Dave.address)
+    //console.log("Dave ending USDI balance: ", balance.toString())
+
+    balance = await wETH_Contract.balanceOf(Dave.address)
+    //console.log("Dave wETH balance end: ", balance.toString())
     
   })
 })

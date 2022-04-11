@@ -279,10 +279,13 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         console.log("usdi_to_repurchase: ", usdi_to_repurchase);
         console.log("tokens_to_liquidate: ", tokens_to_liquidate);
         console.log("asset_price_with_incentive: ", asset_price_with_incentive);
+
+        //get the vault back to a healthy ratio
+        vault.decrease_liability(usdi_to_repurchase);
+
         //decrease liquidators balance usdi
         _usdi.vault_master_burn(msg.sender,usdi_to_repurchase);
-        // then lets get the vault back to a healthy ratio
-        vault.decrease_liability(usdi_to_repurchase);
+        
         // finally, we deliver the tokens to the liquidator
         vault.masterTransfer(asset_address, msg.sender, tokens_to_liquidate);
 
