@@ -51,7 +51,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     mapping(uint256 => address) public _tokenId_oracleAddress;
 
     //mapping of token address to its corresponding liquidation incentive
-    mapping(address => uint256) public _tokenAddress_liquidationIncentive;
+    mapping(address => uint256) public _tokenAddress_liquidationIncentivee4;
 
     constructor() Ownable() {
         _vaultsMinted = 0;
@@ -92,7 +92,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         address token_address,
         uint256 LTVe4,
         address oracle_address,
-        uint256 liquidationIncentive
+        uint256 liquidationIncentivee4
     ) external onlyOwner {
         require(
             _oracleMaster._relays(oracle_address) != address(0x0),
@@ -107,14 +107,14 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         _tokenId_oracleAddress[_tokensRegistered] = oracle_address;
         _enabledTokens.push(token_address);
         _tokenId_tokenLTVe4[_tokensRegistered] = LTVe4;
-        _tokenAddress_liquidationIncentive[token_address] = liquidationIncentive;
+        _tokenAddress_liquidationIncentivee4[token_address] = liquidationIncentivee4;
     }
 
     function update_registered_erc20(
         address token_address,
         uint256 LTVe4,
         address oracle_address,
-        uint256 liquidationIncentive
+        uint256 liquidationIncentivee4
     ) external onlyOwner {
         require(
             _oracleMaster._relays(oracle_address) != address(0x0),
@@ -126,7 +126,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         );
         _tokenId_oracleAddress[_tokensRegistered] = oracle_address;
         _tokenId_tokenLTVe4[_tokensRegistered] = LTVe4;
-        _tokenAddress_liquidationIncentive[token_address] = liquidationIncentive;
+        _tokenAddress_liquidationIncentivee4[token_address] = liquidationIncentivee4;
     }
 
     function check_account(uint256 id) external view override returns (bool) {
@@ -247,11 +247,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         console.log(usdi_liability - vault_borrowing_power);
         // however, if it is a positive number, then we can begin the liquidation process
         // we liquidate the user until their total value = total borrow
-        uint256 usdi_to_repurchase = usdi_liability - vault_borrowing_power;
-        //check for partial fill
-        if (usdi_to_repurchase > max_usdi) {
-            usdi_to_repurchase = max_usdi;
-        }
+        uint256 deficit = usdi_liability - vault_borrowing_power;
         //get the price of the asset
         uint256 asset_price = uint256(
             _oracleMaster.get_live_price(asset_address)
@@ -259,21 +255,41 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         require(asset_price != 0, "no oracle price");
         Exp memory price = Exp({mantissa: asset_price}); // remember that our prices are all in 1e18 terms
         //lower price to give liquidator incentive
-        uint256 asset_price_with_incentive = ExponentialNoError.mul_ScalarTruncate(
+        let token_Id = _tokenAddress_tokenId[asset_address]
+        uint256 scaled_down_price = ExponentialNoError.mul_ScalarTruncate(
             price,
-            _tokenAddress_liquidationIncentive[asset_address]
+            (_tokenAddress_liquidationIncentivee4[asset_address]-_tokenId_tokenLTVe4[token_Id]))
         );
         //solve for ideal amount
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
-            usdi_to_repurchase,
-            asset_price_with_incentive
+            deficit,
+            scaled_down_price
         );
+
+        uint256 usdi_to_repurchase = (ExponentialNoError.mul_ScalarTruncate(
+            price,
+            _tokenAddress_liquidationIncentivee4[asset_address]
+        )) * tokens_to_liquidate;
+
+        uint256 liquidate_price = ExponentialNoError.div_(
+            usdi_to_repurchase,
+            tokens_to_liquidate
+        );
+        //check for partial fill
+        if (usdi_to_repurchase > max_usdi) {
+            usdi_to_repurchase = max_usdi;
+
+            tokens_to_liquidate = ExponentialNoError.div_(
+            usdi_to_repurchase,
+            liquidate_price
+        );
+        }
 
         uint256 vault_balance = vault.getBalances(asset_address);
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > vault_balance) {
             tokens_to_liquidate = vault_balance;
-            usdi_to_repurchase = (asset_price_with_incentive * tokens_to_liquidate)/1e18;
+            usdi_to_repurchase = (liquidate_price * tokens_to_liquidate)/1e18;
         }
 
         console.log("usdi_to_repurchase: ", usdi_to_repurchase);
