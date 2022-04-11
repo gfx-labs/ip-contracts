@@ -85,13 +85,13 @@ export class TestContracts {
       this.book.wethAddress,
       6000,
       this.book.wethAddress,
-      BigNumber.from("950000000000000000")
+      BigNumber.from("9500")
     );
     await this.VaultMaster!.connect(deployer).register_erc20(
       this.book.compAddress,
       4000,
       this.book.compAddress,
-      BigNumber.from("950000000000000000")
+      BigNumber.from("9500")
     );
     await this.VaultMaster!.connect(deployer).register_usdi(this.USDI!.address)
   }

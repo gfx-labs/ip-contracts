@@ -236,6 +236,25 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         _usdi.vault_master_burn(msg.sender, usdi_liability);
     }
 
+    ///@dev converts amount to e18 based on decimal value on erc20 token
+    function tokenTo18(address asset_address, uint256 amount)
+        internal
+        view
+        returns (uint256 scaledAmount)
+    {
+        uint256 scale = 10**(18 - (IERC20(asset_address).decimals()));
+        scaledAmount = amount * scale;
+    }
+
+    ///@dev converts USDC decimal 6 to decimal 18
+    function scaleUSDC(uint256 amount)
+        internal
+        pure
+        returns (uint256 scaledAmount)
+    {
+        scaledAmount = amount * 1e12;
+    }
+
     function getScaledPrice(
         Exp memory price,
         address asset_address,
@@ -246,7 +265,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             (_tokenAddress_liquidationIncentivee4[asset_address] -
                 _tokenId_tokenLTVe4[token_Id])
         );
-        console.log("scaled_down_price: ", scaled_down_price);
+        console.log("getScaledPrice: ", scaled_down_price);
     }
 
     function getUsdiToRepurchase(
@@ -264,6 +283,15 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             tokens_to_liquidate;
     }
 
+    function getAssetPrice18(address asset_address, uint256 rawPrice)
+        internal
+        view
+        returns (uint256 price18)
+    {
+        price18 = tokenTo18(asset_address, rawPrice);
+        require(price18 != 0, "no oracle price");
+    }
+
     function liquidate_account(
         uint256 id,
         address asset_address,
@@ -273,7 +301,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
         IVault vault = IVault(vault_address);
-        uint256 vault_borrowing_power = get_vault_borrowing_power(vault);
+        uint256 vault_borrowing_power = get_vault_borrowing_power(vault); //USDC DECIMAL 6 RAW PRICE
         //if this balance is greater than the usdi liability, we just return 0 (nothing to liquidate);
         uint256 usdi_liability = (vault.getBaseLiability() *
             _e18_interestFactor) / 1e18;
@@ -283,33 +311,34 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         }
         // however, if it is a positive number, then we can begin the liquidation process
         // we liquidate the user until their total value = total borrow
-        uint256 deficit = usdi_liability - vault_borrowing_power;
-        //get the price of the asset
-        uint256 asset_price = uint256(
-            _oracleMaster.get_live_price(asset_address)
-        );
-        require(asset_price != 0, "no oracle price");
+
+        uint256 deficit = scaleUSDC(usdi_liability - vault_borrowing_power);
+        console.log("deficit: ", deficit);
+        //get the price of the asset scaled to decimal 18
+        uint256 asset_price = scaleUSDC(_oracleMaster.get_live_price(asset_address));
+
         Exp memory price = Exp({mantissa: asset_price}); // remember that our prices are all in 1e18 terms
+        //console.log("price.mantissa: ", price.mantissa);
+
+        //console.log("asset_price: ", asset_price);
+
         //lower price to give liquidator incentive
         uint256 token_Id = _tokenAddress_tokenId[asset_address];
         //uint256 scaled_down_price = getScaledPrice(price, asset_address, token_Id);
 
-        console.log("deficit: ", deficit);
-
+        //NEED TO FIX SCALING, ALL SHOULD BE SCALED TO 18 DECIMALS
         //solve for ideal amount
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
-            getScaledPrice(price, asset_address, token_Id), //numerator (big number)
-            deficit //denominator (small number)
+            deficit, //numerator (big number)
+            getScaledPrice(price, asset_address, token_Id) //denominator (small number)
         );
-
+        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
         uint256 usdi_to_repurchase = getUsdiToRepurchase(
             price,
             asset_address,
             tokens_to_liquidate
         );
-        console.log("DIVIDE");
-        console.log("usdi_to_repurchase: ", usdi_to_repurchase);
-        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
+
         uint256 liquidate_price = ExponentialNoError.div_(
             usdi_to_repurchase,
             tokens_to_liquidate
@@ -375,9 +404,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
                 ) * _tokenId_tokenLTVe4[i]) / 1e4; // //
                 total_liquidity_value = total_liquidity_value + token_value;
             }
-            console.log("raw_price: ", raw_price);
         }
-        
+
         return total_liquidity_value;
     }
 

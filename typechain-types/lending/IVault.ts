@@ -26,7 +26,6 @@ export interface IVaultInterface extends utils.Interface {
   functions: {
     "claim_erc20(address,uint256)": FunctionFragment;
     "decrease_liability(uint256)": FunctionFragment;
-    "delegate_Comp_Like_To(address,address)": FunctionFragment;
     "deposit_erc20(address,uint256)": FunctionFragment;
     "getBalances(address)": FunctionFragment;
     "getBaseLiability()": FunctionFragment;
@@ -40,7 +39,6 @@ export interface IVaultInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "claim_erc20"
       | "decrease_liability"
-      | "delegate_Comp_Like_To"
       | "deposit_erc20"
       | "getBalances"
       | "getBaseLiability"
@@ -57,10 +55,6 @@ export interface IVaultInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "decrease_liability",
     values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "delegate_Comp_Like_To",
-    values: [string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "deposit_erc20",
@@ -91,10 +85,6 @@ export interface IVaultInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "decrease_liability",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "delegate_Comp_Like_To",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -164,12 +154,6 @@ export interface IVault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    delegate_Comp_Like_To(
-      compLikeDelegatee: string,
-      CompLikeToken: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     deposit_erc20(
       token_address: string,
       amount: BigNumberish,
@@ -209,12 +193,6 @@ export interface IVault extends BaseContract {
 
   decrease_liability(
     base_amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  delegate_Comp_Like_To(
-    compLikeDelegatee: string,
-    CompLikeToken: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -259,12 +237,6 @@ export interface IVault extends BaseContract {
       base_amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    delegate_Comp_Like_To(
-      compLikeDelegatee: string,
-      CompLikeToken: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     deposit_erc20(
       token_address: string,
@@ -311,12 +283,6 @@ export interface IVault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    delegate_Comp_Like_To(
-      compLikeDelegatee: string,
-      CompLikeToken: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     deposit_erc20(
       token_address: string,
       amount: BigNumberish,
@@ -357,12 +323,6 @@ export interface IVault extends BaseContract {
 
     decrease_liability(
       base_amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    delegate_Comp_Like_To(
-      compLikeDelegatee: string,
-      CompLikeToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
