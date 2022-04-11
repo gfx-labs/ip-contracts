@@ -336,10 +336,12 @@ export interface VaultMasterInterface extends utils.Interface {
 
   events: {
     "Interest(uint256,uint256)": EventFragment;
+    "Liquidate(uint256,address,uint256,uint256,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Interest"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Liquidate"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
 
@@ -353,6 +355,20 @@ export type InterestEvent = TypedEvent<
 >;
 
 export type InterestEventFilter = TypedEventFilter<InterestEvent>;
+
+export interface LiquidateEventObject {
+  vaultId: BigNumber;
+  asset_address: string;
+  max_usdi: BigNumber;
+  usdi_to_repurchase: BigNumber;
+  tokens_to_liquidate: BigNumber;
+}
+export type LiquidateEvent = TypedEvent<
+  [BigNumber, string, BigNumber, BigNumber, BigNumber],
+  LiquidateEventObject
+>;
+
+export type LiquidateEventFilter = TypedEventFilter<LiquidateEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -786,6 +802,21 @@ export interface VaultMaster extends BaseContract {
       amount?: null
     ): InterestEventFilter;
     Interest(epoch?: null, amount?: null): InterestEventFilter;
+
+    "Liquidate(uint256,address,uint256,uint256,uint256)"(
+      vaultId?: null,
+      asset_address?: null,
+      max_usdi?: null,
+      usdi_to_repurchase?: null,
+      tokens_to_liquidate?: null
+    ): LiquidateEventFilter;
+    Liquidate(
+      vaultId?: null,
+      asset_address?: null,
+      max_usdi?: null,
+      usdi_to_repurchase?: null,
+      tokens_to_liquidate?: null
+    ): LiquidateEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,

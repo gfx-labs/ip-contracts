@@ -36,6 +36,14 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
     uint256 public _e4_liquidatorShare;
 
+    event Liquidate(
+        uint256 vaultId, 
+        address asset_address,
+        uint256 max_usdi,
+        uint256 usdi_to_repurchase,
+        uint256 tokens_to_liquidate
+    );
+
     event Interest(uint256 epoch, uint256 amount);
 
     // mapping of vault id to vault address
@@ -237,14 +245,10 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         //if this balance is greater than the usdi liability, we just return 0 (nothing to liquidate);
         uint256 usdi_liability = (vault.getBaseLiability() *
             _e18_interestFactor) / 1e18;
-        console.log("LIQUIDATION CHECK");
-        console.log(vault_borrowing_power, usdi_liability);
         if (vault_borrowing_power >= usdi_liability) {
             console.log("BALANCE NOT GREATER THAN LIABILITY");
             return 0;
         }
-        console.log("DIFFERENCE");
-        console.log(usdi_liability - vault_borrowing_power);
         // however, if it is a positive number, then we can begin the liquidation process
         // we liquidate the user until their total value = total borrow
         uint256 deficit = usdi_liability - vault_borrowing_power;
@@ -260,6 +264,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             price,
             (_tokenAddress_liquidationIncentivee4[asset_address]-_tokenId_tokenLTVe4[token_Id]))
         );
+
         //solve for ideal amount
         uint256 tokens_to_liquidate = ExponentialNoError.div_(
             deficit,
@@ -274,7 +279,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         uint256 liquidate_price = ExponentialNoError.div_(
             usdi_to_repurchase,
             tokens_to_liquidate
-        );
+           );
         //check for partial fill
         if (usdi_to_repurchase > max_usdi) {
             usdi_to_repurchase = max_usdi;
@@ -286,21 +291,27 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         }
 
         uint256 vault_balance = vault.getBalances(asset_address);
+
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > vault_balance) {
             tokens_to_liquidate = vault_balance;
             usdi_to_repurchase = (liquidate_price * tokens_to_liquidate)/1e18;
         }
 
-        console.log("usdi_to_repurchase: ", usdi_to_repurchase);
-        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
-        console.log("asset_price_with_incentive: ", asset_price_with_incentive);
+        //console.log("usdi_to_repurchase: ", usdi_to_repurchase);
+        //console.log("tokens_to_liquidate: ", tokens_to_liquidate);
+        //console.log("asset_price_with_incentive: ", asset_price_with_incentive);
+
+        //get the vault back to a healthy ratio
+        vault.decrease_liability(usdi_to_repurchase);
+
         //decrease liquidators balance usdi
         _usdi.vault_master_burn(msg.sender,usdi_to_repurchase);
-        // then lets get the vault back to a healthy ratio
-        vault.decrease_liability(usdi_to_repurchase);
+
         // finally, we deliver the tokens to the liquidator
         vault.masterTransfer(asset_address, msg.sender, tokens_to_liquidate);
+
+        emit Liquidate(id, asset_address, max_usdi, usdi_to_repurchase, tokens_to_liquidate);
 
         return tokens_to_liquidate;
     }
