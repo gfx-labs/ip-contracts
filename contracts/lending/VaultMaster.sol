@@ -34,7 +34,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     // this is the interest factor * 1e18
     uint256 public _e18_interestFactor;
 
-    uint256 public _e4_liquidatorShare;
+    uint256 public _e4_protocolFee;
 
     event Liquidate(
         uint256 vaultId,
@@ -45,6 +45,13 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     );
 
     event Interest(uint256 epoch, uint256 amount);
+    event NewProtocolFee(uint256 protocol_fee);
+    event RegisteredErc20(address token_address, uint256 LTVe4, address oracle_address, uint256 liquidationIncentivee4);
+    event UpdateRegisteredErc20(address token_address, uint256 LTVe4, address oracle_address, uint256 liquidationIncentivee4);
+    event NewVault(address vault_address, uint256 vaultId,address vaultOwner);
+    event RegisterOracleMaster(address oracleMasterAddress);
+    event BorrowUSDi(uint256 vaultId, address vaultAddress , uint256 borrowAmount);
+    event RepayUSDi(uint256 vaultId, address vaultAddress, uint256 repayAmount);
 
     // mapping of vault id to vault address
     mapping(uint256 => address) public _vaultId_vaultAddress;
@@ -66,7 +73,7 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         _tokensRegistered = 0;
         _e18_interestFactor = 1e18; // initialize at 1e18;
         _totalBaseLiability = 0;
-
+        _e4_protocolFee = 1000;
         _lastInterestTime = block.timestamp;
     }
 
@@ -77,6 +84,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         );
         _vaultId_vaultAddress[_vaultsMinted] = vault_address;
         return vault_address;
+
+        emit NewVault(vault_address,_vaultsMinted, msg.sender);
     }
 
     function register_usdi(address usdi_address) external onlyOwner {
@@ -90,10 +99,25 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
     {
         _oracleMasterAddress = master_oracle_address;
         _oracleMaster = OracleMaster(_oracleMasterAddress);
+
+        emit RegisterOracleMaster(_oracleMasterAddress);
     }
 
     function getInterestFactor() external view override returns (uint256) {
         return _e18_interestFactor;
+    }
+
+    function getProtocolFee() external view override returns (uint256) {
+        return _e4_protocolFee;
+    }
+
+    function change_protocol_fee(uint256 new_protocol_fee) external onlyOwner {   
+        require(
+            new_protocol_fee < 5000, "fee is too large"
+        );
+        _e4_protocolFee = new_protocol_fee;
+
+        emit NewProtocolFee(_e4_protocolFee); 
     }
 
     function register_erc20(
@@ -118,6 +142,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         _tokenAddress_liquidationIncentivee4[
             token_address
         ] = liquidationIncentivee4;
+
+        emit RegisteredErc20(token_address,LTVe4,oracle_address,liquidationIncentivee4);
     }
 
     function update_registered_erc20(
@@ -139,6 +165,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         _tokenAddress_liquidationIncentivee4[
             token_address
         ] = liquidationIncentivee4;
+
+        emit UpdateRegisteredErc20(token_address,LTVe4,oracle_address,liquidationIncentivee4);
     }
 
     function check_account(uint256 id) external view override returns (bool) {
@@ -185,6 +213,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         require(solvency, "this borrow would make your account insolvent");
 
         _usdi.vault_master_mint(msg.sender, amount);
+
+        emit BorrowUSDi(id, vault_address, amount);
     }
 
     function get_account_liability(uint256 id)
@@ -219,6 +249,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         vault.decrease_liability(base_amount);
 
         _usdi.vault_master_burn(msg.sender, base_amount);
+
+        emit RepayUSDi(id, vault_address, amount);
     }
 
     function repay_all_usdi(uint256 id) external override {
@@ -234,6 +266,8 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         );
         vault.decrease_liability(vault.getBaseLiability());
         _usdi.vault_master_burn(msg.sender, usdi_liability);
+
+        emit RepayUSDi(id, vault_address, usdi_liability);
     }
 
     ///@dev converts amount to e18 based on decimal value on erc20 token
@@ -323,7 +357,6 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             return 0;
         }
 
-
         // we liquidate the user until their total value = total borrow
         uint256 deficit = scaleUSDC(usdi_liability - vault_borrowing_power);
         console.log("deficit: ", deficit);
@@ -334,7 +367,6 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
 
         Exp memory price = Exp({mantissa: asset_price}); // remember that our prices are all in 1e18 terms
 
-
         //lower price to give liquidator incentive
         uint256 token_Id = _tokenAddress_tokenId[asset_address];
 
@@ -344,10 +376,6 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
             deficit, //numerator (big number)
             getScaledPrice(price, asset_address, token_Id) //denominator (small number)
         );
-         
-
-
-
 
         console.log("tokens_to_liquidate: ", tokens_to_liquidate);
         uint256 usdi_to_repurchase = getUsdiToRepurchase(
@@ -454,7 +482,11 @@ contract VaultMaster is IVaultMaster, ExponentialNoError, Ownable {
         _e18_interestFactor = _e18_interestFactor + e18_factor_increase;
         uint256 valueAfter = (_totalBaseLiability * _e18_interestFactor) / 1e18;
         if (valueAfter > valueBefore) {
-            _usdi.vault_master_donate(valueAfter - valueBefore);
+
+            uint256 protocolAmount = (valueAfter - valueBefore) * (_e4_protocolFee / 1e4);
+            _usdi.vault_master_donate(valueAfter - valueBefore - protocolAmount);
+            address owner = owner();
+            _usdi.vault_master_mint(owner, protocolAmount);
         }
 
         _lastInterestTime = block.timestamp;

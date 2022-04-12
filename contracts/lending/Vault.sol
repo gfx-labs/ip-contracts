@@ -21,13 +21,15 @@ interface CompLike {
 // vaults generate interest in USDI
 contract Vault is IVault, ExponentialNoError {
     uint256 public _id;
-
     address public _minter;
     address private _usdiAddress;
     IUSDI private _usdi;
 
     address public _masterAddress;
     IVaultMaster private _master;
+
+    event Deposit(address token_address, uint256 amount);
+    event Withdraw(address token_address, uint256 amount);
 
     mapping(address => uint256) _balances;
 
@@ -53,7 +55,6 @@ contract Vault is IVault, ExponentialNoError {
         _minter = minter;
         _usdiAddress = usdi_address;
         _usdi = IUSDI(usdi_address);
-
         _masterAddress = master_address;
         _master = IVaultMaster(master_address);
     }
@@ -83,6 +84,8 @@ contract Vault is IVault, ExponentialNoError {
         IERC20 token = IERC20(token_address);
         token.transferFrom(msg.sender, address(this), amount);
         _balances[token_address] = _balances[token_address] + amount;
+
+        emit Deposit(token_address, amount);
     }
 
     function withdraw_erc20(address token_address, uint256 amount)
@@ -99,27 +102,8 @@ contract Vault is IVault, ExponentialNoError {
         _balances[token_address] = _balances[token_address] - amount;
         bool solvency = _master.check_account(_id);
         require(solvency, "this withdraw would make your account insolvent");
-    }
 
-    function claim_erc20(address token_address, uint256 amount)
-        external
-        override
-        masterOnly
-        returns (uint256)
-    {
-        IERC20 token = IERC20(token_address);
-        if (_balances[token_address] > amount) {
-            token.transferFrom(address(this), _masterAddress, amount);
-            _balances[token_address] = _balances[token_address] - amount;
-            return amount;
-        }
-        token.transferFrom(
-            address(this),
-            _masterAddress,
-            _balances[token_address]
-        );
-        _balances[token_address] = 0;
-        return _balances[token_address];
+        emit Withdraw(token_address, amount);
     }
 
     function masterTransfer(address _token, address _to, uint256 _amount)
@@ -167,6 +151,7 @@ contract Vault is IVault, ExponentialNoError {
         minterOnly
     {
         CompLike(CompLikeToken).delegate(compLikeDelegatee);
+
     }
 
 }

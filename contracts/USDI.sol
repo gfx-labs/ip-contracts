@@ -5,6 +5,7 @@ import "./token/IUSDI.sol";
 import "./token/UFragments.sol";
 import "./lending/Vault.sol";
 import "./_external/IERC20.sol";
+import "./_external/ERC20.sol";
 
 import "hardhat/console.sol";
 
@@ -25,7 +26,6 @@ contract USDI is UFragments, IUSDI {
     event Withdraw(address indexed _from, uint256 _value);
     event Mint(address to, uint256 _value);
     event Burn(address from, uint256 _value);
-
     event Donation(address indexed _from, uint256 _value, uint256 _totalSupply);
 
     constructor(address reserveAddress) UFragments("USDI Token", "USDI") {
