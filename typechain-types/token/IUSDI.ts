@@ -28,7 +28,7 @@ export interface IUSDIInterface extends utils.Interface {
     "deposit(uint256)": FunctionFragment;
     "mint(uint256)": FunctionFragment;
     "reserveRatio()": FunctionFragment;
-    "setVaultMaster(address)": FunctionFragment;
+    "setVaultController(address)": FunctionFragment;
     "vault_master_burn(address,uint256)": FunctionFragment;
     "vault_master_donate(uint256)": FunctionFragment;
     "vault_master_mint(address,uint256)": FunctionFragment;
@@ -41,7 +41,7 @@ export interface IUSDIInterface extends utils.Interface {
       | "deposit"
       | "mint"
       | "reserveRatio"
-      | "setVaultMaster"
+      | "setVaultController"
       | "vault_master_burn"
       | "vault_master_donate"
       | "vault_master_mint"
@@ -59,7 +59,7 @@ export interface IUSDIInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "setVaultMaster",
+    functionFragment: "setVaultController",
     values: [string]
   ): string;
   encodeFunctionData(
@@ -87,7 +87,7 @@ export interface IUSDIInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setVaultMaster",
+    functionFragment: "setVaultController",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -135,23 +135,23 @@ export interface IUSDI extends BaseContract {
 
   functions: {
     burn(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     deposit(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     mint(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     reserveRatio(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    setVaultMaster(
+    setVaultController(
       vault_master_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -174,29 +174,29 @@ export interface IUSDI extends BaseContract {
     ): Promise<ContractTransaction>;
 
     withdraw(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
   burn(
-    amount: BigNumberish,
+    usdc_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   deposit(
-    amount: BigNumberish,
+    usdc_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   mint(
-    amount: BigNumberish,
+    usdc_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   reserveRatio(overrides?: CallOverrides): Promise<BigNumber>;
 
-  setVaultMaster(
+  setVaultController(
     vault_master_address: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -219,20 +219,23 @@ export interface IUSDI extends BaseContract {
   ): Promise<ContractTransaction>;
 
   withdraw(
-    amount: BigNumberish,
+    usdc_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    burn(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    burn(usdc_amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
-    deposit(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    deposit(
+      usdc_amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
-    mint(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    mint(usdc_amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     reserveRatio(overrides?: CallOverrides): Promise<BigNumber>;
 
-    setVaultMaster(
+    setVaultController(
       vault_master_address: string,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -254,30 +257,33 @@ export interface IUSDI extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    withdraw(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    withdraw(
+      usdc_amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {};
 
   estimateGas: {
     burn(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     deposit(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     mint(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     reserveRatio(overrides?: CallOverrides): Promise<BigNumber>;
 
-    setVaultMaster(
+    setVaultController(
       vault_master_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -300,30 +306,30 @@ export interface IUSDI extends BaseContract {
     ): Promise<BigNumber>;
 
     withdraw(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
     burn(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     deposit(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     mint(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     reserveRatio(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    setVaultMaster(
+    setVaultController(
       vault_master_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
@@ -346,7 +352,7 @@ export interface IUSDI extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     withdraw(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

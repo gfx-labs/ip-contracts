@@ -26,13 +26,14 @@ import type {
   OnEvent,
 } from "../common";
 
-export interface VaultMasterInterface extends utils.Interface {
+export interface VaultControllerInterface extends utils.Interface {
   functions: {
     "_e18_interestFactor()": FunctionFragment;
     "_e4_liquidatorShare()": FunctionFragment;
     "_enabledTokens(uint256)": FunctionFragment;
     "_lastInterestTime()": FunctionFragment;
     "_oracleMasterAddress()": FunctionFragment;
+    "_tokenAddress_liquidationIncentivee4(address)": FunctionFragment;
     "_tokenAddress_tokenId(address)": FunctionFragment;
     "_tokenId_oracleAddress(uint256)": FunctionFragment;
     "_tokenId_tokenLTVe4(uint256)": FunctionFragment;
@@ -41,7 +42,7 @@ export interface VaultMasterInterface extends utils.Interface {
     "_usdiAddress()": FunctionFragment;
     "_vaultId_vaultAddress(uint256)": FunctionFragment;
     "_vaultsMinted()": FunctionFragment;
-    "account_collateral_value(uint256)": FunctionFragment;
+    "account_borrowing_power(uint256)": FunctionFragment;
     "borrow_usdi(uint256,uint256)": FunctionFragment;
     "calculate_interest()": FunctionFragment;
     "check_account(uint256)": FunctionFragment;
@@ -50,13 +51,14 @@ export interface VaultMasterInterface extends utils.Interface {
     "liquidate_account(uint256,address,uint256)": FunctionFragment;
     "mint_vault()": FunctionFragment;
     "owner()": FunctionFragment;
-    "register_erc20(address,uint256,address)": FunctionFragment;
+    "register_erc20(address,uint256,address,uint256)": FunctionFragment;
     "register_oracle_master(address)": FunctionFragment;
     "register_usdi(address)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "repay_all_usdi(uint256)": FunctionFragment;
     "repay_usdi(uint256,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
+    "update_registered_erc20(address,uint256,address,uint256)": FunctionFragment;
   };
 
   getFunction(
@@ -66,6 +68,7 @@ export interface VaultMasterInterface extends utils.Interface {
       | "_enabledTokens"
       | "_lastInterestTime"
       | "_oracleMasterAddress"
+      | "_tokenAddress_liquidationIncentivee4"
       | "_tokenAddress_tokenId"
       | "_tokenId_oracleAddress"
       | "_tokenId_tokenLTVe4"
@@ -74,7 +77,7 @@ export interface VaultMasterInterface extends utils.Interface {
       | "_usdiAddress"
       | "_vaultId_vaultAddress"
       | "_vaultsMinted"
-      | "account_collateral_value"
+      | "account_borrowing_power"
       | "borrow_usdi"
       | "calculate_interest"
       | "check_account"
@@ -90,6 +93,7 @@ export interface VaultMasterInterface extends utils.Interface {
       | "repay_all_usdi"
       | "repay_usdi"
       | "transferOwnership"
+      | "update_registered_erc20"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -111,6 +115,10 @@ export interface VaultMasterInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "_oracleMasterAddress",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_tokenAddress_liquidationIncentivee4",
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "_tokenAddress_tokenId",
@@ -145,7 +153,7 @@ export interface VaultMasterInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "account_collateral_value",
+    functionFragment: "account_borrowing_power",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -179,7 +187,7 @@ export interface VaultMasterInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "register_erc20",
-    values: [string, BigNumberish, string]
+    values: [string, BigNumberish, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "register_oracle_master",
@@ -205,6 +213,10 @@ export interface VaultMasterInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     values: [string]
   ): string;
+  encodeFunctionData(
+    functionFragment: "update_registered_erc20",
+    values: [string, BigNumberish, string, BigNumberish]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "_e18_interestFactor",
@@ -224,6 +236,10 @@ export interface VaultMasterInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "_oracleMasterAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_tokenAddress_liquidationIncentivee4",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -259,7 +275,7 @@ export interface VaultMasterInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "account_collateral_value",
+    functionFragment: "account_borrowing_power",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -313,13 +329,19 @@ export interface VaultMasterInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "update_registered_erc20",
+    data: BytesLike
+  ): Result;
 
   events: {
     "Interest(uint256,uint256)": EventFragment;
+    "Liquidate(uint256,address,uint256,uint256,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Interest"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Liquidate"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
 
@@ -334,6 +356,20 @@ export type InterestEvent = TypedEvent<
 
 export type InterestEventFilter = TypedEventFilter<InterestEvent>;
 
+export interface LiquidateEventObject {
+  vaultId: BigNumber;
+  asset_address: string;
+  max_usdi: BigNumber;
+  usdi_to_repurchase: BigNumber;
+  tokens_to_liquidate: BigNumber;
+}
+export type LiquidateEvent = TypedEvent<
+  [BigNumber, string, BigNumber, BigNumber, BigNumber],
+  LiquidateEventObject
+>;
+
+export type LiquidateEventFilter = TypedEventFilter<LiquidateEvent>;
+
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
   newOwner: string;
@@ -346,12 +382,12 @@ export type OwnershipTransferredEvent = TypedEvent<
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
 
-export interface VaultMaster extends BaseContract {
+export interface VaultController extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: VaultMasterInterface;
+  interface: VaultControllerInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -386,6 +422,11 @@ export interface VaultMaster extends BaseContract {
 
     _oracleMasterAddress(overrides?: CallOverrides): Promise<[string]>;
 
+    _tokenAddress_liquidationIncentivee4(
+      arg0: string,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     _tokenAddress_tokenId(
       arg0: string,
       overrides?: CallOverrides
@@ -414,7 +455,7 @@ export interface VaultMaster extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    account_collateral_value(
+    account_borrowing_power(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
@@ -458,6 +499,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
+      liquidationIncentivee4: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -490,6 +532,14 @@ export interface VaultMaster extends BaseContract {
       newOwner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    update_registered_erc20(
+      token_address: string,
+      LTVe4: BigNumberish,
+      oracle_address: string,
+      liquidationIncentivee4: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
   };
 
   _e18_interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
@@ -504,6 +554,11 @@ export interface VaultMaster extends BaseContract {
   _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
 
   _oracleMasterAddress(overrides?: CallOverrides): Promise<string>;
+
+  _tokenAddress_liquidationIncentivee4(
+    arg0: string,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   _tokenAddress_tokenId(
     arg0: string,
@@ -533,7 +588,7 @@ export interface VaultMaster extends BaseContract {
 
   _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
-  account_collateral_value(
+  account_borrowing_power(
     id: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
@@ -574,6 +629,7 @@ export interface VaultMaster extends BaseContract {
     token_address: string,
     LTVe4: BigNumberish,
     oracle_address: string,
+    liquidationIncentivee4: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -607,6 +663,14 @@ export interface VaultMaster extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  update_registered_erc20(
+    token_address: string,
+    LTVe4: BigNumberish,
+    oracle_address: string,
+    liquidationIncentivee4: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     _e18_interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -620,6 +684,11 @@ export interface VaultMaster extends BaseContract {
     _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
 
     _oracleMasterAddress(overrides?: CallOverrides): Promise<string>;
+
+    _tokenAddress_liquidationIncentivee4(
+      arg0: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     _tokenAddress_tokenId(
       arg0: string,
@@ -649,7 +718,7 @@ export interface VaultMaster extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
-    account_collateral_value(
+    account_borrowing_power(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -689,6 +758,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
+      liquidationIncentivee4: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -716,6 +786,14 @@ export interface VaultMaster extends BaseContract {
       newOwner: string,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    update_registered_erc20(
+      token_address: string,
+      LTVe4: BigNumberish,
+      oracle_address: string,
+      liquidationIncentivee4: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
@@ -724,6 +802,21 @@ export interface VaultMaster extends BaseContract {
       amount?: null
     ): InterestEventFilter;
     Interest(epoch?: null, amount?: null): InterestEventFilter;
+
+    "Liquidate(uint256,address,uint256,uint256,uint256)"(
+      vaultId?: null,
+      asset_address?: null,
+      max_usdi?: null,
+      usdi_to_repurchase?: null,
+      tokens_to_liquidate?: null
+    ): LiquidateEventFilter;
+    Liquidate(
+      vaultId?: null,
+      asset_address?: null,
+      max_usdi?: null,
+      usdi_to_repurchase?: null,
+      tokens_to_liquidate?: null
+    ): LiquidateEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
@@ -748,6 +841,11 @@ export interface VaultMaster extends BaseContract {
     _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
 
     _oracleMasterAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _tokenAddress_liquidationIncentivee4(
+      arg0: string,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     _tokenAddress_tokenId(
       arg0: string,
@@ -777,7 +875,7 @@ export interface VaultMaster extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
-    account_collateral_value(
+    account_borrowing_power(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -821,6 +919,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
+      liquidationIncentivee4: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -853,6 +952,14 @@ export interface VaultMaster extends BaseContract {
       newOwner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    update_registered_erc20(
+      token_address: string,
+      LTVe4: BigNumberish,
+      oracle_address: string,
+      liquidationIncentivee4: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -872,6 +979,11 @@ export interface VaultMaster extends BaseContract {
     _lastInterestTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _oracleMasterAddress(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    _tokenAddress_liquidationIncentivee4(
+      arg0: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -905,7 +1017,7 @@ export interface VaultMaster extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    account_collateral_value(
+    account_borrowing_power(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -949,6 +1061,7 @@ export interface VaultMaster extends BaseContract {
       token_address: string,
       LTVe4: BigNumberish,
       oracle_address: string,
+      liquidationIncentivee4: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -979,6 +1092,14 @@ export interface VaultMaster extends BaseContract {
 
     transferOwnership(
       newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    update_registered_erc20(
+      token_address: string,
+      LTVe4: BigNumberish,
+      oracle_address: string,
+      liquidationIncentivee4: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

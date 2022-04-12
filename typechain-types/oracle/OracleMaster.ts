@@ -27,10 +27,11 @@ import type {
 
 export interface OracleMasterInterface extends utils.Interface {
   functions: {
+    "_paused(address)": FunctionFragment;
     "_relays(address)": FunctionFragment;
     "get_live_price(address)": FunctionFragment;
-    "oraclecount()": FunctionFragment;
     "owner()": FunctionFragment;
+    "pause_relay(address,bool)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "set_relay(address,address)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
@@ -38,25 +39,27 @@ export interface OracleMasterInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "_paused"
       | "_relays"
       | "get_live_price"
-      | "oraclecount"
       | "owner"
+      | "pause_relay"
       | "renounceOwnership"
       | "set_relay"
       | "transferOwnership"
   ): FunctionFragment;
 
+  encodeFunctionData(functionFragment: "_paused", values: [string]): string;
   encodeFunctionData(functionFragment: "_relays", values: [string]): string;
   encodeFunctionData(
     functionFragment: "get_live_price",
     values: [string]
   ): string;
-  encodeFunctionData(
-    functionFragment: "oraclecount",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "pause_relay",
+    values: [string, boolean]
+  ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
@@ -70,16 +73,17 @@ export interface OracleMasterInterface extends utils.Interface {
     values: [string]
   ): string;
 
+  decodeFunctionResult(functionFragment: "_paused", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_relays", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "get_live_price",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "oraclecount",
+    functionFragment: "pause_relay",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
@@ -136,6 +140,8 @@ export interface OracleMaster extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    _paused(arg0: string, overrides?: CallOverrides): Promise<[boolean]>;
+
     _relays(arg0: string, overrides?: CallOverrides): Promise<[string]>;
 
     get_live_price(
@@ -143,9 +149,13 @@ export interface OracleMaster extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    oraclecount(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     owner(overrides?: CallOverrides): Promise<[string]>;
+
+    pause_relay(
+      token_address: string,
+      state: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -163,6 +173,8 @@ export interface OracleMaster extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
+  _paused(arg0: string, overrides?: CallOverrides): Promise<boolean>;
+
   _relays(arg0: string, overrides?: CallOverrides): Promise<string>;
 
   get_live_price(
@@ -170,9 +182,13 @@ export interface OracleMaster extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  oraclecount(overrides?: CallOverrides): Promise<BigNumber>;
-
   owner(overrides?: CallOverrides): Promise<string>;
+
+  pause_relay(
+    token_address: string,
+    state: boolean,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   renounceOwnership(
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -190,6 +206,8 @@ export interface OracleMaster extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    _paused(arg0: string, overrides?: CallOverrides): Promise<boolean>;
+
     _relays(arg0: string, overrides?: CallOverrides): Promise<string>;
 
     get_live_price(
@@ -197,9 +215,13 @@ export interface OracleMaster extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    oraclecount(overrides?: CallOverrides): Promise<BigNumber>;
-
     owner(overrides?: CallOverrides): Promise<string>;
+
+    pause_relay(
+      token_address: string,
+      state: boolean,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
@@ -227,6 +249,8 @@ export interface OracleMaster extends BaseContract {
   };
 
   estimateGas: {
+    _paused(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+
     _relays(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     get_live_price(
@@ -234,9 +258,13 @@ export interface OracleMaster extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    oraclecount(overrides?: CallOverrides): Promise<BigNumber>;
-
     owner(overrides?: CallOverrides): Promise<BigNumber>;
+
+    pause_relay(
+      token_address: string,
+      state: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -255,6 +283,11 @@ export interface OracleMaster extends BaseContract {
   };
 
   populateTransaction: {
+    _paused(
+      arg0: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     _relays(
       arg0: string,
       overrides?: CallOverrides
@@ -265,9 +298,13 @@ export interface OracleMaster extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    oraclecount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    pause_relay(
+      token_address: string,
+      state: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }

@@ -14,9 +14,11 @@ interface IVault {
 
   function withdraw_erc20(address token_address, uint256 amount) external;
 
-  function claim_erc20(address token_address, uint256 amount) external returns (uint256);
+  function masterTransfer(address _token, address _to, uint256 _amount) external;
 
   function decrease_liability(uint256 base_amount) external returns (uint256);
 
   function increase_liability(uint256 base_amount) external returns (uint256);
+
+  function delegateCompLikeTo(address compLikeDelegatee, address CompLikeToken) external;
 }

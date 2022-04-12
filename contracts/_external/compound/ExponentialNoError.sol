@@ -27,8 +27,11 @@ contract ExponentialNoError {
      *      For example, truncate(Exp{mantissa: 15 * expScale}) = 15
      */
     function truncate(Exp memory exp) pure internal returns (uint) {
-        // Note: We are not using careful math here as we're performing a division that cannot fail
         return exp.mantissa / expScale;
+    }
+    
+    function truncate(uint u) pure internal returns (uint) {
+        return u / expScale;
     }
 
     /**

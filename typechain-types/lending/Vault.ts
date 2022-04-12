@@ -35,6 +35,7 @@ export interface VaultInterface extends utils.Interface {
     "getBaseLiability()": FunctionFragment;
     "getMinter()": FunctionFragment;
     "increase_liability(uint256)": FunctionFragment;
+    "masterTransfer(address,address,uint256)": FunctionFragment;
     "withdraw_erc20(address,uint256)": FunctionFragment;
   };
 
@@ -51,6 +52,7 @@ export interface VaultInterface extends utils.Interface {
       | "getBaseLiability"
       | "getMinter"
       | "increase_liability"
+      | "masterTransfer"
       | "withdraw_erc20"
   ): FunctionFragment;
 
@@ -85,6 +87,10 @@ export interface VaultInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "increase_liability",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "masterTransfer",
+    values: [string, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "withdraw_erc20",
@@ -124,6 +130,10 @@ export interface VaultInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "getMinter", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "increase_liability",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "masterTransfer",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -197,6 +207,13 @@ export interface Vault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    masterTransfer(
+      _token: string,
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     withdraw_erc20(
       token_address: string,
       amount: BigNumberish,
@@ -237,6 +254,13 @@ export interface Vault extends BaseContract {
 
   increase_liability(
     base_amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  masterTransfer(
+    _token: string,
+    _to: string,
+    _amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -282,6 +306,13 @@ export interface Vault extends BaseContract {
       base_amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    masterTransfer(
+      _token: string,
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     withdraw_erc20(
       token_address: string,
@@ -329,6 +360,13 @@ export interface Vault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    masterTransfer(
+      _token: string,
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     withdraw_erc20(
       token_address: string,
       amount: BigNumberish,
@@ -373,6 +411,13 @@ export interface Vault extends BaseContract {
 
     increase_liability(
       base_amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    masterTransfer(
+      _token: string,
+      _to: string,
+      _amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

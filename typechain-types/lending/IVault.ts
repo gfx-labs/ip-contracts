@@ -24,35 +24,37 @@ import type {
 
 export interface IVaultInterface extends utils.Interface {
   functions: {
-    "claim_erc20(address,uint256)": FunctionFragment;
     "decrease_liability(uint256)": FunctionFragment;
+    "delegateCompLikeTo(address,address)": FunctionFragment;
     "deposit_erc20(address,uint256)": FunctionFragment;
     "getBalances(address)": FunctionFragment;
     "getBaseLiability()": FunctionFragment;
     "getMinter()": FunctionFragment;
     "increase_liability(uint256)": FunctionFragment;
+    "masterTransfer(address,address,uint256)": FunctionFragment;
     "withdraw_erc20(address,uint256)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "claim_erc20"
       | "decrease_liability"
+      | "delegateCompLikeTo"
       | "deposit_erc20"
       | "getBalances"
       | "getBaseLiability"
       | "getMinter"
       | "increase_liability"
+      | "masterTransfer"
       | "withdraw_erc20"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "claim_erc20",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "decrease_liability",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "delegateCompLikeTo",
+    values: [string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "deposit_erc20",
@@ -69,16 +71,20 @@ export interface IVaultInterface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "masterTransfer",
+    values: [string, string, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "withdraw_erc20",
     values: [string, BigNumberish]
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "claim_erc20",
+    functionFragment: "decrease_liability",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "decrease_liability",
+    functionFragment: "delegateCompLikeTo",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -96,6 +102,10 @@ export interface IVaultInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "getMinter", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "increase_liability",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "masterTransfer",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -133,14 +143,14 @@ export interface IVault extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
+    decrease_liability(
+      base_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    decrease_liability(
-      base_amount: BigNumberish,
+    delegateCompLikeTo(
+      compLikeDelegatee: string,
+      CompLikeToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -161,6 +171,13 @@ export interface IVault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    masterTransfer(
+      _token: string,
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     withdraw_erc20(
       token_address: string,
       amount: BigNumberish,
@@ -168,14 +185,14 @@ export interface IVault extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  claim_erc20(
-    token_address: string,
-    amount: BigNumberish,
+  decrease_liability(
+    base_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  decrease_liability(
-    base_amount: BigNumberish,
+  delegateCompLikeTo(
+    compLikeDelegatee: string,
+    CompLikeToken: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -196,6 +213,13 @@ export interface IVault extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  masterTransfer(
+    _token: string,
+    _to: string,
+    _amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   withdraw_erc20(
     token_address: string,
     amount: BigNumberish,
@@ -203,16 +227,16 @@ export interface IVault extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     decrease_liability(
       base_amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    delegateCompLikeTo(
+      compLikeDelegatee: string,
+      CompLikeToken: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     deposit_erc20(
       token_address: string,
@@ -231,6 +255,13 @@ export interface IVault extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    masterTransfer(
+      _token: string,
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     withdraw_erc20(
       token_address: string,
       amount: BigNumberish,
@@ -241,14 +272,14 @@ export interface IVault extends BaseContract {
   filters: {};
 
   estimateGas: {
-    claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
+    decrease_liability(
+      base_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    decrease_liability(
-      base_amount: BigNumberish,
+    delegateCompLikeTo(
+      compLikeDelegatee: string,
+      CompLikeToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -269,6 +300,13 @@ export interface IVault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    masterTransfer(
+      _token: string,
+      _to: string,
+      _amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     withdraw_erc20(
       token_address: string,
       amount: BigNumberish,
@@ -277,14 +315,14 @@ export interface IVault extends BaseContract {
   };
 
   populateTransaction: {
-    claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
+    decrease_liability(
+      base_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    decrease_liability(
-      base_amount: BigNumberish,
+    delegateCompLikeTo(
+      compLikeDelegatee: string,
+      CompLikeToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -305,6 +343,13 @@ export interface IVault extends BaseContract {
 
     increase_liability(
       base_amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    masterTransfer(
+      _token: string,
+      _to: string,
+      _amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
