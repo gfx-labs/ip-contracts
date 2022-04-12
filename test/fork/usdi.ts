@@ -402,20 +402,33 @@ describe("Testing liquidations", () => {
     })
 
     it("checks for over liquidation", async () => {
+        /**
+         * account_borrowing_power returns decimal 6, get_account_liability returns decimal 18
+         *  borrow power: 6775886520000000000000
+         *  liability after borrow maximum and after calculate_interest(): 6775886949429774113242644197017362747658
+         * 
+         */
         const abi = new ERC20ABI()
         const comp_contract = new ethers.Contract(Mainnet.compAddress, abi.erc20ABI(), ethers.provider)
         const vaultID = 2
         const carolVaultTotalTokens = await comp_contract.balanceOf(carol_vault.address)
         const carolBorrowPower = await con.VaultController!.account_borrowing_power(2)
-        console.log(carolVaultTotalTokens.toString())
-        console.log(carolBorrowPower.toString())
-
+        console.log("100 COMP tokens: ", utils.formatEther(carolVaultTotalTokens.toString()))
+        console.log("USDC borrow power: ", carolBorrowPower.toString())
+        await con.VaultController!.connect(Carol).borrow_usdi(vaultID, carolBorrowPower)
 
         let solvency = await con.VaultController!.check_account(vaultID)
-        //console.log("solvency: ", solvency)
+        assert.equal(solvency, true, "Carol's vault is solvent")
+
+        await con.VaultController!.calculate_interest()
+
+        solvency = await con.VaultController!.check_account(vaultID)
+        assert.equal(solvency, false, "Carol's vault is not solvent")
 
         let liabilty = await con.VaultController!.get_account_liability(vaultID)
-        //console.log("liabilty: ", utils.formatEther(liabilty.toString()))
+        console.log("liabilty: ", utils.formatEther(liabilty.toString()))
+
+        
 
         let balance = await con.USDI!.balanceOf(Dave.address)
         //console.log("Dave USDi Balance: ", utils.formatEther(balance.toString()))
