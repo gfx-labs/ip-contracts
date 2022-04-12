@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+import "../_external/IERC20.sol";
 
 
-interface IUSDI {
+interface IUSDI is IERC20 {
 
   function deposit(uint256 usdc_amount) external;
   function withdraw(uint256 usdc_amount) external;

@@ -20,7 +20,9 @@ let Bob: any; // bob is an eth holder. He wishes to deposit his eth and borrow U
 let Carol: any; // carol is a comp holder. she wishes to deposit her comp and then vote
 let Dave: any; // dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
 
-require('chai').should()
+
+require('chai')
+    .should()
 //*
 // Initial Balances:
 // Andy: 100,000,000,000 usdc ($100,000) 6dec
@@ -28,7 +30,7 @@ require('chai').should()
 // Carol: 100,000,000,000,000,000,000 (100 comp), 18dec
 // Dave: 100,000,000,000 usdc ($100,000) 6dec
 //
-// andy is a usdc holder. She wishes to deposit her USDC to hold USDI
+// andy is a usdc holder. he wishes to deposit USDC to hold USDI
 // bob is an eth holder. He wishes to deposit his eth and borrow USDI
 // carol is a comp holder. she wishes to deposit her comp and then vote
 // dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
@@ -185,7 +187,8 @@ describe("TOKEN-DEPOSITS", () => {
           "carol value:",
           (await con.VaultController!.account_borrowing_power(2)).toString()
         );
-         */
+        */
+         
     });
 });
 describe("TOKEN-DEPOSITS", async () => {
@@ -207,7 +210,7 @@ describe("TOKEN-DEPOSITS", async () => {
         const liability_amount = await con
             .VaultController!.connect(Bob)
             .get_account_liability(1);
-        showBody("liability", liability_amount)
+        //showBody("liability", liability_amount)
         expect(liability_amount).to.be.gt(BN("5000e18"));
         //showBody("bob_liability:", liability_amount.toString());
     });
@@ -235,8 +238,8 @@ describe("Checking interest generation", () => {
 })
 /**
  untested functions: 
-  repay_usdi + repay_all_usdi
-  liquidate_account
+  repay_usdi + repay_all_usdi WIP
+  liquidate_account WIP
   check_account
   getInterestFactor
  */
@@ -257,15 +260,15 @@ describe("Testing repay", () => {
         const partialLiability = liability.div(2) //half
         const vaultId = 1
         const initBalance = await con.USDI!.balanceOf(Bob.address)
-        showBody("Bob's Initial Balance: ", initBalance.toString())
+        //showBody("Bob's Initial Balance: ", initBalance.toString())
         await con.VaultController!.connect(Bob).repay_usdi(vaultId, partialLiability)
 
         let updatedLiability = await bob_vault.connect(Bob).getBaseLiability()
         let balance = await con.USDI!.balanceOf(Bob.address)
 
-        showBody("Partial liability: ", partialLiability.toString())
-        showBody("Balance after repay", balance.toString())
-        showBody("Updated Liability after repay: ", updatedLiability.toString())
+        //showBody("Partial liability: ", partialLiability.toString())
+        //showBody("Balance after repay", balance.toString())
+        //showBody("Updated Liability after repay: ", updatedLiability.toString())
 
         //TODO - TEST MATH
         //assert.equal(updatedLiability.toString(), partialLiability.toString(), "Half of liability has been filled")
@@ -305,27 +308,6 @@ describe("Testing liquidations", () => {
     });
 
 
-    /**
-     it("test convert scale", async () => {
-      const usdcAmount = 3247687117 //should resolve to 3247.687117 USDC decimal 6
-      const sats = 3200000000 //should resolve to 32 wBTC decimal 8
-      const etherAmount = utils.parseEther("12")//should resolve to 12 ether decimal 18
-  
-      const wBTC = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"
-  
-  
-      let amount = await con.VaultController!.convertScaleTest(Mainnet.usdcAddress, usdcAmount)
-      assert.equal(utils.formatEther(amount!.toString()), "3247.687117")
-      
-      amount = await con.VaultController!.convertScaleTest(wBTC, sats)
-      assert.equal(utils.formatEther(amount!.toString()), "32.0")
-  
-      amount = await con.VaultController!.convertScaleTest(Mainnet.wethAddress, etherAmount)
-      assert.equal(utils.formatEther(amount!.toString()), "12.0")
-    })
-     */
-
-
     it("borrow maximum and liquidate", async () => {
         /**
          * LIQUIDATE QUESTIONS
@@ -351,25 +333,28 @@ describe("Testing liquidations", () => {
         const abi = new ERC20ABI()
         const wETH_Contract = new ethers.Contract(Mainnet.wethAddress, abi.erc20ABI(), ethers.provider)
         const vaultID = 1
-        const initBalanceBob = await con.USDI!.balanceOf(Bob.address)
-        const initBalanceDave = await con.USDI!.balanceOf(Dave.address)
-        const initWethBalanceDave = await wETH_Contract.balanceOf(Dave.address)
         //showBody("Bob starting USDI balance: ", initBalance.toString())
         const bobVaultInit = await wETH_Contract.balanceOf(bob_vault.address)
 
         //borrow maximum - borrow amount == collateral value 
         const account_borrowing_power = await con.VaultController!.account_borrowing_power(vaultID)
-        showBody("borrow power:", account_borrowing_power)
-        showBody("dave balance: ", initBalanceDave)
-        await con.VaultController!.connect(Bob).borrow_usdi(1, account_borrowing_power)
+        await con.VaultController!.connect(Bob).borrow_usdi(vaultID, account_borrowing_power)
 
 
         /******** CHECK WITHDRAW BEFORE CALCULATE INTEREST ********/
         //skip time so we can put vault below liquidation threshold 
         await fastForward(60 * 60 * 24 * 7 * 52 * 10);//10 year
+
         //await bob_vault.connect(Bob).withdraw_erc20(Mainnet.wethAddress, BN("9e17"))
         //calculate interest to update protocol, vault is now able to be liquidated 
         await con.VaultController!.calculate_interest()
+
+        //init balances after calculate interest
+        const initBalanceDave = await con.USDI!.balanceOf(Dave.address)
+        const initBalanceBob = await con.USDI!.balanceOf(Bob.address)
+        const initWethBalanceDave = await wETH_Contract.balanceOf(Dave.address)
+        const initLiability = await con.VaultController!.get_account_liability(vaultID)
+
         //liquidate account
         const result = await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, BN("1e16"))
         const receipt = await result.wait()
@@ -381,25 +366,65 @@ describe("Testing liquidations", () => {
         let liquidateEvent = receipt.events![receipt.events!.length - 1]
         let args = liquidateEvent.args
         assert.equal(liquidateEvent.event, "Liquidate", "Correct event captured and emitted")
-        //assert.equal(args!.asset_address.toString(), Mainnet.wethAddress.toString(), "Asset address is correct")
-        //showBody(liquidateEvent)
+        assert.equal(args!.asset_address.toString().toUpperCase(), Mainnet.wethAddress.toString().toUpperCase(), "Asset address is correct")
+        const usdi_to_repurchase = args!.usdi_to_repurchase
+        const tokens_to_liquidate = args!.tokens_to_liquidate        
+        //console.log("Formatted usdi_to_repurchase: ", utils.formatEther(usdi_to_repurchase.toString()))
+
 
         /******** check ending balances ********/
+
+        //check ending liability
+        let liabiltiy = await con.VaultController!.get_account_liability(vaultID)
+        //showBody("initLiability: ", initLiability)
+        //showBody("End liability: ", liabiltiy)
+
+
 
         //Bob's vault has less collateral than before
         let balance = await wETH_Contract.balanceOf(bob_vault.address)
         let difference = bobVaultInit.sub(balance)
-        //expect(difference.toNumber()).to.be.greaterThan(0)
+        assert.equal(difference.toString(), tokens_to_liquidate.toString(), "Correct number of tokens liquidated from vault")
+
 
         //Dave spent USDi to liquidate
         balance = await con.USDI!.balanceOf(Dave.address)
-        //expect(balance.toNumber()).to.be.lessThan(initBalanceDave.toNumber())
+        difference = initBalanceDave.sub(balance)
+        //assert.equal(difference.toString(), usdi_to_repurchase.toString(), "Dave spent the correct amount of usdi")
+        //expect(difference.toString()).to.not.equal("0")
+        
 
         //Dave received wETH
         balance = await wETH_Contract.balanceOf(Dave.address)
-        //expect(balance.toNumber()).to.be.greaterThan(initWethBalanceDave.toNumber())
-        //showBody("Dave wETH balance end: ", balance.toString())
+        difference = balance.sub(initWethBalanceDave)
+        assert.equal(difference.toString(), tokens_to_liquidate.toString(), "Correct number of tokens liquidated from vault")
 
+    })
+
+    it("checks for over liquidation", async () => {
+        const abi = new ERC20ABI()
+        const comp_contract = new ethers.Contract(Mainnet.compAddress, abi.erc20ABI(), ethers.provider)
+        const vaultID = 2
+        const carolVaultTotalTokens = await comp_contract.balanceOf(carol_vault.address)
+        const carolBorrowPower = await con.VaultController!.account_borrowing_power(2)
+        console.log(carolVaultTotalTokens.toString())
+        console.log(carolBorrowPower.toString())
+
+
+        let solvency = await con.VaultController!.check_account(vaultID)
+        //console.log("solvency: ", solvency)
+
+        let liabilty = await con.VaultController!.get_account_liability(vaultID)
+        //console.log("liabilty: ", utils.formatEther(liabilty.toString()))
+
+        let balance = await con.USDI!.balanceOf(Dave.address)
+        //console.log("Dave USDi Balance: ", utils.formatEther(balance.toString()))
+
+
+        balance = await con.USDI!.balanceOf(Dave.address)
+        //console.log("Dave USDi Balance: ", utils.formatEther(balance.toString()))
+
+        //await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, bobVaultTotal.div(2)).should.be.revertedWith("vault solvent")
     })
 })
 
