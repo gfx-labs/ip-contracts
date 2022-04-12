@@ -7,6 +7,7 @@ import { stealMoney } from "../util/money";
 import { ContractReceipt, Event, utils } from "ethers";
 import { showBody } from "../util/format";
 import { BN } from "../util/number";
+import { format } from "path";
 //import { assert } from "console";
 
 //import {ERC20ABI} from "../../scripts/erc20ABI"
@@ -427,7 +428,7 @@ describe("Testing liquidations", () => {
 
         let liabilty = await con.VaultController!.get_account_liability(vaultID)
         console.log("liabilty: ", utils.formatEther(liabilty.toString()))
-
+        
         
 
         let balance = await con.USDI!.balanceOf(Dave.address)

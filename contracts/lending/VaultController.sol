@@ -276,7 +276,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
     {
         uint256 scale = 10**(18 - (IERC20(asset_address).decimals()));
         scaledAmount = amount * scale;
-    }    
+    }
 
     function liquidate_account(
         uint256 id,
@@ -295,7 +295,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         require(vault_borrowing_power <= usdi_liability, "vault solvent");
         //get the price of the asset scaled to decimal 18
         uint256 price = _oracleMaster.get_live_price(asset_address);
-        //console.log("price: ", price);
+        console.log("price: ", price);
         // liquidation penalty
         uint256 badFillPrice = truncate(
             price * (1e18 - _tokenAddress_liquidationIncentive[asset_address])
@@ -304,12 +304,11 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         //uint256 vault_balance = vault.getBalances(asset_address);
         uint256 tokens_to_liquidate = tokenAmount;
 
-
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > vault.getBalances(asset_address)) {
             tokens_to_liquidate = vault.getBalances(asset_address);
         }
-
+        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
         uint256 usdi_to_repurchase = truncate(
             badFillPrice * tokens_to_liquidate
         );
@@ -358,9 +357,12 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
                     mul_ScalarTruncate(Exp({mantissa: raw_price}), balance) *
                         _tokenId_tokenLTV[i]
                 );
+                
+
                 total_liquidity_value = total_liquidity_value + token_value;
             }
         }
+        console.log("ENDING total_liquidity_value: ", total_liquidity_value);
         return total_liquidity_value;
     }
 
