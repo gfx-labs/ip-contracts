@@ -184,14 +184,6 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         return (total_liquidity_value >= usdi_liability);
     }
 
-    function account_borrowing_power(uint256 id)
-        external
-        view
-        returns (uint256)
-    {
-        return get_vault_borrowing_power(IVault(_vaultId_vaultAddress[id]));
-    }
-
     function borrow_usdi(uint256 id, uint256 amount) external override {
         pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
@@ -218,18 +210,6 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         _usdi.vault_master_mint(msg.sender, amount);
 
         emit BorrowUSDi(id, vault_address, amount);
-    }
-
-    function get_account_liability(uint256 id)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        address vault_address = _vaultId_vaultAddress[id];
-        require(vault_address != address(0x0), "vault does not exist");
-        IVault vault = IVault(vault_address);
-        return vault.getBaseLiability() * _interestFactor;
     }
 
     function repay_usdi(uint256 id, uint256 amount) external override {
@@ -268,16 +248,6 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         emit RepayUSDi(id, vault_address, usdi_liability);
     }
 
-    ///@dev converts amount to e18 based on decimal value on erc20 token
-    function tokenTo18(address asset_address, uint256 amount)
-        internal
-        view
-        returns (uint256 scaledAmount)
-    {
-        uint256 scale = 10**(18 - (IERC20(asset_address).decimals()));
-        scaledAmount = amount * scale;
-    }
-
     function liquidate_account(
         uint256 id,
         address asset_address,
@@ -286,37 +256,40 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
+        require(
+            IERC20(asset_address).balanceOf(vault_address) > 0,
+            "Vault does not hold any of this asset"
+        );
         IVault vault = IVault(vault_address);
         uint256 vault_borrowing_power = get_vault_borrowing_power(vault);
-        //if this balance is greater than the usdi liability, we just return 0 (nothing to liquidate);
-        uint256 usdi_liability = truncate(
-            vault.getBaseLiability() * _interestFactor
+
+        require(
+            vault_borrowing_power <= _get_account_liability(id),
+            "vault already solvent"
         );
-        require(vault_borrowing_power <= usdi_liability, "vault solvent");
         //get the price of the asset scaled to decimal 18
         uint256 price = _oracleMaster.get_live_price(asset_address);
-        console.log("price: ", price);
+
         // liquidation penalty
         uint256 badFillPrice = truncate(
             price * (1e18 - _tokenAddress_liquidationIncentive[asset_address])
         );
-        //console.log("badFillPrice: ", badFillPrice);
-        //uint256 vault_balance = vault.getBalances(asset_address);
+
         uint256 tokens_to_liquidate = tokenAmount;
 
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > vault.getBalances(asset_address)) {
             tokens_to_liquidate = vault.getBalances(asset_address);
         }
-        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
+
         uint256 usdi_to_repurchase = truncate(
             badFillPrice * tokens_to_liquidate
         );
 
-        uint256 base_amount = div_(usdi_to_repurchase * 1e18, _interestFactor);
-
-        vault.decrease_liability(base_amount);
-        //console.log("usdi_to_repurchase: ", usdi_to_repurchase);
+        //decrease by base amount -- switch to truncate?
+        vault.decrease_liability(
+            div_(usdi_to_repurchase * 1e18, _interestFactor)
+        );
 
         //decrease liquidators usdi balance
         _usdi.vault_master_burn(msg.sender, usdi_to_repurchase);
@@ -324,14 +297,9 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         // finally, we deliver the tokens to the liquidator
         vault.masterTransfer(asset_address, msg.sender, tokens_to_liquidate);
 
-        uint256 vault_borrowing_power_after = get_vault_borrowing_power(vault);
-        uint256 usdi_liability_after = truncate(
-            vault.getBaseLiability() * _interestFactor
-        );
-        // the vault must still be insolvent after liquidation, defer the math off chain
         require(
-            vault_borrowing_power_after <= usdi_liability_after,
-            "vault solvent"
+            get_vault_borrowing_power(vault) <= _get_account_liability(id),
+            "vault solvent - liquidation amount too high"
         );
         emit Liquidate(
             id,
@@ -342,7 +310,37 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         return tokens_to_liquidate;
     }
 
-    ///@dev total_liquidity_value is USDC - decimal 6
+    /******* get things *******/
+    function get_account_liability(uint256 id)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _get_account_liability(id);
+    }
+
+    function _get_account_liability(uint256 id)
+        internal
+        view
+        returns (uint256)
+    {
+        address vault_address = _vaultId_vaultAddress[id];
+        require(vault_address != address(0x0), "vault does not exist");
+        IVault vault = IVault(vault_address);
+
+        return truncate(vault.getBaseLiability() * _interestFactor);
+    }
+
+    function account_borrowing_power(uint256 id)
+        external
+        view
+        returns (uint256)
+    {
+        return get_vault_borrowing_power(IVault(_vaultId_vaultAddress[id]));
+    }
+
+    ///@dev total_liquidity_value
     function get_vault_borrowing_power(IVault vault)
         private
         view
@@ -360,15 +358,15 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
                     mul_ScalarTruncate(Exp({mantissa: raw_price}), balance) *
                         _tokenId_tokenLTV[i]
                 );
-                
 
                 total_liquidity_value = total_liquidity_value + token_value;
             }
         }
-        console.log("ENDING total_liquidity_value: ", total_liquidity_value);
         return total_liquidity_value;
     }
 
+
+    /******* calculate and pay interest *******/
     function calculate_interest() external override {
         pay_interest();
     }

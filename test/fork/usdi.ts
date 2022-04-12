@@ -189,7 +189,7 @@ describe("TOKEN-DEPOSITS", () => {
           (await con.VaultController!.account_borrowing_power(2)).toString()
         );
         */
-         
+
     });
 });
 describe("TOKEN-DEPOSITS", async () => {
@@ -369,7 +369,7 @@ describe("Testing liquidations", () => {
         assert.equal(liquidateEvent.event, "Liquidate", "Correct event captured and emitted")
         assert.equal(args!.asset_address.toString().toUpperCase(), Mainnet.wethAddress.toString().toUpperCase(), "Asset address is correct")
         const usdi_to_repurchase = args!.usdi_to_repurchase
-        const tokens_to_liquidate = args!.tokens_to_liquidate        
+        const tokens_to_liquidate = args!.tokens_to_liquidate
         //console.log("Formatted usdi_to_repurchase: ", utils.formatEther(usdi_to_repurchase.toString()))
 
 
@@ -393,7 +393,7 @@ describe("Testing liquidations", () => {
         difference = initBalanceDave.sub(balance)
         //assert.equal(difference.toString(), usdi_to_repurchase.toString(), "Dave spent the correct amount of usdi")
         //expect(difference.toString()).to.not.equal("0")
-        
+
 
         //Dave received wETH
         balance = await wETH_Contract.balanceOf(Dave.address)
@@ -402,21 +402,38 @@ describe("Testing liquidations", () => {
 
     })
 
-    it("checks for over liquidation", async () => {
+    it("checks for over liquidation and then liquidates a vault that is just barely insolvent", async () => {
         /**
-         * account_borrowing_power returns decimal 6, get_account_liability returns decimal 18
-         *  borrow power: 6775886520000000000000
-         *  liability after borrow maximum and after calculate_interest(): 6775886949429774113242644197017362747658
+         * 
+         * TODO: test exploit: liquidate max -> borrowing power reduced -> account insolvant again -> repeat -> profit
+         * 
+         * Should account_borrowing_power reflect the current borrow power of the vault, as in the amount should go down once a loan is taken? Currently it does not. 
          * 
          */
         const abi = new ERC20ABI()
+        const rawPrice = await con.Oracle!.get_live_price(Mainnet.compAddress)
+        //showBody("rawPrice: ", rawPrice)
+        let formatPrice:any = utils.formatEther(rawPrice.toString())
+        formatPrice = parseFloat(formatPrice)
+        //let formatPrice = (await con.Oracle!.get_live_price(Mainnet.compAddress)).div(1e14).toNumber() / 1e4
+        //showBody("Formatted COMP price: ", formatPrice)
         const comp_contract = new ethers.Contract(Mainnet.compAddress, abi.erc20ABI(), ethers.provider)
         const vaultID = 2
+
+        //get values for total collateral value and loan amount
         const carolVaultTotalTokens = await comp_contract.balanceOf(carol_vault.address)
+        const collateralValue = (parseFloat(utils.formatEther(carolVaultTotalTokens.toString())) * formatPrice)
+        //showBody("Total collateral value: ", collateralValue)
+
+
+        //borrow usdi
         const carolBorrowPower = await con.VaultController!.account_borrowing_power(2)
-        console.log("100 COMP tokens: ", utils.formatEther(carolVaultTotalTokens.toString()))
-        console.log("USDC borrow power: ", carolBorrowPower.toString())
-        await con.VaultController!.connect(Carol).borrow_usdi(vaultID, carolBorrowPower)
+        showBody("carolBorrowPower BEFORE: ", carolBorrowPower.toString())
+        const result = await con.VaultController!.connect(Carol).borrow_usdi(vaultID, carolBorrowPower)
+        const receipt = await result.wait()
+        let event = receipt.events![receipt.events!.length - 1]
+        let args = event.args
+        //showBody("borrowAmount: ", utils.formatEther(args!.borrowAmount.toString()))
 
         let solvency = await con.VaultController!.check_account(vaultID)
         assert.equal(solvency, true, "Carol's vault is solvent")
@@ -427,15 +444,45 @@ describe("Testing liquidations", () => {
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
         let liabilty = await con.VaultController!.get_account_liability(vaultID)
-        console.log("liabilty: ", utils.formatEther(liabilty.toString()))
+        //showBody("Liabilty: Amount of USDi owed: ", utils.formatEther(liabilty.toString()))
+
+        //wrong asset address - should revert
+        await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, BN("1e16")).should.be.revertedWith("Vault does not hold any of this asset")
         
+        //try to liquidate too much - should revert
+        await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.compAddress, BN("1e16")).should.be.revertedWith("vault solvent - liquidation amount too high")
         
 
-        let balance = await con.USDI!.balanceOf(Dave.address)
+        //off chain math - how much to liquidate? 
+        const usdiAmountToLiquidate = liabilty.sub(args!.borrowAmount)
+        //showBody("Formatted USDi amount owed: ", utils.formatEther(usdiAmountToLiquidate.toString()))
+
+        //convert usdi amount to comp amount
+        const amountToLiquidate = rawPrice.div(usdiAmountToLiquidate)
+        showBody("amountToLiquidate: ", amountToLiquidate)
+        showBody("Formatted amount of COMP to liquidate: ", utils.formatEther(amountToLiquidate.toString()))
+
+        //liquidate just 1 too many, should revert
+        await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.compAddress, amountToLiquidate.add(2000000))
+
+        let newBorrowPower = await con.VaultController!.account_borrowing_power(2)
+        showBody("carolBorrowPower AFTER: ", newBorrowPower.toString())
+
+        /**
+         //tiny liquidation 
+        const liquidateResult = await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.compAddress, amountToLiquidate)
+        const liquidateReceipt = await liquidateResult.wait()
+        let liquidateEvent = liquidateReceipt.events![liquidateReceipt.events!.length - 1]
+        args = liquidateEvent.args
+        showBody(args)
+         */
+
+
+        //let balance = await con.USDI!.balanceOf(Dave.address)
         //console.log("Dave USDi Balance: ", utils.formatEther(balance.toString()))
 
 
-        balance = await con.USDI!.balanceOf(Dave.address)
+        //balance = await con.USDI!.balanceOf(Dave.address)
         //console.log("Dave USDi Balance: ", utils.formatEther(balance.toString()))
 
         //await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, bobVaultTotal.div(2)).should.be.revertedWith("vault solvent")
