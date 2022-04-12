@@ -5,7 +5,7 @@ import "../token/IUSDI.sol";
 import "../_external/IERC20.sol";
 import "../_external/compound/ExponentialNoError.sol";
 import "./IVault.sol";
-import "./IVaultMaster.sol";
+import "./IVaultController.sol";
 
 import "hardhat/console.sol";
 
@@ -26,12 +26,11 @@ contract Vault is IVault, ExponentialNoError {
     IUSDI private _usdi;
 
     address public _masterAddress;
-    IVaultMaster private _master;
+    IVaultController private _master;
 
     event Deposit(address token_address, uint256 amount);
     event Withdraw(address token_address, uint256 amount);
 
-    mapping(address => uint256) _balances;
 
     uint256 public _baseLiability;
 
@@ -56,7 +55,7 @@ contract Vault is IVault, ExponentialNoError {
         _usdiAddress = usdi_address;
         _usdi = IUSDI(usdi_address);
         _masterAddress = master_address;
-        _master = IVaultMaster(master_address);
+        _master = IVaultController(master_address);
     }
 
     function getMinter() external view override returns (address) {
@@ -73,7 +72,7 @@ contract Vault is IVault, ExponentialNoError {
         override
         returns (uint256)
     {
-        return _balances[addr];
+        return IERC20(addr).balanceOf(address(this));
     }
 
     function deposit_erc20(address token_address, uint256 amount)
@@ -83,7 +82,6 @@ contract Vault is IVault, ExponentialNoError {
         require(amount > 0, "cannot deposit 0");
         IERC20 token = IERC20(token_address);
         token.transferFrom(msg.sender, address(this), amount);
-        _balances[token_address] = _balances[token_address] + amount;
 
         emit Deposit(token_address, amount);
     }
@@ -93,13 +91,8 @@ contract Vault is IVault, ExponentialNoError {
         override
         minterOnly
     {
-        require(
-            _balances[token_address] > amount,
-            "cannot withdraw more than you owe"
-        );
         IERC20 token = IERC20(token_address);
         token.transferFrom(address(this), msg.sender, amount);
-        _balances[token_address] = _balances[token_address] - amount;
         bool solvency = _master.check_account(_id);
         require(solvency, "this withdraw would make your account insolvent");
 
@@ -145,7 +138,7 @@ contract Vault is IVault, ExponentialNoError {
         return _baseLiability;
     }
 
-    function delegate_Comp_Like_To(address compLikeDelegatee, address CompLikeToken)
+    function delegateCompLikeTo(address compLikeDelegatee, address CompLikeToken)
         external
         override
         minterOnly

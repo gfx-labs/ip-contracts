@@ -5,7 +5,6 @@ import "./token/IUSDI.sol";
 import "./token/UFragments.sol";
 import "./lending/Vault.sol";
 import "./_external/IERC20.sol";
-import "./_external/ERC20.sol";
 
 import "hardhat/console.sol";
 
@@ -14,11 +13,11 @@ contract USDI is UFragments, IUSDI {
     IERC20 public _reserve;
 
     address public _lenderAddress;
-    address public _vaultMasterAddress;
-    IVaultMaster private _vaultMaster;
+    address public _VaultControllerAddress;
+    IVaultController private _VaultController;
 
-    modifier onlyVaultMaster() {
-        require(msg.sender == _vaultMasterAddress, "only vault master");
+    modifier onlyVaultController() {
+        require(msg.sender == _VaultControllerAddress, "only vault master");
         _;
     }
 
@@ -33,11 +32,12 @@ contract USDI is UFragments, IUSDI {
         _reserve = IERC20(_reserveAddress);
     }
 
-    function deposit(uint256 amount) external override {
+    function deposit(uint256 usdc_amount) external override {
+        uint256 amount = usdc_amount * 1e12;
         require(amount > 0, "Cannot deposit 0");
         uint256 allowance = _reserve.allowance(msg.sender, address(this));
-        require(allowance >= amount, "Insufficient Allowance");
-        _reserve.transferFrom(msg.sender, address(this), amount);
+        require(allowance >= usdc_amount, "Insufficient Allowance");
+        _reserve.transferFrom(msg.sender, address(this), usdc_amount);
         _gonBalances[msg.sender] =
             _gonBalances[msg.sender] +
             amount *
@@ -47,13 +47,14 @@ contract USDI is UFragments, IUSDI {
         emit Deposit(msg.sender, amount);
     }
 
-    function withdraw(uint256 amount) external override {
+    function withdraw(uint256 usdc_amount) external override {
+        uint256 amount = usdc_amount * 1e12;
         require(amount > 0, "Cannot withdraw 0");
         uint256 allowance = this.allowance(msg.sender, address(this));
-        require(allowance >= amount, "Insufficient Allowance");
+        require(allowance >= usdc_amount, "Insufficient Allowance");
         uint256 balance = _reserve.balanceOf(address(this));
-        require(balance >= amount, "Insufficient Reserve in Bank");
-        _reserve.transferFrom(address(this), msg.sender, amount);
+        require(balance >= usdc_amount, "Insufficient Reserve in Bank");
+        _reserve.transferFrom(address(this), msg.sender, usdc_amount);
         _gonBalances[msg.sender] =
             _gonBalances[msg.sender] -
             amount *
@@ -63,17 +64,18 @@ contract USDI is UFragments, IUSDI {
         emit Withdraw(msg.sender, amount);
     }
 
-    function setVaultMaster(address vault_master_address)
+    function setVaultController(address vault_master_address)
         external
         override
         onlyOwner
     {
-        _vaultMasterAddress = vault_master_address;
-        _vaultMaster = IVaultMaster(vault_master_address);
+        _VaultControllerAddress = vault_master_address;
+        _VaultController = IVaultController(vault_master_address);
     }
 
-    function mint(uint256 amount) external override onlyOwner {
-        _vaultMaster.calculate_interest();
+    function mint(uint256 usdc_amount) external override onlyOwner {
+        _VaultController.calculate_interest();
+        uint256 amount = usdc_amount * 1e12;
         if (amount <= 0) {
             return;
         }
@@ -86,11 +88,12 @@ contract USDI is UFragments, IUSDI {
         emit Mint(msg.sender, amount);
     }
 
-    function burn(uint256 amount) external override onlyOwner {
-        _vaultMaster.calculate_interest();
-        if (amount <= 0) {
+    function burn(uint256 usdc_amount) external override onlyOwner {
+        _VaultController.calculate_interest();
+        if (usdc_amount <= 0) {
             return;
         }
+        uint256 amount = usdc_amount * 1e12;
         _gonBalances[msg.sender] =
             _gonBalances[msg.sender] -
             amount *
@@ -103,18 +106,18 @@ contract USDI is UFragments, IUSDI {
     function vault_master_mint(address target, uint256 amount)
         external
         override
-        onlyVaultMaster
+        onlyVaultController
     {
         _gonBalances[target] = _gonBalances[target] + amount * _gonsPerFragment;
         _totalSupply = _totalSupply + amount;
         _totalGons = _totalGons + amount * _gonsPerFragment;
-        emit Burn(target, amount);
+        emit Mint(target, amount);
     }
 
     function vault_master_burn(address target, uint256 amount)
         external
         override
-        onlyVaultMaster
+        onlyVaultController
     {
         require(
             _gonBalances[target] > (amount * _gonsPerFragment),
@@ -129,7 +132,7 @@ contract USDI is UFragments, IUSDI {
     function vault_master_donate(uint256 amount)
         external
         override
-        onlyVaultMaster
+        onlyVaultController
     {
         _totalSupply = _totalSupply + amount;
         if (_totalSupply > MAX_SUPPLY) {

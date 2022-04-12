@@ -33,6 +33,7 @@ export interface USDIInterface extends utils.Interface {
     "EIP712_REVISION()": FunctionFragment;
     "MAX_SUPPLY()": FunctionFragment;
     "PERMIT_TYPEHASH()": FunctionFragment;
+    "_VaultControllerAddress()": FunctionFragment;
     "_gonBalances(address)": FunctionFragment;
     "_gonsPerFragment()": FunctionFragment;
     "_lenderAddress()": FunctionFragment;
@@ -40,7 +41,6 @@ export interface USDIInterface extends utils.Interface {
     "_reserveAddress()": FunctionFragment;
     "_totalGons()": FunctionFragment;
     "_totalSupply()": FunctionFragment;
-    "_vaultMasterAddress()": FunctionFragment;
     "allowance(address,address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
@@ -61,7 +61,7 @@ export interface USDIInterface extends utils.Interface {
     "scaledBalanceOf(address)": FunctionFragment;
     "scaledTotalSupply()": FunctionFragment;
     "setMonetaryPolicy(address)": FunctionFragment;
-    "setVaultMaster(address)": FunctionFragment;
+    "setVaultController(address)": FunctionFragment;
     "symbol()": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
@@ -82,6 +82,7 @@ export interface USDIInterface extends utils.Interface {
       | "EIP712_REVISION"
       | "MAX_SUPPLY"
       | "PERMIT_TYPEHASH"
+      | "_VaultControllerAddress"
       | "_gonBalances"
       | "_gonsPerFragment"
       | "_lenderAddress"
@@ -89,7 +90,6 @@ export interface USDIInterface extends utils.Interface {
       | "_reserveAddress"
       | "_totalGons"
       | "_totalSupply"
-      | "_vaultMasterAddress"
       | "allowance"
       | "approve"
       | "balanceOf"
@@ -110,7 +110,7 @@ export interface USDIInterface extends utils.Interface {
       | "scaledBalanceOf"
       | "scaledTotalSupply"
       | "setMonetaryPolicy"
-      | "setVaultMaster"
+      | "setVaultController"
       | "symbol"
       | "totalSupply"
       | "transfer"
@@ -145,6 +145,10 @@ export interface USDIInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "_VaultControllerAddress",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "_gonBalances",
     values: [string]
   ): string;
@@ -167,10 +171,6 @@ export interface USDIInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "_totalSupply",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_vaultMasterAddress",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -241,7 +241,7 @@ export interface USDIInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "setVaultMaster",
+    functionFragment: "setVaultController",
     values: [string]
   ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
@@ -301,6 +301,10 @@ export interface USDIInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "_VaultControllerAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "_gonBalances",
     data: BytesLike
   ): Result;
@@ -320,10 +324,6 @@ export interface USDIInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "_totalGons", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "_totalSupply",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_vaultMasterAddress",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
@@ -371,7 +371,7 @@ export interface USDIInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setVaultMaster",
+    functionFragment: "setVaultController",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
@@ -577,6 +577,8 @@ export interface USDI extends BaseContract {
 
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<[string]>;
 
+    _VaultControllerAddress(overrides?: CallOverrides): Promise<[string]>;
+
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     _gonsPerFragment(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -590,8 +592,6 @@ export interface USDI extends BaseContract {
     _totalGons(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     _totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    _vaultMasterAddress(overrides?: CallOverrides): Promise<[string]>;
 
     allowance(
       owner_: string,
@@ -608,7 +608,7 @@ export interface USDI extends BaseContract {
     balanceOf(who: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     burn(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -621,7 +621,7 @@ export interface USDI extends BaseContract {
     ): Promise<ContractTransaction>;
 
     deposit(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -632,7 +632,7 @@ export interface USDI extends BaseContract {
     ): Promise<ContractTransaction>;
 
     mint(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -682,7 +682,7 @@ export interface USDI extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setVaultMaster(
+    setVaultController(
       vault_master_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -738,7 +738,7 @@ export interface USDI extends BaseContract {
     ): Promise<ContractTransaction>;
 
     withdraw(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
@@ -753,6 +753,8 @@ export interface USDI extends BaseContract {
 
   PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<string>;
 
+  _VaultControllerAddress(overrides?: CallOverrides): Promise<string>;
+
   _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   _gonsPerFragment(overrides?: CallOverrides): Promise<BigNumber>;
@@ -766,8 +768,6 @@ export interface USDI extends BaseContract {
   _totalGons(overrides?: CallOverrides): Promise<BigNumber>;
 
   _totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _vaultMasterAddress(overrides?: CallOverrides): Promise<string>;
 
   allowance(
     owner_: string,
@@ -784,7 +784,7 @@ export interface USDI extends BaseContract {
   balanceOf(who: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   burn(
-    amount: BigNumberish,
+    usdc_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -797,7 +797,7 @@ export interface USDI extends BaseContract {
   ): Promise<ContractTransaction>;
 
   deposit(
-    amount: BigNumberish,
+    usdc_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -808,7 +808,7 @@ export interface USDI extends BaseContract {
   ): Promise<ContractTransaction>;
 
   mint(
-    amount: BigNumberish,
+    usdc_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -853,7 +853,7 @@ export interface USDI extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  setVaultMaster(
+  setVaultController(
     vault_master_address: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -909,7 +909,7 @@ export interface USDI extends BaseContract {
   ): Promise<ContractTransaction>;
 
   withdraw(
-    amount: BigNumberish,
+    usdc_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -923,6 +923,8 @@ export interface USDI extends BaseContract {
     MAX_SUPPLY(overrides?: CallOverrides): Promise<BigNumber>;
 
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<string>;
+
+    _VaultControllerAddress(overrides?: CallOverrides): Promise<string>;
 
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -938,8 +940,6 @@ export interface USDI extends BaseContract {
 
     _totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _vaultMasterAddress(overrides?: CallOverrides): Promise<string>;
-
     allowance(
       owner_: string,
       spender: string,
@@ -954,7 +954,7 @@ export interface USDI extends BaseContract {
 
     balanceOf(who: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    burn(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    burn(usdc_amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     decimals(overrides?: CallOverrides): Promise<number>;
 
@@ -964,7 +964,10 @@ export interface USDI extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    deposit(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    deposit(
+      usdc_amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     increaseAllowance(
       spender: string,
@@ -972,7 +975,7 @@ export interface USDI extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    mint(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    mint(usdc_amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     monetaryPolicy(overrides?: CallOverrides): Promise<string>;
 
@@ -1013,7 +1016,7 @@ export interface USDI extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setVaultMaster(
+    setVaultController(
       vault_master_address: string,
       overrides?: CallOverrides
     ): Promise<void>;
@@ -1065,7 +1068,10 @@ export interface USDI extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    withdraw(amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    withdraw(
+      usdc_amount: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
@@ -1157,6 +1163,8 @@ export interface USDI extends BaseContract {
 
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<BigNumber>;
 
+    _VaultControllerAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     _gonsPerFragment(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1170,8 +1178,6 @@ export interface USDI extends BaseContract {
     _totalGons(overrides?: CallOverrides): Promise<BigNumber>;
 
     _totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _vaultMasterAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
     allowance(
       owner_: string,
@@ -1188,7 +1194,7 @@ export interface USDI extends BaseContract {
     balanceOf(who: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     burn(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1201,7 +1207,7 @@ export interface USDI extends BaseContract {
     ): Promise<BigNumber>;
 
     deposit(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1212,7 +1218,7 @@ export interface USDI extends BaseContract {
     ): Promise<BigNumber>;
 
     mint(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1257,7 +1263,7 @@ export interface USDI extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    setVaultMaster(
+    setVaultController(
       vault_master_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -1313,7 +1319,7 @@ export interface USDI extends BaseContract {
     ): Promise<BigNumber>;
 
     withdraw(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
@@ -1328,6 +1334,10 @@ export interface USDI extends BaseContract {
     MAX_SUPPLY(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _VaultControllerAddress(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     _gonBalances(
       arg0: string,
@@ -1345,10 +1355,6 @@ export interface USDI extends BaseContract {
     _totalGons(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _vaultMasterAddress(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     allowance(
       owner_: string,
@@ -1368,7 +1374,7 @@ export interface USDI extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     burn(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1381,7 +1387,7 @@ export interface USDI extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     deposit(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1392,7 +1398,7 @@ export interface USDI extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     mint(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1443,7 +1449,7 @@ export interface USDI extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    setVaultMaster(
+    setVaultController(
       vault_master_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
@@ -1499,7 +1505,7 @@ export interface USDI extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     withdraw(
-      amount: BigNumberish,
+      usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

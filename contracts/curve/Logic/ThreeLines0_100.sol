@@ -68,16 +68,16 @@ contract ThreeLines0_100 is ICurveSlave {
     }
 
     function valueAt(int256 x_value) external view override returns (int256) {
-        int256 max = 100 * 1e18;
-        require(x_value > 0, "too small");
+        int256 max = 1e18;
+        require(x_value >= 0, "too small");
         require(x_value <= max, "too large");
         if (x_value < _s0) {
-            int256 rise = _r0 - _r1;
+            int256 rise = _r1 - _r0;
             int256 run = _s0;
             return linearInterpolation(rise, run, x_value, _r0);
         }
         if (x_value < _s1) {
-            int256 rise = _r1 - _r2;
+            int256 rise = _r2 - _r1;
             int256 run = _s1 - _s0;
             return linearInterpolation(rise, run, x_value - _s0, _r1);
         }

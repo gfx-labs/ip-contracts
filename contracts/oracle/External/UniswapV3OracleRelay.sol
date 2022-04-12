@@ -10,7 +10,12 @@ contract UniswapV3OracleRelay is IOracleRelay {
     bool public _quoteTokenIsToken0;
     IUniswapV3PoolDerivedState public _pool;
 
-    constructor(address pool_address, bool quote_token_is_token0) {
+    uint256 _mul;
+    uint256 _div;
+
+    constructor(address pool_address, bool quote_token_is_token0, uint256 mul, uint256 div) {
+        _mul = mul;
+        _div = div;
         _poolAddress = pool_address;
         _quoteTokenIsToken0 = quote_token_is_token0;
         _pool = IUniswapV3PoolDerivedState(_poolAddress);
@@ -53,5 +58,7 @@ contract UniswapV3OracleRelay is IOracleRelay {
         if (!_quoteTokenIsToken0) {
             price = (1e18 * 1e18) / price;
         }
+
+        price = price * _mul / _div;
     }
 }

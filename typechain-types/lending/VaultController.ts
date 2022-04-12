@@ -28,15 +28,16 @@ import type {
 
 export interface VaultControllerInterface extends utils.Interface {
   functions: {
-    "_e18_interestFactor()": FunctionFragment;
-    "_e4_liquidatorShare()": FunctionFragment;
+    "_curveMasterAddress()": FunctionFragment;
     "_enabledTokens(uint256)": FunctionFragment;
+    "_interestFactor()": FunctionFragment;
     "_lastInterestTime()": FunctionFragment;
     "_oracleMasterAddress()": FunctionFragment;
-    "_tokenAddress_liquidationIncentivee4(address)": FunctionFragment;
+    "_protocolFee()": FunctionFragment;
+    "_tokenAddress_liquidationIncentive(address)": FunctionFragment;
     "_tokenAddress_tokenId(address)": FunctionFragment;
     "_tokenId_oracleAddress(uint256)": FunctionFragment;
-    "_tokenId_tokenLTVe4(uint256)": FunctionFragment;
+    "_tokenId_tokenLTV(uint256)": FunctionFragment;
     "_tokensRegistered()": FunctionFragment;
     "_totalBaseLiability()": FunctionFragment;
     "_usdiAddress()": FunctionFragment;
@@ -45,12 +46,15 @@ export interface VaultControllerInterface extends utils.Interface {
     "account_borrowing_power(uint256)": FunctionFragment;
     "borrow_usdi(uint256,uint256)": FunctionFragment;
     "calculate_interest()": FunctionFragment;
+    "change_protocol_fee(uint256)": FunctionFragment;
     "check_account(uint256)": FunctionFragment;
     "getInterestFactor()": FunctionFragment;
+    "getProtocolFee()": FunctionFragment;
     "get_account_liability(uint256)": FunctionFragment;
     "liquidate_account(uint256,address,uint256)": FunctionFragment;
     "mint_vault()": FunctionFragment;
     "owner()": FunctionFragment;
+    "register_curve_master(address)": FunctionFragment;
     "register_erc20(address,uint256,address,uint256)": FunctionFragment;
     "register_oracle_master(address)": FunctionFragment;
     "register_usdi(address)": FunctionFragment;
@@ -63,15 +67,16 @@ export interface VaultControllerInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "_e18_interestFactor"
-      | "_e4_liquidatorShare"
+      | "_curveMasterAddress"
       | "_enabledTokens"
+      | "_interestFactor"
       | "_lastInterestTime"
       | "_oracleMasterAddress"
-      | "_tokenAddress_liquidationIncentivee4"
+      | "_protocolFee"
+      | "_tokenAddress_liquidationIncentive"
       | "_tokenAddress_tokenId"
       | "_tokenId_oracleAddress"
-      | "_tokenId_tokenLTVe4"
+      | "_tokenId_tokenLTV"
       | "_tokensRegistered"
       | "_totalBaseLiability"
       | "_usdiAddress"
@@ -80,12 +85,15 @@ export interface VaultControllerInterface extends utils.Interface {
       | "account_borrowing_power"
       | "borrow_usdi"
       | "calculate_interest"
+      | "change_protocol_fee"
       | "check_account"
       | "getInterestFactor"
+      | "getProtocolFee"
       | "get_account_liability"
       | "liquidate_account"
       | "mint_vault"
       | "owner"
+      | "register_curve_master"
       | "register_erc20"
       | "register_oracle_master"
       | "register_usdi"
@@ -97,16 +105,16 @@ export interface VaultControllerInterface extends utils.Interface {
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "_e18_interestFactor",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_e4_liquidatorShare",
+    functionFragment: "_curveMasterAddress",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "_enabledTokens",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_interestFactor",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "_lastInterestTime",
@@ -117,7 +125,11 @@ export interface VaultControllerInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "_tokenAddress_liquidationIncentivee4",
+    functionFragment: "_protocolFee",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_tokenAddress_liquidationIncentive",
     values: [string]
   ): string;
   encodeFunctionData(
@@ -129,7 +141,7 @@ export interface VaultControllerInterface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "_tokenId_tokenLTVe4",
+    functionFragment: "_tokenId_tokenLTV",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -165,11 +177,19 @@ export interface VaultControllerInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "change_protocol_fee",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "check_account",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getInterestFactor",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getProtocolFee",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -185,6 +205,10 @@ export interface VaultControllerInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "register_curve_master",
+    values: [string]
+  ): string;
   encodeFunctionData(
     functionFragment: "register_erc20",
     values: [string, BigNumberish, string, BigNumberish]
@@ -219,15 +243,15 @@ export interface VaultControllerInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "_e18_interestFactor",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_e4_liquidatorShare",
+    functionFragment: "_curveMasterAddress",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "_enabledTokens",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_interestFactor",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -239,7 +263,11 @@ export interface VaultControllerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "_tokenAddress_liquidationIncentivee4",
+    functionFragment: "_protocolFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_tokenAddress_liquidationIncentive",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -251,7 +279,7 @@ export interface VaultControllerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "_tokenId_tokenLTVe4",
+    functionFragment: "_tokenId_tokenLTV",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -287,11 +315,19 @@ export interface VaultControllerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "change_protocol_fee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "check_account",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "getInterestFactor",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getProtocolFee",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -304,6 +340,10 @@ export interface VaultControllerInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "mint_vault", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "register_curve_master",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "register_erc20",
     data: BytesLike
@@ -335,15 +375,43 @@ export interface VaultControllerInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "BorrowUSDi(uint256,address,uint256)": EventFragment;
     "Interest(uint256,uint256)": EventFragment;
-    "Liquidate(uint256,address,uint256,uint256,uint256)": EventFragment;
+    "Liquidate(uint256,address,uint256,uint256)": EventFragment;
+    "NewProtocolFee(uint256)": EventFragment;
+    "NewVault(address,uint256,address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
+    "RegisterCurveMaster(address)": EventFragment;
+    "RegisterOracleMaster(address)": EventFragment;
+    "RegisteredErc20(address,uint256,address,uint256)": EventFragment;
+    "RepayUSDi(uint256,address,uint256)": EventFragment;
+    "UpdateRegisteredErc20(address,uint256,address,uint256)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "BorrowUSDi"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Interest"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Liquidate"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "NewProtocolFee"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "NewVault"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RegisterCurveMaster"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RegisterOracleMaster"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RegisteredErc20"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RepayUSDi"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "UpdateRegisteredErc20"): EventFragment;
 }
+
+export interface BorrowUSDiEventObject {
+  vaultId: BigNumber;
+  vaultAddress: string;
+  borrowAmount: BigNumber;
+}
+export type BorrowUSDiEvent = TypedEvent<
+  [BigNumber, string, BigNumber],
+  BorrowUSDiEventObject
+>;
+
+export type BorrowUSDiEventFilter = TypedEventFilter<BorrowUSDiEvent>;
 
 export interface InterestEventObject {
   epoch: BigNumber;
@@ -359,16 +427,37 @@ export type InterestEventFilter = TypedEventFilter<InterestEvent>;
 export interface LiquidateEventObject {
   vaultId: BigNumber;
   asset_address: string;
-  max_usdi: BigNumber;
   usdi_to_repurchase: BigNumber;
   tokens_to_liquidate: BigNumber;
 }
 export type LiquidateEvent = TypedEvent<
-  [BigNumber, string, BigNumber, BigNumber, BigNumber],
+  [BigNumber, string, BigNumber, BigNumber],
   LiquidateEventObject
 >;
 
 export type LiquidateEventFilter = TypedEventFilter<LiquidateEvent>;
+
+export interface NewProtocolFeeEventObject {
+  protocol_fee: BigNumber;
+}
+export type NewProtocolFeeEvent = TypedEvent<
+  [BigNumber],
+  NewProtocolFeeEventObject
+>;
+
+export type NewProtocolFeeEventFilter = TypedEventFilter<NewProtocolFeeEvent>;
+
+export interface NewVaultEventObject {
+  vault_address: string;
+  vaultId: BigNumber;
+  vaultOwner: string;
+}
+export type NewVaultEvent = TypedEvent<
+  [string, BigNumber, string],
+  NewVaultEventObject
+>;
+
+export type NewVaultEventFilter = TypedEventFilter<NewVaultEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -381,6 +470,67 @@ export type OwnershipTransferredEvent = TypedEvent<
 
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
+
+export interface RegisterCurveMasterEventObject {
+  curveMasterAddress: string;
+}
+export type RegisterCurveMasterEvent = TypedEvent<
+  [string],
+  RegisterCurveMasterEventObject
+>;
+
+export type RegisterCurveMasterEventFilter =
+  TypedEventFilter<RegisterCurveMasterEvent>;
+
+export interface RegisterOracleMasterEventObject {
+  oracleMasterAddress: string;
+}
+export type RegisterOracleMasterEvent = TypedEvent<
+  [string],
+  RegisterOracleMasterEventObject
+>;
+
+export type RegisterOracleMasterEventFilter =
+  TypedEventFilter<RegisterOracleMasterEvent>;
+
+export interface RegisteredErc20EventObject {
+  token_address: string;
+  LTVe4: BigNumber;
+  oracle_address: string;
+  liquidationIncentivee4: BigNumber;
+}
+export type RegisteredErc20Event = TypedEvent<
+  [string, BigNumber, string, BigNumber],
+  RegisteredErc20EventObject
+>;
+
+export type RegisteredErc20EventFilter = TypedEventFilter<RegisteredErc20Event>;
+
+export interface RepayUSDiEventObject {
+  vaultId: BigNumber;
+  vaultAddress: string;
+  repayAmount: BigNumber;
+}
+export type RepayUSDiEvent = TypedEvent<
+  [BigNumber, string, BigNumber],
+  RepayUSDiEventObject
+>;
+
+export type RepayUSDiEventFilter = TypedEventFilter<RepayUSDiEvent>;
+
+export interface UpdateRegisteredErc20EventObject {
+  token_address: string;
+  LTVe4: BigNumber;
+  oracle_address: string;
+  liquidationIncentivee4: BigNumber;
+}
+export type UpdateRegisteredErc20Event = TypedEvent<
+  [string, BigNumber, string, BigNumber],
+  UpdateRegisteredErc20EventObject
+>;
+
+export type UpdateRegisteredErc20EventFilter =
+  TypedEventFilter<UpdateRegisteredErc20Event>;
 
 export interface VaultController extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -409,20 +559,22 @@ export interface VaultController extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    _e18_interestFactor(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    _e4_liquidatorShare(overrides?: CallOverrides): Promise<[BigNumber]>;
+    _curveMasterAddress(overrides?: CallOverrides): Promise<[string]>;
 
     _enabledTokens(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    _interestFactor(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     _lastInterestTime(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     _oracleMasterAddress(overrides?: CallOverrides): Promise<[string]>;
 
-    _tokenAddress_liquidationIncentivee4(
+    _protocolFee(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    _tokenAddress_liquidationIncentive(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
@@ -437,7 +589,7 @@ export interface VaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
-    _tokenId_tokenLTVe4(
+    _tokenId_tokenLTV(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
@@ -470,12 +622,19 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    change_protocol_fee(
+      new_protocol_fee: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     check_account(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
     getInterestFactor(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    getProtocolFee(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     get_account_liability(
       id: BigNumberish,
@@ -485,7 +644,7 @@ export interface VaultController extends BaseContract {
     liquidate_account(
       id: BigNumberish,
       asset_address: string,
-      max_usdi: BigNumberish,
+      tokenAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -495,11 +654,16 @@ export interface VaultController extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
+    register_curve_master(
+      master_curve_address: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     register_erc20(
       token_address: string,
-      LTVe4: BigNumberish,
+      LTV: BigNumberish,
       oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
+      liquidationIncentive: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -535,27 +699,29 @@ export interface VaultController extends BaseContract {
 
     update_registered_erc20(
       token_address: string,
-      LTVe4: BigNumberish,
+      LTV: BigNumberish,
       oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
+      liquidationIncentive: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
-  _e18_interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _e4_liquidatorShare(overrides?: CallOverrides): Promise<BigNumber>;
+  _curveMasterAddress(overrides?: CallOverrides): Promise<string>;
 
   _enabledTokens(
     arg0: BigNumberish,
     overrides?: CallOverrides
   ): Promise<string>;
 
+  _interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
+
   _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
 
   _oracleMasterAddress(overrides?: CallOverrides): Promise<string>;
 
-  _tokenAddress_liquidationIncentivee4(
+  _protocolFee(overrides?: CallOverrides): Promise<BigNumber>;
+
+  _tokenAddress_liquidationIncentive(
     arg0: string,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
@@ -570,7 +736,7 @@ export interface VaultController extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
-  _tokenId_tokenLTVe4(
+  _tokenId_tokenLTV(
     arg0: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
@@ -603,9 +769,16 @@ export interface VaultController extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  change_protocol_fee(
+    new_protocol_fee: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   check_account(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
 
   getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
+
+  getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
 
   get_account_liability(
     id: BigNumberish,
@@ -615,7 +788,7 @@ export interface VaultController extends BaseContract {
   liquidate_account(
     id: BigNumberish,
     asset_address: string,
-    max_usdi: BigNumberish,
+    tokenAmount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -625,11 +798,16 @@ export interface VaultController extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
+  register_curve_master(
+    master_curve_address: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   register_erc20(
     token_address: string,
-    LTVe4: BigNumberish,
+    LTV: BigNumberish,
     oracle_address: string,
-    liquidationIncentivee4: BigNumberish,
+    liquidationIncentive: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -665,27 +843,29 @@ export interface VaultController extends BaseContract {
 
   update_registered_erc20(
     token_address: string,
-    LTVe4: BigNumberish,
+    LTV: BigNumberish,
     oracle_address: string,
-    liquidationIncentivee4: BigNumberish,
+    liquidationIncentive: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    _e18_interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _e4_liquidatorShare(overrides?: CallOverrides): Promise<BigNumber>;
+    _curveMasterAddress(overrides?: CallOverrides): Promise<string>;
 
     _enabledTokens(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<string>;
 
+    _interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
+
     _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
 
     _oracleMasterAddress(overrides?: CallOverrides): Promise<string>;
 
-    _tokenAddress_liquidationIncentivee4(
+    _protocolFee(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _tokenAddress_liquidationIncentive(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -700,7 +880,7 @@ export interface VaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
-    _tokenId_tokenLTVe4(
+    _tokenId_tokenLTV(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -731,12 +911,19 @@ export interface VaultController extends BaseContract {
 
     calculate_interest(overrides?: CallOverrides): Promise<void>;
 
+    change_protocol_fee(
+      new_protocol_fee: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     check_account(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
     getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
 
     get_account_liability(
       id: BigNumberish,
@@ -746,7 +933,7 @@ export interface VaultController extends BaseContract {
     liquidate_account(
       id: BigNumberish,
       asset_address: string,
-      max_usdi: BigNumberish,
+      tokenAmount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -754,11 +941,16 @@ export interface VaultController extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<string>;
 
+    register_curve_master(
+      master_curve_address: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     register_erc20(
       token_address: string,
-      LTVe4: BigNumberish,
+      LTV: BigNumberish,
       oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
+      liquidationIncentive: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -789,34 +981,57 @@ export interface VaultController extends BaseContract {
 
     update_registered_erc20(
       token_address: string,
-      LTVe4: BigNumberish,
+      LTV: BigNumberish,
       oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
+      liquidationIncentive: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
   };
 
   filters: {
+    "BorrowUSDi(uint256,address,uint256)"(
+      vaultId?: null,
+      vaultAddress?: null,
+      borrowAmount?: null
+    ): BorrowUSDiEventFilter;
+    BorrowUSDi(
+      vaultId?: null,
+      vaultAddress?: null,
+      borrowAmount?: null
+    ): BorrowUSDiEventFilter;
+
     "Interest(uint256,uint256)"(
       epoch?: null,
       amount?: null
     ): InterestEventFilter;
     Interest(epoch?: null, amount?: null): InterestEventFilter;
 
-    "Liquidate(uint256,address,uint256,uint256,uint256)"(
+    "Liquidate(uint256,address,uint256,uint256)"(
       vaultId?: null,
       asset_address?: null,
-      max_usdi?: null,
       usdi_to_repurchase?: null,
       tokens_to_liquidate?: null
     ): LiquidateEventFilter;
     Liquidate(
       vaultId?: null,
       asset_address?: null,
-      max_usdi?: null,
       usdi_to_repurchase?: null,
       tokens_to_liquidate?: null
     ): LiquidateEventFilter;
+
+    "NewProtocolFee(uint256)"(protocol_fee?: null): NewProtocolFeeEventFilter;
+    NewProtocolFee(protocol_fee?: null): NewProtocolFeeEventFilter;
+
+    "NewVault(address,uint256,address)"(
+      vault_address?: null,
+      vaultId?: null,
+      vaultOwner?: null
+    ): NewVaultEventFilter;
+    NewVault(
+      vault_address?: null,
+      vaultId?: null,
+      vaultOwner?: null
+    ): NewVaultEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
@@ -826,23 +1041,76 @@ export interface VaultController extends BaseContract {
       previousOwner?: string | null,
       newOwner?: string | null
     ): OwnershipTransferredEventFilter;
+
+    "RegisterCurveMaster(address)"(
+      curveMasterAddress?: null
+    ): RegisterCurveMasterEventFilter;
+    RegisterCurveMaster(
+      curveMasterAddress?: null
+    ): RegisterCurveMasterEventFilter;
+
+    "RegisterOracleMaster(address)"(
+      oracleMasterAddress?: null
+    ): RegisterOracleMasterEventFilter;
+    RegisterOracleMaster(
+      oracleMasterAddress?: null
+    ): RegisterOracleMasterEventFilter;
+
+    "RegisteredErc20(address,uint256,address,uint256)"(
+      token_address?: null,
+      LTVe4?: null,
+      oracle_address?: null,
+      liquidationIncentivee4?: null
+    ): RegisteredErc20EventFilter;
+    RegisteredErc20(
+      token_address?: null,
+      LTVe4?: null,
+      oracle_address?: null,
+      liquidationIncentivee4?: null
+    ): RegisteredErc20EventFilter;
+
+    "RepayUSDi(uint256,address,uint256)"(
+      vaultId?: null,
+      vaultAddress?: null,
+      repayAmount?: null
+    ): RepayUSDiEventFilter;
+    RepayUSDi(
+      vaultId?: null,
+      vaultAddress?: null,
+      repayAmount?: null
+    ): RepayUSDiEventFilter;
+
+    "UpdateRegisteredErc20(address,uint256,address,uint256)"(
+      token_address?: null,
+      LTVe4?: null,
+      oracle_address?: null,
+      liquidationIncentivee4?: null
+    ): UpdateRegisteredErc20EventFilter;
+    UpdateRegisteredErc20(
+      token_address?: null,
+      LTVe4?: null,
+      oracle_address?: null,
+      liquidationIncentivee4?: null
+    ): UpdateRegisteredErc20EventFilter;
   };
 
   estimateGas: {
-    _e18_interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _e4_liquidatorShare(overrides?: CallOverrides): Promise<BigNumber>;
+    _curveMasterAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
     _enabledTokens(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    _interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
+
     _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
 
     _oracleMasterAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _tokenAddress_liquidationIncentivee4(
+    _protocolFee(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _tokenAddress_liquidationIncentive(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -857,7 +1125,7 @@ export interface VaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    _tokenId_tokenLTVe4(
+    _tokenId_tokenLTV(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -890,12 +1158,19 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    change_protocol_fee(
+      new_protocol_fee: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     check_account(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
 
     get_account_liability(
       id: BigNumberish,
@@ -905,7 +1180,7 @@ export interface VaultController extends BaseContract {
     liquidate_account(
       id: BigNumberish,
       asset_address: string,
-      max_usdi: BigNumberish,
+      tokenAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -915,11 +1190,16 @@ export interface VaultController extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
+    register_curve_master(
+      master_curve_address: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     register_erc20(
       token_address: string,
-      LTVe4: BigNumberish,
+      LTV: BigNumberish,
       oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
+      liquidationIncentive: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -955,19 +1235,15 @@ export interface VaultController extends BaseContract {
 
     update_registered_erc20(
       token_address: string,
-      LTVe4: BigNumberish,
+      LTV: BigNumberish,
       oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
+      liquidationIncentive: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    _e18_interestFactor(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    _e4_liquidatorShare(
+    _curveMasterAddress(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -976,13 +1252,17 @@ export interface VaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    _interestFactor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     _lastInterestTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _oracleMasterAddress(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    _tokenAddress_liquidationIncentivee4(
+    _protocolFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _tokenAddress_liquidationIncentive(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -997,7 +1277,7 @@ export interface VaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    _tokenId_tokenLTVe4(
+    _tokenId_tokenLTV(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1032,12 +1312,19 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    change_protocol_fee(
+      new_protocol_fee: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     check_account(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getInterestFactor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getProtocolFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     get_account_liability(
       id: BigNumberish,
@@ -1047,7 +1334,7 @@ export interface VaultController extends BaseContract {
     liquidate_account(
       id: BigNumberish,
       asset_address: string,
-      max_usdi: BigNumberish,
+      tokenAmount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1057,11 +1344,16 @@ export interface VaultController extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    register_curve_master(
+      master_curve_address: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     register_erc20(
       token_address: string,
-      LTVe4: BigNumberish,
+      LTV: BigNumberish,
       oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
+      liquidationIncentive: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1097,9 +1389,9 @@ export interface VaultController extends BaseContract {
 
     update_registered_erc20(
       token_address: string,
-      LTVe4: BigNumberish,
+      LTV: BigNumberish,
       oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
+      liquidationIncentive: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

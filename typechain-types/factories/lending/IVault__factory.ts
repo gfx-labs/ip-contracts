@@ -10,30 +10,6 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "address",
-        name: "token_address",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-    ],
-    name: "claim_erc20",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
         internalType: "uint256",
         name: "base_amount",
         type: "uint256",
@@ -47,6 +23,24 @@ const _abi = [
         type: "uint256",
       },
     ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "compLikeDelegatee",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "CompLikeToken",
+        type: "address",
+      },
+    ],
+    name: "delegateCompLikeTo",
+    outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },

@@ -54,7 +54,7 @@ contract UFragments is ERC20Detailed, Ownable {
         _;
     }
 
-    uint256 private constant DECIMALS = 6;
+    uint256 private constant DECIMALS = 18;
     uint256 private constant MAX_UINT256 = type(uint256).max;
     uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 1 * 10**DECIMALS;
 

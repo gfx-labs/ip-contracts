@@ -5,9 +5,9 @@
 import { Contract, Signer, utils } from "ethers";
 import type { Provider } from "@ethersproject/providers";
 import type {
-  IVaultMaster,
-  IVaultMasterInterface,
-} from "../../lending/IVaultMaster";
+  IVaultController,
+  IVaultControllerInterface,
+} from "../../lending/IVaultController";
 
 const _abi = [
   {
@@ -148,15 +148,15 @@ const _abi = [
   },
 ];
 
-export class IVaultMaster__factory {
+export class IVaultController__factory {
   static readonly abi = _abi;
-  static createInterface(): IVaultMasterInterface {
-    return new utils.Interface(_abi) as IVaultMasterInterface;
+  static createInterface(): IVaultControllerInterface {
+    return new utils.Interface(_abi) as IVaultControllerInterface;
   }
   static connect(
     address: string,
     signerOrProvider: Signer | Provider
-  ): IVaultMaster {
-    return new Contract(address, _abi, signerOrProvider) as IVaultMaster;
+  ): IVaultController {
+    return new Contract(address, _abi, signerOrProvider) as IVaultController;
   }
 }

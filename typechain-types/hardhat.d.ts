@@ -17,9 +17,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IAggregator__factory>;
     getContractFactory(
+      name: "ERC20",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ERC20__factory>;
+    getContractFactory(
       name: "ERC20Detailed",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20Detailed__factory>;
+    getContractFactory(
+      name: "IERC20Metadata",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IERC20Metadata__factory>;
     getContractFactory(
       name: "IERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -57,9 +65,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IVault__factory>;
     getContractFactory(
-      name: "IVaultMaster",
+      name: "IVaultController",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IVaultMaster__factory>;
+    ): Promise<Contracts.IVaultController__factory>;
     getContractFactory(
       name: "CompLike",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -69,9 +77,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Vault__factory>;
     getContractFactory(
-      name: "VaultMaster",
+      name: "VaultController",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.VaultMaster__factory>;
+    ): Promise<Contracts.VaultController__factory>;
     getContractFactory(
       name: "Migrations",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -159,10 +167,20 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IAggregator>;
     getContractAt(
+      name: "ERC20",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ERC20>;
+    getContractAt(
       name: "ERC20Detailed",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.ERC20Detailed>;
+    getContractAt(
+      name: "IERC20Metadata",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IERC20Metadata>;
     getContractAt(
       name: "IERC20",
       address: string,
@@ -209,10 +227,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IVault>;
     getContractAt(
-      name: "IVaultMaster",
+      name: "IVaultController",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.IVaultMaster>;
+    ): Promise<Contracts.IVaultController>;
     getContractAt(
       name: "CompLike",
       address: string,
@@ -224,10 +242,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.Vault>;
     getContractAt(
-      name: "VaultMaster",
+      name: "VaultController",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.VaultMaster>;
+    ): Promise<Contracts.VaultController>;
     getContractAt(
       name: "Migrations",
       address: string,

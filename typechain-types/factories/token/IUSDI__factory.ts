@@ -11,7 +11,7 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "amount",
+        name: "usdc_amount",
         type: "uint256",
       },
     ],
@@ -24,7 +24,7 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "amount",
+        name: "usdc_amount",
         type: "uint256",
       },
     ],
@@ -37,7 +37,7 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "amount",
+        name: "usdc_amount",
         type: "uint256",
       },
     ],
@@ -67,7 +67,7 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "setVaultMaster",
+    name: "setVaultController",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -125,7 +125,7 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "amount",
+        name: "usdc_amount",
         type: "uint256",
       },
     ],

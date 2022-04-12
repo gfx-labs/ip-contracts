@@ -13,7 +13,11 @@ import type {
   Signer,
   utils,
 } from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type {
+  FunctionFragment,
+  Result,
+  EventFragment,
+} from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
@@ -28,9 +32,8 @@ export interface VaultInterface extends utils.Interface {
     "_id()": FunctionFragment;
     "_masterAddress()": FunctionFragment;
     "_minter()": FunctionFragment;
-    "claim_erc20(address,uint256)": FunctionFragment;
     "decrease_liability(uint256)": FunctionFragment;
-    "delegate_Comp_Like_To(address,address)": FunctionFragment;
+    "delegateCompLikeTo(address,address)": FunctionFragment;
     "deposit_erc20(address,uint256)": FunctionFragment;
     "getBalances(address)": FunctionFragment;
     "getBaseLiability()": FunctionFragment;
@@ -46,9 +49,8 @@ export interface VaultInterface extends utils.Interface {
       | "_id"
       | "_masterAddress"
       | "_minter"
-      | "claim_erc20"
       | "decrease_liability"
-      | "delegate_Comp_Like_To"
+      | "delegateCompLikeTo"
       | "deposit_erc20"
       | "getBalances"
       | "getBaseLiability"
@@ -69,15 +71,11 @@ export interface VaultInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "_minter", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "claim_erc20",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "decrease_liability",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "delegate_Comp_Like_To",
+    functionFragment: "delegateCompLikeTo",
     values: [string, string]
   ): string;
   encodeFunctionData(
@@ -114,15 +112,11 @@ export interface VaultInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "_minter", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "claim_erc20",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "decrease_liability",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "delegate_Comp_Like_To",
+    functionFragment: "delegateCompLikeTo",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -151,8 +145,33 @@ export interface VaultInterface extends utils.Interface {
     data: BytesLike
   ): Result;
 
-  events: {};
+  events: {
+    "Deposit(address,uint256)": EventFragment;
+    "Withdraw(address,uint256)": EventFragment;
+  };
+
+  getEvent(nameOrSignatureOrTopic: "Deposit"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Withdraw"): EventFragment;
 }
+
+export interface DepositEventObject {
+  token_address: string;
+  amount: BigNumber;
+}
+export type DepositEvent = TypedEvent<[string, BigNumber], DepositEventObject>;
+
+export type DepositEventFilter = TypedEventFilter<DepositEvent>;
+
+export interface WithdrawEventObject {
+  token_address: string;
+  amount: BigNumber;
+}
+export type WithdrawEvent = TypedEvent<
+  [string, BigNumber],
+  WithdrawEventObject
+>;
+
+export type WithdrawEventFilter = TypedEventFilter<WithdrawEvent>;
 
 export interface Vault extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -189,18 +208,12 @@ export interface Vault extends BaseContract {
 
     _minter(overrides?: CallOverrides): Promise<[string]>;
 
-    claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     decrease_liability(
       base_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    delegate_Comp_Like_To(
+    delegateCompLikeTo(
       compLikeDelegatee: string,
       CompLikeToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -245,18 +258,12 @@ export interface Vault extends BaseContract {
 
   _minter(overrides?: CallOverrides): Promise<string>;
 
-  claim_erc20(
-    token_address: string,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   decrease_liability(
     base_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  delegate_Comp_Like_To(
+  delegateCompLikeTo(
     compLikeDelegatee: string,
     CompLikeToken: string,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -301,18 +308,12 @@ export interface Vault extends BaseContract {
 
     _minter(overrides?: CallOverrides): Promise<string>;
 
-    claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     decrease_liability(
       base_amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    delegate_Comp_Like_To(
+    delegateCompLikeTo(
       compLikeDelegatee: string,
       CompLikeToken: string,
       overrides?: CallOverrides
@@ -349,7 +350,19 @@ export interface Vault extends BaseContract {
     ): Promise<void>;
   };
 
-  filters: {};
+  filters: {
+    "Deposit(address,uint256)"(
+      token_address?: null,
+      amount?: null
+    ): DepositEventFilter;
+    Deposit(token_address?: null, amount?: null): DepositEventFilter;
+
+    "Withdraw(address,uint256)"(
+      token_address?: null,
+      amount?: null
+    ): WithdrawEventFilter;
+    Withdraw(token_address?: null, amount?: null): WithdrawEventFilter;
+  };
 
   estimateGas: {
     _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
@@ -360,18 +373,12 @@ export interface Vault extends BaseContract {
 
     _minter(overrides?: CallOverrides): Promise<BigNumber>;
 
-    claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     decrease_liability(
       base_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    delegate_Comp_Like_To(
+    delegateCompLikeTo(
       compLikeDelegatee: string,
       CompLikeToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -417,18 +424,12 @@ export interface Vault extends BaseContract {
 
     _minter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
     decrease_liability(
       base_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    delegate_Comp_Like_To(
+    delegateCompLikeTo(
       compLikeDelegatee: string,
       CompLikeToken: string,
       overrides?: Overrides & { from?: string | Promise<string> }

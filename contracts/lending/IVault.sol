@@ -20,6 +20,5 @@ interface IVault {
 
   function increase_liability(uint256 base_amount) external returns (uint256);
 
-  function delegate_Comp_Like_To(address compLikeDelegatee, address CompLikeToken) external;
-
+  function delegateCompLikeTo(address compLikeDelegatee, address CompLikeToken) external;
 }
