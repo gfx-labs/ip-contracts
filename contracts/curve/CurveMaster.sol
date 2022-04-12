@@ -19,10 +19,6 @@ contract CurveMaster is ICurveMaster, Ownable {
         _curves[token_address] = curve_address;
     }
 
-    function pause_curve(address token_address, bool state) public onlyOwner {
-        _paused[token_address] = state;
-    }
-
     function get_value_at(address curve_address, int256 x_value)
         external
         view
