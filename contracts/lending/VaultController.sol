@@ -312,7 +312,10 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         uint256 usdi_to_repurchase = truncate(
             badFillPrice * tokens_to_liquidate
         );
-        vault.decrease_liability(usdi_to_repurchase);
+
+        uint256 base_amount = div_(usdi_to_repurchase * 1e18, _interestFactor);
+
+        vault.decrease_liability(base_amount);
         //console.log("usdi_to_repurchase: ", usdi_to_repurchase);
 
         //decrease liquidators usdi balance
