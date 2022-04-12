@@ -7,8 +7,9 @@ import "./lending/Vault.sol";
 import "./_external/IERC20.sol";
 
 import "hardhat/console.sol";
+import "./_external/compound/ExponentialNoError.sol";
 
-contract USDI is UFragments, IUSDI {
+contract USDI is UFragments, IUSDI, ExponentialNoError {
     address public _reserveAddress;
     IERC20 public _reserve;
 
