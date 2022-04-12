@@ -32,7 +32,6 @@ export interface CurveMasterInterface extends utils.Interface {
     "_paused(address)": FunctionFragment;
     "get_value_at(address,int256)": FunctionFragment;
     "owner()": FunctionFragment;
-    "pause_curve(address,bool)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "set_curve(address,address)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
@@ -44,7 +43,6 @@ export interface CurveMasterInterface extends utils.Interface {
       | "_paused"
       | "get_value_at"
       | "owner"
-      | "pause_curve"
       | "renounceOwnership"
       | "set_curve"
       | "transferOwnership"
@@ -57,10 +55,6 @@ export interface CurveMasterInterface extends utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "pause_curve",
-    values: [string, boolean]
-  ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
@@ -81,10 +75,6 @@ export interface CurveMasterInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "pause_curve",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
@@ -153,12 +143,6 @@ export interface CurveMaster extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
-    pause_curve(
-      token_address: string,
-      state: boolean,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
@@ -187,12 +171,6 @@ export interface CurveMaster extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
-  pause_curve(
-    token_address: string,
-    state: boolean,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   renounceOwnership(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
@@ -220,12 +198,6 @@ export interface CurveMaster extends BaseContract {
     ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
-
-    pause_curve(
-      token_address: string,
-      state: boolean,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
@@ -265,12 +237,6 @@ export interface CurveMaster extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
-    pause_curve(
-      token_address: string,
-      state: boolean,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
@@ -305,12 +271,6 @@ export interface CurveMaster extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    pause_curve(
-      token_address: string,
-      state: boolean,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: string | Promise<string> }
