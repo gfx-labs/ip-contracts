@@ -149,7 +149,6 @@ contract USDI is UFragments, IUSDI {
         returns (uint256 e18_reserve_ratio)
     {
         e18_reserve_ratio =
-            (_reserve.balanceOf(address(this)) * ExponentialNoError.expScale) /
-            _totalSupply;
+            (_reserve.balanceOf(address(this)) * ExponentialNoError.expScale) / _totalSupply;
     }
 }
