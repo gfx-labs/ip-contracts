@@ -5,6 +5,7 @@ import "./token/IUSDI.sol";
 import "./token/UFragments.sol";
 import "./lending/Vault.sol";
 import "./_external/IERC20.sol";
+import "./_external/ERC20.sol";
 
 import "hardhat/console.sol";
 import "./_external/compound/ExponentialNoError.sol";
