@@ -4,7 +4,6 @@
 export * as chainlink from "./chainlink";
 export * as extensions from "./extensions";
 export * as uniswap from "./uniswap";
-export { ERC20__factory } from "./ERC20__factory";
 export { ERC20Detailed__factory } from "./ERC20Detailed__factory";
 export { IERC20__factory } from "./IERC20__factory";
 export { IERC20Metadata__factory } from "./IERC20Metadata__factory";

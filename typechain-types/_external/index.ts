@@ -7,7 +7,6 @@ import type * as extensions from "./extensions";
 export type { extensions };
 import type * as uniswap from "./uniswap";
 export type { uniswap };
-export type { ERC20 } from "./ERC20";
 export type { ERC20Detailed } from "./ERC20Detailed";
 export type { IERC20 } from "./IERC20";
 export type { IERC20Metadata } from "./IERC20Metadata";
