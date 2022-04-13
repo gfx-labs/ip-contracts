@@ -21,6 +21,8 @@ import {
     Vault,
     VaultController,
     VaultController__factory,
+    IVOTE,
+    IVOTE__factory,
 } from "../../typechain-types";
 import { Addresser, Mainnet } from "./addresser";
 import { BN } from "./number";
@@ -30,9 +32,9 @@ export class TestContracts {
     book: Addresser;
 
     USDI?: USDI;
-
     USDC?: IERC20;
     COMP?: IERC20;
+    COMPVOTE?: IVOTE;
     WETH?: IERC20;
 
     VaultController?: VaultController;
@@ -72,6 +74,10 @@ export class TestContracts {
         );
         this.WETH = IERC20__factory.connect(
             this.book.wethAddress,
+            hethers.provider
+        );
+        this.COMPVOTE = IVOTE__factory.connect(
+            this.book.compAddress,
             hethers.provider
         );
 
