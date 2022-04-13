@@ -282,7 +282,8 @@ describe("Testing repay", () => {
         showBody(borrowPower)
         showBody(liability_amount)
         //error is "account insolvent"
-        await expect(con.VaultController!.connect(Bob).borrow_usdi(1, borrowAmount)).to.not.be.reverted;
+        //await expect(con.VaultController!.connect(Bob).borrow_usdi(1, borrowAmount)).to.not.be.reverted;
+        await con.VaultController!.connect(Bob).borrow_usdi(1, borrowAmount)
     });
     it("partial repay", async () => {
         const liability = await bob_vault.connect(Bob).getBaseLiability()
