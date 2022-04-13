@@ -50,6 +50,7 @@ export interface VaultControllerInterface extends utils.Interface {
     "check_account(uint256)": FunctionFragment;
     "getInterestFactor()": FunctionFragment;
     "getProtocolFee()": FunctionFragment;
+    "getTokensToLiquidate(uint256,address,uint256)": FunctionFragment;
     "get_account_liability(uint256)": FunctionFragment;
     "liquidate_account(uint256,address,uint256)": FunctionFragment;
     "mint_vault()": FunctionFragment;
@@ -89,6 +90,7 @@ export interface VaultControllerInterface extends utils.Interface {
       | "check_account"
       | "getInterestFactor"
       | "getProtocolFee"
+      | "getTokensToLiquidate"
       | "get_account_liability"
       | "liquidate_account"
       | "mint_vault"
@@ -191,6 +193,10 @@ export interface VaultControllerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getProtocolFee",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getTokensToLiquidate",
+    values: [BigNumberish, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "get_account_liability",
@@ -328,6 +334,10 @@ export interface VaultControllerInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getProtocolFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getTokensToLiquidate",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -636,6 +646,13 @@ export interface VaultController extends BaseContract {
 
     getProtocolFee(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    getTokensToLiquidate(
+      id: BigNumberish,
+      asset_address: string,
+      tokens_to_liquidate: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber] & { tokenAmount: BigNumber }>;
+
     get_account_liability(
       id: BigNumberish,
       overrides?: CallOverrides
@@ -779,6 +796,13 @@ export interface VaultController extends BaseContract {
   getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
 
   getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
+
+  getTokensToLiquidate(
+    id: BigNumberish,
+    asset_address: string,
+    tokens_to_liquidate: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   get_account_liability(
     id: BigNumberish,
@@ -924,6 +948,13 @@ export interface VaultController extends BaseContract {
     getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
 
     getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getTokensToLiquidate(
+      id: BigNumberish,
+      asset_address: string,
+      tokens_to_liquidate: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     get_account_liability(
       id: BigNumberish,
@@ -1172,6 +1203,13 @@ export interface VaultController extends BaseContract {
 
     getProtocolFee(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getTokensToLiquidate(
+      id: BigNumberish,
+      asset_address: string,
+      tokens_to_liquidate: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     get_account_liability(
       id: BigNumberish,
       overrides?: CallOverrides
@@ -1325,6 +1363,13 @@ export interface VaultController extends BaseContract {
     getInterestFactor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getProtocolFee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getTokensToLiquidate(
+      id: BigNumberish,
+      asset_address: string,
+      tokens_to_liquidate: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     get_account_liability(
       id: BigNumberish,
