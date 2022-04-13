@@ -37,15 +37,13 @@ export class TestContracts {
 
     VaultController?: VaultController;
 
-
     Oracle?: OracleMaster;
-    AnchoredView?: AnchoredViewRelay
+    AnchoredViewEth?: AnchoredViewRelay
+    AnchoredViewComp?: AnchoredViewRelay
     ChainlinkEth?: ChainlinkOracleRelay
-
+    ChainlinkComp?: ChainlinkOracleRelay
     UniswapRelayEthUsdc?: IOracleRelay;
     UniswapRelayCompUsdc?: IOracleRelay;
-
-
 
     Curve?: CurveMaster;
     ThreeLines?: ThreeLines0_100;
@@ -98,37 +96,49 @@ export class TestContracts {
             this.ThreeLines.address
         );
 
-        // setup oracle
+        //setup oracle master
         this.Oracle = await new OracleMaster__factory(deployer).deploy();
+        //set oracle on the vault controller
         await this.VaultController.connect(deployer).register_oracle_master(
             this.Oracle.address
         );
-
+        //setup uniswap comp oracle
         this.UniswapRelayCompUsdc = await new UniswapV3OracleRelay__factory(
             deployer
         ).deploy(this.book.usdcCompPool, true, BN("1e12"), BN("1"));
+        //setup chainlink comp oracle
+        this.ChainlinkComp = await new ChainlinkOracleRelay__factory(deployer).deploy(
+            "0xdbd020caef83efd542f4de03e3cf0c28a4428bd5", BN("1e10"), BN("1")
+        );
+        //setup anchored view for comp
+        this.AnchoredViewComp = await new AnchoredViewRelay__factory(deployer).deploy(
+            this.UniswapRelayCompUsdc.address,
+            this.ChainlinkComp.address,
+            BN("30"),
+            BN("100")
+        );
+        //setup comp anchored view on the oracle master
+        await this.Oracle.connect(deployer).set_relay(
+            this.book.compAddress,
+            this.AnchoredViewComp.address
+        );
 
         this.UniswapRelayEthUsdc = await new UniswapV3OracleRelay__factory(
             deployer
         ).deploy(this.book.usdcWethPool, true, BN("1e12"), BN("1"));
 
-        await this.Oracle.connect(deployer).set_relay(
-            this.book.compAddress,
-            this.UniswapRelayCompUsdc.address
-        );
-
         this.ChainlinkEth = await new ChainlinkOracleRelay__factory(deployer).deploy(
             "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419", BN("1e10"), BN("1")
         )
-        this.AnchoredView = await new AnchoredViewRelay__factory(deployer).deploy(
+        this.AnchoredViewEth = await new AnchoredViewRelay__factory(deployer).deploy(
             this.UniswapRelayEthUsdc.address,
             this.ChainlinkEth.address,
-            BN("1"),
-            BN("1")
+            BN("10"),
+            BN("100")
         );
         await this.Oracle.connect(deployer).set_relay(
             this.book.wethAddress,
-            this.AnchoredView.address,
+            this.AnchoredViewEth.address,
         );
 
         //register tokens
