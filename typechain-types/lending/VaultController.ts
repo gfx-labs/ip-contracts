@@ -644,7 +644,7 @@ export interface VaultController extends BaseContract {
     liquidate_account(
       id: BigNumberish,
       asset_address: string,
-      tokenAmount: BigNumberish,
+      tokens_to_liquidate: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -788,7 +788,7 @@ export interface VaultController extends BaseContract {
   liquidate_account(
     id: BigNumberish,
     asset_address: string,
-    tokenAmount: BigNumberish,
+    tokens_to_liquidate: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -933,7 +933,7 @@ export interface VaultController extends BaseContract {
     liquidate_account(
       id: BigNumberish,
       asset_address: string,
-      tokenAmount: BigNumberish,
+      tokens_to_liquidate: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1180,7 +1180,7 @@ export interface VaultController extends BaseContract {
     liquidate_account(
       id: BigNumberish,
       asset_address: string,
-      tokenAmount: BigNumberish,
+      tokens_to_liquidate: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1334,7 +1334,7 @@ export interface VaultController extends BaseContract {
     liquidate_account(
       id: BigNumberish,
       asset_address: string,
-      tokenAmount: BigNumberish,
+      tokens_to_liquidate: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

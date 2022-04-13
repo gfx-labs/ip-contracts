@@ -251,7 +251,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
     function liquidate_account(
         uint256 id,
         address asset_address,
-        uint256 tokenAmount
+        uint256 tokens_to_liquidate
     ) external override returns (uint256) {
         pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
@@ -274,9 +274,16 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         uint256 badFillPrice = truncate(
             price * (1e18 - _tokenAddress_liquidationIncentive[asset_address])
         );
+        console.log("numerator",_get_account_liability(id) - vault_borrowing_power);
+        uint256 denominator = truncate(price * ((1e18 -_tokenAddress_liquidationIncentive[asset_address]) - _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]]));
+        console.log("denominator",denominator);
+        uint256 max_tokens_to_liquidate = (_get_account_liability(id) - vault_borrowing_power) * 1e18 / denominator;
+        console.log("max_tokens_to_liquidate",max_tokens_to_liquidate);
 
-        uint256 tokens_to_liquidate = tokenAmount;
-
+        //if ideal amount isnt possible update with vault balance
+        if (tokens_to_liquidate > max_tokens_to_liquidate) {
+            tokens_to_liquidate = max_tokens_to_liquidate;
+        }
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > vault.getBalances(asset_address)) {
             tokens_to_liquidate = vault.getBalances(asset_address);

@@ -18,8 +18,6 @@ export type { USDI } from "./USDI";
 export * as factories from "./factories";
 export type { IAggregator } from "./_external/chainlink/IAggregator";
 export { IAggregator__factory } from "./factories/_external/chainlink/IAggregator__factory";
-export type { ERC20 } from "./_external/ERC20";
-export { ERC20__factory } from "./factories/_external/ERC20__factory";
 export type { ERC20Detailed } from "./_external/ERC20Detailed";
 export { ERC20Detailed__factory } from "./factories/_external/ERC20Detailed__factory";
 export type { IERC20Metadata } from "./_external/extensions/IERC20Metadata";
