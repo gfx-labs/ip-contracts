@@ -22,7 +22,7 @@ import type {
   OnEvent,
 } from "../common";
 
-export interface IVaultControllerInterface extends utils.Interface {
+export interface IVaultMasterInterface extends utils.Interface {
   functions: {
     "borrow_usdi(uint256,uint256)": FunctionFragment;
     "calculate_interest()": FunctionFragment;
@@ -112,12 +112,12 @@ export interface IVaultControllerInterface extends utils.Interface {
   events: {};
 }
 
-export interface IVaultController extends BaseContract {
+export interface IVaultMaster extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: IVaultControllerInterface;
+  interface: IVaultMasterInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,

@@ -248,6 +248,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         emit RepayUSDi(id, vault_address, usdi_liability);
     }
 
+    ///@param tokens_to_liquidate - number of tokens to liquidate
     function liquidate_account(
         uint256 id,
         address asset_address,
@@ -263,30 +264,13 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         IVault vault = IVault(vault_address);
         uint256 vault_borrowing_power = get_vault_borrowing_power(vault);
 
-        require(
-            vault_borrowing_power <= _get_account_liability(id),
-            "vault already solvent"
+        (uint256 tokenAmount, uint256 badFillPrice) = _liquidationMath(
+            id,
+            asset_address,
+            tokens_to_liquidate
         );
-        //get the price of the asset scaled to decimal 18
-        uint256 price = _oracleMaster.get_live_price(asset_address);
-
-        // liquidation penalty
-        uint256 badFillPrice = truncate(
-            price * (1e18 - _tokenAddress_liquidationIncentive[asset_address])
-        );
-        console.log("numerator",_get_account_liability(id) - vault_borrowing_power);
-        uint256 denominator = truncate(price * ((1e18 -_tokenAddress_liquidationIncentive[asset_address]) - _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]]));
-        console.log("denominator",denominator);
-        uint256 max_tokens_to_liquidate = (_get_account_liability(id) - vault_borrowing_power) * 1e18 / denominator;
-        console.log("max_tokens_to_liquidate",max_tokens_to_liquidate);
-
-        //if ideal amount isnt possible update with vault balance
-        if (tokens_to_liquidate > max_tokens_to_liquidate) {
-            tokens_to_liquidate = max_tokens_to_liquidate;
-        }
-        //if ideal amount isnt possible update with vault balance
-        if (tokens_to_liquidate > vault.getBalances(asset_address)) {
-            tokens_to_liquidate = vault.getBalances(asset_address);
+        if (tokenAmount != 0) {
+            tokens_to_liquidate = tokenAmount;
         }
 
         uint256 usdi_to_repurchase = truncate(
@@ -304,6 +288,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         // finally, we deliver the tokens to the liquidator
         vault.masterTransfer(asset_address, msg.sender, tokens_to_liquidate);
 
+        //possible to reach this?
         require(
             get_vault_borrowing_power(vault) <= _get_account_liability(id),
             "vault solvent - liquidation amount too high"
@@ -318,6 +303,63 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
     }
 
     /******* get things *******/
+    function getTokensToLiquidate(
+        uint256 id,
+        address asset_address,
+        uint256 tokens_to_liquidate
+    ) external view returns (uint256 tokenAmount) {
+        console.log("About to do liquidation math");
+        (
+            tokenAmount, /*uint256 badFillPrice*/
+
+        ) = _liquidationMath(id, asset_address, tokens_to_liquidate);
+        console.log("tokenAmount: ", tokenAmount);
+        return tokenAmount;
+    }
+
+    function _liquidationMath(
+        uint256 id,
+        address asset_address,
+        uint256 tokens_to_liquidate
+    ) internal view returns (uint256, uint256) {
+        address vault_address = _vaultId_vaultAddress[id];
+        require(vault_address != address(0x0), "vault does not exist");
+        require(
+            IERC20(asset_address).balanceOf(vault_address) > 0,
+            "Vault does not hold any of this asset"
+        );
+        IVault vault = IVault(vault_address);
+        uint256 vault_borrowing_power = get_vault_borrowing_power(vault);
+
+        //get the price of the asset scaled to decimal 18
+        uint256 price = _oracleMaster.get_live_price(asset_address);
+
+        // liquidation penalty
+        uint256 badFillPrice = truncate(
+            price * (1e18 - _tokenAddress_liquidationIncentive[asset_address])
+        );
+        //console.log("numerator",_get_account_liability(id) - vault_borrowing_power);
+        uint256 denominator = truncate(
+            price *
+                ((1e18 - _tokenAddress_liquidationIncentive[asset_address]) -
+                    _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]])
+        );
+        //console.log("denominator",denominator);
+        uint256 max_tokens_to_liquidate = ((_get_account_liability(id) -
+            vault_borrowing_power) * 1e18) / denominator;
+        //console.log("max_tokens_to_liquidate",max_tokens_to_liquidate);
+        //if ideal amount isnt possible update with vault balance
+        if (tokens_to_liquidate > max_tokens_to_liquidate) {
+            tokens_to_liquidate = max_tokens_to_liquidate;
+        }
+        //if ideal amount isnt possible update with vault balance
+        if (tokens_to_liquidate > vault.getBalances(asset_address)) {
+            tokens_to_liquidate = vault.getBalances(asset_address);
+        }
+        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
+        return (tokens_to_liquidate, badFillPrice);
+    }
+
     function get_account_liability(uint256 id)
         external
         view
@@ -371,7 +413,6 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         }
         return total_liquidity_value;
     }
-
 
     /******* calculate and pay interest *******/
     function calculate_interest() external override {

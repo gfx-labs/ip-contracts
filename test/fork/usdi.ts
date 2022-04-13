@@ -435,7 +435,7 @@ describe("Testing liquidations", () => {
 
         //borrow usdi
         const carolBorrowPower = await con.VaultController!.account_borrowing_power(2)
-        showBody("carolBorrowPower BEFORE: ", carolBorrowPower)
+        //showBody("carolBorrowPower BEFORE: ", carolBorrowPower)
         const result = await con.VaultController!.connect(Carol).borrow_usdi(vaultID, carolBorrowPower)
         const receipt = await result.wait()
         let event = receipt.events![receipt.events!.length - 1]
@@ -462,19 +462,32 @@ describe("Testing liquidations", () => {
         await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.compAddress, BN("1e24")).should.not.be.reverted
 
         //off chain math - how much to liquidate? 
+        //this is not correct, need to possible have the contract calculate the number of tokens to liquidate in order to reach exact solvancy
         const usdiAmountToLiquidate = liabilty.sub(args!.borrowAmount)
         //showBody("Formatted USDi amount owed: ", utils.formatEther(usdiAmountToLiquidate.toString()))
 
         //convert usdi amount to comp amount
         const amountToLiquidate = rawPrice.div(usdiAmountToLiquidate)
-        showBody("amountToLiquidate: ", amountToLiquidate)
-        showBody("Formatted amount of COMP to liquidate: ", utils.formatEther(amountToLiquidate.toString()))
+        //showBody("amountToLiquidate: ", amountToLiquidate)
+        //showBody("Formatted amount of COMP to liquidate: ", utils.formatEther(amountToLiquidate.toString()))
 
-        //liquidate just 1 too many, should revert
-        await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.compAddress, amountToLiquidate.add(2000000))
+        const bigAmount = BN("2e18")
 
-        let newBorrowPower = await con.VaultController!.account_borrowing_power(2)
-        showBody("carolBorrowPower AFTER: ", newBorrowPower)
+        const tokens_to_liquidate = await con.VaultController!.getTokensToLiquidate(vaultID, Mainnet.compAddress, bigAmount)
+        showBody("tokens_to_liquidate: ", tokens_to_liquidate)
+
+        //liquidate too many, should only liquidate the max
+        const liquidateResult = await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.compAddress, bigAmount)//amountToLiquidate.add(1e16))
+        //const liquidateReceipt = await liquidateResult.wait()
+        //let liquidateEvent = liquidateReceipt.events![liquidateReceipt.events!.length - 1]
+        //args = liquidateEvent.args
+        //showBody(args)
+        
+        //let newLiability = await con.VaultController!.get_account_liability(vaultID)
+        //showBody("newLiability: ", utils.formatEther(newLiability.toString()))
+
+        //let newBorrowPower = await con.VaultController!.account_borrowing_power(2)
+        //showBody("carolBorrowPower AFTER: ", newBorrowPower)
 
         /**
          //tiny liquidation 
