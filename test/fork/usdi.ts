@@ -462,57 +462,32 @@ describe("Testing liquidations", () => {
         assert.equal(solvency, true, "Carol's vault is solvent")
 
         //advance time explictly
-
         await con.VaultController!.calculate_interest()
 
         solvency = await con.VaultController!.check_account(vaultID)
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
-        let liabilty = await con.VaultController!.get_account_liability(vaultID)
-        //showBody("Liabilty: Amount of USDi owed: ", utils.formatEther(liabilty.toString()))
-
         //wrong asset address - should revert
-        await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, BN("1e16")).should.be.revertedWith("Vault does not hold any of this asset")
+        //await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, BN("1e16")).should.be.revertedWith("Vault does not hold any of this asset")
         
-        //try to liquidate too much - should revert
-        await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.compAddress, BN("1e24")).should.not.be.reverted
+        const bigNumber = BN("1e25")
 
-        //off chain math - how much to liquidate? 
-        //this is not correct, need to possible have the contract calculate the number of tokens to liquidate in order to reach exact solvancy
-        const usdiAmountToLiquidate = liabilty.sub(args!.borrowAmount)
-        //showBody("Formatted USDi amount owed: ", utils.formatEther(usdiAmountToLiquidate.toString()))
+        const tokens_to_liquidate = await con.VaultController!.getTokensToLiquidate(vaultID, Mainnet.compAddress, bigNumber)
+        let multiple = tokens_to_liquidate.mul(2)
+        showBody("getTokensToLiquidate: ", tokens_to_liquidate)
+        //showBody("getTokensToLiquidate 2x: ", multiple)
+        //showBody("tokens_to_liquidate: ", tokens_to_liquidate)
 
-        //convert usdi amount to comp amount
-        const amountToLiquidate = rawPrice.div(usdiAmountToLiquidate)
-        //showBody("amountToLiquidate: ", amountToLiquidate)
-        //showBody("Formatted amount of COMP to liquidate: ", utils.formatEther(amountToLiquidate.toString()))
-
-        const bigAmount = BN("2e18")
-
-        const tokens_to_liquidate = await con.VaultController!.getTokensToLiquidate(vaultID, Mainnet.compAddress, bigAmount)
-        showBody("tokens_to_liquidate: ", tokens_to_liquidate)
-
-        //liquidate too many, should only liquidate the max
-        const liquidateResult = await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.compAddress, bigAmount)//amountToLiquidate.add(1e16))
-        //const liquidateReceipt = await liquidateResult.wait()
-        //let liquidateEvent = liquidateReceipt.events![liquidateReceipt.events!.length - 1]
-        //args = liquidateEvent.args
-        //showBody(args)
         
-        //let newLiability = await con.VaultController!.get_account_liability(vaultID)
-        //showBody("newLiability: ", utils.formatEther(newLiability.toString()))
 
-        //let newBorrowPower = await con.VaultController!.account_borrowing_power(2)
-        //showBody("carolBorrowPower AFTER: ", newBorrowPower)
-
-        /**
+        
          //tiny liquidation 
-        const liquidateResult = await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.compAddress, amountToLiquidate)
+        const liquidateResult = await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.compAddress, bigNumber)
         const liquidateReceipt = await liquidateResult.wait()
         let liquidateEvent = liquidateReceipt.events![liquidateReceipt.events!.length - 1]
         args = liquidateEvent.args
-        showBody(args)
-         */
+        showBody("expected tokens_to_liquidate: ", args!.tokens_to_liquidate)
+         
 
 
         //let balance = await con.USDI!.balanceOf(Dave.address)
