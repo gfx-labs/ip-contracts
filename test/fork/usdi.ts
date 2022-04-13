@@ -164,12 +164,10 @@ describe("USDC-DEPOSITS", () => {
     let av = BN(Andy_USDC).mul(BN("1e12"))
     it(`andy should have ${av} usdi`, async () => {
         expect(await con.USDI!.balanceOf(await Andy.getAddress())).to.eq(av);
-        showBody(Andy_USDC)
     });
     let dv = BN(Dave_USDC).mul(BN("1e12"))
     it(`Dave should have ${dv} usdi`, async () => {
         expect(await con.USDI!.balanceOf(await Dave.getAddress())).to.eq(dv);
-        showBody(Dave_USDC)
     });
 });
 
@@ -199,18 +197,17 @@ describe("TOKEN-DEPOSITS", () => {
         */
     });
 });
-/*
+
 // carol delegates comp to her voting address
 describe("DELEGATION:", () => {
     before("deploy contracts", votes);
     it("carol should be able to delegate votes", async () => {
-        //will fail bc getCurrentVotes isnt a function on the IERC20 Intereface
-        const currentVotes = await con.COMP!.getCurrentVotes(carol_voting_address);
-        //showBody("comp:", price.toLocaleString());
+        const currentVotes = await con.COMPVOTE!.getCurrentVotes(carol_voting_address);
         expect(currentVotes).to.eq(Carol_COMP);
+        //showBody("currentVotes:", currentVotes);
     });
 });
-*/
+
 describe("TOKEN-DEPOSITS", async () => {
     //bob tries to borrow usdi against 10 eth as if eth is $100k
     // remember bob has 10 eth
