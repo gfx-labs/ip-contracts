@@ -255,27 +255,21 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         uint256 tokens_to_liquidate
     ) external override returns (uint256) {
         pay_interest();
-        address vault_address = _vaultId_vaultAddress[id];
-        require(vault_address != address(0x0), "vault does not exist");
-        require(
-            IERC20(asset_address).balanceOf(vault_address) > 0,
-            "Vault does not hold any of this asset"
-        );
-        IVault vault = IVault(vault_address);
-        uint256 vault_borrowing_power = get_vault_borrowing_power(vault);
 
         (uint256 tokenAmount, uint256 badFillPrice) = _liquidationMath(
             id,
             asset_address,
             tokens_to_liquidate
         );
+
         if (tokenAmount != 0) {
             tokens_to_liquidate = tokenAmount;
         }
 
         uint256 usdi_to_repurchase = truncate(
             badFillPrice * tokens_to_liquidate
-        );
+        );        
+        IVault vault = getVault(id);
 
         //decrease by base amount -- switch to truncate?
         vault.decrease_liability(
@@ -308,13 +302,11 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         address asset_address,
         uint256 tokens_to_liquidate
     ) external view returns (uint256 tokenAmount) {
-        console.log("About to do liquidation math");
         (
             tokenAmount, /*uint256 badFillPrice*/
 
         ) = _liquidationMath(id, asset_address, tokens_to_liquidate);
-        console.log("tokenAmount: ", tokenAmount);
-        return tokenAmount;
+        tokenAmount = tokenAmount * 2;
     }
 
     function _liquidationMath(
@@ -322,14 +314,8 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         address asset_address,
         uint256 tokens_to_liquidate
     ) internal view returns (uint256, uint256) {
-        address vault_address = _vaultId_vaultAddress[id];
-        require(vault_address != address(0x0), "vault does not exist");
-        require(
-            IERC20(asset_address).balanceOf(vault_address) > 0,
-            "Vault does not hold any of this asset"
-        );
-        IVault vault = IVault(vault_address);
-        uint256 vault_borrowing_power = get_vault_borrowing_power(vault);
+
+        IVault vault = getVault(id);
 
         //get the price of the asset scaled to decimal 18
         uint256 price = _oracleMaster.get_live_price(asset_address);
@@ -346,7 +332,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         );
         //console.log("denominator",denominator);
         uint256 max_tokens_to_liquidate = ((_get_account_liability(id) -
-            vault_borrowing_power) * 1e18) / denominator;
+            get_vault_borrowing_power(vault)) * 1e18) / denominator;
         //console.log("max_tokens_to_liquidate",max_tokens_to_liquidate);
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > max_tokens_to_liquidate) {
@@ -356,8 +342,13 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         if (tokens_to_liquidate > vault.getBalances(asset_address)) {
             tokens_to_liquidate = vault.getBalances(asset_address);
         }
-        console.log("tokens_to_liquidate: ", tokens_to_liquidate);
         return (tokens_to_liquidate, badFillPrice);
+    }
+
+    function getVault(uint256 id) internal view returns (IVault vault) {
+        address vault_address = _vaultId_vaultAddress[id];
+        require(vault_address != address(0x0), "vault does not exist");
+        vault = IVault(vault_address);        
     }
 
     function get_account_liability(uint256 id)
