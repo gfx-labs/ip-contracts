@@ -47,6 +47,8 @@ let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 let comp_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 
+let carol_voting_address = "0x1F2AB8Ac759Fb0E3185630277A554Ae3110bF530"
+
 const setupInitial = async () => {
     //setting up accounts
     let accounts = await ethers.getSigners();
@@ -110,6 +112,10 @@ const tokenDeposits = async () => {
         .connect(Carol)
         .deposit_erc20(Mainnet.compAddress, Carol_COMP);
 };
+
+const votes = async () => {
+    await carol_vault.connect(Carol).delegateCompLikeTo(carol_voting_address,Mainnet.compAddress);
+}
 describe("USDI-TOKEN:Init", () => {
     before("deploy contracts", setupInitial);
     it("Should return the right name, symbol, and decimals", async () => {
@@ -191,6 +197,18 @@ describe("TOKEN-DEPOSITS", () => {
         */
     });
 });
+/*
+// carol delegates comp to her voting address
+describe("DELEGATION:", () => {
+    before("deploy contracts", votes);
+    it("carol should be able to delegate votes", async () => {
+        //will fail bc getCurrentVotes isnt a function on the IERC20 Intereface
+        const currentVotes = await con.COMP!.getCurrentVotes(carol_voting_address);
+        //showBody("comp:", price.toLocaleString());
+        expect(currentVotes).to.eq(Carol_COMP);
+    });
+});
+*/
 describe("TOKEN-DEPOSITS", async () => {
     //bob tries to borrow usdi against 10 eth as if eth is $100k
     // remember bob has 10 eth
@@ -200,7 +218,7 @@ describe("TOKEN-DEPOSITS", async () => {
         )).to.be.revertedWith("account insolvent");
     });
 
-    it(`bob should able to borrow ${"5000e18"} usdi`, async () => {
+    it(`bob should be able to borrow ${"5000e18"} usdi`, async () => {
         await expect(con.VaultController!.connect(Bob).borrow_usdi(1, BN("5000e18"))).to.not.be
             .revertedWith("account insolvent");
     });
@@ -213,6 +231,11 @@ describe("TOKEN-DEPOSITS", async () => {
             .get_account_liability(1);
         //showBody("liability", liability_amount)
         expect(liability_amount).to.be.gt(BN("5000e18"));
+        showBody(liability_amount)
+        let reserveRatio = await con.USDI!.reserveRatio()
+        showBody(reserveRatio);
+        let intVal = await con.Curve!.get_value_at("0x0000000000000000000000000000000000000000",reserveRatio)
+        showBody(intVal);
         //showBody("bob_liability:", liability_amount.toString());
     });
 });
@@ -226,6 +249,10 @@ describe("Checking interest generation", () => {
         let result: any = await con.VaultController!.calculate_interest()
         result = await result.wait()
         let args = result.events![result.events!.length - 1].args
+        let reserveRatio = await con.USDI!.reserveRatio()
+        showBody(reserveRatio);
+        let intVal = await con.Curve!.get_value_at("0x0000000000000000000000000000000000000000",reserveRatio)
+        showBody(intVal);
 
         //showBody(args)
 
@@ -250,8 +277,12 @@ describe("Testing repay", () => {
         //await setupVaults()
     })
     it(`bob should able to borrow ${borrowAmount} usdi`, async () => {
-        await expect(con.VaultController!.connect(Bob).borrow_usdi(1, borrowAmount)).to.not.be
-            .reverted;
+        let borrowPower = await con.VaultController!.connect(Bob).account_borrowing_power(1);
+        const liability_amount = await con.VaultController!.connect(Bob).get_account_liability(1);
+        showBody(borrowPower)
+        showBody(liability_amount)
+        //error is "account insolvent"
+        await expect(con.VaultController!.connect(Bob).borrow_usdi(1, borrowAmount)).to.not.be.reverted;
     });
     it("partial repay", async () => {
         const liability = await bob_vault.connect(Bob).getBaseLiability()
