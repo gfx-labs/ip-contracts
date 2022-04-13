@@ -10,4 +10,5 @@ export type { uniswap };
 export type { ERC20Detailed } from "./ERC20Detailed";
 export type { IERC20 } from "./IERC20";
 export type { IERC20Metadata } from "./IERC20Metadata";
+export type { IVOTE } from "./IVOTE";
 export type { Ownable } from "./Ownable";

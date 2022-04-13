@@ -33,6 +33,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20Metadata__factory>;
     getContractFactory(
+      name: "IVOTE",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IVOTE__factory>;
+    getContractFactory(
       name: "Ownable",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Ownable__factory>;
@@ -182,6 +186,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC20Metadata>;
+    getContractAt(
+      name: "IVOTE",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IVOTE>;
     getContractAt(
       name: "Ownable",
       address: string,

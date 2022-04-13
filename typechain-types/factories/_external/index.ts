@@ -7,4 +7,5 @@ export * as uniswap from "./uniswap";
 export { ERC20Detailed__factory } from "./ERC20Detailed__factory";
 export { IERC20__factory } from "./IERC20__factory";
 export { IERC20Metadata__factory } from "./IERC20Metadata__factory";
+export { IVOTE__factory } from "./IVOTE__factory";
 export { Ownable__factory } from "./Ownable__factory";

@@ -26,10 +26,10 @@ require('chai')
     .should()
 //*
 // Initial Balances:
-// Andy: 100,000,000 usdc ($100,000) 6dec
+// Andy: 100,000,000 usdc ($100) 6dec
 // Bob: 10,000,000,000,000,000,000 weth (10 weth) 18dec
 // Carol: 100,000,000,000,000,000,000 (100 comp), 18dec
-// Dave: 10,000,000,000 usdc ($1,000,000) 6dec
+// Dave: 10,000,000,000 usdc ($10,000) 6dec
 //
 // andy is a usdc holder. he wishes to deposit USDC to hold USDI
 // bob is an eth holder. He wishes to deposit his eth and borrow USDI
@@ -197,18 +197,17 @@ describe("TOKEN-DEPOSITS", () => {
         */
     });
 });
-/*
+
 // carol delegates comp to her voting address
 describe("DELEGATION:", () => {
     before("deploy contracts", votes);
     it("carol should be able to delegate votes", async () => {
-        //will fail bc getCurrentVotes isnt a function on the IERC20 Intereface
-        const currentVotes = await con.COMP!.getCurrentVotes(carol_voting_address);
-        //showBody("comp:", price.toLocaleString());
+        const currentVotes = await con.COMPVOTE!.getCurrentVotes(carol_voting_address);
         expect(currentVotes).to.eq(Carol_COMP);
+        //showBody("currentVotes:", currentVotes);
     });
 });
-*/
+
 describe("TOKEN-DEPOSITS", async () => {
     //bob tries to borrow usdi against 10 eth as if eth is $100k
     // remember bob has 10 eth
@@ -231,11 +230,6 @@ describe("TOKEN-DEPOSITS", async () => {
             .get_account_liability(1);
         //showBody("liability", liability_amount)
         expect(liability_amount).to.be.gt(BN("5000e18"));
-        showBody(liability_amount)
-        let reserveRatio = await con.USDI!.reserveRatio()
-        showBody(reserveRatio);
-        let intVal = await con.Curve!.get_value_at("0x0000000000000000000000000000000000000000",reserveRatio)
-        showBody(intVal);
         //showBody("bob_liability:", liability_amount.toString());
     });
 });
@@ -249,13 +243,6 @@ describe("Checking interest generation", () => {
         let result: any = await con.VaultController!.calculate_interest()
         result = await result.wait()
         let args = result.events![result.events!.length - 1].args
-        let reserveRatio = await con.USDI!.reserveRatio()
-        showBody(reserveRatio);
-        let intVal = await con.Curve!.get_value_at("0x0000000000000000000000000000000000000000",reserveRatio)
-        showBody(intVal);
-
-        //showBody(args)
-
         //check for yeild    
         let balance = await con.USDI!.balanceOf(Dave.address)
         expect(balance > initBalance)
@@ -277,13 +264,7 @@ describe("Testing repay", () => {
         //await setupVaults()
     })
     it(`bob should able to borrow ${borrowAmount} usdi`, async () => {
-        let borrowPower = await con.VaultController!.connect(Bob).account_borrowing_power(1);
-        const liability_amount = await con.VaultController!.connect(Bob).get_account_liability(1);
-        showBody(borrowPower)
-        showBody(liability_amount)
-        //error is "account insolvent"
-        //await expect(con.VaultController!.connect(Bob).borrow_usdi(1, borrowAmount)).to.not.be.reverted;
-        await con.VaultController!.connect(Bob).borrow_usdi(1, borrowAmount)
+        await expect(con.VaultController!.connect(Bob).borrow_usdi(1, borrowAmount)).to.not.be.reverted;
     });
     it("partial repay", async () => {
         const liability = await bob_vault.connect(Bob).getBaseLiability()
