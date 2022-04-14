@@ -594,7 +594,7 @@ export interface IVaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    calculate_interest(overrides?: CallOverrides): Promise<void>;
+    calculate_interest(overrides?: CallOverrides): Promise<BigNumber>;
 
     check_account(
       id: BigNumberish,
