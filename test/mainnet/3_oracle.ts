@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { expect, assert } from "chai";
 import { showBody } from "../util/format";
 import { BN } from "../util/number";
-
+import { mineBlock } from "../util/block";
 
 describe("ETH:", () => {
     it("fetch uniswap relay price", async () => {
@@ -98,7 +98,10 @@ describe("anchored views", () => {
 
 describe("getting prices from oracle master", () => {
     it("fetch eth price", async () => {
+        await mineBlock()
+
         let dog = (await s.Oracle.get_live_price(s.wethAddress)).div(1e14).toNumber() / 1e4
+        await mineBlock()
         showBody(dog)
         expect(dog).to.be.above(1000).and.to.be.below(10000);
     });
