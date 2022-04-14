@@ -1,412 +1,412 @@
 {
-  "_format": "hh-sol-artifact-1",
-  "contractName": "IVaultController",
-  "sourceName": "contracts/lending/IVaultController.sol",
-  "abi": [
-    {
-      "anonymous": false,
-      "inputs": [
+    "_format": "hh-sol-artifact-1",
+    "contractName": "IVaultController",
+    "sourceName": "contracts/lending/IVaultController.sol",
+    "abi": [
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "vaultId",
-          "type": "uint256"
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "vaultId",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "vaultAddress",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "borrowAmount",
+                    "type": "uint256"
+                }
+            ],
+            "name": "BorrowUSDi",
+            "type": "event"
         },
         {
-          "indexed": false,
-          "internalType": "address",
-          "name": "vaultAddress",
-          "type": "address"
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "epoch",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "amount",
+                    "type": "uint256"
+                }
+            ],
+            "name": "Interest",
+            "type": "event"
         },
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "borrowAmount",
-          "type": "uint256"
-        }
-      ],
-      "name": "BorrowUSDi",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "epoch",
-          "type": "uint256"
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "vaultId",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "asset_address",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "usdi_to_repurchase",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "tokens_to_liquidate",
+                    "type": "uint256"
+                }
+            ],
+            "name": "Liquidate",
+            "type": "event"
         },
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "Interest",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "vaultId",
-          "type": "uint256"
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "protocol_fee",
+                    "type": "uint256"
+                }
+            ],
+            "name": "NewProtocolFee",
+            "type": "event"
         },
         {
-          "indexed": false,
-          "internalType": "address",
-          "name": "asset_address",
-          "type": "address"
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "vault_address",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "vaultId",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "vaultOwner",
+                    "type": "address"
+                }
+            ],
+            "name": "NewVault",
+            "type": "event"
         },
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "usdi_to_repurchase",
-          "type": "uint256"
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "curveMasterAddress",
+                    "type": "address"
+                }
+            ],
+            "name": "RegisterCurveMaster",
+            "type": "event"
         },
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "tokens_to_liquidate",
-          "type": "uint256"
-        }
-      ],
-      "name": "Liquidate",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "protocol_fee",
-          "type": "uint256"
-        }
-      ],
-      "name": "NewProtocolFee",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "vault_address",
-          "type": "address"
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "oracleMasterAddress",
+                    "type": "address"
+                }
+            ],
+            "name": "RegisterOracleMaster",
+            "type": "event"
         },
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "vaultId",
-          "type": "uint256"
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "token_address",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "LTVe4",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "oracle_address",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "liquidationIncentivee4",
+                    "type": "uint256"
+                }
+            ],
+            "name": "RegisteredErc20",
+            "type": "event"
         },
         {
-          "indexed": false,
-          "internalType": "address",
-          "name": "vaultOwner",
-          "type": "address"
-        }
-      ],
-      "name": "NewVault",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "curveMasterAddress",
-          "type": "address"
-        }
-      ],
-      "name": "RegisterCurveMaster",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "oracleMasterAddress",
-          "type": "address"
-        }
-      ],
-      "name": "RegisterOracleMaster",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "token_address",
-          "type": "address"
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "vaultId",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "vaultAddress",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "repayAmount",
+                    "type": "uint256"
+                }
+            ],
+            "name": "RepayUSDi",
+            "type": "event"
         },
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "LTVe4",
-          "type": "uint256"
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "token_address",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "LTVe4",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "address",
+                    "name": "oracle_address",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "liquidationIncentivee4",
+                    "type": "uint256"
+                }
+            ],
+            "name": "UpdateRegisteredErc20",
+            "type": "event"
         },
         {
-          "indexed": false,
-          "internalType": "address",
-          "name": "oracle_address",
-          "type": "address"
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "id",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "amount",
+                    "type": "uint256"
+                }
+            ],
+            "name": "borrow_usdi",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
         },
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "liquidationIncentivee4",
-          "type": "uint256"
-        }
-      ],
-      "name": "RegisteredErc20",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "vaultId",
-          "type": "uint256"
+            "inputs": [],
+            "name": "calculate_interest",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
         },
         {
-          "indexed": false,
-          "internalType": "address",
-          "name": "vaultAddress",
-          "type": "address"
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "id",
+                    "type": "uint256"
+                }
+            ],
+            "name": "check_account",
+            "outputs": [
+                {
+                    "internalType": "bool",
+                    "name": "",
+                    "type": "bool"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
         },
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "repayAmount",
-          "type": "uint256"
-        }
-      ],
-      "name": "RepayUSDi",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "token_address",
-          "type": "address"
+            "inputs": [],
+            "name": "getInterestFactor",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
         },
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "LTVe4",
-          "type": "uint256"
+            "inputs": [],
+            "name": "getProtocolFee",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
         },
         {
-          "indexed": false,
-          "internalType": "address",
-          "name": "oracle_address",
-          "type": "address"
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "id",
+                    "type": "uint256"
+                }
+            ],
+            "name": "AccountLiability",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
         },
         {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "liquidationIncentivee4",
-          "type": "uint256"
-        }
-      ],
-      "name": "UpdateRegisteredErc20",
-      "type": "event"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "id",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "address",
+                    "name": "asset_address",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "tokenAmount",
+                    "type": "uint256"
+                }
+            ],
+            "name": "liquidate_account",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "nonpayable",
+            "type": "function"
         },
         {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "borrow_usdi",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "calculate_interest",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
-        }
-      ],
-      "name": "check_account",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getInterestFactor",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "getProtocolFee",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
-        }
-      ],
-      "name": "get_account_liability",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "master_curve_address",
+                    "type": "address"
+                }
+            ],
+            "name": "register_curve_master",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
         },
         {
-          "internalType": "address",
-          "name": "asset_address",
-          "type": "address"
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "master_oracle_address",
+                    "type": "address"
+                }
+            ],
+            "name": "register_oracle_master",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
         },
         {
-          "internalType": "uint256",
-          "name": "tokenAmount",
-          "type": "uint256"
-        }
-      ],
-      "name": "liquidate_account",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "master_curve_address",
-          "type": "address"
-        }
-      ],
-      "name": "register_curve_master",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "master_oracle_address",
-          "type": "address"
-        }
-      ],
-      "name": "register_oracle_master",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
-        }
-      ],
-      "name": "repay_all_usdi",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "id",
+                    "type": "uint256"
+                }
+            ],
+            "name": "repay_all_usdi",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
         },
         {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "id",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "amount",
+                    "type": "uint256"
+                }
+            ],
+            "name": "repay_usdi",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
         }
-      ],
-      "name": "repay_usdi",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-  ],
-  "bytecode": "0x",
-  "deployedBytecode": "0x",
-  "linkReferences": {},
-  "deployedLinkReferences": {}
+    ],
+    "bytecode": "0x",
+    "deployedBytecode": "0x",
+    "linkReferences": {},
+    "deployedLinkReferences": {}
 }
