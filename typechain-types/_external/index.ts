@@ -5,8 +5,6 @@ import type * as chainlink from "./chainlink";
 export type { chainlink };
 import type * as extensions from "./extensions";
 export type { extensions };
-import type * as openZeppelin from "./openZeppelin";
-export type { openZeppelin };
 import type * as uniswap from "./uniswap";
 export type { uniswap };
 export type { ERC20Detailed } from "./ERC20Detailed";

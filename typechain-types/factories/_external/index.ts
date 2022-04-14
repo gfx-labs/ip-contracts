@@ -3,7 +3,6 @@
 /* eslint-disable */
 export * as chainlink from "./chainlink";
 export * as extensions from "./extensions";
-export * as openZeppelin from "./openZeppelin";
 export * as uniswap from "./uniswap";
 export { ERC20Detailed__factory } from "./ERC20Detailed__factory";
 export { IERC20__factory } from "./IERC20__factory";

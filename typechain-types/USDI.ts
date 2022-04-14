@@ -34,6 +34,7 @@ export interface USDIInterface extends utils.Interface {
     "MAX_SUPPLY()": FunctionFragment;
     "PERMIT_TYPEHASH()": FunctionFragment;
     "_VaultControllerAddress()": FunctionFragment;
+    "__UFragments_init(string,string)": FunctionFragment;
     "_gonBalances(address)": FunctionFragment;
     "_gonsPerFragment()": FunctionFragment;
     "_lenderAddress()": FunctionFragment;
@@ -49,6 +50,7 @@ export interface USDIInterface extends utils.Interface {
     "decreaseAllowance(address,uint256)": FunctionFragment;
     "deposit(uint256)": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
+    "initialize(address)": FunctionFragment;
     "mint(uint256)": FunctionFragment;
     "monetaryPolicy()": FunctionFragment;
     "name()": FunctionFragment;
@@ -83,6 +85,7 @@ export interface USDIInterface extends utils.Interface {
       | "MAX_SUPPLY"
       | "PERMIT_TYPEHASH"
       | "_VaultControllerAddress"
+      | "__UFragments_init"
       | "_gonBalances"
       | "_gonsPerFragment"
       | "_lenderAddress"
@@ -98,6 +101,7 @@ export interface USDIInterface extends utils.Interface {
       | "decreaseAllowance"
       | "deposit"
       | "increaseAllowance"
+      | "initialize"
       | "mint"
       | "monetaryPolicy"
       | "name"
@@ -149,6 +153,10 @@ export interface USDIInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "__UFragments_init",
+    values: [string, string]
+  ): string;
+  encodeFunctionData(
     functionFragment: "_gonBalances",
     values: [string]
   ): string;
@@ -196,6 +204,7 @@ export interface USDIInterface extends utils.Interface {
     functionFragment: "increaseAllowance",
     values: [string, BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "initialize", values: [string]): string;
   encodeFunctionData(functionFragment: "mint", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "monetaryPolicy",
@@ -305,6 +314,10 @@ export interface USDIInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "__UFragments_init",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "_gonBalances",
     data: BytesLike
   ): Result;
@@ -340,6 +353,7 @@ export interface USDIInterface extends utils.Interface {
     functionFragment: "increaseAllowance",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "monetaryPolicy",
@@ -579,6 +593,12 @@ export interface USDI extends BaseContract {
 
     _VaultControllerAddress(overrides?: CallOverrides): Promise<[string]>;
 
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     _gonsPerFragment(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -628,6 +648,11 @@ export interface USDI extends BaseContract {
     increaseAllowance(
       spender: string,
       addedValue: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    initialize(
+      reserveAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -755,6 +780,12 @@ export interface USDI extends BaseContract {
 
   _VaultControllerAddress(overrides?: CallOverrides): Promise<string>;
 
+  __UFragments_init(
+    name: string,
+    symbol: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   _gonsPerFragment(overrides?: CallOverrides): Promise<BigNumber>;
@@ -804,6 +835,11 @@ export interface USDI extends BaseContract {
   increaseAllowance(
     spender: string,
     addedValue: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  initialize(
+    reserveAddress: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -926,6 +962,12 @@ export interface USDI extends BaseContract {
 
     _VaultControllerAddress(overrides?: CallOverrides): Promise<string>;
 
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     _gonsPerFragment(overrides?: CallOverrides): Promise<BigNumber>;
@@ -974,6 +1016,11 @@ export interface USDI extends BaseContract {
       addedValue: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    initialize(
+      reserveAddress: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     mint(usdc_amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
@@ -1165,6 +1212,12 @@ export interface USDI extends BaseContract {
 
     _VaultControllerAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     _gonsPerFragment(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1214,6 +1267,11 @@ export interface USDI extends BaseContract {
     increaseAllowance(
       spender: string,
       addedValue: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    initialize(
+      reserveAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1339,6 +1397,12 @@ export interface USDI extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     _gonBalances(
       arg0: string,
       overrides?: CallOverrides
@@ -1394,6 +1458,11 @@ export interface USDI extends BaseContract {
     increaseAllowance(
       spender: string,
       addedValue: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    initialize(
+      reserveAddress: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
