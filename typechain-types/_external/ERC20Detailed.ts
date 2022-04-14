@@ -28,6 +28,7 @@ import type {
 
 export interface ERC20DetailedInterface extends utils.Interface {
   functions: {
+    "__ERC20Detailed_init(string,string,uint8)": FunctionFragment;
     "allowance(address,address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
@@ -41,6 +42,7 @@ export interface ERC20DetailedInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "__ERC20Detailed_init"
       | "allowance"
       | "approve"
       | "balanceOf"
@@ -52,6 +54,10 @@ export interface ERC20DetailedInterface extends utils.Interface {
       | "transferFrom"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "__ERC20Detailed_init",
+    values: [string, string, BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "allowance",
     values: [string, string]
@@ -77,6 +83,10 @@ export interface ERC20DetailedInterface extends utils.Interface {
     values: [string, string, BigNumberish]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "__ERC20Detailed_init",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
@@ -153,6 +163,13 @@ export interface ERC20Detailed extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     allowance(
       owner: string,
       spender: string,
@@ -188,6 +205,13 @@ export interface ERC20Detailed extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
+
+  __ERC20Detailed_init(
+    name_: string,
+    symbol_: string,
+    decimals_: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   allowance(
     owner: string,
@@ -225,6 +249,13 @@ export interface ERC20Detailed extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     allowance(
       owner: string,
       spender: string,
@@ -286,6 +317,13 @@ export interface ERC20Detailed extends BaseContract {
   };
 
   estimateGas: {
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     allowance(
       owner: string,
       spender: string,
@@ -323,6 +361,13 @@ export interface ERC20Detailed extends BaseContract {
   };
 
   populateTransaction: {
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     allowance(
       owner: string,
       spender: string,

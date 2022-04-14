@@ -1,6 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 import "./IERC20.sol";
+//import "../openzeppelin/ERC20Upgradeable.sol";
+import "../openzeppelin/Initializable.sol";
+
 
 /**
  * @title ERC20Detailed token
@@ -8,15 +11,24 @@ import "./IERC20.sol";
  * All the operations are done using the smallest and indivisible token unit,
  * just as on Ethereum all the operations are done in wei.
  */
-abstract contract ERC20Detailed is IERC20 {
+abstract contract ERC20Detailed is Initializable, IERC20 {
     string private _name;
     string private _symbol;
     uint8 private _decimals;
 
+    /**
     constructor(string memory name_, string memory symbol_, uint8 decimals_){
         _name = name_;
         _symbol = symbol_;
         _decimals = decimals_;
+    }
+     */
+
+    function __ERC20Detailed_init(string memory name_, string memory symbol_, uint8 decimals_) public initializer
+    {
+       _name = name_;
+        _symbol = symbol_;
+        _decimals = decimals_; 
     }
 
     /**
