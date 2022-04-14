@@ -4,6 +4,7 @@
 export * as external from "./_external";
 export * as curve from "./curve";
 export * as lending from "./lending";
+export * as openzeppelin from "./openzeppelin";
 export * as oracle from "./oracle";
 export * as ozproxy from "./ozproxy";
 export * as token from "./token";
