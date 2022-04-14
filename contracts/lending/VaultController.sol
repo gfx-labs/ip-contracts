@@ -12,11 +12,13 @@ import "./IVault.sol";
 //import "../_external/Ownable.sol";
 import "../_external/IERC20.sol";
 import "../_external/compound/ExponentialNoError.sol";
-import "../_external/openZeppelin/OwnableUpgradeable.sol";
+import "../openzeppelin/OwnableUpgradeable.sol";
+import "../openzeppelin/Initializable.sol";
 
 import "hardhat/console.sol";
 
 contract VaultController is
+    Initializable,
     IVaultController,
     ExponentialNoError,
     OwnableUpgradeable
@@ -56,8 +58,6 @@ contract VaultController is
     uint256 public _interestFactor;
     uint256 public _protocolFee;
 
-    
-
     /**
     constructor() Ownable() {
         _vaultsMinted = 0;
@@ -70,7 +70,7 @@ contract VaultController is
      */
 
     function initialize() external override initializer {
-         __Ownable_init();
+        __Ownable_init();
         _vaultsMinted = 0;
         _tokensRegistered = 0;
         _interestFactor = 1e18; // initialize at 1e18;
