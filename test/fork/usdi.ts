@@ -114,7 +114,7 @@ const tokenDeposits = async () => {
 };
 
 const votes = async () => {
-    await carol_vault.connect(Carol).delegateCompLikeTo(carol_voting_address,Mainnet.compAddress);
+    await carol_vault.connect(Carol).delegateCompLikeTo(carol_voting_address, Mainnet.compAddress);
 }
 describe("USDI-TOKEN:Init", () => {
     before("deploy contracts", setupInitial);
@@ -418,7 +418,7 @@ describe("Testing liquidations", () => {
         const abi = new ERC20ABI()
         const rawPrice = await con.Oracle!.get_live_price(Mainnet.compAddress)
         //showBody("rawPrice: ", rawPrice)
-        let formatPrice:any = utils.formatEther(rawPrice.toString())
+        let formatPrice: any = utils.formatEther(rawPrice.toString())
         formatPrice = parseFloat(formatPrice)
         //let formatPrice = (await con.Oracle!.get_live_price(Mainnet.compAddress)).div(1e14).toNumber() / 1e4
         //showBody("Formatted COMP price: ", formatPrice)
@@ -450,25 +450,44 @@ describe("Testing liquidations", () => {
 
         //wrong asset address - should revert
         //await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.wethAddress, BN("1e16")).should.be.revertedWith("Vault does not hold any of this asset")
-        
+
         const bigNumber = BN("1e25")
+        let tokens_to_liquidate = await con.VaultController!.getTokensToLiquidate(vaultID, Mainnet.compAddress, bigNumber)
+        let tokensReceipt = await tokens_to_liquidate.wait()
+        event = tokensReceipt.events![tokensReceipt.events!.length - 1]
+        args = event.args
+        const liquidatableTokens = args!.tokenAmount
+        showBody("getTokensToLiquidate args!.tokenAmount: ", liquidatableTokens)
 
-        const tokens_to_liquidate = await con.VaultController!.getTokensToLiquidate(vaultID, Mainnet.compAddress, bigNumber)
-        let multiple = tokens_to_liquidate.mul(2)
-        showBody("getTokensToLiquidate: ", tokens_to_liquidate)
-        //showBody("getTokensToLiquidate 2x: ", multiple)
-        //showBody("tokens_to_liquidate: ", tokens_to_liquidate)
+        /**
+         tokens_to_liquidate = await con.VaultController!.getTokensToLiquidate(vaultID, Mainnet.compAddress, bigNumber)
+        tokensReceipt = await tokens_to_liquidate.wait()
+        event = tokensReceipt.events![tokensReceipt.events!.length - 1]
+        args = event.args
+        showBody("getTokensToLiquidate args!.tokenAmount: ", args!.tokenAmount)
 
-        
+        tokens_to_liquidate = await con.VaultController!.getTokensToLiquidate(vaultID, Mainnet.compAddress, bigNumber)
+        tokensReceipt = await tokens_to_liquidate.wait()
+        event = tokensReceipt.events![tokensReceipt.events!.length - 1]
+        args = event.args
+        showBody("getTokensToLiquidate args!.tokenAmount: ", args!.tokenAmount)
 
-        
-         //tiny liquidation 
+        tokens_to_liquidate = await con.VaultController!.getTokensToLiquidate(vaultID, Mainnet.compAddress, bigNumber)
+        tokensReceipt = await tokens_to_liquidate.wait()
+        event = tokensReceipt.events![tokensReceipt.events!.length - 1]
+        args = event.args
+        showBody("getTokensToLiquidate args!.tokenAmount: ", args!.tokenAmount)
+
+
+         */
+        //tiny liquidation 
         const liquidateResult = await con.VaultController!.connect(Dave).liquidate_account(vaultID, Mainnet.compAddress, bigNumber)
         const liquidateReceipt = await liquidateResult.wait()
         let liquidateEvent = liquidateReceipt.events![liquidateReceipt.events!.length - 1]
         args = liquidateEvent.args
-        showBody("expected tokens_to_liquidate: ", args!.tokens_to_liquidate)
-         
+        showBody("tokens liquidated: ", args!.tokens_to_liquidate)
+        expect(args!.tokens_to_liquidate.toNumber()).to.be.greaterThan(liquidatableTokens.toNumber())
+
 
 
         //let balance = await con.USDI!.balanceOf(Dave.address)
