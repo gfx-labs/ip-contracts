@@ -214,6 +214,8 @@ describe("Testing liquidations", () => {
         showBody("liquidatableTokens:", liquidatableTokens)
         //tiny liquidation 
         showBody("calculating amount to liquidate");
+
+        //callStatic does not actually make the call and change the state of the contract, thus liquidateAmount == liquidatableTokens
         const liquidateAmount = await s.VaultController.connect(s.Dave).callStatic.liquidate_account(vaultID, s.compAddress, BN("1e25"))
         showBody("liquidating at IF", await s.VaultController.InterestFactor());
         await expect(s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.compAddress, BN("1e25"))).to.not.reverted
