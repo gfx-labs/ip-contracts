@@ -69,7 +69,8 @@ contract VaultController is
     }
      */
 
-    function initialize() public initializer {
+    function initialize() external override initializer {
+         __Ownable_init();
         _vaultsMinted = 0;
         _tokensRegistered = 0;
         _interestFactor = 1e18; // initialize at 1e18;

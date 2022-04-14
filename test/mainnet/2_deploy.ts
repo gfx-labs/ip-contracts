@@ -1,5 +1,5 @@
 import { s } from "./scope";
-import { ethers } from "hardhat";
+import { upgrades } from "hardhat";
 import { expect, assert } from "chai";
 import { showBody } from "../util/format";
 import { BN } from "../util/number";
@@ -45,8 +45,12 @@ describe("Deploy Contracts", () => {
         expect(await s.USDI.monetaryPolicy()).to.equal(s.Frank.address)
 
         showBody("deploying vault controller")
+        await mineBlock()
         s.VaultController = await new VaultController__factory(s.Frank).deploy();
         await mineBlock()
+        let result = await s.VaultController.initialize()
+        await mineBlock()
+
         expect(await s.USDI.owner()).to.equal(s.Frank.address)
         showBody("vault controller set vault owner")
         await expect(s.USDI.setVaultController(s.VaultController.address)).to.not.reverted
@@ -54,9 +58,11 @@ describe("Deploy Contracts", () => {
     })
 
     it("Deploy Curve", async () => {
+        await mineBlock()
         s.Curve = await new CurveMaster__factory(s.Frank).deploy();
         await mineBlock()
-        await expect(s.VaultController.register_curve_master(s.Curve.address)).to.not.reverted;
+        await s.VaultController.register_curve_master(s.Curve.address)
+        //await expect(s.VaultController.register_curve_master(s.Curve.address)).to.not.reverted;
         await mineBlock()
         s.ThreeLines = await new ThreeLines0_100__factory(
             s.Frank
