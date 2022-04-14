@@ -968,7 +968,7 @@ export interface VaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    calculate_interest(overrides?: CallOverrides): Promise<void>;
+    calculate_interest(overrides?: CallOverrides): Promise<BigNumber>;
 
     change_protocol_fee(
       new_protocol_fee: BigNumberish,

@@ -164,9 +164,6 @@ describe("Testing liquidations", () => {
     })
 
     it("checks for over liquidation and then liquidates a vault that is just barely insolvent", async () => {
-        let bn = await ethers.provider.getBlockNumber()
-        showBody("current block", bn)
-        expect(bn).to.eq(BN("14,546,867"))
         /**
          * 
          * TODO: test exploit: liquidate max -> borrowing power reduced -> account insolvant again -> repeat -> profit
@@ -198,9 +195,15 @@ describe("Testing liquidations", () => {
 
         showBody("advance 1 week and then calculate interest")
         await fastForward(OneWeek)
-        await advanceBlockHeight(1)
         await s.VaultController.calculate_interest()
         await advanceBlockHeight(1)
+
+        let bn = await ethers.provider.getBlockNumber()
+        showBody("current block", bn)
+        expect(bn).to.eq(BN("14,546,869"))
+
+        let bt = (await ethers.provider.getBlock(bn)).timestamp
+        showBody("current timestamp", bt)
 
         solvency = await s.VaultController.check_account(vaultID)
         showBody("carol vault should be insolvent")
@@ -211,12 +214,13 @@ describe("Testing liquidations", () => {
         //tiny liquidation 
         showBody("calculating amount to liquidate");
         const liquidateAmount = await s.VaultController.connect(s.Dave).callStatic.liquidate_account(vaultID, s.compAddress, BN("1e25"))
-        showBody("liquidating");
+        showBody("liquidating at IF", await s.VaultController.InterestFactor());
         await expect(s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.compAddress, BN("1e25"))).to.not.reverted
         await advanceBlockHeight(1)
         showBody("dave liquidated:", liquidateAmount, "comp")
-        showBody("block must match", liquidateAmount, "comp")
-        expect(liquidateAmount).to.eq(BN("2,435,177,006,312,036,581"))
+        expect(liquidateAmount)
+            .to.be.above(BN("2,435,172,979,901,686,000"))
+            .and.below(BN("2,435,172,979,901,686,500"))
 
         //let balance = await s.USDI.balanceOf(Dave.address)
         //console.log("Dave USDi Balance: ", utils.formatEther(balance.toString()))
