@@ -26,6 +26,8 @@ export type { IERC20 } from "./_external/IERC20";
 export { IERC20__factory } from "./factories/_external/IERC20__factory";
 export type { IVOTE } from "./_external/IVOTE";
 export { IVOTE__factory } from "./factories/_external/IVOTE__factory";
+export type { OwnableUpgradeable } from "./_external/openZeppelin/OwnableUpgradeable";
+export { OwnableUpgradeable__factory } from "./factories/_external/openZeppelin/OwnableUpgradeable__factory";
 export type { Ownable } from "./_external/Ownable";
 export { Ownable__factory } from "./factories/_external/Ownable__factory";
 export type { IUniswapV3PoolDerivedState } from "./_external/uniswap/IUniswapV3PoolDerivedState";
