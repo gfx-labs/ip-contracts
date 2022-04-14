@@ -35,7 +35,9 @@ describe("Deploy Contracts", () => {
 
     it("Deploy USDI core", async () => {
         showBody("deploying usdi")
-        s.USDI = await new USDI__factory(s.Frank).deploy(s.usdcAddress)
+        s.USDI = await new USDI__factory(s.Frank).deploy()
+        await mineBlock()
+        await s.USDI.initialize(s.usdcAddress)
         await mineBlock()
         expect(await s.USDI.owner()).to.equal(s.Frank.address)
 
