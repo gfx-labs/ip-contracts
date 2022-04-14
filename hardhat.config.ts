@@ -8,7 +8,6 @@ import "@openzeppelin/hardhat-upgrades";
 import "@typechain/hardhat";
 import { HardhatUserConfig } from "hardhat/types";
 dotenv.config();
-console.log(process.env.RPC_URL2)
 const config: HardhatUserConfig = {
     defaultNetwork: "hardhat",
     networks: {
@@ -43,7 +42,7 @@ const config: HardhatUserConfig = {
             tasks: ["compile"],
         },
         test: {//npx hardhat watch test -- run test when a file is saved
-            tasks: [{ command: 'test', params: { testFiles: ['./test/index.ts'] } }], //test this file
+            tasks: [{ command: 'test', params: { testFiles: ['./test/mainnet/9_upgradeable.ts'] } }], //test this file
             files: ['./test/mainnet/9_upgradeable.ts'] //test when this file is saved
         }
     },
