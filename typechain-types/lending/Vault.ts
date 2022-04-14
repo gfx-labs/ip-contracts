@@ -2,275 +2,225 @@
 /* tslint:disable */
 /* eslint-disable */
 import type {
-  BaseContract,
-  BigNumber,
-  BigNumberish,
-  BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
+    BaseContract,
+    BigNumber,
+    BigNumberish,
+    BytesLike,
+    CallOverrides,
+    ContractTransaction,
+    Overrides,
+    PopulatedTransaction,
+    Signer,
+    utils,
 } from "ethers";
 import type { FunctionFragment, Result } from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
-  TypedListener,
-  OnEvent,
+    TypedEventFilter,
+    TypedEvent,
+    TypedListener,
+    OnEvent,
 } from "../common";
 
 export interface VaultInterface extends utils.Interface {
-  functions: {
-    "_baseLiability()": FunctionFragment;
-    "_id()": FunctionFragment;
-    "_masterAddress()": FunctionFragment;
-    "_minter()": FunctionFragment;
-    "claim_erc20(address,uint256)": FunctionFragment;
-    "decrease_liability(uint256)": FunctionFragment;
-    "deposit_erc20(address,uint256)": FunctionFragment;
-    "getBalances(address)": FunctionFragment;
-    "getBaseLiability()": FunctionFragment;
-    "getMinter()": FunctionFragment;
-    "increase_liability(uint256)": FunctionFragment;
-    "masterTransfer(address,address,uint256)": FunctionFragment;
-    "withdraw_erc20(address,uint256)": FunctionFragment;
-  };
+    functions: {
+        "_baseLiability()": FunctionFragment;
+        "_id()": FunctionFragment;
+        "_masterAddress()": FunctionFragment;
+        "_minter()": FunctionFragment;
+        "claim_erc20(address,uint256)": FunctionFragment;
+        "decrease_liability(uint256)": FunctionFragment;
+        "deposit_erc20(address,uint256)": FunctionFragment;
+        "getBalances(address)": FunctionFragment;
+        "BaseLiability()": FunctionFragment;
+        "getMinter()": FunctionFragment;
+        "increase_liability(uint256)": FunctionFragment;
+        "masterTransfer(address,address,uint256)": FunctionFragment;
+        "withdraw_erc20(address,uint256)": FunctionFragment;
+    };
 
-  getFunction(
-    nameOrSignatureOrTopic:
-      | "_baseLiability"
-      | "_id"
-      | "_masterAddress"
-      | "_minter"
-      | "claim_erc20"
-      | "decrease_liability"
-      | "deposit_erc20"
-      | "getBalances"
-      | "getBaseLiability"
-      | "getMinter"
-      | "increase_liability"
-      | "masterTransfer"
-      | "withdraw_erc20"
-  ): FunctionFragment;
+    getFunction(
+        nameOrSignatureOrTopic:
+            | "_baseLiability"
+            | "_id"
+            | "_masterAddress"
+            | "_minter"
+            | "claim_erc20"
+            | "decrease_liability"
+            | "deposit_erc20"
+            | "getBalances"
+            | "BaseLiability"
+            | "getMinter"
+            | "increase_liability"
+            | "masterTransfer"
+            | "withdraw_erc20"
+    ): FunctionFragment;
 
-  encodeFunctionData(
-    functionFragment: "_baseLiability",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "_id", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "_masterAddress",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "_minter", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "claim_erc20",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "decrease_liability",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "deposit_erc20",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(functionFragment: "getBalances", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "getBaseLiability",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "getMinter", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "increase_liability",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "masterTransfer",
-    values: [string, string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "withdraw_erc20",
-    values: [string, BigNumberish]
-  ): string;
+    encodeFunctionData(
+        functionFragment: "_baseLiability",
+        values?: undefined
+    ): string;
+    encodeFunctionData(functionFragment: "_id", values?: undefined): string;
+    encodeFunctionData(
+        functionFragment: "_masterAddress",
+        values?: undefined
+    ): string;
+    encodeFunctionData(functionFragment: "_minter", values?: undefined): string;
+    encodeFunctionData(
+        functionFragment: "claim_erc20",
+        values: [string, BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "decrease_liability",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "deposit_erc20",
+        values: [string, BigNumberish]
+    ): string;
+    encodeFunctionData(functionFragment: "getBalances", values: [string]): string;
+    encodeFunctionData(
+        functionFragment: "BaseLiability",
+        values?: undefined
+    ): string;
+    encodeFunctionData(functionFragment: "getMinter", values?: undefined): string;
+    encodeFunctionData(
+        functionFragment: "increase_liability",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "masterTransfer",
+        values: [string, string, BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "withdraw_erc20",
+        values: [string, BigNumberish]
+    ): string;
 
-  decodeFunctionResult(
-    functionFragment: "_baseLiability",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "_id", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "_masterAddress",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "_minter", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "claim_erc20",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "decrease_liability",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "deposit_erc20",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getBalances",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getBaseLiability",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "getMinter", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "increase_liability",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "masterTransfer",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "withdraw_erc20",
-    data: BytesLike
-  ): Result;
+    decodeFunctionResult(
+        functionFragment: "_baseLiability",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(functionFragment: "_id", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "_masterAddress",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(functionFragment: "_minter", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "claim_erc20",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "decrease_liability",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "deposit_erc20",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getBalances",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "BaseLiability",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(functionFragment: "getMinter", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "increase_liability",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "masterTransfer",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "withdraw_erc20",
+        data: BytesLike
+    ): Result;
 
-  events: {};
+    events: {};
 }
 
 export interface Vault extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+    connect(signerOrProvider: Signer | Provider | string): this;
+    attach(addressOrName: string): this;
+    deployed(): Promise<this>;
 
-  interface: VaultInterface;
+    interface: VaultInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
-    fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+    queryFilter<TEvent extends TypedEvent>(
+        event: TypedEventFilter<TEvent>,
+        fromBlockOrBlockhash?: string | number | undefined,
+        toBlock?: string | number | undefined
+    ): Promise<Array<TEvent>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+    listeners<TEvent extends TypedEvent>(
+        eventFilter?: TypedEventFilter<TEvent>
+    ): Array<TypedListener<TEvent>>;
+    listeners(eventName?: string): Array<Listener>;
+    removeAllListeners<TEvent extends TypedEvent>(
+        eventFilter: TypedEventFilter<TEvent>
+    ): this;
+    removeAllListeners(eventName?: string): this;
+    off: OnEvent<this>;
+    on: OnEvent<this>;
+    once: OnEvent<this>;
+    removeListener: OnEvent<this>;
 
-  functions: {
-    _baseLiability(overrides?: CallOverrides): Promise<[BigNumber]>;
+    functions: {
+        _baseLiability(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    _id(overrides?: CallOverrides): Promise<[BigNumber]>;
+        _id(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    _masterAddress(overrides?: CallOverrides): Promise<[string]>;
+        _masterAddress(overrides?: CallOverrides): Promise<[string]>;
 
-    _minter(overrides?: CallOverrides): Promise<[string]>;
+        _minter(overrides?: CallOverrides): Promise<[string]>;
 
-    claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+        claim_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
 
-    decrease_liability(
-      base_amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+        decrease_liability(
+            base_amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
 
-    deposit_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+        deposit_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
 
-    getBalances(addr: string, overrides?: CallOverrides): Promise<[BigNumber]>;
+        getBalances(addr: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    getBaseLiability(overrides?: CallOverrides): Promise<[BigNumber]>;
+        BaseLiability(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    getMinter(overrides?: CallOverrides): Promise<[string]>;
+        getMinter(overrides?: CallOverrides): Promise<[string]>;
 
-    increase_liability(
-      base_amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+        increase_liability(
+            base_amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
 
-    masterTransfer(
-      _token: string,
-      _to: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+        masterTransfer(
+            _token: string,
+            _to: string,
+            _amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
 
-    withdraw_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-  };
+        withdraw_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+    };
 
-  _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _id(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _masterAddress(overrides?: CallOverrides): Promise<string>;
-
-  _minter(overrides?: CallOverrides): Promise<string>;
-
-  claim_erc20(
-    token_address: string,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  decrease_liability(
-    base_amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  deposit_erc20(
-    token_address: string,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  getBalances(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  getBaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getMinter(overrides?: CallOverrides): Promise<string>;
-
-  increase_liability(
-    base_amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  masterTransfer(
-    _token: string,
-    _to: string,
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  withdraw_erc20(
-    token_address: string,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
     _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
     _id(overrides?: CallOverrides): Promise<BigNumber>;
@@ -280,151 +230,201 @@ export interface Vault extends BaseContract {
     _minter(overrides?: CallOverrides): Promise<string>;
 
     claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+        token_address: string,
+        amount: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     decrease_liability(
-      base_amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+        base_amount: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     deposit_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        token_address: string,
+        amount: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     getBalances(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    getBaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
+    BaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
     getMinter(overrides?: CallOverrides): Promise<string>;
 
     increase_liability(
-      base_amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+        base_amount: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     masterTransfer(
-      _token: string,
-      _to: string,
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        _token: string,
+        _to: string,
+        _amount: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     withdraw_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+        token_address: string,
+        amount: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
-  filters: {};
+    callStatic: {
+        _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
-  estimateGas: {
-    _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
+        _id(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _id(overrides?: CallOverrides): Promise<BigNumber>;
+        _masterAddress(overrides?: CallOverrides): Promise<string>;
 
-    _masterAddress(overrides?: CallOverrides): Promise<BigNumber>;
+        _minter(overrides?: CallOverrides): Promise<string>;
 
-    _minter(overrides?: CallOverrides): Promise<BigNumber>;
+        claim_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
 
-    claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        decrease_liability(
+            base_amount: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
 
-    decrease_liability(
-      base_amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        deposit_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<void>;
 
-    deposit_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        getBalances(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    getBalances(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
+        BaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getBaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
+        getMinter(overrides?: CallOverrides): Promise<string>;
 
-    getMinter(overrides?: CallOverrides): Promise<BigNumber>;
+        increase_liability(
+            base_amount: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
 
-    increase_liability(
-      base_amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        masterTransfer(
+            _token: string,
+            _to: string,
+            _amount: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<void>;
 
-    masterTransfer(
-      _token: string,
-      _to: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        withdraw_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<void>;
+    };
 
-    withdraw_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-  };
+    filters: {};
 
-  populateTransaction: {
-    _baseLiability(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    estimateGas: {
+        _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _id(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        _id(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _masterAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        _masterAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _minter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        _minter(overrides?: CallOverrides): Promise<BigNumber>;
 
-    claim_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        claim_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
 
-    decrease_liability(
-      base_amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        decrease_liability(
+            base_amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
 
-    deposit_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        deposit_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
 
-    getBalances(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        getBalances(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    getBaseLiability(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        BaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getMinter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getMinter(overrides?: CallOverrides): Promise<BigNumber>;
 
-    increase_liability(
-      base_amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        increase_liability(
+            base_amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
 
-    masterTransfer(
-      _token: string,
-      _to: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        masterTransfer(
+            _token: string,
+            _to: string,
+            _amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
 
-    withdraw_erc20(
-      token_address: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-  };
+        withdraw_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+    };
+
+    populateTransaction: {
+        _baseLiability(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        _id(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        _masterAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        _minter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        claim_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        decrease_liability(
+            base_amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        deposit_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        getBalances(
+            addr: string,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        BaseLiability(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        getMinter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        increase_liability(
+            base_amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        masterTransfer(
+            _token: string,
+            _to: string,
+            _amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        withdraw_erc20(
+            token_address: string,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+    };
 }
