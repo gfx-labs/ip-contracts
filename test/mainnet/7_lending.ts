@@ -200,7 +200,7 @@ describe("Testing liquidations", () => {
 
         let bn = await ethers.provider.getBlockNumber()
         showBody("current block", bn)
-        expect(bn).to.eq(BN("14,546,869"))
+        expect(bn).to.eq(BN("14546874"))
 
         let bt = (await ethers.provider.getBlock(bn)).timestamp
         showBody("current timestamp", bt)
