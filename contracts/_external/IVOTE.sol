@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
 
+import "./IERC20.sol";
 /**
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
-interface IVOTE {
+interface IVOTE is IERC20 {
     /**
      * @notice Gets the current votes balance for `account`
      * @param account The address to get votes balance

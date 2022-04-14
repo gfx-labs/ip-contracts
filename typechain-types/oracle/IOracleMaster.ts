@@ -6,6 +6,8 @@ import type {
   BigNumber,
   BytesLike,
   CallOverrides,
+  ContractTransaction,
+  Overrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -22,19 +24,36 @@ import type {
 export interface IOracleMasterInterface extends utils.Interface {
   functions: {
     "get_live_price(address)": FunctionFragment;
+    "pause_relay(address,bool)": FunctionFragment;
+    "set_relay(address,address)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "get_live_price"): FunctionFragment;
+  getFunction(
+    nameOrSignatureOrTopic: "get_live_price" | "pause_relay" | "set_relay"
+  ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "get_live_price",
     values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "pause_relay",
+    values: [string, boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "set_relay",
+    values: [string, string]
   ): string;
 
   decodeFunctionResult(
     functionFragment: "get_live_price",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "pause_relay",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "set_relay", data: BytesLike): Result;
 
   events: {};
 }
@@ -70,6 +89,18 @@ export interface IOracleMaster extends BaseContract {
       token_address: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
+
+    pause_relay(
+      token_address: string,
+      state: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    set_relay(
+      token_address: string,
+      relay_address: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
   };
 
   get_live_price(
@@ -77,11 +108,35 @@ export interface IOracleMaster extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  pause_relay(
+    token_address: string,
+    state: boolean,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  set_relay(
+    token_address: string,
+    relay_address: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     get_live_price(
       token_address: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    pause_relay(
+      token_address: string,
+      state: boolean,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    set_relay(
+      token_address: string,
+      relay_address: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {};
@@ -91,12 +146,36 @@ export interface IOracleMaster extends BaseContract {
       token_address: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    pause_relay(
+      token_address: string,
+      state: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    set_relay(
+      token_address: string,
+      relay_address: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
     get_live_price(
       token_address: string,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    pause_relay(
+      token_address: string,
+      state: boolean,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    set_relay(
+      token_address: string,
+      relay_address: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };
 }
