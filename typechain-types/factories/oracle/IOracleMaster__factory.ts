@@ -29,6 +29,42 @@ const _abi = [
     stateMutability: "view",
     type: "function",
   },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "token_address",
+        type: "address",
+      },
+      {
+        internalType: "bool",
+        name: "state",
+        type: "bool",
+      },
+    ],
+    name: "pause_relay",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "token_address",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "relay_address",
+        type: "address",
+      },
+    ],
+    name: "set_relay",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
 ];
 
 export class IOracleMaster__factory {

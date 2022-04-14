@@ -243,6 +243,118 @@ const _abi = [
         name: "id",
         type: "uint256",
       },
+    ],
+    name: "AccountBorrowingPower",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
+    ],
+    name: "AccountLiability",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "InterestFactor",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "ProtocolFee",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "num",
+        type: "uint256",
+      },
+    ],
+    name: "TokensToLiquidate",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
+    ],
+    name: "VaultAddress",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
       {
         internalType: "uint256",
         name: "amount",
@@ -281,51 +393,6 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "getInterestFactor",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getProtocolFee",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-    ],
-    name: "get_account_liability",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [
       {
         internalType: "uint256",
@@ -355,6 +422,19 @@ const _abi = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "mint_vault",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "address",
@@ -371,11 +451,52 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
+        name: "token_address",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "LTV",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "oracle_address",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "liquidationIncentive",
+        type: "uint256",
+      },
+    ],
+    name: "register_erc20",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
         name: "master_oracle_address",
         type: "address",
       },
     ],
     name: "register_oracle_master",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "usdi_address",
+        type: "address",
+      },
+    ],
+    name: "register_usdi",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -407,6 +528,34 @@ const _abi = [
       },
     ],
     name: "repay_usdi",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "token_address",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "LTV",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "oracle_address",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "liquidationIncentive",
+        type: "uint256",
+      },
+    ],
+    name: "update_registered_erc20",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

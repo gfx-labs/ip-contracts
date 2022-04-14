@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../token/IUSDI.sol";
 import "../_external/IERC20.sol";
+import "../_external/Context.sol";
 import "../_external/compound/ExponentialNoError.sol";
 import "./IVault.sol";
 import "./IVaultController.sol";
@@ -19,7 +20,7 @@ interface CompLike {
 // our implentation of maker vaults
 // vaults are multi-collateral
 // vaults generate interest in USDI
-contract Vault is IVault, ExponentialNoError {
+contract Vault is IVault, ExponentialNoError, Context {
     uint256 public _id;
     address public _minter;
     address private _usdiAddress;
@@ -35,12 +36,12 @@ contract Vault is IVault, ExponentialNoError {
     uint256 public _baseLiability;
 
     modifier masterOnly() {
-        require(msg.sender == _masterAddress);
+        require(_msgSender() == _masterAddress);
         _;
     }
 
     modifier minterOnly() {
-        require(msg.sender == _minter);
+        require(_msgSender() == _minter);
         _;
     }
 
@@ -62,7 +63,7 @@ contract Vault is IVault, ExponentialNoError {
         return _minter;
     }
 
-    function getBaseLiability() external view override returns (uint256) {
+    function BaseLiability() external view override returns (uint256) {
         return _baseLiability;
     }
 
@@ -75,24 +76,13 @@ contract Vault is IVault, ExponentialNoError {
         return IERC20(addr).balanceOf(address(this));
     }
 
-    function deposit_erc20(address token_address, uint256 amount)
-        external
-        override
-    {
-        require(amount > 0, "cannot deposit 0");
-        IERC20 token = IERC20(token_address);
-        token.transferFrom(msg.sender, address(this), amount);
-
-        emit Deposit(token_address, amount);
-    }
-
     function withdraw_erc20(address token_address, uint256 amount)
         external
         override
         minterOnly
     {
         IERC20 token = IERC20(token_address);
-        token.transferFrom(address(this), msg.sender, amount);
+        token.transferFrom(address(this), _msgSender(), amount);
         bool solvency = _master.check_account(_id);
         require(solvency, "this withdraw would make your account insolvent");
 

@@ -14,3 +14,8 @@ export const fastForward = async (time: number) => {
         params: [time],
     }).then(() => { advanceBlockHeight(1) })
 };
+
+export const mineBlock = async () => {
+    return fastForward(15).then(() => { return advanceBlockHeight(1) })
+
+}
