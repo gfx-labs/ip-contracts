@@ -396,6 +396,7 @@ export interface VaultControllerInterface extends utils.Interface {
     "RegisteredErc20(address,uint256,address,uint256)": EventFragment;
     "RepayUSDi(uint256,address,uint256)": EventFragment;
     "UpdateRegisteredErc20(address,uint256,address,uint256)": EventFragment;
+    "tokensToLiquidate(uint256,address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "BorrowUSDi"): EventFragment;
@@ -409,6 +410,7 @@ export interface VaultControllerInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "RegisteredErc20"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RepayUSDi"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdateRegisteredErc20"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "tokensToLiquidate"): EventFragment;
 }
 
 export interface BorrowUSDiEventObject {
@@ -542,6 +544,18 @@ export type UpdateRegisteredErc20Event = TypedEvent<
 export type UpdateRegisteredErc20EventFilter =
   TypedEventFilter<UpdateRegisteredErc20Event>;
 
+export interface tokensToLiquidateEventObject {
+  tokenAmount: BigNumber;
+  assetAddress: string;
+}
+export type tokensToLiquidateEvent = TypedEvent<
+  [BigNumber, string],
+  tokensToLiquidateEventObject
+>;
+
+export type tokensToLiquidateEventFilter =
+  TypedEventFilter<tokensToLiquidateEvent>;
+
 export interface VaultController extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
@@ -650,8 +664,8 @@ export interface VaultController extends BaseContract {
       id: BigNumberish,
       asset_address: string,
       tokens_to_liquidate: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber] & { tokenAmount: BigNumber }>;
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     get_account_liability(
       id: BigNumberish,
@@ -801,8 +815,8 @@ export interface VaultController extends BaseContract {
     id: BigNumberish,
     asset_address: string,
     tokens_to_liquidate: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   get_account_liability(
     id: BigNumberish,
@@ -954,7 +968,7 @@ export interface VaultController extends BaseContract {
       asset_address: string,
       tokens_to_liquidate: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<void>;
 
     get_account_liability(
       id: BigNumberish,
@@ -1123,6 +1137,15 @@ export interface VaultController extends BaseContract {
       oracle_address?: null,
       liquidationIncentivee4?: null
     ): UpdateRegisteredErc20EventFilter;
+
+    "tokensToLiquidate(uint256,address)"(
+      tokenAmount?: null,
+      assetAddress?: null
+    ): tokensToLiquidateEventFilter;
+    tokensToLiquidate(
+      tokenAmount?: null,
+      assetAddress?: null
+    ): tokensToLiquidateEventFilter;
   };
 
   estimateGas: {
@@ -1207,7 +1230,7 @@ export interface VaultController extends BaseContract {
       id: BigNumberish,
       asset_address: string,
       tokens_to_liquidate: BigNumberish,
-      overrides?: CallOverrides
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     get_account_liability(
@@ -1368,7 +1391,7 @@ export interface VaultController extends BaseContract {
       id: BigNumberish,
       asset_address: string,
       tokens_to_liquidate: BigNumberish,
-      overrides?: CallOverrides
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     get_account_liability(

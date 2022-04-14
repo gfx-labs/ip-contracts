@@ -254,8 +254,6 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         address asset_address,
         uint256 tokens_to_liquidate
     ) external override returns (uint256) {
-        pay_interest();
-
         (uint256 tokenAmount, uint256 badFillPrice) = _liquidationMath(
             id,
             asset_address,
@@ -268,7 +266,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
 
         uint256 usdi_to_repurchase = truncate(
             badFillPrice * tokens_to_liquidate
-        );        
+        );
         IVault vault = getVault(id);
 
         //decrease by base amount -- switch to truncate?
@@ -296,24 +294,31 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         return tokens_to_liquidate;
     }
 
+
     /******* get things *******/
+        event tokensToLiquidate(uint256 tokenAmount, address assetAddress);
+
+    ///@dev - updates state via pay_interest() then returns the amount of tokens underwater this vault is
+    ///@dev - the amount owed is a moving target and changes with each block
     function getTokensToLiquidate(
         uint256 id,
         address asset_address,
         uint256 tokens_to_liquidate
-    ) external view returns (uint256 tokenAmount) {
+    ) external {
         (
-            tokenAmount, /*uint256 badFillPrice*/
+            uint256 tokenAmount, /*uint256 badFillPrice*/
 
         ) = _liquidationMath(id, asset_address, tokens_to_liquidate);
-        tokenAmount = tokenAmount * 2;
+
+        emit tokensToLiquidate(tokenAmount, asset_address);
     }
 
     function _liquidationMath(
         uint256 id,
         address asset_address,
         uint256 tokens_to_liquidate
-    ) internal view returns (uint256, uint256) {
+    ) internal returns (uint256, uint256) {
+        pay_interest();
 
         IVault vault = getVault(id);
 
@@ -348,7 +353,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
     function getVault(uint256 id) internal view returns (IVault vault) {
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
-        vault = IVault(vault_address);        
+        vault = IVault(vault_address);
     }
 
     function get_account_liability(uint256 id)
