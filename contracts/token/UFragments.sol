@@ -60,7 +60,7 @@ contract UFragments is ERC20Detailed, Ownable {
 
     // _totalGons is a multiple of INITIAL_FRAGMENTS_SUPPLY so that _gonsPerFragment is an integer.
     // Use the highest value that fits in a uint256 for max granularity.
-    uint256 public _totalGons = INITIAL_FRAGMENTS_SUPPLY * 10 ** 32;
+    uint256 public _totalGons = INITIAL_FRAGMENTS_SUPPLY * 10 ** 48;
 
     // MAX_SUPPLY = maximum integer < (sqrt(4*_totalGons + 1) - 1) / 2
     uint256 public MAX_SUPPLY = type(uint128).max; // (2^128) - 1

@@ -5,158 +5,158 @@
 import { Contract, Signer, utils } from "ethers";
 import type { Provider } from "@ethersproject/providers";
 import type {
-  IVaultController,
-  IVaultControllerInterface,
-} from "../../lending/IVaultController";
+    IVaultMaster,
+    IVaultMasterInterface,
+} from "../../lending/IVaultMaster";
 
 const _abi = [
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-    ],
-    name: "borrow_usdi",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "calculate_interest",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-    ],
-    name: "check_account",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getInterestFactor",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-    ],
-    name: "get_account_liability",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-      {
-        internalType: "address",
-        name: "asset_address",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "maximum",
-        type: "uint256",
-      },
-    ],
-    name: "liquidate_account",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-    ],
-    name: "repay_all_usdi",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "id",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-    ],
-    name: "repay_usdi",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
+    {
+        inputs: [
+            {
+                internalType: "uint256",
+                name: "id",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "amount",
+                type: "uint256",
+            },
+        ],
+        name: "borrow_usdi",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        inputs: [],
+        name: "calculate_interest",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        inputs: [
+            {
+                internalType: "uint256",
+                name: "id",
+                type: "uint256",
+            },
+        ],
+        name: "check_account",
+        outputs: [
+            {
+                internalType: "bool",
+                name: "",
+                type: "bool",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [],
+        name: "getInterestFactor",
+        outputs: [
+            {
+                internalType: "uint256",
+                name: "",
+                type: "uint256",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [
+            {
+                internalType: "uint256",
+                name: "id",
+                type: "uint256",
+            },
+        ],
+        name: "AccountLiability",
+        outputs: [
+            {
+                internalType: "uint256",
+                name: "",
+                type: "uint256",
+            },
+        ],
+        stateMutability: "view",
+        type: "function",
+    },
+    {
+        inputs: [
+            {
+                internalType: "uint256",
+                name: "id",
+                type: "uint256",
+            },
+            {
+                internalType: "address",
+                name: "asset_address",
+                type: "address",
+            },
+            {
+                internalType: "uint256",
+                name: "maximum",
+                type: "uint256",
+            },
+        ],
+        name: "liquidate_account",
+        outputs: [
+            {
+                internalType: "uint256",
+                name: "",
+                type: "uint256",
+            },
+        ],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        inputs: [
+            {
+                internalType: "uint256",
+                name: "id",
+                type: "uint256",
+            },
+        ],
+        name: "repay_all_usdi",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
+    {
+        inputs: [
+            {
+                internalType: "uint256",
+                name: "id",
+                type: "uint256",
+            },
+            {
+                internalType: "uint256",
+                name: "amount",
+                type: "uint256",
+            },
+        ],
+        name: "repay_usdi",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+    },
 ];
 
-export class IVaultController__factory {
-  static readonly abi = _abi;
-  static createInterface(): IVaultControllerInterface {
-    return new utils.Interface(_abi) as IVaultControllerInterface;
-  }
-  static connect(
-    address: string,
-    signerOrProvider: Signer | Provider
-  ): IVaultController {
-    return new Contract(address, _abi, signerOrProvider) as IVaultController;
-  }
+export class IVaultMaster__factory {
+    static readonly abi = _abi;
+    static createInterface(): IVaultMasterInterface {
+        return new utils.Interface(_abi) as IVaultMasterInterface;
+    }
+    static connect(
+        address: string,
+        signerOrProvider: Signer | Provider
+    ): IVaultMaster {
+        return new Contract(address, _abi, signerOrProvider) as IVaultMaster;
+    }
 }

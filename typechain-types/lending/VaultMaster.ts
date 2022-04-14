@@ -2,707 +2,522 @@
 /* tslint:disable */
 /* eslint-disable */
 import type {
-  BaseContract,
-  BigNumber,
-  BigNumberish,
-  BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
+    BaseContract,
+    BigNumber,
+    BigNumberish,
+    BytesLike,
+    CallOverrides,
+    ContractTransaction,
+    Overrides,
+    PopulatedTransaction,
+    Signer,
+    utils,
 } from "ethers";
 import type {
-  FunctionFragment,
-  Result,
-  EventFragment,
+    FunctionFragment,
+    Result,
+    EventFragment,
 } from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
-  TypedListener,
-  OnEvent,
+    TypedEventFilter,
+    TypedEvent,
+    TypedListener,
+    OnEvent,
 } from "../common";
 
-export interface VaultControllerInterface extends utils.Interface {
-  functions: {
-    "_e18_interestFactor()": FunctionFragment;
-    "_e4_liquidatorShare()": FunctionFragment;
-    "_enabledTokens(uint256)": FunctionFragment;
-    "_lastInterestTime()": FunctionFragment;
-    "_oracleMasterAddress()": FunctionFragment;
-    "_tokenAddress_liquidationIncentivee4(address)": FunctionFragment;
-    "_tokenAddress_tokenId(address)": FunctionFragment;
-    "_tokenId_oracleAddress(uint256)": FunctionFragment;
-    "_tokenId_tokenLTVe4(uint256)": FunctionFragment;
-    "_tokensRegistered()": FunctionFragment;
-    "_totalBaseLiability()": FunctionFragment;
-    "_usdiAddress()": FunctionFragment;
-    "_vaultId_vaultAddress(uint256)": FunctionFragment;
-    "_vaultsMinted()": FunctionFragment;
-    "account_borrowing_power(uint256)": FunctionFragment;
-    "borrow_usdi(uint256,uint256)": FunctionFragment;
-    "calculate_interest()": FunctionFragment;
-    "check_account(uint256)": FunctionFragment;
-    "getInterestFactor()": FunctionFragment;
-    "get_account_liability(uint256)": FunctionFragment;
-    "liquidate_account(uint256,address,uint256)": FunctionFragment;
-    "mint_vault()": FunctionFragment;
-    "owner()": FunctionFragment;
-    "register_erc20(address,uint256,address,uint256)": FunctionFragment;
-    "register_oracle_master(address)": FunctionFragment;
-    "register_usdi(address)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "repay_all_usdi(uint256)": FunctionFragment;
-    "repay_usdi(uint256,uint256)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
-    "update_registered_erc20(address,uint256,address,uint256)": FunctionFragment;
-  };
+export interface VaultMasterInterface extends utils.Interface {
+    functions: {
+        "_e18_interestFactor()": FunctionFragment;
+        "_e4_liquidatorShare()": FunctionFragment;
+        "_enabledTokens(uint256)": FunctionFragment;
+        "_lastInterestTime()": FunctionFragment;
+        "_oracleMasterAddress()": FunctionFragment;
+        "_tokenAddress_tokenId(address)": FunctionFragment;
+        "_tokenId_oracleAddress(uint256)": FunctionFragment;
+        "_tokenId_tokenLTVe4(uint256)": FunctionFragment;
+        "_tokensRegistered()": FunctionFragment;
+        "_totalBaseLiability()": FunctionFragment;
+        "_usdiAddress()": FunctionFragment;
+        "_vaultId_vaultAddress(uint256)": FunctionFragment;
+        "_vaultsMinted()": FunctionFragment;
+        "account_collateral_value(uint256)": FunctionFragment;
+        "borrow_usdi(uint256,uint256)": FunctionFragment;
+        "calculate_interest()": FunctionFragment;
+        "check_account(uint256)": FunctionFragment;
+        "getInterestFactor()": FunctionFragment;
+        "AccountLiability(uint256)": FunctionFragment;
+        "liquidate_account(uint256,address,uint256)": FunctionFragment;
+        "mint_vault()": FunctionFragment;
+        "owner()": FunctionFragment;
+        "register_erc20(address,uint256,address)": FunctionFragment;
+        "register_oracle_master(address)": FunctionFragment;
+        "register_usdi(address)": FunctionFragment;
+        "renounceOwnership()": FunctionFragment;
+        "repay_all_usdi(uint256)": FunctionFragment;
+        "repay_usdi(uint256,uint256)": FunctionFragment;
+        "transferOwnership(address)": FunctionFragment;
+    };
 
-  getFunction(
-    nameOrSignatureOrTopic:
-      | "_e18_interestFactor"
-      | "_e4_liquidatorShare"
-      | "_enabledTokens"
-      | "_lastInterestTime"
-      | "_oracleMasterAddress"
-      | "_tokenAddress_liquidationIncentivee4"
-      | "_tokenAddress_tokenId"
-      | "_tokenId_oracleAddress"
-      | "_tokenId_tokenLTVe4"
-      | "_tokensRegistered"
-      | "_totalBaseLiability"
-      | "_usdiAddress"
-      | "_vaultId_vaultAddress"
-      | "_vaultsMinted"
-      | "account_borrowing_power"
-      | "borrow_usdi"
-      | "calculate_interest"
-      | "check_account"
-      | "getInterestFactor"
-      | "get_account_liability"
-      | "liquidate_account"
-      | "mint_vault"
-      | "owner"
-      | "register_erc20"
-      | "register_oracle_master"
-      | "register_usdi"
-      | "renounceOwnership"
-      | "repay_all_usdi"
-      | "repay_usdi"
-      | "transferOwnership"
-      | "update_registered_erc20"
-  ): FunctionFragment;
+    getFunction(
+        nameOrSignatureOrTopic:
+            | "_e18_interestFactor"
+            | "_e4_liquidatorShare"
+            | "_enabledTokens"
+            | "_lastInterestTime"
+            | "_oracleMasterAddress"
+            | "_tokenAddress_tokenId"
+            | "_tokenId_oracleAddress"
+            | "_tokenId_tokenLTVe4"
+            | "_tokensRegistered"
+            | "_totalBaseLiability"
+            | "_usdiAddress"
+            | "_vaultId_vaultAddress"
+            | "_vaultsMinted"
+            | "account_collateral_value"
+            | "borrow_usdi"
+            | "calculate_interest"
+            | "check_account"
+            | "getInterestFactor"
+            | "AccountLiability"
+            | "liquidate_account"
+            | "mint_vault"
+            | "owner"
+            | "register_erc20"
+            | "register_oracle_master"
+            | "register_usdi"
+            | "renounceOwnership"
+            | "repay_all_usdi"
+            | "repay_usdi"
+            | "transferOwnership"
+    ): FunctionFragment;
 
-  encodeFunctionData(
-    functionFragment: "_e18_interestFactor",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_e4_liquidatorShare",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_enabledTokens",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_lastInterestTime",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_oracleMasterAddress",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_tokenAddress_liquidationIncentivee4",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_tokenAddress_tokenId",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_tokenId_oracleAddress",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_tokenId_tokenLTVe4",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_tokensRegistered",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_totalBaseLiability",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_usdiAddress",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_vaultId_vaultAddress",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_vaultsMinted",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "account_borrowing_power",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "borrow_usdi",
-    values: [BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "calculate_interest",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "check_account",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getInterestFactor",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "get_account_liability",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "liquidate_account",
-    values: [BigNumberish, string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mint_vault",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "register_erc20",
-    values: [string, BigNumberish, string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "register_oracle_master",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "register_usdi",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "repay_all_usdi",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "repay_usdi",
-    values: [BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "update_registered_erc20",
-    values: [string, BigNumberish, string, BigNumberish]
-  ): string;
+    encodeFunctionData(
+        functionFragment: "_e18_interestFactor",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_e4_liquidatorShare",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_enabledTokens",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_lastInterestTime",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_oracleMasterAddress",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_tokenAddress_tokenId",
+        values: [string]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_tokenId_oracleAddress",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_tokenId_tokenLTVe4",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_tokensRegistered",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_totalBaseLiability",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_usdiAddress",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_vaultId_vaultAddress",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "_vaultsMinted",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "account_collateral_value",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "borrow_usdi",
+        values: [BigNumberish, BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "calculate_interest",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "check_account",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getInterestFactor",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "AccountLiability",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "liquidate_account",
+        values: [BigNumberish, string, BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "mint_vault",
+        values?: undefined
+    ): string;
+    encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+    encodeFunctionData(
+        functionFragment: "register_erc20",
+        values: [string, BigNumberish, string]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "register_oracle_master",
+        values: [string]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "register_usdi",
+        values: [string]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "renounceOwnership",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "repay_all_usdi",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "repay_usdi",
+        values: [BigNumberish, BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "transferOwnership",
+        values: [string]
+    ): string;
 
-  decodeFunctionResult(
-    functionFragment: "_e18_interestFactor",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_e4_liquidatorShare",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_enabledTokens",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_lastInterestTime",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_oracleMasterAddress",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_tokenAddress_liquidationIncentivee4",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_tokenAddress_tokenId",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_tokenId_oracleAddress",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_tokenId_tokenLTVe4",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_tokensRegistered",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_totalBaseLiability",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_usdiAddress",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_vaultId_vaultAddress",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_vaultsMinted",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "account_borrowing_power",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "borrow_usdi",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "calculate_interest",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "check_account",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getInterestFactor",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "get_account_liability",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "liquidate_account",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "mint_vault", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "register_erc20",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "register_oracle_master",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "register_usdi",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "repay_all_usdi",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "repay_usdi", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "update_registered_erc20",
-    data: BytesLike
-  ): Result;
+    decodeFunctionResult(
+        functionFragment: "_e18_interestFactor",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_e4_liquidatorShare",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_enabledTokens",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_lastInterestTime",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_oracleMasterAddress",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_tokenAddress_tokenId",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_tokenId_oracleAddress",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_tokenId_tokenLTVe4",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_tokensRegistered",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_totalBaseLiability",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_usdiAddress",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_vaultId_vaultAddress",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "_vaultsMinted",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "account_collateral_value",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "borrow_usdi",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "calculate_interest",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "check_account",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getInterestFactor",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "AccountLiability",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "liquidate_account",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(functionFragment: "mint_vault", data: BytesLike): Result;
+    decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "register_erc20",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "register_oracle_master",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "register_usdi",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "renounceOwnership",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "repay_all_usdi",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(functionFragment: "repay_usdi", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "transferOwnership",
+        data: BytesLike
+    ): Result;
 
-  events: {
-    "Interest(uint256,uint256)": EventFragment;
-    "Liquidate(uint256,address,uint256,uint256,uint256)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
-  };
+    events: {
+        "Interest(uint256,uint256)": EventFragment;
+        "OwnershipTransferred(address,address)": EventFragment;
+    };
 
-  getEvent(nameOrSignatureOrTopic: "Interest"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Liquidate"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "Interest"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
 
 export interface InterestEventObject {
-  epoch: BigNumber;
-  amount: BigNumber;
+    epoch: BigNumber;
+    amount: BigNumber;
 }
 export type InterestEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  InterestEventObject
+    [BigNumber, BigNumber],
+    InterestEventObject
 >;
 
 export type InterestEventFilter = TypedEventFilter<InterestEvent>;
 
-export interface LiquidateEventObject {
-  vaultId: BigNumber;
-  asset_address: string;
-  max_usdi: BigNumber;
-  usdi_to_repurchase: BigNumber;
-  tokens_to_liquidate: BigNumber;
-}
-export type LiquidateEvent = TypedEvent<
-  [BigNumber, string, BigNumber, BigNumber, BigNumber],
-  LiquidateEventObject
->;
-
-export type LiquidateEventFilter = TypedEventFilter<LiquidateEvent>;
-
 export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
+    previousOwner: string;
+    newOwner: string;
 }
 export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
+    [string, string],
+    OwnershipTransferredEventObject
 >;
 
 export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface VaultController extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
-
-  interface: VaultControllerInterface;
-
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
-    fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
-
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
-
-  functions: {
-    _e18_interestFactor(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    _e4_liquidatorShare(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    _enabledTokens(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    _lastInterestTime(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    _oracleMasterAddress(overrides?: CallOverrides): Promise<[string]>;
-
-    _tokenAddress_liquidationIncentivee4(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    _tokenAddress_tokenId(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    _tokenId_oracleAddress(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    _tokenId_tokenLTVe4(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    _tokensRegistered(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    _totalBaseLiability(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    _usdiAddress(overrides?: CallOverrides): Promise<[string]>;
-
-    _vaultId_vaultAddress(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    _vaultsMinted(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    account_borrowing_power(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    borrow_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    calculate_interest(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    check_account(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    getInterestFactor(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    get_account_liability(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    liquidate_account(
-      id: BigNumberish,
-      asset_address: string,
-      max_usdi: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    mint_vault(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    register_erc20(
-      token_address: string,
-      LTVe4: BigNumberish,
-      oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    register_oracle_master(
-      master_oracle_address: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    register_usdi(
-      usdi_address: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    repay_all_usdi(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    repay_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    update_registered_erc20(
-      token_address: string,
-      LTVe4: BigNumberish,
-      oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-  };
-
-  _e18_interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _e4_liquidatorShare(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _enabledTokens(
-    arg0: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _oracleMasterAddress(overrides?: CallOverrides): Promise<string>;
-
-  _tokenAddress_liquidationIncentivee4(
-    arg0: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  _tokenAddress_tokenId(
-    arg0: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  _tokenId_oracleAddress(
-    arg0: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  _tokenId_tokenLTVe4(
-    arg0: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  _tokensRegistered(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _totalBaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _usdiAddress(overrides?: CallOverrides): Promise<string>;
-
-  _vaultId_vaultAddress(
-    arg0: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
-
-  account_borrowing_power(
-    id: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  borrow_usdi(
-    id: BigNumberish,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  calculate_interest(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  check_account(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
-
-  getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
-
-  get_account_liability(
-    id: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  liquidate_account(
-    id: BigNumberish,
-    asset_address: string,
-    max_usdi: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  mint_vault(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  register_erc20(
-    token_address: string,
-    LTVe4: BigNumberish,
-    oracle_address: string,
-    liquidationIncentivee4: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  register_oracle_master(
-    master_oracle_address: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  register_usdi(
-    usdi_address: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  renounceOwnership(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  repay_all_usdi(
-    id: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  repay_usdi(
-    id: BigNumberish,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  update_registered_erc20(
-    token_address: string,
-    LTVe4: BigNumberish,
-    oracle_address: string,
-    liquidationIncentivee4: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
+    TypedEventFilter<OwnershipTransferredEvent>;
+
+export interface VaultMaster extends BaseContract {
+    connect(signerOrProvider: Signer | Provider | string): this;
+    attach(addressOrName: string): this;
+    deployed(): Promise<this>;
+
+    interface: VaultMasterInterface;
+
+    queryFilter<TEvent extends TypedEvent>(
+        event: TypedEventFilter<TEvent>,
+        fromBlockOrBlockhash?: string | number | undefined,
+        toBlock?: string | number | undefined
+    ): Promise<Array<TEvent>>;
+
+    listeners<TEvent extends TypedEvent>(
+        eventFilter?: TypedEventFilter<TEvent>
+    ): Array<TypedListener<TEvent>>;
+    listeners(eventName?: string): Array<Listener>;
+    removeAllListeners<TEvent extends TypedEvent>(
+        eventFilter: TypedEventFilter<TEvent>
+    ): this;
+    removeAllListeners(eventName?: string): this;
+    off: OnEvent<this>;
+    on: OnEvent<this>;
+    once: OnEvent<this>;
+    removeListener: OnEvent<this>;
+
+    functions: {
+        _e18_interestFactor(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+        _e4_liquidatorShare(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+        _enabledTokens(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<[string]>;
+
+        _lastInterestTime(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+        _oracleMasterAddress(overrides?: CallOverrides): Promise<[string]>;
+
+        _tokenAddress_tokenId(
+            arg0: string,
+            overrides?: CallOverrides
+        ): Promise<[BigNumber]>;
+
+        _tokenId_oracleAddress(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<[string]>;
+
+        _tokenId_tokenLTVe4(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<[BigNumber]>;
+
+        _tokensRegistered(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+        _totalBaseLiability(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+        _usdiAddress(overrides?: CallOverrides): Promise<[string]>;
+
+        _vaultId_vaultAddress(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<[string]>;
+
+        _vaultsMinted(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+        account_collateral_value(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<[BigNumber]>;
+
+        borrow_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        calculate_interest(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        check_account(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<[boolean]>;
+
+        getInterestFactor(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+        AccountLiability(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<[BigNumber]>;
+
+        liquidate_account(
+            id: BigNumberish,
+            asset_address: string,
+            max_usdi: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        mint_vault(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        owner(overrides?: CallOverrides): Promise<[string]>;
+
+        register_erc20(
+            token_address: string,
+            LTVe4: BigNumberish,
+            oracle_address: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        register_oracle_master(
+            master_oracle_address: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        register_usdi(
+            usdi_address: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        renounceOwnership(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        repay_all_usdi(
+            id: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        repay_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        transferOwnership(
+            newOwner: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+    };
+
     _e18_interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
 
     _e4_liquidatorShare(overrides?: CallOverrides): Promise<BigNumber>;
 
     _enabledTokens(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
+        arg0: BigNumberish,
+        overrides?: CallOverrides
     ): Promise<string>;
 
     _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
 
     _oracleMasterAddress(overrides?: CallOverrides): Promise<string>;
 
-    _tokenAddress_liquidationIncentivee4(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     _tokenAddress_tokenId(
-      arg0: string,
-      overrides?: CallOverrides
+        arg0: string,
+        overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     _tokenId_oracleAddress(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
+        arg0: BigNumberish,
+        overrides?: CallOverrides
     ): Promise<string>;
 
     _tokenId_tokenLTVe4(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
+        arg0: BigNumberish,
+        overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     _tokensRegistered(overrides?: CallOverrides): Promise<BigNumber>;
@@ -712,395 +527,459 @@ export interface VaultController extends BaseContract {
     _usdiAddress(overrides?: CallOverrides): Promise<string>;
 
     _vaultId_vaultAddress(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
+        arg0: BigNumberish,
+        overrides?: CallOverrides
     ): Promise<string>;
 
     _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
-    account_borrowing_power(
-      id: BigNumberish,
-      overrides?: CallOverrides
+    account_collateral_value(
+        id: BigNumberish,
+        overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     borrow_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        id: BigNumberish,
+        amount: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
-    calculate_interest(overrides?: CallOverrides): Promise<void>;
+    calculate_interest(
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
-    check_account(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    check_account(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
 
     getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
 
-    get_account_liability(
-      id: BigNumberish,
-      overrides?: CallOverrides
+    AccountLiability(
+        id: BigNumberish,
+        overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     liquidate_account(
-      id: BigNumberish,
-      asset_address: string,
-      max_usdi: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+        id: BigNumberish,
+        asset_address: string,
+        max_usdi: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
-    mint_vault(overrides?: CallOverrides): Promise<string>;
+    mint_vault(
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
     register_erc20(
-      token_address: string,
-      LTVe4: BigNumberish,
-      oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        token_address: string,
+        LTVe4: BigNumberish,
+        oracle_address: string,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     register_oracle_master(
-      master_oracle_address: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+        master_oracle_address: string,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     register_usdi(
-      usdi_address: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    repay_all_usdi(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    repay_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    update_registered_erc20(
-      token_address: string,
-      LTVe4: BigNumberish,
-      oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
-
-  filters: {
-    "Interest(uint256,uint256)"(
-      epoch?: null,
-      amount?: null
-    ): InterestEventFilter;
-    Interest(epoch?: null, amount?: null): InterestEventFilter;
-
-    "Liquidate(uint256,address,uint256,uint256,uint256)"(
-      vaultId?: null,
-      asset_address?: null,
-      max_usdi?: null,
-      usdi_to_repurchase?: null,
-      tokens_to_liquidate?: null
-    ): LiquidateEventFilter;
-    Liquidate(
-      vaultId?: null,
-      asset_address?: null,
-      max_usdi?: null,
-      usdi_to_repurchase?: null,
-      tokens_to_liquidate?: null
-    ): LiquidateEventFilter;
-
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-  };
-
-  estimateGas: {
-    _e18_interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _e4_liquidatorShare(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _enabledTokens(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _oracleMasterAddress(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _tokenAddress_liquidationIncentivee4(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    _tokenAddress_tokenId(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    _tokenId_oracleAddress(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    _tokenId_tokenLTVe4(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    _tokensRegistered(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _totalBaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _usdiAddress(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _vaultId_vaultAddress(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
-
-    account_borrowing_power(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    borrow_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    calculate_interest(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    check_account(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
-
-    get_account_liability(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    liquidate_account(
-      id: BigNumberish,
-      asset_address: string,
-      max_usdi: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    mint_vault(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    register_erc20(
-      token_address: string,
-      LTVe4: BigNumberish,
-      oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    register_oracle_master(
-      master_oracle_address: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    register_usdi(
-      usdi_address: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        usdi_address: string,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     repay_all_usdi(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        id: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     repay_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        id: BigNumberish,
+        amount: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        newOwner: string,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
-    update_registered_erc20(
-      token_address: string,
-      LTVe4: BigNumberish,
-      oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-  };
+    callStatic: {
+        _e18_interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
 
-  populateTransaction: {
-    _e18_interestFactor(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        _e4_liquidatorShare(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _e4_liquidatorShare(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        _enabledTokens(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<string>;
 
-    _enabledTokens(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _lastInterestTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        _oracleMasterAddress(overrides?: CallOverrides): Promise<string>;
 
-    _oracleMasterAddress(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        _tokenAddress_tokenId(
+            arg0: string,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
 
-    _tokenAddress_liquidationIncentivee4(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        _tokenId_oracleAddress(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<string>;
 
-    _tokenAddress_tokenId(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        _tokenId_tokenLTVe4(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
 
-    _tokenId_oracleAddress(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        _tokensRegistered(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _tokenId_tokenLTVe4(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        _totalBaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _tokensRegistered(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        _usdiAddress(overrides?: CallOverrides): Promise<string>;
 
-    _totalBaseLiability(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        _vaultId_vaultAddress(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<string>;
 
-    _usdiAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _vaultId_vaultAddress(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        account_collateral_value(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
 
-    _vaultsMinted(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        borrow_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<void>;
 
-    account_borrowing_power(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        calculate_interest(overrides?: CallOverrides): Promise<void>;
 
-    borrow_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        check_account(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<boolean>;
 
-    calculate_interest(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
 
-    check_account(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        AccountLiability(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
 
-    getInterestFactor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        liquidate_account(
+            id: BigNumberish,
+            asset_address: string,
+            max_usdi: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
 
-    get_account_liability(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        mint_vault(overrides?: CallOverrides): Promise<string>;
 
-    liquidate_account(
-      id: BigNumberish,
-      asset_address: string,
-      max_usdi: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        owner(overrides?: CallOverrides): Promise<string>;
 
-    mint_vault(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        register_erc20(
+            token_address: string,
+            LTVe4: BigNumberish,
+            oracle_address: string,
+            overrides?: CallOverrides
+        ): Promise<void>;
 
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        register_oracle_master(
+            master_oracle_address: string,
+            overrides?: CallOverrides
+        ): Promise<void>;
 
-    register_erc20(
-      token_address: string,
-      LTVe4: BigNumberish,
-      oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        register_usdi(
+            usdi_address: string,
+            overrides?: CallOverrides
+        ): Promise<void>;
 
-    register_oracle_master(
-      master_oracle_address: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
-    register_usdi(
-      usdi_address: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        repay_all_usdi(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
-    renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        repay_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<void>;
 
-    repay_all_usdi(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        transferOwnership(
+            newOwner: string,
+            overrides?: CallOverrides
+        ): Promise<void>;
+    };
 
-    repay_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+    filters: {
+        "Interest(uint256,uint256)"(
+            epoch?: null,
+            amount?: null
+        ): InterestEventFilter;
+        Interest(epoch?: null, amount?: null): InterestEventFilter;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        "OwnershipTransferred(address,address)"(
+            previousOwner?: string | null,
+            newOwner?: string | null
+        ): OwnershipTransferredEventFilter;
+        OwnershipTransferred(
+            previousOwner?: string | null,
+            newOwner?: string | null
+        ): OwnershipTransferredEventFilter;
+    };
 
-    update_registered_erc20(
-      token_address: string,
-      LTVe4: BigNumberish,
-      oracle_address: string,
-      liquidationIncentivee4: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-  };
+    estimateGas: {
+        _e18_interestFactor(overrides?: CallOverrides): Promise<BigNumber>;
+
+        _e4_liquidatorShare(overrides?: CallOverrides): Promise<BigNumber>;
+
+        _enabledTokens(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
+
+        _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
+
+        _oracleMasterAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
+        _tokenAddress_tokenId(
+            arg0: string,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
+
+        _tokenId_oracleAddress(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
+
+        _tokenId_tokenLTVe4(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
+
+        _tokensRegistered(overrides?: CallOverrides): Promise<BigNumber>;
+
+        _totalBaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
+
+        _usdiAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
+        _vaultId_vaultAddress(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
+
+        _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
+
+        account_collateral_value(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
+
+        borrow_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        calculate_interest(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        check_account(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
+
+        getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
+
+        AccountLiability(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
+
+        liquidate_account(
+            id: BigNumberish,
+            asset_address: string,
+            max_usdi: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        mint_vault(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        owner(overrides?: CallOverrides): Promise<BigNumber>;
+
+        register_erc20(
+            token_address: string,
+            LTVe4: BigNumberish,
+            oracle_address: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        register_oracle_master(
+            master_oracle_address: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        register_usdi(
+            usdi_address: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        renounceOwnership(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        repay_all_usdi(
+            id: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        repay_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        transferOwnership(
+            newOwner: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+    };
+
+    populateTransaction: {
+        _e18_interestFactor(
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        _e4_liquidatorShare(
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        _enabledTokens(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        _lastInterestTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        _oracleMasterAddress(
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        _tokenAddress_tokenId(
+            arg0: string,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        _tokenId_oracleAddress(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        _tokenId_tokenLTVe4(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        _tokensRegistered(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        _totalBaseLiability(
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        _usdiAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        _vaultId_vaultAddress(
+            arg0: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        _vaultsMinted(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        account_collateral_value(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        borrow_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        calculate_interest(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        check_account(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        getInterestFactor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        AccountLiability(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        liquidate_account(
+            id: BigNumberish,
+            asset_address: string,
+            max_usdi: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        mint_vault(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        register_erc20(
+            token_address: string,
+            LTVe4: BigNumberish,
+            oracle_address: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        register_oracle_master(
+            master_oracle_address: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        register_usdi(
+            usdi_address: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        renounceOwnership(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        repay_all_usdi(
+            id: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        repay_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        transferOwnership(
+            newOwner: string,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+    };
 }

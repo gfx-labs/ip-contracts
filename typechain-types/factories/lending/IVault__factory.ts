@@ -8,6 +8,19 @@ import type { IVault, IVaultInterface } from "../../lending/IVault";
 
 const _abi = [
   {
+    inputs: [],
+    name: "BaseLiability",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "uint256",
@@ -48,42 +61,11 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "token_address",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-    ],
-    name: "deposit_erc20",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
         name: "arg1",
         type: "address",
       },
     ],
     name: "getBalances",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getBaseLiability",
     outputs: [
       {
         internalType: "uint256",
