@@ -9,7 +9,7 @@ import "./_external/IERC20.sol";
 import "hardhat/console.sol";
 import "./_external/compound/ExponentialNoError.sol";
 
-contract USDI is UFragments, IUSDI, ExponentialNoError {
+abstract contract USDI is Initializable, UFragments, IUSDI, ExponentialNoError {
     address public _reserveAddress;
     IERC20 public _reserve;
 
@@ -28,7 +28,15 @@ contract USDI is UFragments, IUSDI, ExponentialNoError {
     event Burn(address from, uint256 _value);
     event Donation(address indexed _from, uint256 _value, uint256 _totalSupply);
 
+    /**
     constructor(address reserveAddress) UFragments("USDI Token", "USDI") {
+        _reserveAddress = reserveAddress;
+        _reserve = IERC20(_reserveAddress);
+    }
+     */
+    function initialize(address reserveAddress) public initializer
+    {
+        __UFragments_init("USDI Token", "USDI");
         _reserveAddress = reserveAddress;
         _reserve = IERC20(_reserveAddress);
     }
