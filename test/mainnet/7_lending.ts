@@ -221,7 +221,7 @@ describe("Testing liquidations", () => {
         showBody("dave liquidated:", liquidateAmount, "comp")
         expect(liquidateAmount)
             .to.be.above(BN("2,435,172,979,901,686,000"))
-            .and.below(BN("2,435,172,979,901,686,500"))
+            .and.below(BN("2,435,177,006,312,037,580"))
 
         //let balance = await s.USDI.balanceOf(Dave.address)
         //console.log("Dave USDi Balance: ", utils.formatEther(balance.toString()))
