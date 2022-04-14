@@ -15,7 +15,7 @@ interface IVaultController {
 
 
   // methods
-
+  function initialize() external;
   function mint_vault() external returns (address);
   function check_account(uint256 id) external view returns (bool);
   function liquidate_account(uint256 id, address asset_address, uint256 tokenAmount) external returns (uint256);

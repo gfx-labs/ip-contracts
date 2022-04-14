@@ -33,6 +33,8 @@ export interface UFragmentsInterface extends utils.Interface {
     "EIP712_REVISION()": FunctionFragment;
     "MAX_SUPPLY()": FunctionFragment;
     "PERMIT_TYPEHASH()": FunctionFragment;
+    "__ERC20Detailed_init(string,string,uint8)": FunctionFragment;
+    "__UFragments_init(string,string)": FunctionFragment;
     "_gonBalances(address)": FunctionFragment;
     "_gonsPerFragment()": FunctionFragment;
     "_totalGons()": FunctionFragment;
@@ -69,6 +71,8 @@ export interface UFragmentsInterface extends utils.Interface {
       | "EIP712_REVISION"
       | "MAX_SUPPLY"
       | "PERMIT_TYPEHASH"
+      | "__ERC20Detailed_init"
+      | "__UFragments_init"
       | "_gonBalances"
       | "_gonsPerFragment"
       | "_totalGons"
@@ -117,6 +121,14 @@ export interface UFragmentsInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "PERMIT_TYPEHASH",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "__ERC20Detailed_init",
+    values: [string, string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "__UFragments_init",
+    values: [string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "_gonBalances",
@@ -229,6 +241,14 @@ export interface UFragmentsInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "MAX_SUPPLY", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "PERMIT_TYPEHASH",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "__ERC20Detailed_init",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "__UFragments_init",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -414,6 +434,19 @@ export interface UFragments extends BaseContract {
 
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<[string]>;
 
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     _gonsPerFragment(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -536,6 +569,19 @@ export interface UFragments extends BaseContract {
 
   PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<string>;
 
+  __ERC20Detailed_init(
+    name_: string,
+    symbol_: string,
+    decimals_: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  __UFragments_init(
+    name: string,
+    symbol: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   _gonsPerFragment(overrides?: CallOverrides): Promise<BigNumber>;
@@ -654,6 +700,19 @@ export interface UFragments extends BaseContract {
     MAX_SUPPLY(overrides?: CallOverrides): Promise<BigNumber>;
 
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<string>;
+
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -819,6 +878,19 @@ export interface UFragments extends BaseContract {
 
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<BigNumber>;
 
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     _gonsPerFragment(overrides?: CallOverrides): Promise<BigNumber>;
@@ -938,6 +1010,19 @@ export interface UFragments extends BaseContract {
     MAX_SUPPLY(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     _gonBalances(
       arg0: string,
