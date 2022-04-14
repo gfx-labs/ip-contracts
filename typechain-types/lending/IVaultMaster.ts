@@ -2,341 +2,341 @@
 /* tslint:disable */
 /* eslint-disable */
 import type {
-  BaseContract,
-  BigNumber,
-  BigNumberish,
-  BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
+    BaseContract,
+    BigNumber,
+    BigNumberish,
+    BytesLike,
+    CallOverrides,
+    ContractTransaction,
+    Overrides,
+    PopulatedTransaction,
+    Signer,
+    utils,
 } from "ethers";
 import type { FunctionFragment, Result } from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
-  TypedListener,
-  OnEvent,
+    TypedEventFilter,
+    TypedEvent,
+    TypedListener,
+    OnEvent,
 } from "../common";
 
 export interface IVaultMasterInterface extends utils.Interface {
-  functions: {
-    "borrow_usdi(uint256,uint256)": FunctionFragment;
-    "calculate_interest()": FunctionFragment;
-    "check_account(uint256)": FunctionFragment;
-    "getInterestFactor()": FunctionFragment;
-    "get_account_liability(uint256)": FunctionFragment;
-    "liquidate_account(uint256,address,uint256)": FunctionFragment;
-    "repay_all_usdi(uint256)": FunctionFragment;
-    "repay_usdi(uint256,uint256)": FunctionFragment;
-  };
+    functions: {
+        "borrow_usdi(uint256,uint256)": FunctionFragment;
+        "calculate_interest()": FunctionFragment;
+        "check_account(uint256)": FunctionFragment;
+        "getInterestFactor()": FunctionFragment;
+        "AccountLiability(uint256)": FunctionFragment;
+        "liquidate_account(uint256,address,uint256)": FunctionFragment;
+        "repay_all_usdi(uint256)": FunctionFragment;
+        "repay_usdi(uint256,uint256)": FunctionFragment;
+    };
 
-  getFunction(
-    nameOrSignatureOrTopic:
-      | "borrow_usdi"
-      | "calculate_interest"
-      | "check_account"
-      | "getInterestFactor"
-      | "get_account_liability"
-      | "liquidate_account"
-      | "repay_all_usdi"
-      | "repay_usdi"
-  ): FunctionFragment;
+    getFunction(
+        nameOrSignatureOrTopic:
+            | "borrow_usdi"
+            | "calculate_interest"
+            | "check_account"
+            | "getInterestFactor"
+            | "AccountLiability"
+            | "liquidate_account"
+            | "repay_all_usdi"
+            | "repay_usdi"
+    ): FunctionFragment;
 
-  encodeFunctionData(
-    functionFragment: "borrow_usdi",
-    values: [BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "calculate_interest",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "check_account",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getInterestFactor",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "get_account_liability",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "liquidate_account",
-    values: [BigNumberish, string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "repay_all_usdi",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "repay_usdi",
-    values: [BigNumberish, BigNumberish]
-  ): string;
+    encodeFunctionData(
+        functionFragment: "borrow_usdi",
+        values: [BigNumberish, BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "calculate_interest",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "check_account",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "getInterestFactor",
+        values?: undefined
+    ): string;
+    encodeFunctionData(
+        functionFragment: "AccountLiability",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "liquidate_account",
+        values: [BigNumberish, string, BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "repay_all_usdi",
+        values: [BigNumberish]
+    ): string;
+    encodeFunctionData(
+        functionFragment: "repay_usdi",
+        values: [BigNumberish, BigNumberish]
+    ): string;
 
-  decodeFunctionResult(
-    functionFragment: "borrow_usdi",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "calculate_interest",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "check_account",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getInterestFactor",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "get_account_liability",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "liquidate_account",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "repay_all_usdi",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "repay_usdi", data: BytesLike): Result;
+    decodeFunctionResult(
+        functionFragment: "borrow_usdi",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "calculate_interest",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "check_account",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "getInterestFactor",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "AccountLiability",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "liquidate_account",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "repay_all_usdi",
+        data: BytesLike
+    ): Result;
+    decodeFunctionResult(functionFragment: "repay_usdi", data: BytesLike): Result;
 
-  events: {};
+    events: {};
 }
 
 export interface IVaultMaster extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+    connect(signerOrProvider: Signer | Provider | string): this;
+    attach(addressOrName: string): this;
+    deployed(): Promise<this>;
 
-  interface: IVaultMasterInterface;
+    interface: IVaultMasterInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
-    fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+    queryFilter<TEvent extends TypedEvent>(
+        event: TypedEventFilter<TEvent>,
+        fromBlockOrBlockhash?: string | number | undefined,
+        toBlock?: string | number | undefined
+    ): Promise<Array<TEvent>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+    listeners<TEvent extends TypedEvent>(
+        eventFilter?: TypedEventFilter<TEvent>
+    ): Array<TypedListener<TEvent>>;
+    listeners(eventName?: string): Array<Listener>;
+    removeAllListeners<TEvent extends TypedEvent>(
+        eventFilter: TypedEventFilter<TEvent>
+    ): this;
+    removeAllListeners(eventName?: string): this;
+    off: OnEvent<this>;
+    on: OnEvent<this>;
+    once: OnEvent<this>;
+    removeListener: OnEvent<this>;
 
-  functions: {
+    functions: {
+        borrow_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        calculate_interest(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        check_account(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<[boolean]>;
+
+        getInterestFactor(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+        AccountLiability(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<[BigNumber]>;
+
+        liquidate_account(
+            id: BigNumberish,
+            asset_address: string,
+            maximum: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        repay_all_usdi(
+            id: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+
+        repay_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<ContractTransaction>;
+    };
+
     borrow_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
+        id: BigNumberish,
+        amount: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     calculate_interest(
-      overrides?: Overrides & { from?: string | Promise<string> }
+        overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    check_account(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    getInterestFactor(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    get_account_liability(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    liquidate_account(
-      id: BigNumberish,
-      asset_address: string,
-      maximum: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    repay_all_usdi(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    repay_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-  };
-
-  borrow_usdi(
-    id: BigNumberish,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  calculate_interest(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  check_account(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
-
-  getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
-
-  get_account_liability(
-    id: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  liquidate_account(
-    id: BigNumberish,
-    asset_address: string,
-    maximum: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  repay_all_usdi(
-    id: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  repay_usdi(
-    id: BigNumberish,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    borrow_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    calculate_interest(overrides?: CallOverrides): Promise<void>;
-
-    check_account(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    check_account(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
 
     getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
 
-    get_account_liability(
-      id: BigNumberish,
-      overrides?: CallOverrides
+    AccountLiability(
+        id: BigNumberish,
+        overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     liquidate_account(
-      id: BigNumberish,
-      asset_address: string,
-      maximum: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    repay_all_usdi(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    repay_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
-
-  filters: {};
-
-  estimateGas: {
-    borrow_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    calculate_interest(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    check_account(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
-
-    get_account_liability(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    liquidate_account(
-      id: BigNumberish,
-      asset_address: string,
-      maximum: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        id: BigNumberish,
+        asset_address: string,
+        maximum: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     repay_all_usdi(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+        id: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     repay_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-  };
+        id: BigNumberish,
+        amount: BigNumberish,
+        overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
-  populateTransaction: {
-    borrow_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+    callStatic: {
+        borrow_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<void>;
 
-    calculate_interest(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        calculate_interest(overrides?: CallOverrides): Promise<void>;
 
-    check_account(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        check_account(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<boolean>;
 
-    getInterestFactor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+        getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
 
-    get_account_liability(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+        AccountLiability(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
 
-    liquidate_account(
-      id: BigNumberish,
-      asset_address: string,
-      maximum: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        liquidate_account(
+            id: BigNumberish,
+            asset_address: string,
+            maximum: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
 
-    repay_all_usdi(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+        repay_all_usdi(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
-    repay_usdi(
-      id: BigNumberish,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-  };
+        repay_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<void>;
+    };
+
+    filters: {};
+
+    estimateGas: {
+        borrow_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        calculate_interest(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        check_account(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
+
+        getInterestFactor(overrides?: CallOverrides): Promise<BigNumber>;
+
+        AccountLiability(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<BigNumber>;
+
+        liquidate_account(
+            id: BigNumberish,
+            asset_address: string,
+            maximum: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        repay_all_usdi(
+            id: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+
+        repay_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<BigNumber>;
+    };
+
+    populateTransaction: {
+        borrow_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        calculate_interest(
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        check_account(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        getInterestFactor(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+        AccountLiability(
+            id: BigNumberish,
+            overrides?: CallOverrides
+        ): Promise<PopulatedTransaction>;
+
+        liquidate_account(
+            id: BigNumberish,
+            asset_address: string,
+            maximum: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        repay_all_usdi(
+            id: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+
+        repay_usdi(
+            id: BigNumberish,
+            amount: BigNumberish,
+            overrides?: Overrides & { from?: string | Promise<string> }
+        ): Promise<PopulatedTransaction>;
+    };
 }

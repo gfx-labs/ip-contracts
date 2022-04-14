@@ -6,11 +6,9 @@ interface IVault {
 
   function getBalances(address arg1) external view returns (uint256);
 
-  function getBaseLiability() external view returns (uint256);
+  function BaseLiability() external view returns (uint256);
 
   function getMinter() external view returns (address);
-
-  function deposit_erc20(address token_address, uint256 amount) external;
 
   function withdraw_erc20(address token_address, uint256 amount) external;
 
