@@ -1,5 +1,4 @@
 import { ethers, BigNumber } from "ethers";
-import { ethers as hethers } from "hardhat";
 
 import {
     AnchoredViewRelay,
