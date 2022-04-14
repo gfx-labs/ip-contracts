@@ -63,6 +63,29 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "string",
+        name: "name_",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "symbol_",
+        type: "string",
+      },
+      {
+        internalType: "uint8",
+        name: "decimals_",
+        type: "uint8",
+      },
+    ],
+    name: "__ERC20Detailed_init",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "owner",
         type: "address",
