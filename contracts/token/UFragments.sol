@@ -6,8 +6,6 @@ import "../_external/ERC20Detailed.sol";
 
 import "../openzeppelin/OwnableUpgradeable.sol";
 import "../openzeppelin/Initializable.sol";
-import "../openzeppelin/ERC20Upgradeable.sol";
-
 
 /**
  * @title uFragments ERC20 token
@@ -19,7 +17,11 @@ import "../openzeppelin/ERC20Upgradeable.sol";
  *      We support splitting the currency in expansion and combining the currency on contraction by
  *      changing the exchange rate between the hidden 'gons' and the public 'fragments'.
  */
-abstract contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
+contract UFragments is
+    Initializable,
+    OwnableUpgradeable,
+    ERC20Detailed
+{
     // PLEASE READ BEFORE CHANGING ANY ACCOUNTING OR MATH
     // Anytime there is division, there is a risk of numerical instability from rounding errors. In
     // order to minimize this risk, we adhere to the following guidelines:
@@ -110,6 +112,7 @@ abstract contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed
         initializer
     {
         __Ownable_init();
+        __ERC20Detailed_init(name, symbol, uint8(DECIMALS));
         rebasePausedDeprecated = false;
         tokenPausedDeprecated = false;
 

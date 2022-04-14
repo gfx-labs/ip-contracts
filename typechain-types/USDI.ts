@@ -34,6 +34,7 @@ export interface USDIInterface extends utils.Interface {
     "MAX_SUPPLY()": FunctionFragment;
     "PERMIT_TYPEHASH()": FunctionFragment;
     "_VaultControllerAddress()": FunctionFragment;
+    "__ERC20Detailed_init(string,string,uint8)": FunctionFragment;
     "__UFragments_init(string,string)": FunctionFragment;
     "_gonBalances(address)": FunctionFragment;
     "_gonsPerFragment()": FunctionFragment;
@@ -85,6 +86,7 @@ export interface USDIInterface extends utils.Interface {
       | "MAX_SUPPLY"
       | "PERMIT_TYPEHASH"
       | "_VaultControllerAddress"
+      | "__ERC20Detailed_init"
       | "__UFragments_init"
       | "_gonBalances"
       | "_gonsPerFragment"
@@ -151,6 +153,10 @@ export interface USDIInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "_VaultControllerAddress",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "__ERC20Detailed_init",
+    values: [string, string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "__UFragments_init",
@@ -311,6 +317,10 @@ export interface USDIInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "_VaultControllerAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "__ERC20Detailed_init",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -593,6 +603,13 @@ export interface USDI extends BaseContract {
 
     _VaultControllerAddress(overrides?: CallOverrides): Promise<[string]>;
 
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     __UFragments_init(
       name: string,
       symbol: string,
@@ -780,6 +797,13 @@ export interface USDI extends BaseContract {
 
   _VaultControllerAddress(overrides?: CallOverrides): Promise<string>;
 
+  __ERC20Detailed_init(
+    name_: string,
+    symbol_: string,
+    decimals_: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   __UFragments_init(
     name: string,
     symbol: string,
@@ -961,6 +985,13 @@ export interface USDI extends BaseContract {
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<string>;
 
     _VaultControllerAddress(overrides?: CallOverrides): Promise<string>;
+
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     __UFragments_init(
       name: string,
@@ -1212,6 +1243,13 @@ export interface USDI extends BaseContract {
 
     _VaultControllerAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     __UFragments_init(
       name: string,
       symbol: string,
@@ -1395,6 +1433,13 @@ export interface USDI extends BaseContract {
 
     _VaultControllerAddress(
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     __UFragments_init(

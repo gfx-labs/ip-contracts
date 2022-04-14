@@ -9,7 +9,7 @@ import "./_external/IERC20.sol";
 import "hardhat/console.sol";
 import "./_external/compound/ExponentialNoError.sol";
 
-abstract contract USDI is Initializable, UFragments, IUSDI, ExponentialNoError {
+contract USDI is Initializable, UFragments, IUSDI, ExponentialNoError {
     address public _reserveAddress;
     IERC20 public _reserve;
 
