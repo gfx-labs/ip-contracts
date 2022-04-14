@@ -64,24 +64,37 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         _lastInterestTime = block.timestamp;
     }
 
-    function mint_vault() public returns (address) {
+    function InterestFactor() external view override returns (uint256) {
+        return _interestFactor;
+    }
+
+    function ProtocolFee() external view override returns (uint256) {
+        return _protocolFee;
+    }
+
+    function VaultAddress(uint256 id) external view override returns(address){
+        return _vaultId_vaultAddress[id];
+    }
+
+    function mint_vault() public override returns (address) {
         _vaultsMinted = _vaultsMinted + 1;
         address vault_address = address(
-            new Vault(_vaultsMinted, msg.sender, address(this), _usdiAddress)
+            new Vault(_vaultsMinted, _msgSender(), address(this), _usdiAddress)
         );
         _vaultId_vaultAddress[_vaultsMinted] = vault_address;
 
-        emit NewVault(vault_address, _vaultsMinted, msg.sender);
+        emit NewVault(vault_address, _vaultsMinted, _msgSender());
         return vault_address;
     }
 
-    function register_usdi(address usdi_address) external onlyOwner {
+    function register_usdi(address usdi_address) external override onlyOwner {
         _usdiAddress = usdi_address;
         _usdi = IUSDI(usdi_address);
     }
 
     function register_oracle_master(address master_oracle_address)
         external
+        override
         onlyOwner
     {
         _oracleMasterAddress = master_oracle_address;
@@ -100,13 +113,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         emit RegisterCurveMaster(_curveMasterAddress);
     }
 
-    function getInterestFactor() external view override returns (uint256) {
-        return _interestFactor;
-    }
 
-    function getProtocolFee() external view override returns (uint256) {
-        return _protocolFee;
-    }
 
     function change_protocol_fee(uint256 new_protocol_fee) external onlyOwner {
         require(new_protocol_fee < 5000, "fee is too large");
@@ -179,7 +186,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         require(vault_address != address(0x0), "vault does not exist");
         IVault vault = IVault(vault_address);
         uint256 total_liquidity_value = get_vault_borrowing_power(vault);
-        uint256 usdi_liability = (vault.getBaseLiability() * _interestFactor) /
+        uint256 usdi_liability = (vault.BaseLiability() * _interestFactor) /
             1e18;
         return (total_liquidity_value >= usdi_liability);
     }
@@ -190,7 +197,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         require(vault_address != address(0x00), "vault does not exist");
         IVault vault = IVault(vault_address);
         require(
-            msg.sender == vault.getMinter(),
+            _msgSender() == vault.getMinter(),
             "only vault creator may borrow from their vault"
         );
 
@@ -207,7 +214,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         bool solvency = (total_liquidity_value >= usdi_liability);
         require(solvency, "account insolvent");
 
-        _usdi.vault_master_mint(msg.sender, amount);
+        _usdi.vault_master_mint(_msgSender(), amount);
 
         emit BorrowUSDi(id, vault_address, amount);
     }
@@ -221,11 +228,11 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         uint256 base_amount = div_(amount * 1e18, _interestFactor);
         _totalBaseLiability = _totalBaseLiability - base_amount;
         require(
-            base_amount <= vault.getBaseLiability(),
+            base_amount <= vault.BaseLiability(),
             "cannot repay more than is borrowed"
         );
         vault.decrease_liability(base_amount);
-        _usdi.vault_master_burn(msg.sender, amount);
+        _usdi.vault_master_burn(_msgSender(), amount);
         emit RepayUSDi(id, vault_address, amount);
     }
 
@@ -239,11 +246,11 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         uint256 usdi_liability = truncate(
             ExponentialNoError.mul_ScalarTruncate(
                 interest_factor,
-                vault.getBaseLiability()
+                vault.BaseLiability()
             )
         );
-        vault.decrease_liability(vault.getBaseLiability());
-        _usdi.vault_master_burn(msg.sender, usdi_liability);
+        vault.decrease_liability(vault.BaseLiability());
+        _usdi.vault_master_burn(_msgSender(), usdi_liability);
 
         emit RepayUSDi(id, vault_address, usdi_liability);
     }
@@ -254,6 +261,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         address asset_address,
         uint256 tokens_to_liquidate
     ) external override returns (uint256) {
+        pay_interest();
         (uint256 tokenAmount, uint256 badFillPrice) = _liquidationMath(
             id,
             asset_address,
@@ -275,14 +283,14 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         );
 
         //decrease liquidators usdi balance
-        _usdi.vault_master_burn(msg.sender, usdi_to_repurchase);
+        _usdi.vault_master_burn(_msgSender(), usdi_to_repurchase);
 
         // finally, we deliver the tokens to the liquidator
-        vault.masterTransfer(asset_address, msg.sender, tokens_to_liquidate);
+        vault.masterTransfer(asset_address, _msgSender(), tokens_to_liquidate);
 
         //possible to reach this?
         require(
-            get_vault_borrowing_power(vault) <= _get_account_liability(id),
+            get_vault_borrowing_power(vault) <= _AccountLiability(id),
             "vault solvent - liquidation amount too high"
         );
         emit Liquidate(
@@ -296,30 +304,26 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
 
 
     /******* get things *******/
-        event tokensToLiquidate(uint256 tokenAmount, address assetAddress);
 
     ///@dev - updates state via pay_interest() then returns the amount of tokens underwater this vault is
     ///@dev - the amount owed is a moving target and changes with each block
-    function getTokensToLiquidate(
+    function TokensToLiquidate(
         uint256 id,
         address asset_address,
         uint256 tokens_to_liquidate
-    ) external {
+    ) public  view returns (uint256) {
         (
             uint256 tokenAmount, /*uint256 badFillPrice*/
-
         ) = _liquidationMath(id, asset_address, tokens_to_liquidate);
 
-        emit tokensToLiquidate(tokenAmount, asset_address);
+        return tokenAmount;
     }
 
     function _liquidationMath(
         uint256 id,
         address asset_address,
         uint256 tokens_to_liquidate
-    ) internal returns (uint256, uint256) {
-        pay_interest();
-
+    ) internal view returns (uint256, uint256) {
         IVault vault = getVault(id);
 
         //get the price of the asset scaled to decimal 18
@@ -329,20 +333,21 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         uint256 badFillPrice = truncate(
             price * (1e18 - _tokenAddress_liquidationIncentive[asset_address])
         );
-        //console.log("numerator",_get_account_liability(id) - vault_borrowing_power);
+
         uint256 denominator = truncate(
             price *
                 ((1e18 - _tokenAddress_liquidationIncentive[asset_address]) -
                     _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]])
         );
-        //console.log("denominator",denominator);
-        uint256 max_tokens_to_liquidate = ((_get_account_liability(id) -
+
+        uint256 max_tokens_to_liquidate = ((_AccountLiability(id) -
             get_vault_borrowing_power(vault)) * 1e18) / denominator;
-        //console.log("max_tokens_to_liquidate",max_tokens_to_liquidate);
+
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > max_tokens_to_liquidate) {
             tokens_to_liquidate = max_tokens_to_liquidate;
         }
+
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > vault.getBalances(asset_address)) {
             tokens_to_liquidate = vault.getBalances(asset_address);
@@ -356,16 +361,16 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         vault = IVault(vault_address);
     }
 
-    function get_account_liability(uint256 id)
+    function AccountLiability(uint256 id)
         external
         view
         override
         returns (uint256)
     {
-        return _get_account_liability(id);
+        return _AccountLiability(id);
     }
 
-    function _get_account_liability(uint256 id)
+    function _AccountLiability(uint256 id)
         internal
         view
         returns (uint256)
@@ -374,10 +379,10 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         require(vault_address != address(0x0), "vault does not exist");
         IVault vault = IVault(vault_address);
 
-        return truncate(vault.getBaseLiability() * _interestFactor);
+        return truncate(vault.BaseLiability() * _interestFactor);
     }
 
-    function account_borrowing_power(uint256 id)
+    function AccountBorrowingPower(uint256 id)
         external
         view
         returns (uint256)
