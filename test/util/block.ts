@@ -1,11 +1,10 @@
 import { network } from "hardhat";
 
 export const advanceBlockHeight = async (blocks: number) => {
-    const txns = [];
     for (let i = 0; i < blocks; i++) {
-        txns.push(network.provider.send("evm_mine"));
+        await network.provider.send("evm_mine")
     }
-    await Promise.all(txns);
+    return
 };
 
 export const fastForward = async (time: number) => {

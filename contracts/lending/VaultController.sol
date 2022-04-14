@@ -186,8 +186,7 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         require(vault_address != address(0x0), "vault does not exist");
         IVault vault = IVault(vault_address);
         uint256 total_liquidity_value = get_vault_borrowing_power(vault);
-        uint256 usdi_liability = (vault.BaseLiability() * _interestFactor) /
-            1e18;
+        uint256 usdi_liability = truncate((vault.BaseLiability() * _interestFactor));
         return (total_liquidity_value >= usdi_liability);
     }
 
@@ -335,13 +334,9 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         );
 
         uint256 denominator = truncate(
-            price *
-                ((1e18 - _tokenAddress_liquidationIncentive[asset_address]) -
-                    _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]])
+            price * ((1e18 - _tokenAddress_liquidationIncentive[asset_address]) - _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]])
         );
-
-        uint256 max_tokens_to_liquidate = ((_AccountLiability(id) -
-            get_vault_borrowing_power(vault)) * 1e18) / denominator;
+        uint256 max_tokens_to_liquidate = truncate(((_AccountLiability(id) - get_vault_borrowing_power(vault)) * 1e36) / denominator);
 
         //if ideal amount isnt possible update with vault balance
         if (tokens_to_liquidate > max_tokens_to_liquidate) {
@@ -378,7 +373,6 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
         IVault vault = IVault(vault_address);
-
         return truncate(vault.BaseLiability() * _interestFactor);
     }
 
@@ -399,16 +393,10 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         uint256 total_liquidity_value = 0;
         for (uint256 i = 1; i <= _tokensRegistered; i++) {
             address token_address = _enabledTokens[i - 1];
-            uint256 raw_price = uint256(
-                _oracleMaster.get_live_price(token_address)
-            );
+            uint256 raw_price = uint256(_oracleMaster.get_live_price(token_address));
             if (raw_price != 0) {
                 uint256 balance = vault.getBalances(token_address);
-                uint256 token_value = truncate(
-                    mul_ScalarTruncate(Exp({mantissa: raw_price}), balance) *
-                        _tokenId_tokenLTV[i]
-                );
-
+                uint256 token_value = truncate(truncate(raw_price * balance * _tokenId_tokenLTV[i]));
                 total_liquidity_value = total_liquidity_value + token_value;
             }
         }
@@ -416,13 +404,15 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
     }
 
     /******* calculate and pay interest *******/
-    function calculate_interest() external override {
-        pay_interest();
+    function calculate_interest() external override returns (uint256) {
+        return pay_interest();
     }
 
-    function pay_interest() private {
+    function pay_interest() private returns (uint256) {
         uint256 timeDifference = block.timestamp - _lastInterestTime;
-
+        if(timeDifference == 0) {
+            return 0;
+        }
         int256 reserve_ratio = int256(_usdi.reserveRatio());
         int256 int_curve_val = _curveMaster.get_value_at(
             address(0x00),
@@ -432,11 +422,9 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
 
         uint256 curve_val = uint256(int_curve_val);
         uint256 e18_factor_increase = truncate(
-            mul_ScalarTruncate(
-                Exp({mantissa: (timeDifference * 1e18) / (365 days + 6 hours)}),
-                curve_val
-            ) * _interestFactor
-        );
+            truncate((timeDifference * 1e18 * curve_val) / (365 days + 6 hours))
+             * _interestFactor);
+    
         uint256 valueBefore = truncate(_totalBaseLiability * _interestFactor);
         _interestFactor = _interestFactor + e18_factor_increase;
         uint256 valueAfter = truncate(_totalBaseLiability * _interestFactor);
@@ -452,5 +440,6 @@ contract VaultController is IVaultController, ExponentialNoError, Ownable {
         }
         _lastInterestTime = block.timestamp;
         emit Interest(block.timestamp, e18_factor_increase);
+        return e18_factor_increase;
     }
 }

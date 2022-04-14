@@ -22,7 +22,7 @@ interface IVaultController {
   function borrow_usdi(uint256 id, uint256 amount) external;
   function repay_usdi(uint256 id, uint256 amount) external;
   function repay_all_usdi(uint256 id) external;
-  function calculate_interest() external;
+  function calculate_interest() external returns (uint256);
 
 
   // admin
