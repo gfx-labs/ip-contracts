@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
+// OpenZeppelin Contracts v4.4.0 (utils/Context.sol)
 
 pragma solidity ^0.8.0;
-import "../proxy/Initializable.sol";
+import "./Initializable.sol";
 
 /**
  * @dev Provides information about the current execution context, including the
@@ -15,10 +15,11 @@ import "../proxy/Initializable.sol";
  * This contract is only required for intermediate, library-like contracts.
  */
 abstract contract ContextUpgradeable is Initializable {
-    function __Context_init() internal onlyInitializing {
+    function __Context_init() internal initializer {
+        __Context_init_unchained();
     }
 
-    function __Context_init_unchained() internal onlyInitializing {
+    function __Context_init_unchained() internal initializer {
     }
     function _msgSender() internal view virtual returns (address) {
         return msg.sender;
@@ -27,11 +28,6 @@ abstract contract ContextUpgradeable is Initializable {
     function _msgData() internal view virtual returns (bytes calldata) {
         return msg.data;
     }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
     uint256[50] private __gap;
 }
+
