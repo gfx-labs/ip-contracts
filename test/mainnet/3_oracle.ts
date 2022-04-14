@@ -9,12 +9,12 @@ describe("ETH:", () => {
     it("fetch uniswap relay price", async () => {
         let anchorPrice = (await s.UniswapRelayEthUsdc.currentValue()).div(1e14).toNumber() / 1e4
         expect(anchorPrice).to.be.above(1000).and.to.be.below(10000);
-        showBody(anchorPrice);
+        showBody("anchorPrice: ", anchorPrice);
     });
     it("fetch chainlink relay price", async () => {
         let chainlinkPrice = (await s.ChainlinkEth.currentValue()).div(1e14).toNumber() / 1e4
         expect(chainlinkPrice).to.be.above(1000).and.to.be.below(10000);
-        showBody(chainlinkPrice);
+        showBody("chainlinkPrice: ", chainlinkPrice);
     });
     it("verify chainlink price within anchor bounds", async () => {
         let anchorPrice = (await s.UniswapRelayCompUsdc.currentValue()).div(1e14).toNumber() / 1e4
