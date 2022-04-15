@@ -85,6 +85,8 @@ export type { IERC721Upgradeable } from "./openzeppelin/IERC721Upgradeable";
 export { IERC721Upgradeable__factory } from "./factories/openzeppelin/IERC721Upgradeable__factory";
 export type { OwnableUpgradeable } from "./openzeppelin/OwnableUpgradeable";
 export { OwnableUpgradeable__factory } from "./factories/openzeppelin/OwnableUpgradeable__factory";
+export type { PausableUpgradeable } from "./openzeppelin/PausableUpgradeable";
+export { PausableUpgradeable__factory } from "./factories/openzeppelin/PausableUpgradeable__factory";
 export type { ChainlinkOracleRelay } from "./oracle/External/ChainlinkOracleRelay";
 export { ChainlinkOracleRelay__factory } from "./factories/oracle/External/ChainlinkOracleRelay__factory";
 export type { UniswapV3OracleRelay } from "./oracle/External/UniswapV3OracleRelay";

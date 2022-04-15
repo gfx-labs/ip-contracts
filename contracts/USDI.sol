@@ -9,7 +9,9 @@ import "./_external/IERC20.sol";
 import "hardhat/console.sol";
 import "./_external/compound/ExponentialNoError.sol";
 
-contract USDI is Initializable, UFragments, IUSDI, ExponentialNoError {
+import "./openzeppelin/PausableUpgradeable.sol";
+
+contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, ExponentialNoError {
     address public _reserveAddress;
     IERC20 public _reserve;
 
@@ -37,11 +39,21 @@ contract USDI is Initializable, UFragments, IUSDI, ExponentialNoError {
     function initialize(address reserveAddress) public initializer
     {
         __UFragments_init("USDI Token", "USDI");
+        __Pausable_init();
         _reserveAddress = reserveAddress;
         _reserve = IERC20(_reserveAddress);
     }
+    function pause() external onlyOwner
+    {
+        _pause();
+    }
 
-    function deposit(uint256 usdc_amount) external override {
+    function unpause() external onlyOwner
+    {
+        _unpause();
+    }
+
+    function deposit(uint256 usdc_amount) external override whenNotPaused{
         uint256 amount = usdc_amount * 1e12;
         require(amount > 0, "Cannot deposit 0");
         uint256 allowance = _reserve.allowance(msg.sender, address(this));
@@ -56,7 +68,7 @@ contract USDI is Initializable, UFragments, IUSDI, ExponentialNoError {
         emit Deposit(msg.sender, amount);
     }
 
-    function withdraw(uint256 usdc_amount) external override {
+    function withdraw(uint256 usdc_amount) external override whenNotPaused{
         uint256 amount = usdc_amount * 1e12;
         require(amount > 0, "Cannot withdraw 0");
         //uint256 allowance = this.allowance(msg.sender, address(this));

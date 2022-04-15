@@ -13,3 +13,4 @@ export type { IERC721MetadataUpgradeable } from "./IERC721MetadataUpgradeable";
 export type { IERC721ReceiverUpgradeable } from "./IERC721ReceiverUpgradeable";
 export type { IERC721Upgradeable } from "./IERC721Upgradeable";
 export type { OwnableUpgradeable } from "./OwnableUpgradeable";
+export type { PausableUpgradeable } from "./PausableUpgradeable";

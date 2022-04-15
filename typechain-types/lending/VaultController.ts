@@ -57,6 +57,8 @@ export interface VaultControllerInterface extends utils.Interface {
     "liquidate_account(uint256,address,uint256)": FunctionFragment;
     "mint_vault()": FunctionFragment;
     "owner()": FunctionFragment;
+    "pause()": FunctionFragment;
+    "paused()": FunctionFragment;
     "register_curve_master(address)": FunctionFragment;
     "register_erc20(address,uint256,address,uint256)": FunctionFragment;
     "register_oracle_master(address)": FunctionFragment;
@@ -65,6 +67,7 @@ export interface VaultControllerInterface extends utils.Interface {
     "repay_all_usdi(uint256)": FunctionFragment;
     "repay_usdi(uint256,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
+    "unpause()": FunctionFragment;
     "update_registered_erc20(address,uint256,address,uint256)": FunctionFragment;
   };
 
@@ -99,6 +102,8 @@ export interface VaultControllerInterface extends utils.Interface {
       | "liquidate_account"
       | "mint_vault"
       | "owner"
+      | "pause"
+      | "paused"
       | "register_curve_master"
       | "register_erc20"
       | "register_oracle_master"
@@ -107,6 +112,7 @@ export interface VaultControllerInterface extends utils.Interface {
       | "repay_all_usdi"
       | "repay_usdi"
       | "transferOwnership"
+      | "unpause"
       | "update_registered_erc20"
   ): FunctionFragment;
 
@@ -223,6 +229,8 @@ export interface VaultControllerInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "pause", values?: undefined): string;
+  encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "register_curve_master",
     values: [string]
@@ -255,6 +263,7 @@ export interface VaultControllerInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     values: [string]
   ): string;
+  encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "update_registered_erc20",
     values: [string, BigNumberish, string, BigNumberish]
@@ -367,6 +376,8 @@ export interface VaultControllerInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "mint_vault", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "register_curve_master",
     data: BytesLike
@@ -396,6 +407,7 @@ export interface VaultControllerInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "update_registered_erc20",
     data: BytesLike
@@ -408,10 +420,12 @@ export interface VaultControllerInterface extends utils.Interface {
     "NewProtocolFee(uint256)": EventFragment;
     "NewVault(address,uint256,address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
+    "Paused(address)": EventFragment;
     "RegisterCurveMaster(address)": EventFragment;
     "RegisterOracleMaster(address)": EventFragment;
     "RegisteredErc20(address,uint256,address,uint256)": EventFragment;
     "RepayUSDi(uint256,address,uint256)": EventFragment;
+    "Unpaused(address)": EventFragment;
     "UpdateRegisteredErc20(address,uint256,address,uint256)": EventFragment;
   };
 
@@ -421,10 +435,12 @@ export interface VaultControllerInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "NewProtocolFee"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "NewVault"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RegisterCurveMaster"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RegisterOracleMaster"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RegisteredErc20"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RepayUSDi"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdateRegisteredErc20"): EventFragment;
 }
 
@@ -498,6 +514,13 @@ export type OwnershipTransferredEvent = TypedEvent<
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
 
+export interface PausedEventObject {
+  account: string;
+}
+export type PausedEvent = TypedEvent<[string], PausedEventObject>;
+
+export type PausedEventFilter = TypedEventFilter<PausedEvent>;
+
 export interface RegisterCurveMasterEventObject {
   curveMasterAddress: string;
 }
@@ -544,6 +567,13 @@ export type RepayUSDiEvent = TypedEvent<
 >;
 
 export type RepayUSDiEventFilter = TypedEventFilter<RepayUSDiEvent>;
+
+export interface UnpausedEventObject {
+  account: string;
+}
+export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
+
+export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
 
 export interface UpdateRegisteredErc20EventObject {
   token_address: string;
@@ -697,6 +727,12 @@ export interface VaultController extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    paused(overrides?: CallOverrides): Promise<[boolean]>;
+
     register_curve_master(
       master_curve_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -737,6 +773,10 @@ export interface VaultController extends BaseContract {
 
     transferOwnership(
       newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -854,6 +894,12 @@ export interface VaultController extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
+  pause(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  paused(overrides?: CallOverrides): Promise<boolean>;
+
   register_curve_master(
     master_curve_address: string,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -894,6 +940,10 @@ export interface VaultController extends BaseContract {
 
   transferOwnership(
     newOwner: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  unpause(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -1008,6 +1058,10 @@ export interface VaultController extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<string>;
 
+    pause(overrides?: CallOverrides): Promise<void>;
+
+    paused(overrides?: CallOverrides): Promise<boolean>;
+
     register_curve_master(
       master_curve_address: string,
       overrides?: CallOverrides
@@ -1045,6 +1099,8 @@ export interface VaultController extends BaseContract {
       newOwner: string,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    unpause(overrides?: CallOverrides): Promise<void>;
 
     update_registered_erc20(
       token_address: string,
@@ -1109,6 +1165,9 @@ export interface VaultController extends BaseContract {
       newOwner?: string | null
     ): OwnershipTransferredEventFilter;
 
+    "Paused(address)"(account?: null): PausedEventFilter;
+    Paused(account?: null): PausedEventFilter;
+
     "RegisterCurveMaster(address)"(
       curveMasterAddress?: null
     ): RegisterCurveMasterEventFilter;
@@ -1146,6 +1205,9 @@ export interface VaultController extends BaseContract {
       vaultAddress?: null,
       repayAmount?: null
     ): RepayUSDiEventFilter;
+
+    "Unpaused(address)"(account?: null): UnpausedEventFilter;
+    Unpaused(account?: null): UnpausedEventFilter;
 
     "UpdateRegisteredErc20(address,uint256,address,uint256)"(
       token_address?: null,
@@ -1273,6 +1335,12 @@ export interface VaultController extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    paused(overrides?: CallOverrides): Promise<BigNumber>;
+
     register_curve_master(
       master_curve_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1313,6 +1381,10 @@ export interface VaultController extends BaseContract {
 
     transferOwnership(
       newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1443,6 +1515,12 @@ export interface VaultController extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    paused(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     register_curve_master(
       master_curve_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1483,6 +1561,10 @@ export interface VaultController extends BaseContract {
 
     transferOwnership(
       newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

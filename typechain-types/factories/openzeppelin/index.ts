@@ -12,3 +12,4 @@ export { IERC721MetadataUpgradeable__factory } from "./IERC721MetadataUpgradeabl
 export { IERC721ReceiverUpgradeable__factory } from "./IERC721ReceiverUpgradeable__factory";
 export { IERC721Upgradeable__factory } from "./IERC721Upgradeable__factory";
 export { OwnableUpgradeable__factory } from "./OwnableUpgradeable__factory";
+export { PausableUpgradeable__factory } from "./PausableUpgradeable__factory";
