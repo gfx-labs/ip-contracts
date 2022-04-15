@@ -21,6 +21,20 @@ export const mineBlock = async () => {
     return
 }
 
+export const reset = async () => {
+    await network.provider.request({
+        method: "hardhat_reset",
+        params: [
+            {
+                forking: {
+                    jsonRpcUrl: "https://mainnet.rpc.gfx.xyz",
+                    blockNumber: 14546835
+                },
+            },
+        ],
+    });
+}
+
 export const OneYear = 60 * 60 * 24 * 365.25
 export const OneWeek = 60 * 60 * 24 * 7;
 export const OneDay = 60 * 60 * 24;
