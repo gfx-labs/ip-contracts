@@ -57,6 +57,8 @@ export interface USDIInterface extends utils.Interface {
     "name()": FunctionFragment;
     "nonces(address)": FunctionFragment;
     "owner()": FunctionFragment;
+    "pause()": FunctionFragment;
+    "paused()": FunctionFragment;
     "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
     "rebase(uint256,uint256,uint256)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
@@ -72,6 +74,7 @@ export interface USDIInterface extends utils.Interface {
     "transferAllFrom(address,address)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
+    "unpause()": FunctionFragment;
     "vault_master_burn(address,uint256)": FunctionFragment;
     "vault_master_donate(uint256)": FunctionFragment;
     "vault_master_mint(address,uint256)": FunctionFragment;
@@ -109,6 +112,8 @@ export interface USDIInterface extends utils.Interface {
       | "name"
       | "nonces"
       | "owner"
+      | "pause"
+      | "paused"
       | "permit"
       | "rebase"
       | "renounceOwnership"
@@ -124,6 +129,7 @@ export interface USDIInterface extends utils.Interface {
       | "transferAllFrom"
       | "transferFrom"
       | "transferOwnership"
+      | "unpause"
       | "vault_master_burn"
       | "vault_master_donate"
       | "vault_master_mint"
@@ -219,6 +225,8 @@ export interface USDIInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "nonces", values: [string]): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "pause", values?: undefined): string;
+  encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "permit",
     values: [
@@ -281,6 +289,7 @@ export interface USDIInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     values: [string]
   ): string;
+  encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "vault_master_burn",
     values: [string, BigNumberish]
@@ -372,6 +381,8 @@ export interface USDIInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "nonces", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "permit", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "rebase", data: BytesLike): Result;
   decodeFunctionResult(
@@ -420,6 +431,7 @@ export interface USDIInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "vault_master_burn",
     data: BytesLike
@@ -443,7 +455,9 @@ export interface USDIInterface extends utils.Interface {
     "LogRebase(uint256,uint256)": EventFragment;
     "Mint(address,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
+    "Paused(address)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
+    "Unpaused(address)": EventFragment;
     "Withdraw(address,uint256)": EventFragment;
   };
 
@@ -455,7 +469,9 @@ export interface USDIInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "LogRebase"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Mint"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Withdraw"): EventFragment;
 }
 
@@ -541,6 +557,13 @@ export type OwnershipTransferredEvent = TypedEvent<
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
 
+export interface PausedEventObject {
+  account: string;
+}
+export type PausedEvent = TypedEvent<[string], PausedEventObject>;
+
+export type PausedEventFilter = TypedEventFilter<PausedEvent>;
+
 export interface TransferEventObject {
   from: string;
   to: string;
@@ -552,6 +575,13 @@ export type TransferEvent = TypedEvent<
 >;
 
 export type TransferEventFilter = TypedEventFilter<TransferEvent>;
+
+export interface UnpausedEventObject {
+  account: string;
+}
+export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
+
+export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
 
 export interface WithdrawEventObject {
   _from: string;
@@ -686,6 +716,12 @@ export interface USDI extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    paused(overrides?: CallOverrides): Promise<[boolean]>;
+
     permit(
       owner: string,
       spender: string,
@@ -759,6 +795,10 @@ export interface USDI extends BaseContract {
 
     transferOwnership(
       newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -880,6 +920,12 @@ export interface USDI extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
+  pause(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  paused(overrides?: CallOverrides): Promise<boolean>;
+
   permit(
     owner: string,
     spender: string,
@@ -948,6 +994,10 @@ export interface USDI extends BaseContract {
 
   transferOwnership(
     newOwner: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  unpause(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -1063,6 +1113,10 @@ export interface USDI extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<string>;
 
+    pause(overrides?: CallOverrides): Promise<void>;
+
+    paused(overrides?: CallOverrides): Promise<boolean>;
+
     permit(
       owner: string,
       spender: string,
@@ -1128,6 +1182,8 @@ export interface USDI extends BaseContract {
       newOwner: string,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    unpause(overrides?: CallOverrides): Promise<void>;
 
     vault_master_burn(
       target: string,
@@ -1212,6 +1268,9 @@ export interface USDI extends BaseContract {
       newOwner?: string | null
     ): OwnershipTransferredEventFilter;
 
+    "Paused(address)"(account?: null): PausedEventFilter;
+    Paused(account?: null): PausedEventFilter;
+
     "Transfer(address,address,uint256)"(
       from?: string | null,
       to?: string | null,
@@ -1222,6 +1281,9 @@ export interface USDI extends BaseContract {
       to?: string | null,
       value?: null
     ): TransferEventFilter;
+
+    "Unpaused(address)"(account?: null): UnpausedEventFilter;
+    Unpaused(account?: null): UnpausedEventFilter;
 
     "Withdraw(address,uint256)"(
       _from?: string | null,
@@ -1326,6 +1388,12 @@ export interface USDI extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    paused(overrides?: CallOverrides): Promise<BigNumber>;
+
     permit(
       owner: string,
       spender: string,
@@ -1394,6 +1462,10 @@ export interface USDI extends BaseContract {
 
     transferOwnership(
       newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1527,6 +1599,12 @@ export interface USDI extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    paused(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     permit(
       owner: string,
       spender: string,
@@ -1598,6 +1676,10 @@ export interface USDI extends BaseContract {
 
     transferOwnership(
       newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

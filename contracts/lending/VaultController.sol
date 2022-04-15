@@ -10,15 +10,18 @@ import "./Vault.sol";
 import "./IVault.sol";
 
 //import "../_external/Ownable.sol";
+//import oz stuff
 import "../_external/IERC20.sol";
 import "../_external/compound/ExponentialNoError.sol";
 import "../openzeppelin/OwnableUpgradeable.sol";
 import "../openzeppelin/Initializable.sol";
+import "../openzeppelin/PausableUpgradeable.sol";
 
 import "hardhat/console.sol";
 
 contract VaultController is
     Initializable,
+    PausableUpgradeable,
     IVaultController,
     ExponentialNoError,
     OwnableUpgradeable
@@ -71,6 +74,7 @@ contract VaultController is
 
     function initialize() external override initializer {
         __Ownable_init();
+        __Pausable_init();
         _vaultsMinted = 0;
         _tokensRegistered = 0;
         _interestFactor = 1e18; // initialize at 1e18;
@@ -100,6 +104,16 @@ contract VaultController is
 
         emit NewVault(vault_address, _vaultsMinted, _msgSender());
         return vault_address;
+    }
+
+    function pause() external onlyOwner
+    {
+        _pause();
+    }
+
+    function unpause() external onlyOwner
+    {
+        _unpause();
     }
 
     function register_usdi(address usdi_address) external override onlyOwner {
@@ -205,7 +219,7 @@ contract VaultController is
         return (total_liquidity_value >= usdi_liability);
     }
 
-    function borrow_usdi(uint256 id, uint256 amount) external override {
+    function borrow_usdi(uint256 id, uint256 amount) external override whenNotPaused {
         pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x00), "vault does not exist");
@@ -233,7 +247,7 @@ contract VaultController is
         emit BorrowUSDi(id, vault_address, amount);
     }
 
-    function repay_usdi(uint256 id, uint256 amount) external override {
+    function repay_usdi(uint256 id, uint256 amount) external override whenNotPaused{
         pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
@@ -250,7 +264,7 @@ contract VaultController is
         emit RepayUSDi(id, vault_address, amount);
     }
 
-    function repay_all_usdi(uint256 id) external override {
+    function repay_all_usdi(uint256 id) external override whenNotPaused{
         pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
@@ -274,7 +288,7 @@ contract VaultController is
         uint256 id,
         address asset_address,
         uint256 tokens_to_liquidate
-    ) external override returns (uint256) {
+    ) external override whenNotPaused returns (uint256) {
         pay_interest();
         (uint256 tokenAmount, uint256 badFillPrice) = _liquidationMath(
             id,

@@ -153,6 +153,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.OwnableUpgradeable__factory>;
     getContractFactory(
+      name: "PausableUpgradeable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.PausableUpgradeable__factory>;
+    getContractFactory(
       name: "ChainlinkOracleRelay",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ChainlinkOracleRelay__factory>;
@@ -404,6 +408,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.OwnableUpgradeable>;
+    getContractAt(
+      name: "PausableUpgradeable",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.PausableUpgradeable>;
     getContractAt(
       name: "ChainlinkOracleRelay",
       address: string,
