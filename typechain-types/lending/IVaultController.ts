@@ -37,6 +37,7 @@ export interface IVaultControllerInterface extends utils.Interface {
     "borrow_usdi(uint256,uint256)": FunctionFragment;
     "calculate_interest()": FunctionFragment;
     "check_account(uint256)": FunctionFragment;
+    "initialize()": FunctionFragment;
     "liquidate_account(uint256,address,uint256)": FunctionFragment;
     "mint_vault()": FunctionFragment;
     "register_curve_master(address)": FunctionFragment;
@@ -59,6 +60,7 @@ export interface IVaultControllerInterface extends utils.Interface {
       | "borrow_usdi"
       | "calculate_interest"
       | "check_account"
+      | "initialize"
       | "liquidate_account"
       | "mint_vault"
       | "register_curve_master"
@@ -105,6 +107,10 @@ export interface IVaultControllerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "check_account",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initialize",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "liquidate_account",
@@ -179,6 +185,7 @@ export interface IVaultControllerInterface extends utils.Interface {
     functionFragment: "check_account",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "liquidate_account",
     data: BytesLike
@@ -422,6 +429,10 @@ export interface IVaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
+    initialize(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     liquidate_account(
       id: BigNumberish,
       asset_address: string,
@@ -510,6 +521,10 @@ export interface IVaultController extends BaseContract {
   ): Promise<ContractTransaction>;
 
   check_account(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
+
+  initialize(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   liquidate_account(
     id: BigNumberish,
@@ -600,6 +615,8 @@ export interface IVaultController extends BaseContract {
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    initialize(overrides?: CallOverrides): Promise<void>;
 
     liquidate_account(
       id: BigNumberish,
@@ -789,6 +806,10 @@ export interface IVaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    initialize(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     liquidate_account(
       id: BigNumberish,
       asset_address: string,
@@ -883,6 +904,10 @@ export interface IVaultController extends BaseContract {
     check_account(
       id: BigNumberish,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    initialize(
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     liquidate_account(
