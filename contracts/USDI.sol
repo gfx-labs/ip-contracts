@@ -9,7 +9,9 @@ import "./_external/IERC20.sol";
 import "hardhat/console.sol";
 import "./_external/compound/ExponentialNoError.sol";
 
-contract USDI is UFragments, IUSDI, ExponentialNoError {
+import "./openzeppelin/PausableUpgradeable.sol";
+
+contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, ExponentialNoError {
     address public _reserveAddress;
     IERC20 public _reserve;
 
@@ -28,12 +30,30 @@ contract USDI is UFragments, IUSDI, ExponentialNoError {
     event Burn(address from, uint256 _value);
     event Donation(address indexed _from, uint256 _value, uint256 _totalSupply);
 
+    /**
     constructor(address reserveAddress) UFragments("USDI Token", "USDI") {
         _reserveAddress = reserveAddress;
         _reserve = IERC20(_reserveAddress);
     }
+     */
+    function initialize(address reserveAddress) public initializer
+    {
+        __UFragments_init("USDI Token", "USDI");
+        __Pausable_init();
+        _reserveAddress = reserveAddress;
+        _reserve = IERC20(_reserveAddress);
+    }
+    function pause() external onlyOwner
+    {
+        _pause();
+    }
 
-    function deposit(uint256 usdc_amount) external override {
+    function unpause() external onlyOwner
+    {
+        _unpause();
+    }
+
+    function deposit(uint256 usdc_amount) external override whenNotPaused{
         uint256 amount = usdc_amount * 1e12;
         require(amount > 0, "Cannot deposit 0");
         uint256 allowance = _reserve.allowance(msg.sender, address(this));
@@ -48,13 +68,14 @@ contract USDI is UFragments, IUSDI, ExponentialNoError {
         emit Deposit(msg.sender, amount);
     }
 
-    function withdraw(uint256 usdc_amount) external override {
+    function withdraw(uint256 usdc_amount) external override whenNotPaused{
         uint256 amount = usdc_amount * 1e12;
         require(amount > 0, "Cannot withdraw 0");
-        uint256 allowance = this.allowance(msg.sender, address(this));
-        require(allowance >= usdc_amount, "Insufficient Allowance");
+        //uint256 allowance = this.allowance(msg.sender, address(this));
+        //require(allowance >= usdc_amount, "Insufficient Allowance");
         uint256 balance = _reserve.balanceOf(address(this));
         require(balance >= usdc_amount, "Insufficient Reserve in Bank");
+        _reserve.approve(address(this), usdc_amount);
         _reserve.transferFrom(address(this), msg.sender, usdc_amount);
         _gonBalances[msg.sender] =
             _gonBalances[msg.sender] -
