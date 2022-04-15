@@ -15,8 +15,6 @@ describe("TOKEN-DEPOSITS", async () => {
 
         const startingUSDIamount = await s.USDI.balanceOf(s.Dave.address)
         assert.equal(startingUSDIamount.toString(), "0", "Starting USDi balance is correct")
-
-        //approve and deposit 5000 USDC
         
         await s.USDC.connect(s.Dave).approve(s.USDI.address, usdcAmount)
         const depositResult = await s.USDI.connect(s.Dave).deposit(usdcAmount)
