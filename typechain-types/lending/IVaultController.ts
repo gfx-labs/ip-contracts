@@ -40,12 +40,14 @@ export interface IVaultControllerInterface extends utils.Interface {
     "initialize()": FunctionFragment;
     "liquidate_account(uint256,address,uint256)": FunctionFragment;
     "mint_vault()": FunctionFragment;
+    "pause()": FunctionFragment;
     "register_curve_master(address)": FunctionFragment;
     "register_erc20(address,uint256,address,uint256)": FunctionFragment;
     "register_oracle_master(address)": FunctionFragment;
     "register_usdi(address)": FunctionFragment;
     "repay_all_usdi(uint256)": FunctionFragment;
     "repay_usdi(uint256,uint256)": FunctionFragment;
+    "unpause()": FunctionFragment;
     "update_registered_erc20(address,uint256,address,uint256)": FunctionFragment;
   };
 
@@ -63,12 +65,14 @@ export interface IVaultControllerInterface extends utils.Interface {
       | "initialize"
       | "liquidate_account"
       | "mint_vault"
+      | "pause"
       | "register_curve_master"
       | "register_erc20"
       | "register_oracle_master"
       | "register_usdi"
       | "repay_all_usdi"
       | "repay_usdi"
+      | "unpause"
       | "update_registered_erc20"
   ): FunctionFragment;
 
@@ -120,6 +124,7 @@ export interface IVaultControllerInterface extends utils.Interface {
     functionFragment: "mint_vault",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "pause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "register_curve_master",
     values: [string]
@@ -144,6 +149,7 @@ export interface IVaultControllerInterface extends utils.Interface {
     functionFragment: "repay_usdi",
     values: [BigNumberish, BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "update_registered_erc20",
     values: [string, BigNumberish, string, BigNumberish]
@@ -191,6 +197,7 @@ export interface IVaultControllerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "mint_vault", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "register_curve_master",
     data: BytesLike
@@ -212,6 +219,7 @@ export interface IVaultControllerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "repay_usdi", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "update_registered_erc20",
     data: BytesLike
@@ -444,6 +452,10 @@ export interface IVaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     register_curve_master(
       master_curve_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -475,6 +487,10 @@ export interface IVaultController extends BaseContract {
     repay_usdi(
       id: BigNumberish,
       amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -537,6 +553,10 @@ export interface IVaultController extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  pause(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   register_curve_master(
     master_curve_address: string,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -568,6 +588,10 @@ export interface IVaultController extends BaseContract {
   repay_usdi(
     id: BigNumberish,
     amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  unpause(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -627,6 +651,8 @@ export interface IVaultController extends BaseContract {
 
     mint_vault(overrides?: CallOverrides): Promise<string>;
 
+    pause(overrides?: CallOverrides): Promise<void>;
+
     register_curve_master(
       master_curve_address: string,
       overrides?: CallOverrides
@@ -657,6 +683,8 @@ export interface IVaultController extends BaseContract {
       amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    unpause(overrides?: CallOverrides): Promise<void>;
 
     update_registered_erc20(
       token_address: string,
@@ -821,6 +849,10 @@ export interface IVaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     register_curve_master(
       master_curve_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -852,6 +884,10 @@ export interface IVaultController extends BaseContract {
     repay_usdi(
       id: BigNumberish,
       amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -921,6 +957,10 @@ export interface IVaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     register_curve_master(
       master_curve_address: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -952,6 +992,10 @@ export interface IVaultController extends BaseContract {
     repay_usdi(
       id: BigNumberish,
       amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
