@@ -34,6 +34,8 @@ export interface USDIInterface extends utils.Interface {
     "MAX_SUPPLY()": FunctionFragment;
     "PERMIT_TYPEHASH()": FunctionFragment;
     "_VaultControllerAddress()": FunctionFragment;
+    "__ERC20Detailed_init(string,string,uint8)": FunctionFragment;
+    "__UFragments_init(string,string)": FunctionFragment;
     "_gonBalances(address)": FunctionFragment;
     "_gonsPerFragment()": FunctionFragment;
     "_lenderAddress()": FunctionFragment;
@@ -49,11 +51,14 @@ export interface USDIInterface extends utils.Interface {
     "decreaseAllowance(address,uint256)": FunctionFragment;
     "deposit(uint256)": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
+    "initialize(address)": FunctionFragment;
     "mint(uint256)": FunctionFragment;
     "monetaryPolicy()": FunctionFragment;
     "name()": FunctionFragment;
     "nonces(address)": FunctionFragment;
     "owner()": FunctionFragment;
+    "pause()": FunctionFragment;
+    "paused()": FunctionFragment;
     "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
     "rebase(uint256,uint256,uint256)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
@@ -69,6 +74,7 @@ export interface USDIInterface extends utils.Interface {
     "transferAllFrom(address,address)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
+    "unpause()": FunctionFragment;
     "vault_master_burn(address,uint256)": FunctionFragment;
     "vault_master_donate(uint256)": FunctionFragment;
     "vault_master_mint(address,uint256)": FunctionFragment;
@@ -83,6 +89,8 @@ export interface USDIInterface extends utils.Interface {
       | "MAX_SUPPLY"
       | "PERMIT_TYPEHASH"
       | "_VaultControllerAddress"
+      | "__ERC20Detailed_init"
+      | "__UFragments_init"
       | "_gonBalances"
       | "_gonsPerFragment"
       | "_lenderAddress"
@@ -98,11 +106,14 @@ export interface USDIInterface extends utils.Interface {
       | "decreaseAllowance"
       | "deposit"
       | "increaseAllowance"
+      | "initialize"
       | "mint"
       | "monetaryPolicy"
       | "name"
       | "nonces"
       | "owner"
+      | "pause"
+      | "paused"
       | "permit"
       | "rebase"
       | "renounceOwnership"
@@ -118,6 +129,7 @@ export interface USDIInterface extends utils.Interface {
       | "transferAllFrom"
       | "transferFrom"
       | "transferOwnership"
+      | "unpause"
       | "vault_master_burn"
       | "vault_master_donate"
       | "vault_master_mint"
@@ -147,6 +159,14 @@ export interface USDIInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "_VaultControllerAddress",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "__ERC20Detailed_init",
+    values: [string, string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "__UFragments_init",
+    values: [string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "_gonBalances",
@@ -196,6 +216,7 @@ export interface USDIInterface extends utils.Interface {
     functionFragment: "increaseAllowance",
     values: [string, BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "initialize", values: [string]): string;
   encodeFunctionData(functionFragment: "mint", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "monetaryPolicy",
@@ -204,6 +225,8 @@ export interface USDIInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "nonces", values: [string]): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "pause", values?: undefined): string;
+  encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "permit",
     values: [
@@ -266,6 +289,7 @@ export interface USDIInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     values: [string]
   ): string;
+  encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "vault_master_burn",
     values: [string, BigNumberish]
@@ -305,6 +329,14 @@ export interface USDIInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "__ERC20Detailed_init",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "__UFragments_init",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "_gonBalances",
     data: BytesLike
   ): Result;
@@ -340,6 +372,7 @@ export interface USDIInterface extends utils.Interface {
     functionFragment: "increaseAllowance",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "monetaryPolicy",
@@ -348,6 +381,8 @@ export interface USDIInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "nonces", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "permit", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "rebase", data: BytesLike): Result;
   decodeFunctionResult(
@@ -396,6 +431,7 @@ export interface USDIInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "vault_master_burn",
     data: BytesLike
@@ -419,7 +455,9 @@ export interface USDIInterface extends utils.Interface {
     "LogRebase(uint256,uint256)": EventFragment;
     "Mint(address,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
+    "Paused(address)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
+    "Unpaused(address)": EventFragment;
     "Withdraw(address,uint256)": EventFragment;
   };
 
@@ -431,7 +469,9 @@ export interface USDIInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "LogRebase"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Mint"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Withdraw"): EventFragment;
 }
 
@@ -517,6 +557,13 @@ export type OwnershipTransferredEvent = TypedEvent<
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
 
+export interface PausedEventObject {
+  account: string;
+}
+export type PausedEvent = TypedEvent<[string], PausedEventObject>;
+
+export type PausedEventFilter = TypedEventFilter<PausedEvent>;
+
 export interface TransferEventObject {
   from: string;
   to: string;
@@ -528,6 +575,13 @@ export type TransferEvent = TypedEvent<
 >;
 
 export type TransferEventFilter = TypedEventFilter<TransferEvent>;
+
+export interface UnpausedEventObject {
+  account: string;
+}
+export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
+
+export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
 
 export interface WithdrawEventObject {
   _from: string;
@@ -578,6 +632,19 @@ export interface USDI extends BaseContract {
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<[string]>;
 
     _VaultControllerAddress(overrides?: CallOverrides): Promise<[string]>;
+
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
@@ -631,6 +698,11 @@ export interface USDI extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    initialize(
+      reserveAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     mint(
       usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -643,6 +715,12 @@ export interface USDI extends BaseContract {
     nonces(who: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
+
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    paused(overrides?: CallOverrides): Promise<[boolean]>;
 
     permit(
       owner: string,
@@ -720,6 +798,10 @@ export interface USDI extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    unpause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     vault_master_burn(
       target: string,
       amount: BigNumberish,
@@ -754,6 +836,19 @@ export interface USDI extends BaseContract {
   PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<string>;
 
   _VaultControllerAddress(overrides?: CallOverrides): Promise<string>;
+
+  __ERC20Detailed_init(
+    name_: string,
+    symbol_: string,
+    decimals_: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  __UFragments_init(
+    name: string,
+    symbol: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -807,6 +902,11 @@ export interface USDI extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  initialize(
+    reserveAddress: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   mint(
     usdc_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -819,6 +919,12 @@ export interface USDI extends BaseContract {
   nonces(who: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   owner(overrides?: CallOverrides): Promise<string>;
+
+  pause(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  paused(overrides?: CallOverrides): Promise<boolean>;
 
   permit(
     owner: string,
@@ -891,6 +997,10 @@ export interface USDI extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  unpause(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   vault_master_burn(
     target: string,
     amount: BigNumberish,
@@ -925,6 +1035,19 @@ export interface USDI extends BaseContract {
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<string>;
 
     _VaultControllerAddress(overrides?: CallOverrides): Promise<string>;
+
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -975,6 +1098,11 @@ export interface USDI extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
+    initialize(
+      reserveAddress: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     mint(usdc_amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     monetaryPolicy(overrides?: CallOverrides): Promise<string>;
@@ -984,6 +1112,10 @@ export interface USDI extends BaseContract {
     nonces(who: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
+
+    pause(overrides?: CallOverrides): Promise<void>;
+
+    paused(overrides?: CallOverrides): Promise<boolean>;
 
     permit(
       owner: string,
@@ -1050,6 +1182,8 @@ export interface USDI extends BaseContract {
       newOwner: string,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    unpause(overrides?: CallOverrides): Promise<void>;
 
     vault_master_burn(
       target: string,
@@ -1134,6 +1268,9 @@ export interface USDI extends BaseContract {
       newOwner?: string | null
     ): OwnershipTransferredEventFilter;
 
+    "Paused(address)"(account?: null): PausedEventFilter;
+    Paused(account?: null): PausedEventFilter;
+
     "Transfer(address,address,uint256)"(
       from?: string | null,
       to?: string | null,
@@ -1144,6 +1281,9 @@ export interface USDI extends BaseContract {
       to?: string | null,
       value?: null
     ): TransferEventFilter;
+
+    "Unpaused(address)"(account?: null): UnpausedEventFilter;
+    Unpaused(account?: null): UnpausedEventFilter;
 
     "Withdraw(address,uint256)"(
       _from?: string | null,
@@ -1164,6 +1304,19 @@ export interface USDI extends BaseContract {
     PERMIT_TYPEHASH(overrides?: CallOverrides): Promise<BigNumber>;
 
     _VaultControllerAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     _gonBalances(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1217,6 +1370,11 @@ export interface USDI extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    initialize(
+      reserveAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     mint(
       usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1229,6 +1387,12 @@ export interface USDI extends BaseContract {
     nonces(who: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
+
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    paused(overrides?: CallOverrides): Promise<BigNumber>;
 
     permit(
       owner: string,
@@ -1301,6 +1465,10 @@ export interface USDI extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    unpause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     vault_master_burn(
       target: string,
       amount: BigNumberish,
@@ -1337,6 +1505,19 @@ export interface USDI extends BaseContract {
 
     _VaultControllerAddress(
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    __ERC20Detailed_init(
+      name_: string,
+      symbol_: string,
+      decimals_: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    __UFragments_init(
+      name: string,
+      symbol: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     _gonBalances(
@@ -1397,6 +1578,11 @@ export interface USDI extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    initialize(
+      reserveAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     mint(
       usdc_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1412,6 +1598,12 @@ export interface USDI extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    pause(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    paused(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     permit(
       owner: string,
@@ -1484,6 +1676,10 @@ export interface USDI extends BaseContract {
 
     transferOwnership(
       newOwner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

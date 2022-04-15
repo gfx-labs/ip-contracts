@@ -4,7 +4,7 @@ import { stealMoney } from "../util/money";
 import { showBody } from "../util/format";
 import { BN } from "../util/number";
 import { s } from "./scope";
-import { advanceBlockHeight, fastForward, mineBlock } from "../util/block";
+import { advanceBlockHeight, reset, mineBlock } from "../util/block";
 import { IERC20__factory, IVOTE__factory } from "../../typechain-types";
 //import { assert } from "console";
 
@@ -30,6 +30,9 @@ let weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 let carol_voting_address = "0x1F2AB8Ac759Fb0E3185630277A554Ae3110bF530"
 
 describe("hardhat settings", () => {
+    it("reset hardhat network each run", async () => {
+        expect(await reset()).to.not.throw
+    })
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not.throw
     })
