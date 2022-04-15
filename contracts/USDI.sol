@@ -59,10 +59,11 @@ contract USDI is Initializable, UFragments, IUSDI, ExponentialNoError {
     function withdraw(uint256 usdc_amount) external override {
         uint256 amount = usdc_amount * 1e12;
         require(amount > 0, "Cannot withdraw 0");
-        uint256 allowance = this.allowance(msg.sender, address(this));
-        require(allowance >= usdc_amount, "Insufficient Allowance");
+        //uint256 allowance = this.allowance(msg.sender, address(this));
+        //require(allowance >= usdc_amount, "Insufficient Allowance");
         uint256 balance = _reserve.balanceOf(address(this));
         require(balance >= usdc_amount, "Insufficient Reserve in Bank");
+        _reserve.approve(address(this), usdc_amount);
         _reserve.transferFrom(address(this), msg.sender, usdc_amount);
         _gonBalances[msg.sender] =
             _gonBalances[msg.sender] -
