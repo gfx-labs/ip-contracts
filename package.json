@@ -17,6 +17,7 @@
     "dependencies": {
         "@typechain/truffle-v5": "^8.0.0",
         "@typechain/web3-v1": "^6.0.0",
+        "big-number": "^2.0.0",
         "dotenv": "^16.0.0",
         "hardhat-console": "^1.0.0",
         "hardhat-watcher": "^2.1.1"
