@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 import "./_external/IERC20.sol";
 
 interface IUSDI is IERC20 {
+
+  function initialize(address reserveAddress) external;
+
   // getters
   function reserveRatio() external view returns (uint256);
 
@@ -13,6 +16,9 @@ interface IUSDI is IERC20 {
   function withdraw(uint256 usdc_amount) external;
 
   // admin & internal use functions
+  function pause() external;
+  function unpause() external;
+
   function mint(uint256 usdc_amount) external;
 
   function burn(uint256 usdc_amount) external;
