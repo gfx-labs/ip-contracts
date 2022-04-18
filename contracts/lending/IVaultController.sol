@@ -26,6 +26,8 @@ interface IVaultController {
 
 
   // admin
+  function pause() external;
+  function unpause() external;
   function register_oracle_master(address master_oracle_address) external;
   function register_curve_master(address master_curve_address) external;
   function register_erc20(address token_address, uint256 LTV, address oracle_address, uint256 liquidationIncentive) external;
