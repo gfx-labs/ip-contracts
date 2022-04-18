@@ -182,7 +182,6 @@ contract VaultController is
 
     _usdi.vault_master_mint(_msgSender(), _AccountLiability(id));
 
-    //TODO test for actual amount borrowed via _AccountLiability(id)
     emit BorrowUSDi(id, vault_address, _AccountLiability(id));
   }
 
@@ -344,12 +343,6 @@ contract VaultController is
 
     uint256 curve_val = uint256(int_curve_val);
 
-    uint256 step = timeDifference * 1e18 * curve_val; //
-    step = step / (365 days + 6 hours); //
-    step = truncate(step)* _interestFactor;
-    step = truncate(step);
-    console.log("step4: ", step);
-
     uint256 e18_factor_increase = truncate(
       truncate((timeDifference * 1e18 * curve_val) / (365 days + 6 hours)) * _interestFactor
     );
@@ -364,7 +357,7 @@ contract VaultController is
       _usdi.vault_master_mint(owner(), protocolAmount);
     }
     _lastInterestTime = block.timestamp;
-    emit Interest(block.timestamp, e18_factor_increase);
+    emit Interest(block.timestamp, e18_factor_increase, curve_val);
     return e18_factor_increase;
   }
 }

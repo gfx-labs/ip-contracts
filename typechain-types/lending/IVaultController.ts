@@ -241,7 +241,7 @@ export interface IVaultControllerInterface extends utils.Interface {
 
   events: {
     "BorrowUSDi(uint256,address,uint256)": EventFragment;
-    "Interest(uint256,uint256)": EventFragment;
+    "Interest(uint256,uint256,uint256)": EventFragment;
     "Liquidate(uint256,address,uint256,uint256)": EventFragment;
     "NewProtocolFee(uint256)": EventFragment;
     "NewVault(address,uint256,address)": EventFragment;
@@ -279,9 +279,10 @@ export type BorrowUSDiEventFilter = TypedEventFilter<BorrowUSDiEvent>;
 export interface InterestEventObject {
   epoch: BigNumber;
   amount: BigNumber;
+  curve_val: BigNumber;
 }
 export type InterestEvent = TypedEvent<
-  [BigNumber, BigNumber],
+  [BigNumber, BigNumber, BigNumber],
   InterestEventObject
 >;
 
@@ -739,11 +740,16 @@ export interface IVaultController extends BaseContract {
       borrowAmount?: null
     ): BorrowUSDiEventFilter;
 
-    "Interest(uint256,uint256)"(
+    "Interest(uint256,uint256,uint256)"(
       epoch?: null,
-      amount?: null
+      amount?: null,
+      curve_val?: null
     ): InterestEventFilter;
-    Interest(epoch?: null, amount?: null): InterestEventFilter;
+    Interest(
+      epoch?: null,
+      amount?: null,
+      curve_val?: null
+    ): InterestEventFilter;
 
     "Liquidate(uint256,address,uint256,uint256)"(
       vaultId?: null,
