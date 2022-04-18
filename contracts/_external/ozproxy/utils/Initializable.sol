@@ -33,51 +33,48 @@ import "../ERC1967/Address.sol";
  * ====
  */
 abstract contract Initializable {
-    /**
-     * @dev Indicates that the contract has been initialized.
-     */
-    bool private _initialized;
+  /**
+   * @dev Indicates that the contract has been initialized.
+   */
+  bool private _initialized;
 
-    /**
-     * @dev Indicates that the contract is in the process of being initialized.
-     */
-    bool private _initializing;
+  /**
+   * @dev Indicates that the contract is in the process of being initialized.
+   */
+  bool private _initializing;
 
-    /**
-     * @dev Modifier to protect an initializer function from being invoked twice.
-     */
-    modifier initializer() {
-        // If the contract is initializing we ignore whether _initialized is set in order to support multiple
-        // inheritance patterns, but we only do this in the context of a constructor, because in other contexts the
-        // contract may have been reentered.
-        require(
-            _initializing ? _isConstructor() : !_initialized,
-            "Initializable: contract is already initialized"
-        );
+  /**
+   * @dev Modifier to protect an initializer function from being invoked twice.
+   */
+  modifier initializer() {
+    // If the contract is initializing we ignore whether _initialized is set in order to support multiple
+    // inheritance patterns, but we only do this in the context of a constructor, because in other contexts the
+    // contract may have been reentered.
+    require(_initializing ? _isConstructor() : !_initialized, "Initializable: contract is already initialized");
 
-        bool isTopLevelCall = !_initializing;
-        if (isTopLevelCall) {
-            _initializing = true;
-            _initialized = true;
-        }
-
-        _;
-
-        if (isTopLevelCall) {
-            _initializing = false;
-        }
+    bool isTopLevelCall = !_initializing;
+    if (isTopLevelCall) {
+      _initializing = true;
+      _initialized = true;
     }
 
-    /**
-     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the
-     * {initializer} modifier, directly or indirectly.
-     */
-    modifier onlyInitializing() {
-        require(_initializing, "Initializable: contract is not initializing");
-        _;
-    }
+    _;
 
-    function _isConstructor() private view returns (bool) {
-        return !Address.isContract(address(this));
+    if (isTopLevelCall) {
+      _initializing = false;
     }
+  }
+
+  /**
+   * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the
+   * {initializer} modifier, directly or indirectly.
+   */
+  modifier onlyInitializing() {
+    require(_initializing, "Initializable: contract is not initializing");
+    _;
+  }
+
+  function _isConstructor() private view returns (bool) {
+    return !Address.isContract(address(this));
+  }
 }
