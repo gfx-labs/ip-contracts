@@ -1,0 +1,26 @@
+lint:
+  stage: test
+  image: nodejs:16.14-alpine3.15
+  cache:
+    paths:
+      - node_modules/
+    key:
+      files:
+        - package-lock.json
+  script:
+    - npm i
+    - npm run lint
+
+test:
+  stage: test
+  image: nodejs:16.14-alpine3.15
+  cache:
+    paths:
+      - node_modules/
+    key:
+      files:
+        - package-lock.json
+  script:
+    - npm i
+    - npx hardhat clean
+    - npx hardhat test

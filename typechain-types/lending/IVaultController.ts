@@ -36,6 +36,7 @@ export interface IVaultControllerInterface extends utils.Interface {
     "VaultAddress(uint256)": FunctionFragment;
     "borrowUsdi(uint256,uint256)": FunctionFragment;
     "calculateInterest()": FunctionFragment;
+    "change_protocol_fee(uint256)": FunctionFragment;
     "checkAccount(uint256)": FunctionFragment;
     "initialize()": FunctionFragment;
     "liquidate_account(uint256,address,uint256)": FunctionFragment;
@@ -61,6 +62,7 @@ export interface IVaultControllerInterface extends utils.Interface {
       | "VaultAddress"
       | "borrowUsdi"
       | "calculateInterest"
+      | "change_protocol_fee"
       | "checkAccount"
       | "initialize"
       | "liquidate_account"
@@ -107,6 +109,10 @@ export interface IVaultControllerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "calculateInterest",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "change_protocol_fee",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "checkAccount",
@@ -179,6 +185,10 @@ export interface IVaultControllerInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "borrowUsdi", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "calculateInterest",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "change_protocol_fee",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -426,6 +436,11 @@ export interface IVaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    change_protocol_fee(
+      new_protocol_fee: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     checkAccount(
       id: BigNumberish,
       overrides?: CallOverrides
@@ -530,6 +545,11 @@ export interface IVaultController extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  change_protocol_fee(
+    new_protocol_fee: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   checkAccount(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
 
   initialize(
@@ -628,6 +648,11 @@ export interface IVaultController extends BaseContract {
     ): Promise<void>;
 
     calculateInterest(overrides?: CallOverrides): Promise<BigNumber>;
+
+    change_protocol_fee(
+      new_protocol_fee: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     checkAccount(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
 
@@ -820,6 +845,11 @@ export interface IVaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    change_protocol_fee(
+      new_protocol_fee: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     checkAccount(
       id: BigNumberish,
       overrides?: CallOverrides
@@ -925,6 +955,11 @@ export interface IVaultController extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     calculateInterest(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    change_protocol_fee(
+      new_protocol_fee: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

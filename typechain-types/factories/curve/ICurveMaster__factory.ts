@@ -34,6 +34,24 @@ const _abi = [
     stateMutability: "view",
     type: "function",
   },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "token_address",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "curve_address",
+        type: "address",
+      },
+    ],
+    name: "set_curve",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
 ];
 
 export class ICurveMaster__factory {
