@@ -34,6 +34,7 @@ export interface IVaultControllerInterface extends utils.Interface {
     "ProtocolFee()": FunctionFragment;
     "TokensToLiquidate(uint256,address,uint256)": FunctionFragment;
     "VaultAddress(uint256)": FunctionFragment;
+    "_lastInterestTime()": FunctionFragment;
     "borrowUsdi(uint256,uint256)": FunctionFragment;
     "calculateInterest()": FunctionFragment;
     "change_protocol_fee(uint256)": FunctionFragment;
@@ -60,6 +61,7 @@ export interface IVaultControllerInterface extends utils.Interface {
       | "ProtocolFee"
       | "TokensToLiquidate"
       | "VaultAddress"
+      | "_lastInterestTime"
       | "borrowUsdi"
       | "calculateInterest"
       | "change_protocol_fee"
@@ -101,6 +103,10 @@ export interface IVaultControllerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "VaultAddress",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_lastInterestTime",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "borrowUsdi",
@@ -180,6 +186,10 @@ export interface IVaultControllerInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "VaultAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_lastInterestTime",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "borrowUsdi", data: BytesLike): Result;
@@ -426,6 +436,8 @@ export interface IVaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    _lastInterestTime(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     borrowUsdi(
       id: BigNumberish,
       amount: BigNumberish,
@@ -535,6 +547,8 @@ export interface IVaultController extends BaseContract {
 
   VaultAddress(id: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
+  _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
+
   borrowUsdi(
     id: BigNumberish,
     amount: BigNumberish,
@@ -640,6 +654,8 @@ export interface IVaultController extends BaseContract {
     ): Promise<BigNumber>;
 
     VaultAddress(id: BigNumberish, overrides?: CallOverrides): Promise<string>;
+
+    _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
 
     borrowUsdi(
       id: BigNumberish,
@@ -835,6 +851,8 @@ export interface IVaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    _lastInterestTime(overrides?: CallOverrides): Promise<BigNumber>;
+
     borrowUsdi(
       id: BigNumberish,
       amount: BigNumberish,
@@ -947,6 +965,8 @@ export interface IVaultController extends BaseContract {
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    _lastInterestTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     borrowUsdi(
       id: BigNumberish,
