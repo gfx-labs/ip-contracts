@@ -86,4 +86,9 @@ describe("TOKEN-DEPOSITS", async () => {
         assert.equal(usdiBalance.toString(), startingUSDIamount.sub(usdcAmount.mul(1e12)).toString(), "USDi balance is correct")
 
     });
+
+    it("checks other things", async () => {
+        let rr = await s.USDI.reserveRatio()
+        showBody(rr)
+    })
 });

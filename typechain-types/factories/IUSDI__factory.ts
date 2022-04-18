@@ -166,12 +166,32 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "address",
+        name: "reserveAddress",
+        type: "address",
+      },
+    ],
+    name: "initialize",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "uint256",
         name: "usdc_amount",
         type: "uint256",
       },
     ],
     name: "mint",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "pause",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -265,6 +285,13 @@ const _abi = [
         type: "bool",
       },
     ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "unpause",
+    outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
