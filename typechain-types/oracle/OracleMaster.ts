@@ -29,7 +29,7 @@ export interface OracleMasterInterface extends utils.Interface {
   functions: {
     "_paused(address)": FunctionFragment;
     "_relays(address)": FunctionFragment;
-    "get_live_price(address)": FunctionFragment;
+    "getLivePrice(address)": FunctionFragment;
     "owner()": FunctionFragment;
     "pause_relay(address,bool)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
@@ -41,7 +41,7 @@ export interface OracleMasterInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "_paused"
       | "_relays"
-      | "get_live_price"
+      | "getLivePrice"
       | "owner"
       | "pause_relay"
       | "renounceOwnership"
@@ -52,7 +52,7 @@ export interface OracleMasterInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "_paused", values: [string]): string;
   encodeFunctionData(functionFragment: "_relays", values: [string]): string;
   encodeFunctionData(
-    functionFragment: "get_live_price",
+    functionFragment: "getLivePrice",
     values: [string]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
@@ -76,7 +76,7 @@ export interface OracleMasterInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "_paused", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_relays", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "get_live_price",
+    functionFragment: "getLivePrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -144,7 +144,7 @@ export interface OracleMaster extends BaseContract {
 
     _relays(arg0: string, overrides?: CallOverrides): Promise<[string]>;
 
-    get_live_price(
+    getLivePrice(
       token_address: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
@@ -177,7 +177,7 @@ export interface OracleMaster extends BaseContract {
 
   _relays(arg0: string, overrides?: CallOverrides): Promise<string>;
 
-  get_live_price(
+  getLivePrice(
     token_address: string,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
@@ -210,7 +210,7 @@ export interface OracleMaster extends BaseContract {
 
     _relays(arg0: string, overrides?: CallOverrides): Promise<string>;
 
-    get_live_price(
+    getLivePrice(
       token_address: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -253,7 +253,7 @@ export interface OracleMaster extends BaseContract {
 
     _relays(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    get_live_price(
+    getLivePrice(
       token_address: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -293,7 +293,7 @@ export interface OracleMaster extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    get_live_price(
+    getLivePrice(
       token_address: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

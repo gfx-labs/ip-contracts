@@ -16,13 +16,13 @@ interface IVaultController {
 
   // methods
   function initialize() external;
-  function mint_vault() external returns (address);
-  function check_account(uint256 id) external view returns (bool);
+  function mintVault() external returns (address);
+  function checkAccount(uint256 id) external view returns (bool);
   function liquidate_account(uint256 id, address asset_address, uint256 tokenAmount) external returns (uint256);
-  function borrow_usdi(uint256 id, uint256 amount) external;
-  function repay_usdi(uint256 id, uint256 amount) external;
-  function repay_all_usdi(uint256 id) external;
-  function calculate_interest() external returns (uint256);
+  function borrowUsdi(uint256 id, uint256 amount) external;
+  function repayUSDi(uint256 id, uint256 amount) external;
+  function repayAllUSDi(uint256 id) external;
+  function calculateInterest() external returns (uint256);
 
 
   // admin

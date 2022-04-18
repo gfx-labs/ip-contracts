@@ -361,14 +361,14 @@ const _abi = [
         type: "uint256",
       },
     ],
-    name: "borrow_usdi",
+    name: "borrowUsdi",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
     inputs: [],
-    name: "calculate_interest",
+    name: "calculateInterest",
     outputs: [
       {
         internalType: "uint256",
@@ -387,7 +387,7 @@ const _abi = [
         type: "uint256",
       },
     ],
-    name: "check_account",
+    name: "checkAccount",
     outputs: [
       {
         internalType: "bool",
@@ -436,7 +436,7 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "mint_vault",
+    name: "mintVault",
     outputs: [
       {
         internalType: "address",
@@ -529,7 +529,7 @@ const _abi = [
         type: "uint256",
       },
     ],
-    name: "repay_all_usdi",
+    name: "repayAllUSDi",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -547,7 +547,7 @@ const _abi = [
         type: "uint256",
       },
     ],
-    name: "repay_usdi",
+    name: "repayUSDi",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

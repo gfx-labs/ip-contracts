@@ -4,19 +4,17 @@ pragma solidity ^0.8.0;
 
 interface IVault {
 
-  function getBalances(address arg1) external view returns (uint256);
-
   function BaseLiability() external view returns (uint256);
+  function Minter() external view returns (address);
 
-  function getMinter() external view returns (address);
+  function tokenBalance(address) external view returns (uint256);
 
-  function withdraw_erc20(address token_address, uint256 amount) external;
-
+  function withdrawErc20(address token_address, uint256 amount) external;
   function masterTransfer(address _token, address _to, uint256 _amount) external;
+  function delegateCompLikeTo(address compLikeDelegatee, address CompLikeToken) external;
 
+  // administrative functions
   function decrease_liability(uint256 base_amount) external returns (uint256);
-
   function increase_liability(uint256 base_amount) external returns (uint256);
 
-  function delegateCompLikeTo(address compLikeDelegatee, address CompLikeToken) external;
 }

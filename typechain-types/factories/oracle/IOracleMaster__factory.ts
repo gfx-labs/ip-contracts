@@ -18,7 +18,7 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "get_live_price",
+    name: "getLivePrice",
     outputs: [
       {
         internalType: "uint256",

@@ -72,7 +72,6 @@ describe("Deploy Contracts", () => {
             BN("200e16"),
             BN("5e16"),
             BN("45e15"),
-            BN("1e16"),
             BN("50e16"),
             BN("55e16"),
         );

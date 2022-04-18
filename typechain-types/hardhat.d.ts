@@ -37,54 +37,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IVOTE__factory>;
     getContractFactory(
-      name: "Ownable",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Ownable__factory>;
-    getContractFactory(
-      name: "IUniswapV3PoolDerivedState",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IUniswapV3PoolDerivedState__factory>;
-    getContractFactory(
-      name: "CurveMaster",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.CurveMaster__factory>;
-    getContractFactory(
-      name: "ICurveMaster",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ICurveMaster__factory>;
-    getContractFactory(
-      name: "ICurveSlave",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ICurveSlave__factory>;
-    getContractFactory(
-      name: "ThreeLines0_100",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ThreeLines0_100__factory>;
-    getContractFactory(
-      name: "IVault",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IVault__factory>;
-    getContractFactory(
-      name: "IVaultController",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IVaultController__factory>;
-    getContractFactory(
-      name: "CompLike",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.CompLike__factory>;
-    getContractFactory(
-      name: "Vault",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Vault__factory>;
-    getContractFactory(
-      name: "VaultController",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.VaultController__factory>;
-    getContractFactory(
-      name: "Migrations",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Migrations__factory>;
-    getContractFactory(
       name: "ERC165Upgradeable",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC165Upgradeable__factory>;
@@ -157,29 +109,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.PausableUpgradeable__factory>;
     getContractFactory(
-      name: "ChainlinkOracleRelay",
+      name: "Ownable",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ChainlinkOracleRelay__factory>;
-    getContractFactory(
-      name: "UniswapV3OracleRelay",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.UniswapV3OracleRelay__factory>;
-    getContractFactory(
-      name: "IOracleMaster",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IOracleMaster__factory>;
-    getContractFactory(
-      name: "IOracleRelay",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IOracleRelay__factory>;
-    getContractFactory(
-      name: "AnchoredViewRelay",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.AnchoredViewRelay__factory>;
-    getContractFactory(
-      name: "OracleMaster",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.OracleMaster__factory>;
+    ): Promise<Contracts.Ownable__factory>;
     getContractFactory(
       name: "BeaconProxy",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -221,9 +153,73 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.UUPSUpgradeable__factory>;
     getContractFactory(
+      name: "IUniswapV3PoolDerivedState",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IUniswapV3PoolDerivedState__factory>;
+    getContractFactory(
+      name: "CurveMaster",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.CurveMaster__factory>;
+    getContractFactory(
+      name: "ICurveMaster",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ICurveMaster__factory>;
+    getContractFactory(
+      name: "ICurveSlave",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ICurveSlave__factory>;
+    getContractFactory(
+      name: "ThreeLines0_100",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ThreeLines0_100__factory>;
+    getContractFactory(
       name: "IUSDI",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IUSDI__factory>;
+    getContractFactory(
+      name: "IVault",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IVault__factory>;
+    getContractFactory(
+      name: "IVaultController",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IVaultController__factory>;
+    getContractFactory(
+      name: "CompLike",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.CompLike__factory>;
+    getContractFactory(
+      name: "Vault",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Vault__factory>;
+    getContractFactory(
+      name: "VaultController",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.VaultController__factory>;
+    getContractFactory(
+      name: "ChainlinkOracleRelay",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ChainlinkOracleRelay__factory>;
+    getContractFactory(
+      name: "UniswapV3OracleRelay",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.UniswapV3OracleRelay__factory>;
+    getContractFactory(
+      name: "IOracleMaster",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IOracleMaster__factory>;
+    getContractFactory(
+      name: "IOracleRelay",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IOracleRelay__factory>;
+    getContractFactory(
+      name: "AnchoredViewRelay",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.AnchoredViewRelay__factory>;
+    getContractFactory(
+      name: "OracleMaster",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.OracleMaster__factory>;
     getContractFactory(
       name: "UFragments",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -263,66 +259,6 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IVOTE>;
-    getContractAt(
-      name: "Ownable",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Ownable>;
-    getContractAt(
-      name: "IUniswapV3PoolDerivedState",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IUniswapV3PoolDerivedState>;
-    getContractAt(
-      name: "CurveMaster",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.CurveMaster>;
-    getContractAt(
-      name: "ICurveMaster",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ICurveMaster>;
-    getContractAt(
-      name: "ICurveSlave",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ICurveSlave>;
-    getContractAt(
-      name: "ThreeLines0_100",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ThreeLines0_100>;
-    getContractAt(
-      name: "IVault",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IVault>;
-    getContractAt(
-      name: "IVaultController",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IVaultController>;
-    getContractAt(
-      name: "CompLike",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.CompLike>;
-    getContractAt(
-      name: "Vault",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Vault>;
-    getContractAt(
-      name: "VaultController",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.VaultController>;
-    getContractAt(
-      name: "Migrations",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Migrations>;
     getContractAt(
       name: "ERC165Upgradeable",
       address: string,
@@ -414,35 +350,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.PausableUpgradeable>;
     getContractAt(
-      name: "ChainlinkOracleRelay",
+      name: "Ownable",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.ChainlinkOracleRelay>;
-    getContractAt(
-      name: "UniswapV3OracleRelay",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.UniswapV3OracleRelay>;
-    getContractAt(
-      name: "IOracleMaster",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IOracleMaster>;
-    getContractAt(
-      name: "IOracleRelay",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IOracleRelay>;
-    getContractAt(
-      name: "AnchoredViewRelay",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.AnchoredViewRelay>;
-    getContractAt(
-      name: "OracleMaster",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.OracleMaster>;
+    ): Promise<Contracts.Ownable>;
     getContractAt(
       name: "BeaconProxy",
       address: string,
@@ -494,10 +405,90 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.UUPSUpgradeable>;
     getContractAt(
+      name: "IUniswapV3PoolDerivedState",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IUniswapV3PoolDerivedState>;
+    getContractAt(
+      name: "CurveMaster",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.CurveMaster>;
+    getContractAt(
+      name: "ICurveMaster",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ICurveMaster>;
+    getContractAt(
+      name: "ICurveSlave",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ICurveSlave>;
+    getContractAt(
+      name: "ThreeLines0_100",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ThreeLines0_100>;
+    getContractAt(
       name: "IUSDI",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IUSDI>;
+    getContractAt(
+      name: "IVault",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IVault>;
+    getContractAt(
+      name: "IVaultController",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IVaultController>;
+    getContractAt(
+      name: "CompLike",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.CompLike>;
+    getContractAt(
+      name: "Vault",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Vault>;
+    getContractAt(
+      name: "VaultController",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.VaultController>;
+    getContractAt(
+      name: "ChainlinkOracleRelay",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ChainlinkOracleRelay>;
+    getContractAt(
+      name: "UniswapV3OracleRelay",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.UniswapV3OracleRelay>;
+    getContractAt(
+      name: "IOracleMaster",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IOracleMaster>;
+    getContractAt(
+      name: "IOracleRelay",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IOracleRelay>;
+    getContractAt(
+      name: "AnchoredViewRelay",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.AnchoredViewRelay>;
+    getContractAt(
+      name: "OracleMaster",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.OracleMaster>;
     getContractAt(
       name: "UFragments",
       address: string,

@@ -29,39 +29,40 @@ import type {
 export interface VaultInterface extends utils.Interface {
   functions: {
     "BaseLiability()": FunctionFragment;
+    "Minter()": FunctionFragment;
     "_baseLiability()": FunctionFragment;
     "_id()": FunctionFragment;
     "_masterAddress()": FunctionFragment;
     "_minter()": FunctionFragment;
     "decrease_liability(uint256)": FunctionFragment;
     "delegateCompLikeTo(address,address)": FunctionFragment;
-    "getBalances(address)": FunctionFragment;
-    "getMinter()": FunctionFragment;
     "increase_liability(uint256)": FunctionFragment;
     "masterTransfer(address,address,uint256)": FunctionFragment;
-    "withdraw_erc20(address,uint256)": FunctionFragment;
+    "tokenBalance(address)": FunctionFragment;
+    "withdrawErc20(address,uint256)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "BaseLiability"
+      | "Minter"
       | "_baseLiability"
       | "_id"
       | "_masterAddress"
       | "_minter"
       | "decrease_liability"
       | "delegateCompLikeTo"
-      | "getBalances"
-      | "getMinter"
       | "increase_liability"
       | "masterTransfer"
-      | "withdraw_erc20"
+      | "tokenBalance"
+      | "withdrawErc20"
   ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "BaseLiability",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "Minter", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "_baseLiability",
     values?: undefined
@@ -80,8 +81,6 @@ export interface VaultInterface extends utils.Interface {
     functionFragment: "delegateCompLikeTo",
     values: [string, string]
   ): string;
-  encodeFunctionData(functionFragment: "getBalances", values: [string]): string;
-  encodeFunctionData(functionFragment: "getMinter", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "increase_liability",
     values: [BigNumberish]
@@ -91,7 +90,11 @@ export interface VaultInterface extends utils.Interface {
     values: [string, string, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "withdraw_erc20",
+    functionFragment: "tokenBalance",
+    values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "withdrawErc20",
     values: [string, BigNumberish]
   ): string;
 
@@ -99,6 +102,7 @@ export interface VaultInterface extends utils.Interface {
     functionFragment: "BaseLiability",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "Minter", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "_baseLiability",
     data: BytesLike
@@ -118,11 +122,6 @@ export interface VaultInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getBalances",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "getMinter", data: BytesLike): Result;
-  decodeFunctionResult(
     functionFragment: "increase_liability",
     data: BytesLike
   ): Result;
@@ -131,7 +130,11 @@ export interface VaultInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "withdraw_erc20",
+    functionFragment: "tokenBalance",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawErc20",
     data: BytesLike
   ): Result;
 
@@ -192,6 +195,8 @@ export interface Vault extends BaseContract {
   functions: {
     BaseLiability(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    Minter(overrides?: CallOverrides): Promise<[string]>;
+
     _baseLiability(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     _id(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -211,10 +216,6 @@ export interface Vault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    getBalances(addr: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    getMinter(overrides?: CallOverrides): Promise<[string]>;
-
     increase_liability(
       base_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -227,7 +228,9 @@ export interface Vault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    withdraw_erc20(
+    tokenBalance(addr: string, overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    withdrawErc20(
       token_address: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -235,6 +238,8 @@ export interface Vault extends BaseContract {
   };
 
   BaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
+
+  Minter(overrides?: CallOverrides): Promise<string>;
 
   _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -255,10 +260,6 @@ export interface Vault extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  getBalances(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  getMinter(overrides?: CallOverrides): Promise<string>;
-
   increase_liability(
     base_amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -271,7 +272,9 @@ export interface Vault extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  withdraw_erc20(
+  tokenBalance(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
+
+  withdrawErc20(
     token_address: string,
     amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -279,6 +282,8 @@ export interface Vault extends BaseContract {
 
   callStatic: {
     BaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
+
+    Minter(overrides?: CallOverrides): Promise<string>;
 
     _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -299,10 +304,6 @@ export interface Vault extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    getBalances(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    getMinter(overrides?: CallOverrides): Promise<string>;
-
     increase_liability(
       base_amount: BigNumberish,
       overrides?: CallOverrides
@@ -315,7 +316,9 @@ export interface Vault extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    withdraw_erc20(
+    tokenBalance(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
+
+    withdrawErc20(
       token_address: string,
       amount: BigNumberish,
       overrides?: CallOverrides
@@ -339,6 +342,8 @@ export interface Vault extends BaseContract {
   estimateGas: {
     BaseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
+    Minter(overrides?: CallOverrides): Promise<BigNumber>;
+
     _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
     _id(overrides?: CallOverrides): Promise<BigNumber>;
@@ -358,10 +363,6 @@ export interface Vault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    getBalances(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    getMinter(overrides?: CallOverrides): Promise<BigNumber>;
-
     increase_liability(
       base_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -374,7 +375,9 @@ export interface Vault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    withdraw_erc20(
+    tokenBalance(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
+
+    withdrawErc20(
       token_address: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -383,6 +386,8 @@ export interface Vault extends BaseContract {
 
   populateTransaction: {
     BaseLiability(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    Minter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _baseLiability(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -403,13 +408,6 @@ export interface Vault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    getBalances(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getMinter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     increase_liability(
       base_amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -422,7 +420,12 @@ export interface Vault extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    withdraw_erc20(
+    tokenBalance(
+      addr: string,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    withdrawErc20(
       token_address: string,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
