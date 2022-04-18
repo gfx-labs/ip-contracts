@@ -49,13 +49,13 @@ export interface VaultControllerInterface extends utils.Interface {
     "_usdiAddress()": FunctionFragment;
     "_vaultId_vaultAddress(uint256)": FunctionFragment;
     "_vaultsMinted()": FunctionFragment;
-    "borrow_usdi(uint256,uint256)": FunctionFragment;
-    "calculate_interest()": FunctionFragment;
+    "borrowUsdi(uint256,uint256)": FunctionFragment;
+    "calculateInterest()": FunctionFragment;
     "change_protocol_fee(uint256)": FunctionFragment;
-    "check_account(uint256)": FunctionFragment;
+    "checkAccount(uint256)": FunctionFragment;
     "initialize()": FunctionFragment;
     "liquidate_account(uint256,address,uint256)": FunctionFragment;
-    "mint_vault()": FunctionFragment;
+    "mintVault()": FunctionFragment;
     "owner()": FunctionFragment;
     "pause()": FunctionFragment;
     "paused()": FunctionFragment;
@@ -64,8 +64,8 @@ export interface VaultControllerInterface extends utils.Interface {
     "register_oracle_master(address)": FunctionFragment;
     "register_usdi(address)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
-    "repay_all_usdi(uint256)": FunctionFragment;
-    "repay_usdi(uint256,uint256)": FunctionFragment;
+    "repayAllUSDi(uint256)": FunctionFragment;
+    "repayUSDi(uint256,uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "unpause()": FunctionFragment;
     "update_registered_erc20(address,uint256,address,uint256)": FunctionFragment;
@@ -94,13 +94,13 @@ export interface VaultControllerInterface extends utils.Interface {
       | "_usdiAddress"
       | "_vaultId_vaultAddress"
       | "_vaultsMinted"
-      | "borrow_usdi"
-      | "calculate_interest"
+      | "borrowUsdi"
+      | "calculateInterest"
       | "change_protocol_fee"
-      | "check_account"
+      | "checkAccount"
       | "initialize"
       | "liquidate_account"
-      | "mint_vault"
+      | "mintVault"
       | "owner"
       | "pause"
       | "paused"
@@ -109,8 +109,8 @@ export interface VaultControllerInterface extends utils.Interface {
       | "register_oracle_master"
       | "register_usdi"
       | "renounceOwnership"
-      | "repay_all_usdi"
-      | "repay_usdi"
+      | "repayAllUSDi"
+      | "repayUSDi"
       | "transferOwnership"
       | "unpause"
       | "update_registered_erc20"
@@ -201,11 +201,11 @@ export interface VaultControllerInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "borrow_usdi",
+    functionFragment: "borrowUsdi",
     values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "calculate_interest",
+    functionFragment: "calculateInterest",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -213,7 +213,7 @@ export interface VaultControllerInterface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "check_account",
+    functionFragment: "checkAccount",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -224,10 +224,7 @@ export interface VaultControllerInterface extends utils.Interface {
     functionFragment: "liquidate_account",
     values: [BigNumberish, string, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "mint_vault",
-    values?: undefined
-  ): string;
+  encodeFunctionData(functionFragment: "mintVault", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(functionFragment: "pause", values?: undefined): string;
   encodeFunctionData(functionFragment: "paused", values?: undefined): string;
@@ -252,11 +249,11 @@ export interface VaultControllerInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "repay_all_usdi",
+    functionFragment: "repayAllUSDi",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "repay_usdi",
+    functionFragment: "repayUSDi",
     values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
@@ -353,12 +350,9 @@ export interface VaultControllerInterface extends utils.Interface {
     functionFragment: "_vaultsMinted",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "borrowUsdi", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "borrow_usdi",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "calculate_interest",
+    functionFragment: "calculateInterest",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -366,7 +360,7 @@ export interface VaultControllerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "check_account",
+    functionFragment: "checkAccount",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -374,7 +368,7 @@ export interface VaultControllerInterface extends utils.Interface {
     functionFragment: "liquidate_account",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "mint_vault", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "mintVault", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
@@ -399,10 +393,10 @@ export interface VaultControllerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "repay_all_usdi",
+    functionFragment: "repayAllUSDi",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "repay_usdi", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "repayUSDi", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
@@ -690,13 +684,13 @@ export interface VaultController extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    borrow_usdi(
+    borrowUsdi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    calculate_interest(
+    calculateInterest(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -705,7 +699,7 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    check_account(
+    checkAccount(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
@@ -721,7 +715,7 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    mint_vault(
+    mintVault(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -760,12 +754,12 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    repay_all_usdi(
+    repayAllUSDi(
       id: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    repay_usdi(
+    repayUSDi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -860,13 +854,13 @@ export interface VaultController extends BaseContract {
 
   _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
-  borrow_usdi(
+  borrowUsdi(
     id: BigNumberish,
     amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  calculate_interest(
+  calculateInterest(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -875,7 +869,7 @@ export interface VaultController extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  check_account(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
+  checkAccount(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
 
   initialize(
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -888,7 +882,7 @@ export interface VaultController extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  mint_vault(
+  mintVault(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -927,12 +921,12 @@ export interface VaultController extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  repay_all_usdi(
+  repayAllUSDi(
     id: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  repay_usdi(
+  repayUSDi(
     id: BigNumberish,
     amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -1027,23 +1021,20 @@ export interface VaultController extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
-    borrow_usdi(
+    borrowUsdi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    calculate_interest(overrides?: CallOverrides): Promise<BigNumber>;
+    calculateInterest(overrides?: CallOverrides): Promise<BigNumber>;
 
     change_protocol_fee(
       new_protocol_fee: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    check_account(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    checkAccount(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
 
     initialize(overrides?: CallOverrides): Promise<void>;
 
@@ -1054,7 +1045,7 @@ export interface VaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    mint_vault(overrides?: CallOverrides): Promise<string>;
+    mintVault(overrides?: CallOverrides): Promise<string>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -1087,9 +1078,9 @@ export interface VaultController extends BaseContract {
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
-    repay_all_usdi(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    repayAllUSDi(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
-    repay_usdi(
+    repayUSDi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: CallOverrides
@@ -1298,13 +1289,13 @@ export interface VaultController extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<BigNumber>;
 
-    borrow_usdi(
+    borrowUsdi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    calculate_interest(
+    calculateInterest(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1313,7 +1304,7 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    check_account(
+    checkAccount(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1329,7 +1320,7 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    mint_vault(
+    mintVault(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -1368,12 +1359,12 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    repay_all_usdi(
+    repayAllUSDi(
       id: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    repay_usdi(
+    repayUSDi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -1478,13 +1469,13 @@ export interface VaultController extends BaseContract {
 
     _vaultsMinted(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    borrow_usdi(
+    borrowUsdi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    calculate_interest(
+    calculateInterest(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1493,7 +1484,7 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    check_account(
+    checkAccount(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1509,7 +1500,7 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    mint_vault(
+    mintVault(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1548,12 +1539,12 @@ export interface VaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    repay_all_usdi(
+    repayAllUSDi(
       id: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    repay_usdi(
+    repayUSDi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }

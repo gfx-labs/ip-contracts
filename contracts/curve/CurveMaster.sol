@@ -12,14 +12,7 @@ contract CurveMaster is ICurveMaster, Ownable {
 
     constructor() Ownable() {}
 
-    function set_curve(address token_address, address curve_address)
-        public
-        onlyOwner
-    {
-        _curves[token_address] = curve_address;
-    }
-
-    function get_value_at(address curve_address, int256 x_value)
+    function getValueAt(address curve_address, int256 x_value)
         external
         view
         override
@@ -31,5 +24,12 @@ contract CurveMaster is ICurveMaster, Ownable {
         int256 value = curve.valueAt(x_value);
         require(value != 0);
         return value;
+    }
+
+    function set_curve(address token_address, address curve_address)
+        public
+        onlyOwner
+    {
+        _curves[token_address] = curve_address;
     }
 }

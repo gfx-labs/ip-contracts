@@ -22,20 +22,17 @@ import type {
 
 export interface ICurveMasterInterface extends utils.Interface {
   functions: {
-    "get_value_at(address,int256)": FunctionFragment;
+    "getValueAt(address,int256)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "get_value_at"): FunctionFragment;
+  getFunction(nameOrSignatureOrTopic: "getValueAt"): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "get_value_at",
+    functionFragment: "getValueAt",
     values: [string, BigNumberish]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "get_value_at",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "getValueAt", data: BytesLike): Result;
 
   events: {};
 }
@@ -67,21 +64,21 @@ export interface ICurveMaster extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    get_value_at(
+    getValueAt(
       curve_address: string,
       x_value: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
   };
 
-  get_value_at(
+  getValueAt(
     curve_address: string,
     x_value: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
   callStatic: {
-    get_value_at(
+    getValueAt(
       curve_address: string,
       x_value: BigNumberish,
       overrides?: CallOverrides
@@ -91,7 +88,7 @@ export interface ICurveMaster extends BaseContract {
   filters: {};
 
   estimateGas: {
-    get_value_at(
+    getValueAt(
       curve_address: string,
       x_value: BigNumberish,
       overrides?: CallOverrides
@@ -99,7 +96,7 @@ export interface ICurveMaster extends BaseContract {
   };
 
   populateTransaction: {
-    get_value_at(
+    getValueAt(
       curve_address: string,
       x_value: BigNumberish,
       overrides?: CallOverrides

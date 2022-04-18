@@ -21,6 +21,19 @@ const _abi = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "Minter",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       {
         internalType: "uint256",
@@ -55,38 +68,6 @@ const _abi = [
     name: "delegateCompLikeTo",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "arg1",
-        type: "address",
-      },
-    ],
-    name: "getBalances",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getMinter",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {
@@ -135,6 +116,25 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    name: "tokenBalance",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
         name: "token_address",
         type: "address",
       },
@@ -144,7 +144,7 @@ const _abi = [
         type: "uint256",
       },
     ],
-    name: "withdraw_erc20",
+    name: "withdrawErc20",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

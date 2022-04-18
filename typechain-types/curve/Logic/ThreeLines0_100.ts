@@ -25,9 +25,8 @@ export interface ThreeLines0_100Interface extends utils.Interface {
     "_r0()": FunctionFragment;
     "_r1()": FunctionFragment;
     "_r2()": FunctionFragment;
-    "_r3()": FunctionFragment;
-    "_s0()": FunctionFragment;
     "_s1()": FunctionFragment;
+    "_s2()": FunctionFragment;
     "linearInterpolation(int256,int256,int256,int256)": FunctionFragment;
     "valueAt(int256)": FunctionFragment;
   };
@@ -37,9 +36,8 @@ export interface ThreeLines0_100Interface extends utils.Interface {
       | "_r0"
       | "_r1"
       | "_r2"
-      | "_r3"
-      | "_s0"
       | "_s1"
+      | "_s2"
       | "linearInterpolation"
       | "valueAt"
   ): FunctionFragment;
@@ -47,9 +45,8 @@ export interface ThreeLines0_100Interface extends utils.Interface {
   encodeFunctionData(functionFragment: "_r0", values?: undefined): string;
   encodeFunctionData(functionFragment: "_r1", values?: undefined): string;
   encodeFunctionData(functionFragment: "_r2", values?: undefined): string;
-  encodeFunctionData(functionFragment: "_r3", values?: undefined): string;
-  encodeFunctionData(functionFragment: "_s0", values?: undefined): string;
   encodeFunctionData(functionFragment: "_s1", values?: undefined): string;
+  encodeFunctionData(functionFragment: "_s2", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "linearInterpolation",
     values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
@@ -62,9 +59,8 @@ export interface ThreeLines0_100Interface extends utils.Interface {
   decodeFunctionResult(functionFragment: "_r0", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_r1", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_r2", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "_r3", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "_s0", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_s1", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "_s2", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "linearInterpolation",
     data: BytesLike
@@ -107,11 +103,9 @@ export interface ThreeLines0_100 extends BaseContract {
 
     _r2(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    _r3(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    _s0(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     _s1(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    _s2(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     linearInterpolation(
       rise: BigNumberish,
@@ -133,11 +127,9 @@ export interface ThreeLines0_100 extends BaseContract {
 
   _r2(overrides?: CallOverrides): Promise<BigNumber>;
 
-  _r3(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _s0(overrides?: CallOverrides): Promise<BigNumber>;
-
   _s1(overrides?: CallOverrides): Promise<BigNumber>;
+
+  _s2(overrides?: CallOverrides): Promise<BigNumber>;
 
   linearInterpolation(
     rise: BigNumberish,
@@ -156,11 +148,9 @@ export interface ThreeLines0_100 extends BaseContract {
 
     _r2(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _r3(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _s0(overrides?: CallOverrides): Promise<BigNumber>;
-
     _s1(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _s2(overrides?: CallOverrides): Promise<BigNumber>;
 
     linearInterpolation(
       rise: BigNumberish,
@@ -185,11 +175,9 @@ export interface ThreeLines0_100 extends BaseContract {
 
     _r2(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _r3(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _s0(overrides?: CallOverrides): Promise<BigNumber>;
-
     _s1(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _s2(overrides?: CallOverrides): Promise<BigNumber>;
 
     linearInterpolation(
       rise: BigNumberish,
@@ -212,11 +200,9 @@ export interface ThreeLines0_100 extends BaseContract {
 
     _r2(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    _r3(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _s0(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     _s1(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _s2(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     linearInterpolation(
       rise: BigNumberish,
