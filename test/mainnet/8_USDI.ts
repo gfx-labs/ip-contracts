@@ -36,7 +36,16 @@ describe("TOKEN-DEPOSITS", async () => {
         //Dave already holds some USDi at this point
         const startingUSDIamount = await s.USDI.balanceOf(s.Dave.address)
 
+        //approve
         await s.USDC.connect(s.Dave).approve(s.USDI.address, usdcAmount)
+
+        //check pauseable 
+        await s.USDI.connect(s.Frank).pause()
+        await advanceBlockHeight(1)
+        await expect(s.USDI.connect(s.Dave).deposit(usdcAmount)).to.be.revertedWith("Pausable: paused")
+        await s.USDI.connect(s.Frank).unpause()
+        await advanceBlockHeight(1)
+
         const depositResult = await s.USDI.connect(s.Dave).deposit(usdcAmount)
         await mineBlock()
         const depositReceipt = await depositResult.wait()
@@ -57,6 +66,14 @@ describe("TOKEN-DEPOSITS", async () => {
         assert.equal(startingUSDCamount.toString(), s.Dave_USDC.sub(usdcAmount).toString(), "Starting USDC balance is correct")
 
         const startingUSDIamount = await s.USDI.balanceOf(s.Dave.address)
+
+        
+        //check pauseable 
+        await s.USDI.connect(s.Frank).pause()
+        await advanceBlockHeight(1)
+        await expect(s.USDI.connect(s.Dave).withdraw(usdcAmount)).to.be.revertedWith("Pausable: paused")
+        await s.USDI.connect(s.Frank).unpause()
+        await advanceBlockHeight(1)
 
         const withdrawResult = await s.USDI.connect(s.Dave).withdraw(usdcAmount)
         await mineBlock()
