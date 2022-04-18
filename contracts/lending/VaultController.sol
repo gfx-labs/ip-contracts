@@ -106,13 +106,11 @@ contract VaultController is
         return vault_address;
     }
 
-    function pause() external onlyOwner
-    {
+    function pause() external override onlyOwner {
         _pause();
     }
 
-    function unpause() external onlyOwner
-    {
+    function unpause() external override onlyOwner {
         _unpause();
     }
 
@@ -219,7 +217,11 @@ contract VaultController is
         return (total_liquidity_value >= usdi_liability);
     }
 
-    function borrow_usdi(uint256 id, uint256 amount) external override whenNotPaused {
+    function borrow_usdi(uint256 id, uint256 amount)
+        external
+        override
+        whenNotPaused
+    {
         pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x00), "vault does not exist");
@@ -247,7 +249,11 @@ contract VaultController is
         emit BorrowUSDi(id, vault_address, amount);
     }
 
-    function repay_usdi(uint256 id, uint256 amount) external override whenNotPaused{
+    function repay_usdi(uint256 id, uint256 amount)
+        external
+        override
+        whenNotPaused
+    {
         pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
@@ -264,7 +270,7 @@ contract VaultController is
         emit RepayUSDi(id, vault_address, amount);
     }
 
-    function repay_all_usdi(uint256 id) external override whenNotPaused{
+    function repay_all_usdi(uint256 id) external override whenNotPaused {
         pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
