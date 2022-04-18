@@ -1,6 +1,6 @@
 lint:
   stage: test
-  image: node:16.14-alpine3.15
+  image: gfx.cafe/build/img/node:latest
   cache:
     paths:
       - node_modules/
@@ -13,7 +13,7 @@ lint:
 
 test:
   stage: test
-  image: node:16.14-alpine3.15
+  image: gfx.cafe/build/img/node:latest
   cache:
     paths:
       - node_modules/
