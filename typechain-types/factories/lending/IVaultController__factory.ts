@@ -383,6 +383,19 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
+        name: "new_protocol_fee",
+        type: "uint256",
+      },
+    ],
+    name: "change_protocol_fee",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
         name: "id",
         type: "uint256",
       },

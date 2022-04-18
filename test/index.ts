@@ -1,1 +1,1 @@
-import "./mainnet"
+import "./mainnet/test_all"
