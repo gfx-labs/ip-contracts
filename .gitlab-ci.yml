@@ -1,6 +1,6 @@
 lint:
   stage: test
-  image: nodejs:16.14-alpine3.15
+  image: node:16.14-alpine3.15
   cache:
     paths:
       - node_modules/
@@ -13,7 +13,7 @@ lint:
 
 test:
   stage: test
-  image: nodejs:16.14-alpine3.15
+  image: node:16.14-alpine3.15
   cache:
     paths:
       - node_modules/
