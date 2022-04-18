@@ -7,6 +7,8 @@ import type {
   BigNumberish,
   BytesLike,
   CallOverrides,
+  ContractTransaction,
+  Overrides,
   PopulatedTransaction,
   Signer,
   utils,
@@ -23,16 +25,24 @@ import type {
 export interface ICurveMasterInterface extends utils.Interface {
   functions: {
     "getValueAt(address,int256)": FunctionFragment;
+    "set_curve(address,address)": FunctionFragment;
   };
 
-  getFunction(nameOrSignatureOrTopic: "getValueAt"): FunctionFragment;
+  getFunction(
+    nameOrSignatureOrTopic: "getValueAt" | "set_curve"
+  ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "getValueAt",
     values: [string, BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "set_curve",
+    values: [string, string]
+  ): string;
 
   decodeFunctionResult(functionFragment: "getValueAt", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "set_curve", data: BytesLike): Result;
 
   events: {};
 }
@@ -69,6 +79,12 @@ export interface ICurveMaster extends BaseContract {
       x_value: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
+
+    set_curve(
+      token_address: string,
+      curve_address: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
   };
 
   getValueAt(
@@ -77,12 +93,24 @@ export interface ICurveMaster extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  set_curve(
+    token_address: string,
+    curve_address: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     getValueAt(
       curve_address: string,
       x_value: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    set_curve(
+      token_address: string,
+      curve_address: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {};
@@ -93,6 +121,12 @@ export interface ICurveMaster extends BaseContract {
       x_value: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    set_curve(
+      token_address: string,
+      curve_address: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -100,6 +134,12 @@ export interface ICurveMaster extends BaseContract {
       curve_address: string,
       x_value: BigNumberish,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    set_curve(
+      token_address: string,
+      curve_address: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };
 }

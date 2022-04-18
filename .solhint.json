@@ -1,0 +1,50 @@
+{
+    "extends": "solhint:recommended",
+    "plugins": [],
+    "rules": {
+        "###security-rules###": "",
+        "avoid-call-value": "error",
+        "avoid-low-level-calls": "error",
+        "avoid-throw": "error",
+        "avoid-sha3": "warn",
+        "avoid-suicide": "error",
+        "avoid-tx-origin": "error",
+        "check-send-result": "error",
+        "compiler-version": [
+            "error",
+            "^0.8.0"
+        ],
+        "func-visibility": [
+            "error",
+            {
+                "ignoreConstructors": true
+            }
+        ],
+        "multiple-sends": "error",
+        "no-complex-fallback": "error",
+        "no-inline-assembly": "error",
+        "not-rely-on-block-hash": "error",
+        "not-rely-on-time": "off",
+        "reentrancy": "error",
+        "state-visibility": "error",
+        "###style-rules###": "",
+        "event-name-camelcase": "error",
+        "quotes": "error",
+        "comprehensive-interface": "warn",
+        "use-forbidden-name": "error",
+        "imports-on-top": "error",
+        "reason-string": "error",
+        "no-unused-vars": "error",
+        "no-empty-blocks": "off",
+        "var-name-mixedcase": "off",
+        "func-name-mixedcase": "off",
+        "max-line-length": [
+            "warn",
+            150
+        ],
+        "code-complexity": [
+            "warn",
+            3
+        ]
+    }
+}
