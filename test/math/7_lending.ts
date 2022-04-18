@@ -4,9 +4,19 @@ import { expect, assert } from "chai";
 import { showBody } from "../util/format";
 import { BN } from "../util/number";
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../util/block";
-import { Event, utils } from "ethers";
+import { Event, utils, BigNumber } from "ethers";
 
+const getArgs = async (result: any) => {
+    await advanceBlockHeight(1)
+    const receipt = await result.wait()
+    await advanceBlockHeight(1)
+    const events = receipt.events
+    const args = events[events.length - 1].args
 
+    return args
+}
+
+const nullAddr = "0x0000000000000000000000000000000000000000"
 
 describe("TOKEN-DEPOSITS", async () => {
     const borrowAmount = BN("5000e18")
@@ -26,34 +36,105 @@ describe("TOKEN-DEPOSITS", async () => {
 
         const borrowResult = await s.VaultController.connect(s.Bob).borrowUsdi(1, borrowAmount)
         await advanceBlockHeight(1)
-        const borrowReceipt = await borrowResult.wait()
-        await advanceBlockHeight(1)
-        const event = borrowReceipt.events
-        const args = event![event!.length -1].args
+        const args = await getArgs(borrowResult)
         actualBorrowAmount = args!.borrowAmount
 
 
         const resultingUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
         assert.equal(resultingUSDiBalance.toString(), actualBorrowAmount.toString(), "Bob received the correct amount of USDi")
 
-        
-        showBody("Actual USDi Borrowed: ", actualBorrowAmount)
-        showBody("Formatted USDi Borrowed: ", utils.formatEther(actualBorrowAmount))
+
+        //showBody("Actual USDi Borrowed: ", actualBorrowAmount)
+        //showBody("Formatted USDi Borrowed: ", utils.formatEther(actualBorrowAmount))
     });
-    it(`after a few days, bob should have a liability greater than ${"BN(5000e18)"}`, async () => {
+    it(`after 1 week, bob should have a liability greater than ${"BN(5000e18)"}`, async () => {
         await advanceBlockHeight(1)
         const initLiability = await s
             .VaultController.connect(s.Bob)
             .AccountLiability(1);
-        await fastForward(60 * 60 * 24 * 7);//1 week
+        await fastForward(OneWeek);//1 week
         await advanceBlockHeight(1)
-        await s.VaultController.connect(s.Frank).calculateInterest();
+
+
+        showBody("CALCULATING INTEREST")
+
+        const interestFactor = await s.VaultController.InterestFactor()
+        const latestInterestTime = await s.VaultController._lastInterestTime()
+        const currentBlock = await ethers.provider.getBlockNumber()
+        const currentTime = (await ethers.provider.getBlock(currentBlock)).timestamp
+        let timeDifference = currentTime - latestInterestTime.toNumber() + 1 //account for change when fetching from provider
+
+        const reserveRatio = await s.USDI.reserveRatio()
+        const curve = await s.Curve.getValueAt(nullAddr, reserveRatio)//
+
+
+
+
+        const interestResult = await s.VaultController.connect(s.Frank).calculateInterest();
         await advanceBlockHeight(1)
+        const e18_factor_increase = await getArgs(interestResult)
+
+
+
+        //expected: 863019406392694063926940639291006
+        //actual  : 862428701802418434861966689482089 
+        //oneYear is correct
+        
+        
+
+
+        //calculate factor increase
+
+
+        //step 1 - timeDif * curve scaled to e18
+        
+
+        //showBody("timeDifference TEST: ", timeDifference)
+        //showBody("1e18: ", BN("1e18"))
+        //showBody("curve: ", curve)
+
+        const bg = require('big-number')
+
+        let calculation = BN(timeDifference).mul(BN("1e18").mul(curve))//correct step 1
+        calculation = calculation.div(OneYear)//correct step 2 - divide by OneYear
+        calculation = calculation.div(BN("1e18"))//truncate
+        calculation = calculation.mul(interestFactor)
+        calculation = calculation.div(BN("1e18"))//truncate again
+
+        showBody(calculation.toString())
+       
+    
+
+
+
+
+
+        //let calculation = ((((BN(timeDifference).mul(BN("1e18")).mul(curve)).div(OneYear)).div(BN("1e18"))).mul(interestFactor)).div(BN("1e18"))
+        //showBody(interestFactor)
+
+
+
+
+
+
+
+        //showBody("Result::::", calculation)
+        showBody("e18_factor_increase: ", e18_factor_increase.amount)
+
+
+
+
+
+
+
+
+
+
         const liability_amount = await s
             .VaultController.connect(s.Bob)
             .AccountLiability(1);
-        showBody("start liability", initLiability)
-        showBody("bobs liability ", liability_amount)
+        //showBody("start liability ", initLiability)
+        //showBody("ending liability", liability_amount)
         expect(liability_amount).to.be.gt(BN("5000e18"));
     });
 });
@@ -234,13 +315,10 @@ describe("Testing liquidations", () => {
         await advanceBlockHeight(1)
         const borrowResult = await s.VaultController.connect(s.Carol).borrowUsdi(vaultID, carolBorrowPower)
         await advanceBlockHeight(1)
-        const borrowReceipt = await borrowResult.wait()
-        await advanceBlockHeight(1)
-        const event = borrowReceipt.events
-        const args = event![event!.length -1].args
+        const args = await getArgs(borrowResult)
         const actualBorrowAmount = args!.borrowAmount
 
-        
+
         expect(await s.USDI.balanceOf(s.Carol.address)).to.eq(actualBorrowAmount)
 
         let solvency = await s.VaultController.checkAccount(vaultID)
