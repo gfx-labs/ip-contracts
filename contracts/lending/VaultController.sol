@@ -17,6 +17,8 @@ import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 contract VaultController is
     Initializable,
     PausableUpgradeable,
@@ -224,14 +226,16 @@ contract VaultController is
 
         _totalBaseLiability = _totalBaseLiability + base_amount;
 
-        uint256 usdi_liability = truncate(_interestFactor * base_liability);
+        uint256 usdi_liability = truncate((_interestFactor - 1) * base_liability);
+        
         uint256 total_liquidity_value = get_vault_borrowing_power(vault);
 
         require(total_liquidity_value >= usdi_liability, "account insolvent");
 
-        _usdi.vault_master_mint(_msgSender(), amount);
+        _usdi.vault_master_mint(_msgSender(), _AccountLiability(id));
 
-        emit BorrowUSDi(id, vault_address, amount);
+        //TODO test for actual amount borrowed via _AccountLiability(id)
+        emit BorrowUSDi(id, vault_address, _AccountLiability(id));
     }
 
     function repayUSDi(uint256 id, uint256 amount)
