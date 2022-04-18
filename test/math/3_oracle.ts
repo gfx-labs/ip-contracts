@@ -9,12 +9,12 @@ describe("ETH:", () => {
     it("fetch uniswap relay price", async () => {
         let anchorPrice = (await s.UniswapRelayEthUsdc.currentValue()).div(1e14).toNumber() / 1e4
         expect(anchorPrice).to.be.above(1000).and.to.be.below(10000);
-        showBody("anchorPrice: ", anchorPrice);
+        //showBody("anchorPrice: ", anchorPrice);
     });
     it("fetch chainlink relay price", async () => {
         let chainlinkPrice = (await s.ChainlinkEth.currentValue()).div(1e14).toNumber() / 1e4
         expect(chainlinkPrice).to.be.above(1000).and.to.be.below(10000);
-        showBody("chainlinkPrice: ", chainlinkPrice);
+        //showBody("chainlinkPrice: ", chainlinkPrice);
     });
     it("verify chainlink price within anchor bounds", async () => {
         let anchorPrice = (await s.UniswapRelayCompUsdc.currentValue()).div(1e14).toNumber() / 1e4
@@ -33,7 +33,7 @@ describe("ETH:", () => {
         let chainlinkPrice = (await s.ChainlinkEth.currentValue()).div(1e14).toNumber() / 1e4
         expect(mainPrice = chainlinkPrice);
         expect(oraclePrice = mainPrice);
-        showBody(oraclePrice)
+        //showBody(oraclePrice)
     });
 });
 
@@ -41,12 +41,12 @@ describe("COMP:", () => {
     it("fetch uniswap relay price", async () => {
         let anchorPrice = (await s.UniswapRelayCompUsdc.currentValue()).div(1e14).toNumber() / 1e4
         expect(anchorPrice).to.be.above(100).and.to.be.below(1000);
-        showBody(anchorPrice);
+        //showBody(anchorPrice);
     });
     it("fetch chainlink relay price", async () => {
         let chainlinkPrice = (await s.ChainlinkComp.currentValue()).div(1e14).toNumber() / 1e4
         expect(chainlinkPrice).to.be.above(100).and.to.be.below(1000);
-        showBody(chainlinkPrice);
+        //showBody(chainlinkPrice);
     });
     it("verify chainlink price within anchor bounds", async () => {
         let anchorPrice = (await s.UniswapRelayCompUsdc.currentValue()).div(1e14).toNumber() / 1e4
@@ -65,20 +65,20 @@ describe("COMP:", () => {
         let chainlinkPrice = (await s.ChainlinkComp.currentValue()).div(1e14).toNumber() / 1e4
         expect(mainPrice = chainlinkPrice);
         expect(oraclePrice = mainPrice);
-        showBody(oraclePrice)
+        //showBody(oraclePrice)
     });
 });
 
 describe("Uniswap oracles", () => {
     it("fetch eth price", async () => {
         let dog = (await s.UniswapRelayEthUsdc.currentValue()).div(1e14).toNumber() / 1e4
-        showBody(dog);
+        //showBody(dog);
         expect(dog).to.be.above(1000).and.to.be.below(10000);
     });
 
     it("fetch comp price", async () => {
         let dog = (await s.UniswapRelayCompUsdc.currentValue()).div(1e14).toNumber() / 1e4
-        showBody(dog);
+        //showBody(dog);
         expect(dog).to.be.above(100).and.to.be.below(1000);
     });
 });
@@ -86,12 +86,12 @@ describe("Uniswap oracles", () => {
 describe("anchored views", () => {
     it("fetch comp price", async () => {
         let dog = (await s.AnchoredViewComp.currentValue()).div(1e14).toNumber() / 1e4
-        showBody(dog);
+        //showBody(dog);
         expect(dog).to.be.above(100).and.to.be.below(1000);
     });
     it("fetch eth price", async () => {
         let dog = (await s.AnchoredViewEth.currentValue()).div(1e14).toNumber() / 1e4
-        showBody(dog);
+        //showBody(dog);
         expect(dog).to.be.above(1000).and.to.be.below(10000);
     });
 });
@@ -102,13 +102,13 @@ describe("getting prices from oracle master", () => {
 
         let dog = (await s.Oracle.getLivePrice(s.wethAddress)).div(1e14).toNumber() / 1e4
         await mineBlock()
-        showBody(dog)
+        //showBody(dog)
         expect(dog).to.be.above(1000).and.to.be.below(10000);
     });
 
     it("comp price", async () => {
         let dog = (await s.Oracle.getLivePrice(s.compAddress)).div(1e14).toNumber() / 1e4
-        showBody(dog)
+        //showBody(dog)
         expect(dog).to.be.above(50).and.to.be.below(2000);
     })
 });
