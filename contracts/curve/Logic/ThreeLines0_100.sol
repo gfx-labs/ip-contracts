@@ -71,7 +71,7 @@ contract ThreeLines0_100 is ICurveSlave {
         if (x_value < _s2) {
             int256 rise = _r2 - _r1;
             int256 run = _s2 - _s1;
-            return linearInterpolation(rise, run, x_value - _s0, _r1);
+            return linearInterpolation(rise, run, x_value - _s1, _r1);
         }
         if (x_value <= max) {
             return _r2;

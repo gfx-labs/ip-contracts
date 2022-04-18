@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../token/IUSDI.sol";
-import "../_external/IERC20.sol";
-import "../_external/Context.sol";
-import "../_external/compound/ExponentialNoError.sol";
+import "../IUSDI.sol";
+
 import "./IVault.sol";
 import "./IVaultController.sol";
 
-import "hardhat/console.sol";
+import "../_external/IERC20.sol";
+import "../_external/Context.sol";
+import "../_external/compound/ExponentialNoError.sol";
 
 interface CompLike {
   function delegate(address delegatee) external;
@@ -17,7 +17,7 @@ interface CompLike {
 // the mantissa for ExponentialNoError is 1e18
 // so to store 5, you store 5e18
 
-// our implentation of maker vaults
+// our implentation of maker-vault like vault
 // vaults are multi-collateral
 // vaults generate interest in USDI
 contract Vault is IVault, ExponentialNoError, Context {
@@ -59,7 +59,7 @@ contract Vault is IVault, ExponentialNoError, Context {
         _master = IVaultController(master_address);
     }
 
-    function getMinter() external view override returns (address) {
+    function Minter() external view override returns (address) {
         return _minter;
     }
 
@@ -67,7 +67,7 @@ contract Vault is IVault, ExponentialNoError, Context {
         return _baseLiability;
     }
 
-    function getBalances(address addr)
+    function tokenBalance(address addr)
         external
         view
         override
@@ -76,17 +76,25 @@ contract Vault is IVault, ExponentialNoError, Context {
         return IERC20(addr).balanceOf(address(this));
     }
 
-    function withdraw_erc20(address token_address, uint256 amount)
+    function withdrawErc20(address token_address, uint256 amount)
         external
         override
         minterOnly
     {
         IERC20 token = IERC20(token_address);
         token.transferFrom(address(this), _msgSender(), amount);
-        bool solvency = _master.check_account(_id);
+        bool solvency = _master.checkAccount(_id);
         require(solvency, "this withdraw would make your account insolvent");
 
         emit Withdraw(token_address, amount);
+    }
+
+    function delegateCompLikeTo(address compLikeDelegatee, address CompLikeToken)
+        external
+        override
+        minterOnly
+    {
+        CompLike(CompLikeToken).delegate(compLikeDelegatee);
     }
 
     function masterTransfer(address _token, address _to, uint256 _amount)
@@ -128,14 +136,6 @@ contract Vault is IVault, ExponentialNoError, Context {
         return _baseLiability;
     }
 
-    function delegateCompLikeTo(address compLikeDelegatee, address CompLikeToken)
-        external
-        override
-        minterOnly
-    {
-        CompLike(CompLikeToken).delegate(compLikeDelegatee);
-
-    }
 
 }
 

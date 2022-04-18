@@ -23,7 +23,7 @@ const _abi = [
         type: "int256",
       },
     ],
-    name: "get_value_at",
+    name: "getValueAt",
     outputs: [
       {
         internalType: "int256",

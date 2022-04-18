@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-//import "../_external/Ownable.sol";
 import "../_external/ERC20Detailed.sol";
 
-import "../openzeppelin/OwnableUpgradeable.sol";
-import "../openzeppelin/Initializable.sol";
+import "../_external/openzeppelin/OwnableUpgradeable.sol";
+import "../_external/openzeppelin/Initializable.sol";
 
 /**
- * @title uFragments ERC20 token
+ * @title uFragments ERC20 token 
  * @dev USDI uses the uFragments concept from the Ideal Money project to play interest
+ *      implementation is shamelessly borrowed from Ampleforth project
  *      uFragments is a normal ERC20 token, but its supply can be adjusted by splitting and
  *      combining tokens proportionally across all wallets.
  *

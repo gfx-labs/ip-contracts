@@ -12,19 +12,19 @@ describe("TOKEN-DEPOSITS", async () => {
     //bob tries to borrow usdi against 10 eth as if eth is $100k
     // remember bob has 10 eth
     it(`bob should not be able to borrow 1e6 * 1e18 * ${s.Bob_WETH} usdi`, async () => {
-        await expect(s.VaultController.connect(s.Bob).borrow_usdi(1,
+        await expect(s.VaultController.connect(s.Bob).borrowUsdi(1,
             s.Bob_WETH.mul(BN("1e18")).mul(1e6),
         )).to.be.revertedWith("account insolvent");
     });
 
     it(`bob should be able to borrow ${"5000e18"} usdi`, async () => {
-        await expect(s.VaultController.connect(s.Bob).borrow_usdi(1, BN("5000e18"))).to.not.be
+        await expect(s.VaultController.connect(s.Bob).borrowUsdi(1, BN("5000e18"))).to.not.be
             .revertedWith("account insolvent");
     });
     it(`after a few days, bob should have a liability greater than ${"BN(5000e18)"}`, async () => {
         await fastForward(60 * 60 * 24 * 7);//1 week
         await advanceBlockHeight(1)
-        await s.VaultController.connect(s.Frank).calculate_interest();
+        await s.VaultController.connect(s.Frank).calculateInterest();
         await advanceBlockHeight(1)
         const liability_amount = await s
             .VaultController.connect(s.Bob)
@@ -41,7 +41,7 @@ describe("Checking interest generation", () => {
         await fastForward(OneYear);//1 year
         await advanceBlockHeight(1)
         //calculate and pay interest
-        await expect(s.VaultController.calculate_interest()).to.not.reverted
+        await expect(s.VaultController.calculateInterest()).to.not.reverted
         //check for yeild    
         let balance = await s.USDI.balanceOf(s.Dave.address)
         expect(balance > initBalance)
@@ -49,16 +49,16 @@ describe("Checking interest generation", () => {
 })
 /**
  untested functions: 
-  repay_usdi + repay_all_usdi WIP
+  repayUSDi + repayAllUSDi WIP
   liquidate_account WIP
-  check_account
+  checkAccount
   getInterestFactor
  */
 
 describe("Testing repay", () => {
     const borrowAmount = BN("10e18")
     it(`bob should able to borrow ${borrowAmount} usdi`, async () => {
-        await expect(s.VaultController.connect(s.Bob).borrow_usdi(1, borrowAmount)).to.not.be.reverted;
+        await expect(s.VaultController.connect(s.Bob).borrowUsdi(1, borrowAmount)).to.not.be.reverted;
     });
     it("partial repay", async () => {
         const liability = await s.BobVault.connect(s.Bob).BaseLiability()
@@ -71,11 +71,11 @@ describe("Testing repay", () => {
         //check pauseable 
         await s.VaultController.connect(s.Frank).pause()
         await advanceBlockHeight(1)
-        await expect(s.VaultController.connect(s.Bob).repay_usdi(vaultId, partialLiability)).to.be.revertedWith("Pausable: paused")
+        await expect(s.VaultController.connect(s.Bob).repayUSDi(vaultId, partialLiability)).to.be.revertedWith("Pausable: paused")
         await s.VaultController.connect(s.Frank).unpause()
         await advanceBlockHeight(1)
 
-        await s.VaultController.connect(s.Bob).repay_usdi(vaultId, partialLiability)
+        await s.VaultController.connect(s.Bob).repayUSDi(vaultId, partialLiability)
         await advanceBlockHeight(1)
         let updatedLiability = await s.BobVault.connect(s.Bob).BaseLiability()
         let balance = await s.USDI.balanceOf(s.Bob.address)
@@ -94,12 +94,12 @@ describe("Testing repay", () => {
         //check pauseable 
         await s.VaultController.connect(s.Frank).pause()
         await advanceBlockHeight(1)
-        await expect(s.VaultController.connect(s.Bob).repay_all_usdi(1)).to.be.revertedWith("Pausable: paused")
+        await expect(s.VaultController.connect(s.Bob).repayAllUSDi(1)).to.be.revertedWith("Pausable: paused")
         await s.VaultController.connect(s.Frank).unpause()
         await advanceBlockHeight(1)
 
 
-        await s.VaultController.connect(s.Bob).repay_all_usdi(1)
+        await s.VaultController.connect(s.Bob).repayAllUSDi(1)
         await advanceBlockHeight(1)
 
         let updatedLiability = await s.BobVault.connect(s.Bob).BaseLiability()
@@ -112,7 +112,7 @@ describe("Testing repay", () => {
 
 describe("Testing liquidations", () => {
     it(`bob should have ${s.Bob_WETH} wETH deposited`, async () => {
-        expect(await s.BobVault.connect(s.Bob).getBalances(s.WETH.address)).to.eq(s.Bob_WETH);
+        expect(await s.BobVault.connect(s.Bob).tokenBalance(s.WETH.address)).to.eq(s.Bob_WETH);
     });
     it("borrow maximum and liquidate", async () => {
         const vaultID = 1
@@ -120,7 +120,7 @@ describe("Testing liquidations", () => {
 
         //borrow maximum - borrow amount == collateral value 
         const AccountBorrowingPower = await s.VaultController.AccountBorrowingPower(vaultID)
-        await s.VaultController.connect(s.Bob).borrow_usdi(vaultID, AccountBorrowingPower)
+        await s.VaultController.connect(s.Bob).borrowUsdi(vaultID, AccountBorrowingPower)
         await advanceBlockHeight(1)
 
         /******** CHECK WITHDRAW BEFORE CALCULATE INTEREST ********/
@@ -128,9 +128,9 @@ describe("Testing liquidations", () => {
         await fastForward(OneYear * 10);//10 year
         await advanceBlockHeight(1)
 
-        //await bob_vault.connect(Bob).withdraw_erc20(s.wethAddress, BN("9e17"))
+        //await bob_vault.connect(Bob).withdrawErc20(s.wethAddress, BN("9e17"))
         //calculate interest to update protocol, vault is now able to be liquidated 
-        await s.VaultController.calculate_interest()
+        await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
 
         //init balances after calculate interest
@@ -195,9 +195,9 @@ describe("Testing liquidations", () => {
          * Should AccountBorrowingPower reflect the current borrow power of the vault, as in the amount should go down once a loan is taken? Currently it does not. 
          * 
          */
-        const rawPrice = await s.Oracle.get_live_price(s.compAddress)
+        const rawPrice = await s.Oracle.getLivePrice(s.compAddress)
         //showBody("rawPrice: ", rawPrice)
-        //let formatPrice = (await s.Oracle.get_live_price(s.compAddress)).div(1e14).toNumber() / 1e4
+        //let formatPrice = (await s.Oracle.getLivePrice(s.compAddress)).div(1e14).toNumber() / 1e4
         const vaultID = 2
 
         showBody("scaled COMP price: ", rawPrice.mul(BN("1e18")))
@@ -207,19 +207,19 @@ describe("Testing liquidations", () => {
         showBody("carol's TCV: ", collateralValue)
         //borrow usdi
         const carolBorrowPower = await s.VaultController.AccountBorrowingPower(2)
-        await expect(s.VaultController.connect(s.Carol).borrow_usdi(vaultID, carolBorrowPower)).to.not.reverted;
+        await expect(s.VaultController.connect(s.Carol).borrowUsdi(vaultID, carolBorrowPower)).to.not.reverted;
 
         await advanceBlockHeight(1)
 
         expect(await s.USDI.balanceOf(s.Carol.address)).to.eq(carolBorrowPower)
 
-        let solvency = await s.VaultController.check_account(vaultID)
+        let solvency = await s.VaultController.checkAccount(vaultID)
         showBody("carol's vault should be solvent")
         assert.equal(solvency, true, "Carol's vault is solvent")
 
         showBody("advance 1 week and then calculate interest")
         await fastForward(OneWeek)
-        await s.VaultController.calculate_interest()
+        await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
 
         let bn = await ethers.provider.getBlockNumber()
@@ -230,7 +230,7 @@ describe("Testing liquidations", () => {
         let bt = (await ethers.provider.getBlock(bn)).timestamp
         showBody("current timestamp", bt)
 
-        solvency = await s.VaultController.check_account(vaultID)
+        solvency = await s.VaultController.checkAccount(vaultID)
         showBody("carol vault should be insolvent")
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
@@ -245,9 +245,7 @@ describe("Testing liquidations", () => {
         await expect(s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.compAddress, BN("1e25"))).to.not.reverted
         await advanceBlockHeight(1)
         showBody("dave liquidated:", liquidateAmount, "comp")
-        expect(liquidateAmount)
-            .to.be.above(BN("2,435,172,979,901,686,000"))
-            .and.below(BN("2,435,177,006,312,037,580"))
+        expect(liquidateAmount).to.eq(liquidatableTokens)
 
         //let balance = await s.USDI.balanceOf(Dave.address)
         //console.log("Dave USDi Balance: ", utils.formatEther(balance.toString()))
