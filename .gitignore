@@ -7,3 +7,5 @@ cache
 artifacts
 
 .env
+
+typechain-types
