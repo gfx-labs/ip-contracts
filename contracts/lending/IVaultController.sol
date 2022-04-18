@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 interface IVaultController {
   // view functions
+  function _lastInterestTime() external view returns(uint256);
   function InterestFactor() external view returns (uint256);
 
   function ProtocolFee() external view returns (uint256);
