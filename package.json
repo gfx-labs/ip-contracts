@@ -7,7 +7,7 @@
         "test": "test"
     },
     "scripts": {
-        "test": "npx hardhat test",
+        "test": "npx hardhat test test/mainnet/index.ts",
         "lint": "npx solhint contracts/**/*.sol",
         "fmt": "npx prettier --write 'contracts/*/*.sol'",
         "save-abis": "rm -rf artifacts/contracts/_external && mv artifacts/contracts abis"
