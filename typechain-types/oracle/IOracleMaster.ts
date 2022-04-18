@@ -23,17 +23,17 @@ import type {
 
 export interface IOracleMasterInterface extends utils.Interface {
   functions: {
-    "get_live_price(address)": FunctionFragment;
+    "getLivePrice(address)": FunctionFragment;
     "pause_relay(address,bool)": FunctionFragment;
     "set_relay(address,address)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "get_live_price" | "pause_relay" | "set_relay"
+    nameOrSignatureOrTopic: "getLivePrice" | "pause_relay" | "set_relay"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "get_live_price",
+    functionFragment: "getLivePrice",
     values: [string]
   ): string;
   encodeFunctionData(
@@ -46,7 +46,7 @@ export interface IOracleMasterInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "get_live_price",
+    functionFragment: "getLivePrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -85,7 +85,7 @@ export interface IOracleMaster extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    get_live_price(
+    getLivePrice(
       token_address: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
@@ -103,7 +103,7 @@ export interface IOracleMaster extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  get_live_price(
+  getLivePrice(
     token_address: string,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
@@ -121,7 +121,7 @@ export interface IOracleMaster extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    get_live_price(
+    getLivePrice(
       token_address: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -142,7 +142,7 @@ export interface IOracleMaster extends BaseContract {
   filters: {};
 
   estimateGas: {
-    get_live_price(
+    getLivePrice(
       token_address: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -161,7 +161,7 @@ export interface IOracleMaster extends BaseContract {
   };
 
   populateTransaction: {
-    get_live_price(
+    getLivePrice(
       token_address: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

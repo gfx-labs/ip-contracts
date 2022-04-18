@@ -10,25 +10,25 @@ import { IVault__factory } from "../../typechain-types";
 describe("Vault setup:", () => {
     it("mint vaults", async () => {
         showBody("bob mint vault")
-        await expect(s.VaultController.connect(s.Bob).mint_vault()).to.not.reverted;
+        await expect(s.VaultController.connect(s.Bob).mintVault()).to.not.reverted;
         await mineBlock();
         let bobVault = await s.VaultController.VaultAddress(1)
         s.BobVault = IVault__factory.connect(
             bobVault,
             s.Bob,
         );
-        expect(await s.BobVault.getMinter()).to.eq(s.Bob.address)
+        expect(await s.BobVault.Minter()).to.eq(s.Bob.address)
 
 
         showBody("carol mint vault")
-        await expect(s.VaultController.connect(s.Carol).mint_vault()).to.not.reverted;
+        await expect(s.VaultController.connect(s.Carol).mintVault()).to.not.reverted;
         await mineBlock()
         let carolVault = await s.VaultController.VaultAddress(2)
         s.CarolVault = IVault__factory.connect(
             carolVault,
             s.Carol,
         );
-        expect(await s.CarolVault.getMinter()).to.eq(s.Carol.address)
+        expect(await s.CarolVault.Minter()).to.eq(s.Carol.address)
     })
     it("vault deposits", async () => {
         await expect(s.WETH.connect(s.Bob).transfer(s.BobVault.address, s.Bob_WETH)).to.not.reverted;
@@ -36,10 +36,10 @@ describe("Vault setup:", () => {
         await mineBlock();
 
         showBody("bob transfer weth")
-        expect(await s.BobVault.getBalances(s.wethAddress)).to.eq(s.Bob_WETH)
+        expect(await s.BobVault.tokenBalance(s.wethAddress)).to.eq(s.Bob_WETH)
 
         showBody("carol transfer comp")
-        expect(await s.CarolVault.getBalances(s.compAddress)).to.eq(s.Carol_COMP)
+        expect(await s.CarolVault.tokenBalance(s.compAddress)).to.eq(s.Carol_COMP)
     })
     it("carol should be able to delegate votes", async () => {
         await expect(s.CarolVault.delegateCompLikeTo(s.compVotingAddress, s.compAddress)).to.not.reverted;

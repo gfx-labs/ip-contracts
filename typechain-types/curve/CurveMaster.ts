@@ -30,7 +30,7 @@ export interface CurveMasterInterface extends utils.Interface {
   functions: {
     "_curves(address)": FunctionFragment;
     "_paused(address)": FunctionFragment;
-    "get_value_at(address,int256)": FunctionFragment;
+    "getValueAt(address,int256)": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "set_curve(address,address)": FunctionFragment;
@@ -41,7 +41,7 @@ export interface CurveMasterInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "_curves"
       | "_paused"
-      | "get_value_at"
+      | "getValueAt"
       | "owner"
       | "renounceOwnership"
       | "set_curve"
@@ -51,7 +51,7 @@ export interface CurveMasterInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "_curves", values: [string]): string;
   encodeFunctionData(functionFragment: "_paused", values: [string]): string;
   encodeFunctionData(
-    functionFragment: "get_value_at",
+    functionFragment: "getValueAt",
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
@@ -70,10 +70,7 @@ export interface CurveMasterInterface extends utils.Interface {
 
   decodeFunctionResult(functionFragment: "_curves", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_paused", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "get_value_at",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "getValueAt", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
@@ -135,7 +132,7 @@ export interface CurveMaster extends BaseContract {
 
     _paused(arg0: string, overrides?: CallOverrides): Promise<[boolean]>;
 
-    get_value_at(
+    getValueAt(
       curve_address: string,
       x_value: BigNumberish,
       overrides?: CallOverrides
@@ -163,7 +160,7 @@ export interface CurveMaster extends BaseContract {
 
   _paused(arg0: string, overrides?: CallOverrides): Promise<boolean>;
 
-  get_value_at(
+  getValueAt(
     curve_address: string,
     x_value: BigNumberish,
     overrides?: CallOverrides
@@ -191,7 +188,7 @@ export interface CurveMaster extends BaseContract {
 
     _paused(arg0: string, overrides?: CallOverrides): Promise<boolean>;
 
-    get_value_at(
+    getValueAt(
       curve_address: string,
       x_value: BigNumberish,
       overrides?: CallOverrides
@@ -229,7 +226,7 @@ export interface CurveMaster extends BaseContract {
 
     _paused(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    get_value_at(
+    getValueAt(
       curve_address: string,
       x_value: BigNumberish,
       overrides?: CallOverrides
@@ -264,7 +261,7 @@ export interface CurveMaster extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    get_value_at(
+    getValueAt(
       curve_address: string,
       x_value: BigNumberish,
       overrides?: CallOverrides

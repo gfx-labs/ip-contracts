@@ -1,23 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../token/IUSDI.sol";
-import "../oracle/OracleMaster.sol";
-import "../curve/CurveMaster.sol";
+import "../IUSDI.sol";
 
-import "./IVaultController.sol";
 import "./Vault.sol";
 import "./IVault.sol";
 
-//import "../_external/Ownable.sol";
-//import oz stuff
+import "./IVaultController.sol";
+
+import "../oracle/OracleMaster.sol";
+import "../curve/CurveMaster.sol";
+
 import "../_external/IERC20.sol";
 import "../_external/compound/ExponentialNoError.sol";
-import "../openzeppelin/OwnableUpgradeable.sol";
-import "../openzeppelin/Initializable.sol";
-import "../openzeppelin/PausableUpgradeable.sol";
-
-import "hardhat/console.sol";
+import "../_external/openzeppelin/OwnableUpgradeable.sol";
+import "../_external/openzeppelin/Initializable.sol";
+import "../_external/openzeppelin/PausableUpgradeable.sol";
 
 contract VaultController is
     Initializable,
@@ -56,21 +54,13 @@ contract VaultController is
     uint256 public _tokensRegistered;
     uint256 public _totalBaseLiability;
     uint256 public _lastInterestTime;
-    // usdi owed = _interestFactor * baseLiability;
-    // this is the interest factor * 1e18
     uint256 public _interestFactor;
     uint256 public _protocolFee;
 
-    /**
-    constructor() Ownable() {
-        _vaultsMinted = 0;
-        _tokensRegistered = 0;
-        _interestFactor = 1e18; // initialize at 1e18;
-        _totalBaseLiability = 0;
-        _protocolFee = 1e14;
-        _lastInterestTime = block.timestamp;
+    modifier paysInterest() {
+        pay_interest();
+        _;
     }
-     */
 
     function initialize() external override initializer {
         __Ownable_init();
@@ -95,7 +85,7 @@ contract VaultController is
         return _vaultId_vaultAddress[id];
     }
 
-    function mint_vault() public override returns (address) {
+    function mintVault() public override returns (address) {
         _vaultsMinted = _vaultsMinted + 1;
         address vault_address = address(
             new Vault(_vaultsMinted, _msgSender(), address(this), _usdiAddress)
@@ -206,7 +196,7 @@ contract VaultController is
         );
     }
 
-    function check_account(uint256 id) external view override returns (bool) {
+    function checkAccount(uint256 id) external view override returns (bool) {
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
         IVault vault = IVault(vault_address);
@@ -217,44 +207,42 @@ contract VaultController is
         return (total_liquidity_value >= usdi_liability);
     }
 
-    function borrow_usdi(uint256 id, uint256 amount)
+    function borrowUsdi(uint256 id, uint256 amount)
         external
         override
+        paysInterest
         whenNotPaused
     {
-        pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x00), "vault does not exist");
         IVault vault = IVault(vault_address);
+
         require(
-            _msgSender() == vault.getMinter(),
+            _msgSender() == vault.Minter(),
             "only vault creator may borrow from their vault"
         );
 
         uint256 base_amount = div_(amount * 1e18, _interestFactor);
-
         uint256 base_liability = vault.increase_liability(base_amount);
 
         _totalBaseLiability = _totalBaseLiability + base_amount;
 
         uint256 usdi_liability = truncate(_interestFactor * base_liability);
-
         uint256 total_liquidity_value = get_vault_borrowing_power(vault);
 
-        bool solvency = (total_liquidity_value >= usdi_liability);
-        require(solvency, "account insolvent");
+        require(total_liquidity_value >= usdi_liability, "account insolvent");
 
         _usdi.vault_master_mint(_msgSender(), amount);
 
         emit BorrowUSDi(id, vault_address, amount);
     }
 
-    function repay_usdi(uint256 id, uint256 amount)
+    function repayUSDi(uint256 id, uint256 amount)
         external
         override
+        paysInterest
         whenNotPaused
     {
-        pay_interest();
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
         IVault vault = IVault(vault_address);
@@ -270,8 +258,12 @@ contract VaultController is
         emit RepayUSDi(id, vault_address, amount);
     }
 
-    function repay_all_usdi(uint256 id) external override whenNotPaused {
-        pay_interest();
+    function repayAllUSDi(uint256 id) 
+        external
+        override
+        paysInterest
+        whenNotPaused
+    {
         address vault_address = _vaultId_vaultAddress[id];
         require(vault_address != address(0x0), "vault does not exist");
         IVault vault = IVault(vault_address);
@@ -290,12 +282,12 @@ contract VaultController is
     }
 
     ///@param tokens_to_liquidate - number of tokens to liquidate
-    function liquidate_account(
-        uint256 id,
-        address asset_address,
-        uint256 tokens_to_liquidate
-    ) external override whenNotPaused returns (uint256) {
-        pay_interest();
+    function liquidate_account(uint256 id, address asset_address, uint256 tokens_to_liquidate)
+        external 
+        override
+        paysInterest
+        whenNotPaused 
+        returns (uint256) {
         (uint256 tokenAmount, uint256 badFillPrice) = _liquidationMath(
             id,
             asset_address,
@@ -336,9 +328,9 @@ contract VaultController is
         return tokens_to_liquidate;
     }
 
-    /******* get things *******/
+    /******* getters things *******/
 
-    ///@dev - updates state via pay_interest() then returns the amount of tokens underwater this vault is
+    ///@dev - returns the amount of tokens underwater this vault is
     ///@dev - the amount owed is a moving target and changes with each block
     function TokensToLiquidate(
         uint256 id,
@@ -347,7 +339,6 @@ contract VaultController is
     ) public view returns (uint256) {
         (
             uint256 tokenAmount, /*uint256 badFillPrice*/
-
         ) = _liquidationMath(id, asset_address, tokens_to_liquidate);
 
         return tokenAmount;
@@ -361,7 +352,7 @@ contract VaultController is
         IVault vault = getVault(id);
 
         //get the price of the asset scaled to decimal 18
-        uint256 price = _oracleMaster.get_live_price(asset_address);
+        uint256 price = _oracleMaster.getLivePrice(asset_address);
 
         // liquidation penalty
         uint256 badFillPrice = truncate(
@@ -384,8 +375,8 @@ contract VaultController is
         }
 
         //if ideal amount isnt possible update with vault balance
-        if (tokens_to_liquidate > vault.getBalances(asset_address)) {
-            tokens_to_liquidate = vault.getBalances(asset_address);
+        if (tokens_to_liquidate > vault.tokenBalance(asset_address)) {
+            tokens_to_liquidate = vault.tokenBalance(asset_address);
         }
         return (tokens_to_liquidate, badFillPrice);
     }
@@ -426,10 +417,10 @@ contract VaultController is
         for (uint256 i = 1; i <= _tokensRegistered; i++) {
             address token_address = _enabledTokens[i - 1];
             uint256 raw_price = uint256(
-                _oracleMaster.get_live_price(token_address)
+                _oracleMaster.getLivePrice(token_address)
             );
             if (raw_price != 0) {
-                uint256 balance = vault.getBalances(token_address);
+                uint256 balance = vault.tokenBalance(token_address);
                 uint256 token_value = truncate(
                     truncate(raw_price * balance * _tokenId_tokenLTV[i])
                 );
@@ -440,7 +431,7 @@ contract VaultController is
     }
 
     /******* calculate and pay interest *******/
-    function calculate_interest() external override returns (uint256) {
+    function calculateInterest() external override returns (uint256) {
         return pay_interest();
     }
 
@@ -450,7 +441,7 @@ contract VaultController is
             return 0;
         }
         int256 reserve_ratio = int256(_usdi.reserveRatio());
-        int256 int_curve_val = _curveMaster.get_value_at(
+        int256 int_curve_val = _curveMaster.getValueAt(
             address(0x00),
             reserve_ratio
         );

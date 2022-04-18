@@ -34,19 +34,19 @@ export interface IVaultControllerInterface extends utils.Interface {
     "ProtocolFee()": FunctionFragment;
     "TokensToLiquidate(uint256,address,uint256)": FunctionFragment;
     "VaultAddress(uint256)": FunctionFragment;
-    "borrow_usdi(uint256,uint256)": FunctionFragment;
-    "calculate_interest()": FunctionFragment;
-    "check_account(uint256)": FunctionFragment;
+    "borrowUsdi(uint256,uint256)": FunctionFragment;
+    "calculateInterest()": FunctionFragment;
+    "checkAccount(uint256)": FunctionFragment;
     "initialize()": FunctionFragment;
     "liquidate_account(uint256,address,uint256)": FunctionFragment;
-    "mint_vault()": FunctionFragment;
+    "mintVault()": FunctionFragment;
     "pause()": FunctionFragment;
     "register_curve_master(address)": FunctionFragment;
     "register_erc20(address,uint256,address,uint256)": FunctionFragment;
     "register_oracle_master(address)": FunctionFragment;
     "register_usdi(address)": FunctionFragment;
-    "repay_all_usdi(uint256)": FunctionFragment;
-    "repay_usdi(uint256,uint256)": FunctionFragment;
+    "repayAllUSDi(uint256)": FunctionFragment;
+    "repayUSDi(uint256,uint256)": FunctionFragment;
     "unpause()": FunctionFragment;
     "update_registered_erc20(address,uint256,address,uint256)": FunctionFragment;
   };
@@ -59,19 +59,19 @@ export interface IVaultControllerInterface extends utils.Interface {
       | "ProtocolFee"
       | "TokensToLiquidate"
       | "VaultAddress"
-      | "borrow_usdi"
-      | "calculate_interest"
-      | "check_account"
+      | "borrowUsdi"
+      | "calculateInterest"
+      | "checkAccount"
       | "initialize"
       | "liquidate_account"
-      | "mint_vault"
+      | "mintVault"
       | "pause"
       | "register_curve_master"
       | "register_erc20"
       | "register_oracle_master"
       | "register_usdi"
-      | "repay_all_usdi"
-      | "repay_usdi"
+      | "repayAllUSDi"
+      | "repayUSDi"
       | "unpause"
       | "update_registered_erc20"
   ): FunctionFragment;
@@ -101,15 +101,15 @@ export interface IVaultControllerInterface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "borrow_usdi",
+    functionFragment: "borrowUsdi",
     values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "calculate_interest",
+    functionFragment: "calculateInterest",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "check_account",
+    functionFragment: "checkAccount",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -120,10 +120,7 @@ export interface IVaultControllerInterface extends utils.Interface {
     functionFragment: "liquidate_account",
     values: [BigNumberish, string, BigNumberish]
   ): string;
-  encodeFunctionData(
-    functionFragment: "mint_vault",
-    values?: undefined
-  ): string;
+  encodeFunctionData(functionFragment: "mintVault", values?: undefined): string;
   encodeFunctionData(functionFragment: "pause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "register_curve_master",
@@ -142,11 +139,11 @@ export interface IVaultControllerInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "repay_all_usdi",
+    functionFragment: "repayAllUSDi",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "repay_usdi",
+    functionFragment: "repayUSDi",
     values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
@@ -179,16 +176,13 @@ export interface IVaultControllerInterface extends utils.Interface {
     functionFragment: "VaultAddress",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "borrowUsdi", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "borrow_usdi",
+    functionFragment: "calculateInterest",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "calculate_interest",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "check_account",
+    functionFragment: "checkAccount",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -196,7 +190,7 @@ export interface IVaultControllerInterface extends utils.Interface {
     functionFragment: "liquidate_account",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "mint_vault", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "mintVault", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "register_curve_master",
@@ -215,10 +209,10 @@ export interface IVaultControllerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "repay_all_usdi",
+    functionFragment: "repayAllUSDi",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "repay_usdi", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "repayUSDi", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "update_registered_erc20",
@@ -422,17 +416,17 @@ export interface IVaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
-    borrow_usdi(
+    borrowUsdi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    calculate_interest(
+    calculateInterest(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    check_account(
+    checkAccount(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
@@ -448,7 +442,7 @@ export interface IVaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    mint_vault(
+    mintVault(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -479,12 +473,12 @@ export interface IVaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    repay_all_usdi(
+    repayAllUSDi(
       id: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    repay_usdi(
+    repayUSDi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -526,17 +520,17 @@ export interface IVaultController extends BaseContract {
 
   VaultAddress(id: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
-  borrow_usdi(
+  borrowUsdi(
     id: BigNumberish,
     amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  calculate_interest(
+  calculateInterest(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  check_account(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
+  checkAccount(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
 
   initialize(
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -549,7 +543,7 @@ export interface IVaultController extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  mint_vault(
+  mintVault(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -580,12 +574,12 @@ export interface IVaultController extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  repay_all_usdi(
+  repayAllUSDi(
     id: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  repay_usdi(
+  repayUSDi(
     id: BigNumberish,
     amount: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -627,18 +621,15 @@ export interface IVaultController extends BaseContract {
 
     VaultAddress(id: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
-    borrow_usdi(
+    borrowUsdi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    calculate_interest(overrides?: CallOverrides): Promise<BigNumber>;
+    calculateInterest(overrides?: CallOverrides): Promise<BigNumber>;
 
-    check_account(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    checkAccount(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
 
     initialize(overrides?: CallOverrides): Promise<void>;
 
@@ -649,7 +640,7 @@ export interface IVaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    mint_vault(overrides?: CallOverrides): Promise<string>;
+    mintVault(overrides?: CallOverrides): Promise<string>;
 
     pause(overrides?: CallOverrides): Promise<void>;
 
@@ -676,9 +667,9 @@ export interface IVaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    repay_all_usdi(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    repayAllUSDi(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
-    repay_usdi(
+    repayUSDi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: CallOverrides
@@ -819,17 +810,17 @@ export interface IVaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    borrow_usdi(
+    borrowUsdi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    calculate_interest(
+    calculateInterest(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    check_account(
+    checkAccount(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -845,7 +836,7 @@ export interface IVaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    mint_vault(
+    mintVault(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -876,12 +867,12 @@ export interface IVaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    repay_all_usdi(
+    repayAllUSDi(
       id: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    repay_usdi(
+    repayUSDi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -927,17 +918,17 @@ export interface IVaultController extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    borrow_usdi(
+    borrowUsdi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    calculate_interest(
+    calculateInterest(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    check_account(
+    checkAccount(
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -953,7 +944,7 @@ export interface IVaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    mint_vault(
+    mintVault(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -984,12 +975,12 @@ export interface IVaultController extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    repay_all_usdi(
+    repayAllUSDi(
       id: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    repay_usdi(
+    repayUSDi(
       id: BigNumberish,
       amount: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }

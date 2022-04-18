@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../_external/Ownable.sol";
 import "./IOracleMaster.sol";
 import "./IOracleRelay.sol";
+
+import "../_external/Ownable.sol";
 
 contract OracleMaster is IOracleMaster, Ownable {
     // mapping of token to address
@@ -11,19 +12,8 @@ contract OracleMaster is IOracleMaster, Ownable {
     mapping(address => bool) public _paused;
 
     constructor() Ownable() {}
-
-    function set_relay(address token_address, address relay_address)
-        public
-        onlyOwner
-    {
-        _relays[token_address] = relay_address;
-    }
-
-    function pause_relay(address token_address, bool state) public onlyOwner {
-        _paused[token_address] = state;
-    }
-
-    function get_live_price(address token_address)
+    
+    function getLivePrice(address token_address)
         external
         view
         override
@@ -36,4 +26,17 @@ contract OracleMaster is IOracleMaster, Ownable {
         require(value != 0);
         return value;
     }
+
+    function set_relay(address token_address, address relay_address)
+        public
+        onlyOwner
+    {
+        _relays[token_address] = relay_address;
+    }
+
+    function pause_relay(address token_address, bool state) public onlyOwner {
+        _paused[token_address] = state;
+    }
+
+
 }

@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./token/IUSDI.sol";
+import "./IUSDI.sol";
+
 import "./token/UFragments.sol";
 import "./lending/Vault.sol";
+
 import "./_external/IERC20.sol";
-
-import "hardhat/console.sol";
 import "./_external/compound/ExponentialNoError.sol";
-
-import "./openzeppelin/PausableUpgradeable.sol";
+import "./_external/openzeppelin/PausableUpgradeable.sol";
 
 contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, ExponentialNoError {
     address public _reserveAddress;
@@ -36,24 +35,21 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
         _reserve = IERC20(_reserveAddress);
     }
      */
-    function initialize(address reserveAddress) public initializer
-    {
+    function initialize(address reserveAddress) public initializer {
         __UFragments_init("USDI Token", "USDI");
         __Pausable_init();
         _reserveAddress = reserveAddress;
         _reserve = IERC20(_reserveAddress);
     }
-    function pause() external onlyOwner
-    {
+    function pause() external onlyOwner {
         _pause();
     }
 
-    function unpause() external onlyOwner
-    {
+    function unpause() external onlyOwner {
         _unpause();
     }
 
-    function deposit(uint256 usdc_amount) external override whenNotPaused{
+    function deposit(uint256 usdc_amount) external override whenNotPaused {
         uint256 amount = usdc_amount * 1e12;
         require(amount > 0, "Cannot deposit 0");
         uint256 allowance = _reserve.allowance(msg.sender, address(this));
@@ -96,7 +92,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     }
 
     function mint(uint256 usdc_amount) external override onlyOwner {
-        _VaultController.calculate_interest();
+        _VaultController.calculateInterest();
         uint256 amount = usdc_amount * 1e12;
         if (amount <= 0) {
             return;
@@ -111,7 +107,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     }
 
     function burn(uint256 usdc_amount) external override onlyOwner {
-        _VaultController.calculate_interest();
+        _VaultController.calculateInterest();
         if (usdc_amount <= 0) {
             return;
         }
