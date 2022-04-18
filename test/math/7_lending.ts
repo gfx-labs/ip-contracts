@@ -16,7 +16,11 @@ const getArgs = async (result: any) => {
     return args
 }
 
-//takes interest factor and returns new interest factor - pulls block time from network and latestInterestTime from contract
+/**
+ * @dev takes interest factor and returns new interest factor - pulls block time from network and latestInterestTime from contract
+ * @param interestFactor  - current interest factor read from contract
+ * @returns new interest factor based on time elapsed and reserve ratio (read from contract atm)
+ */
 const payInterestMath = async (interestFactor: BigNumber) => {
     const latestInterestTime = await s.VaultController._lastInterestTime()//calculate? 
     const currentBlock = await ethers.provider.getBlockNumber()
@@ -31,6 +35,10 @@ const payInterestMath = async (interestFactor: BigNumber) => {
     calculation = calculation.div(BN("1e18"))//truncate
     calculation = calculation.mul(interestFactor)
     calculation = calculation.div(BN("1e18"))//truncate again
+
+    //showBody("Interest Factor increase: ", calculation)
+    //showBody("Provided Interest Factor: ", interestFactor)
+    //showBody("New Interest Factor: ", interestFactor.add(calculation))
 
     //new interest factor
     return interestFactor.add(calculation)
@@ -70,75 +78,47 @@ describe("TOKEN-DEPOSITS", async () => {
         const args = await getArgs(borrowResult)
         actualBorrowAmount = args!.borrowAmount
 
-
         //calculate the new interest factor - starting interest factor is 1e18 as confirmed in tests above
         //actual new interest factor from contract
         const newInterestFactor = await s.VaultController.InterestFactor()
 
         assert.equal(newInterestFactor.toString(), expectedInterestFactor.toString(), "New Interest Factor is correct")
 
-        showBody(newInterestFactor)
-        showBody(expectedInterestFactor)
-
-
         const resultingUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
         assert.equal(resultingUSDiBalance.toString(), actualBorrowAmount.toString(), "Bob received the correct amount of USDi")
 
     });
     it(`after 1 week, bob should have a liability greater than ${"BN(5000e18)"}`, async () => {
+        await advanceBlockHeight(1)
+        const initLiability = await s
+            .VaultController.connect(s.Bob)
+            .AccountLiability(1);
+        await fastForward(OneWeek);//1 week
+        await advanceBlockHeight(1)
+
         let interestFactor = await s.VaultController.InterestFactor()
-        assert.equal(interestFactor.toString(), expectedInterestFactor.toString(), "interest factor is correct")
+        const interestMath = await payInterestMath(interestFactor)
 
-        await advanceBlockHeight(1)
-        const initLiability = await s
-            .VaultController.connect(s.Bob)
-            .AccountLiability(1);
-        await fastForward(OneWeek);//1 week
-        await advanceBlockHeight(1)
-        
-        //interest factor on first loan taken (interest factor ==  initIF) after 1 week
-        expectedInterestFactor = await payInterestMath(initIF)
-        showBody("Expected Interest Factor    : ", expectedInterestFactor)
-
-        await s.VaultController.connect(s.Frank).calculateInterest();
-
-        //this should scale higher after 1 week? it is matching interest factor from previous test
-        interestFactor = await s.VaultController.InterestFactor()
-        showBody("Interest Factor after 1 week: ", interestFactor)
-        assert.equal(interestFactor.toString(), expectedInterestFactor.toString(), "interest factor is correct after 1 week ")
-
-        /**
-         let expectedInterestFactor = await payInterestMath(initIF)
-        expectedInterestFactor = await payInterestMath(expectedInterestFactor)
-        
-        const interestFactor = await s.VaultController.InterestFactor()
-        assert.equal(interestFactor.toString(), expectedInterestFactor.toString(), "interest factor is correct")
-
-
-        await advanceBlockHeight(1)
-        const initLiability = await s
-            .VaultController.connect(s.Bob)
-            .AccountLiability(1);
-        await fastForward(OneWeek);//1 week
-        await advanceBlockHeight(1)
-
-        
-        expectedInterestFactor = await payInterestMath(interestFactor)
 
         const interestResult = await s.VaultController.connect(s.Frank).calculateInterest();
         await advanceBlockHeight(1)
+        const e18_factor_increase = await getArgs(interestResult)
 
-        let newInterestFactor = await s.VaultController.InterestFactor()
 
-        assert.equal(newInterestFactor.toString(), expectedInterestFactor.toString(), "New Interest Factor is correct")
+        interestFactor = await s.VaultController.InterestFactor()
+
+        assert.equal(interestFactor.toString(), interestMath.toString(), "Interest factor is correct")
+
 
         //TODO calculate new liability based on interest factor
-
         const liability_amount = await s
             .VaultController.connect(s.Bob)
             .AccountLiability(1);
+        //showBody("start liability ", initLiability)
+        //showBody("ending liability", liability_amount)
         expect(liability_amount).to.be.gt(BN("5000e18"));
-         */
+
+        
     });
 });
 

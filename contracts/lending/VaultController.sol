@@ -346,11 +346,9 @@ contract VaultController is
     uint256 e18_factor_increase = truncate(
       truncate((timeDifference * 1e18 * curve_val) / (365 days + 6 hours)) * _interestFactor
     );
-
     uint256 valueBefore = truncate(_totalBaseLiability * _interestFactor);
     _interestFactor = _interestFactor + e18_factor_increase;
     uint256 valueAfter = truncate(_totalBaseLiability * _interestFactor);
-
     if (valueAfter > valueBefore) {
       uint256 protocolAmount = truncate((valueAfter - valueBefore) * (_protocolFee));
       _usdi.vault_master_donate(valueAfter - valueBefore - protocolAmount);
