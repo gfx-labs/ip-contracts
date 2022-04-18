@@ -6,6 +6,11 @@ import { BN } from "../util/number";
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../util/block";
 import { Event, utils, BigNumber } from "ethers";
 
+/**
+ * 
+ * @param result object returned from a transaction that emits an event 
+ * @returns the args from the last event emitted from the transaction
+ */
 const getArgs = async (result: any) => {
     await advanceBlockHeight(1)
     const receipt = await result.wait()
@@ -117,7 +122,6 @@ describe("TOKEN-DEPOSITS", async () => {
         //showBody("start liability ", initLiability)
         //showBody("ending liability", liability_amount)
         expect(liability_amount).to.be.gt(BN("5000e18"));
-
         
     });
 });
