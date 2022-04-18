@@ -16,9 +16,9 @@
         "skipLibCheck": true /* Skip type checking all .d.ts files. */
     },
     "include": [
-        "./scripts",
-        "./test",
-        "./typechain-types"
+        "./scripts/**/*",
+        "./test/**/*",
+        "./typechain-types/**/*"
     ],
     "files": [
         "./hardhat.config.ts"
