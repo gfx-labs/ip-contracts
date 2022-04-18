@@ -67,6 +67,14 @@ describe("Testing repay", () => {
         const vaultId = 1
         const initBalance = await s.USDI.balanceOf(s.Bob.address)
         showBody("Bob's Initial Balance: ", initBalance)
+
+        //check pauseable 
+        await s.VaultController.connect(s.Frank).pause()
+        await advanceBlockHeight(1)
+        await expect(s.VaultController.connect(s.Bob).repay_usdi(vaultId, partialLiability)).to.be.revertedWith("Pausable: paused")
+        await s.VaultController.connect(s.Frank).unpause()
+        await advanceBlockHeight(1)
+
         await s.VaultController.connect(s.Bob).repay_usdi(vaultId, partialLiability)
         await advanceBlockHeight(1)
         let updatedLiability = await s.BobVault.connect(s.Bob).BaseLiability()
@@ -82,6 +90,15 @@ describe("Testing repay", () => {
 
     })
     it("bob compeltely repays vault", async () => {
+
+        //check pauseable 
+        await s.VaultController.connect(s.Frank).pause()
+        await advanceBlockHeight(1)
+        await expect(s.VaultController.connect(s.Bob).repay_all_usdi(1)).to.be.revertedWith("Pausable: paused")
+        await s.VaultController.connect(s.Frank).unpause()
+        await advanceBlockHeight(1)
+
+
         await s.VaultController.connect(s.Bob).repay_all_usdi(1)
         await advanceBlockHeight(1)
 
@@ -121,6 +138,13 @@ describe("Testing liquidations", () => {
         const initBalanceBob = await s.USDI.balanceOf(s.Bob.address)
         const initWethBalanceDave = await s.WETH.balanceOf(s.Dave.address)
         const initLiability = await s.VaultController.AccountLiability(vaultID)
+
+        //check pauseable 
+        await s.VaultController.connect(s.Frank).pause()
+        await advanceBlockHeight(1)
+        await expect(s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.wethAddress, BN("1e16"))).to.be.revertedWith("Pausable: paused")
+        await s.VaultController.connect(s.Frank).unpause()
+        await advanceBlockHeight(1)
 
         //liquidate account
         const result = await s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.wethAddress, BN("1e16"))
