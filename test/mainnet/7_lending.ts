@@ -5,7 +5,20 @@ import { showBody } from "../util/format";
 import { BN } from "../util/number";
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../util/block";
 import { Event, utils } from "ethers";
+/**
+ * 
+ * @param result object returned from a transaction that emits an event 
+ * @returns the args from the last event emitted from the transaction
+ */
+ const getArgs = async (result: any) => {
+    await advanceBlockHeight(1)
+    const receipt = await result.wait()
+    await advanceBlockHeight(1)
+    const events = receipt.events
+    const args = events[events.length - 1].args
 
+    return args
+}
 
 
 describe("TOKEN-DEPOSITS", async () => {
@@ -207,11 +220,13 @@ describe("Testing liquidations", () => {
         showBody("carol's TCV: ", collateralValue)
         //borrow usdi
         const carolBorrowPower = await s.VaultController.AccountBorrowingPower(2)
-        await expect(s.VaultController.connect(s.Carol).borrowUsdi(vaultID, carolBorrowPower)).to.not.reverted;
-
+        const borrowResult = await s.VaultController.connect(s.Carol).borrowUsdi(vaultID, carolBorrowPower)
         await advanceBlockHeight(1)
+        const args = await getArgs(borrowResult)
+        const actualBorrowAmount = args!.borrowAmount
 
-        expect(await s.USDI.balanceOf(s.Carol.address)).to.eq(carolBorrowPower)
+
+        expect(await s.USDI.balanceOf(s.Carol.address)).to.eq(actualBorrowAmount)
 
         let solvency = await s.VaultController.checkAccount(vaultID)
         showBody("carol's vault should be solvent")
