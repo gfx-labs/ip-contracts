@@ -34,12 +34,15 @@ export interface IUSDIInterface extends utils.Interface {
     "burn(uint256)": FunctionFragment;
     "decimals()": FunctionFragment;
     "deposit(uint256)": FunctionFragment;
+    "initialize(address)": FunctionFragment;
     "mint(uint256)": FunctionFragment;
+    "pause()": FunctionFragment;
     "reserveRatio()": FunctionFragment;
     "setVaultController(address)": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
     "transferFrom(address,address,uint256)": FunctionFragment;
+    "unpause()": FunctionFragment;
     "vault_master_burn(address,uint256)": FunctionFragment;
     "vault_master_donate(uint256)": FunctionFragment;
     "vault_master_mint(address,uint256)": FunctionFragment;
@@ -54,12 +57,15 @@ export interface IUSDIInterface extends utils.Interface {
       | "burn"
       | "decimals"
       | "deposit"
+      | "initialize"
       | "mint"
+      | "pause"
       | "reserveRatio"
       | "setVaultController"
       | "totalSupply"
       | "transfer"
       | "transferFrom"
+      | "unpause"
       | "vault_master_burn"
       | "vault_master_donate"
       | "vault_master_mint"
@@ -81,7 +87,9 @@ export interface IUSDIInterface extends utils.Interface {
     functionFragment: "deposit",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "initialize", values: [string]): string;
   encodeFunctionData(functionFragment: "mint", values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: "pause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "reserveRatio",
     values?: undefined
@@ -102,6 +110,7 @@ export interface IUSDIInterface extends utils.Interface {
     functionFragment: "transferFrom",
     values: [string, string, BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "vault_master_burn",
     values: [string, BigNumberish]
@@ -125,7 +134,9 @@ export interface IUSDIInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "reserveRatio",
     data: BytesLike
@@ -143,6 +154,7 @@ export interface IUSDIInterface extends utils.Interface {
     functionFragment: "transferFrom",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "vault_master_burn",
     data: BytesLike
@@ -243,8 +255,17 @@ export interface IUSDI extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    initialize(
+      reserveAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     mint(
       usdc_amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    pause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -267,6 +288,10 @@ export interface IUSDI extends BaseContract {
       sender: string,
       recipient: string,
       amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -319,8 +344,17 @@ export interface IUSDI extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  initialize(
+    reserveAddress: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   mint(
     usdc_amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  pause(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -343,6 +377,10 @@ export interface IUSDI extends BaseContract {
     sender: string,
     recipient: string,
     amount: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  unpause(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -392,7 +430,14 @@ export interface IUSDI extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    initialize(
+      reserveAddress: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     mint(usdc_amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
+
+    pause(overrides?: CallOverrides): Promise<void>;
 
     reserveRatio(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -415,6 +460,8 @@ export interface IUSDI extends BaseContract {
       amount: BigNumberish,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    unpause(overrides?: CallOverrides): Promise<void>;
 
     vault_master_burn(
       target: string,
@@ -490,8 +537,17 @@ export interface IUSDI extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    initialize(
+      reserveAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     mint(
       usdc_amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    pause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -514,6 +570,10 @@ export interface IUSDI extends BaseContract {
       sender: string,
       recipient: string,
       amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -570,8 +630,17 @@ export interface IUSDI extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    initialize(
+      reserveAddress: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     mint(
       usdc_amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    pause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -594,6 +663,10 @@ export interface IUSDI extends BaseContract {
       sender: string,
       recipient: string,
       amount: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    unpause(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

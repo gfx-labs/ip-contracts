@@ -30,9 +30,9 @@ export interface VaultInterface extends utils.Interface {
   functions: {
     "BaseLiability()": FunctionFragment;
     "Minter()": FunctionFragment;
+    "_VaultControllerAddress()": FunctionFragment;
     "_baseLiability()": FunctionFragment;
     "_id()": FunctionFragment;
-    "_masterAddress()": FunctionFragment;
     "_minter()": FunctionFragment;
     "decrease_liability(uint256)": FunctionFragment;
     "delegateCompLikeTo(address,address)": FunctionFragment;
@@ -46,9 +46,9 @@ export interface VaultInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "BaseLiability"
       | "Minter"
+      | "_VaultControllerAddress"
       | "_baseLiability"
       | "_id"
-      | "_masterAddress"
       | "_minter"
       | "decrease_liability"
       | "delegateCompLikeTo"
@@ -64,14 +64,14 @@ export interface VaultInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "Minter", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "_VaultControllerAddress",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "_baseLiability",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "_id", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "_masterAddress",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "_minter", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "decrease_liability",
@@ -104,14 +104,14 @@ export interface VaultInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "Minter", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "_VaultControllerAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "_baseLiability",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "_id", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "_masterAddress",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "_minter", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "decrease_liability",
@@ -197,11 +197,11 @@ export interface Vault extends BaseContract {
 
     Minter(overrides?: CallOverrides): Promise<[string]>;
 
+    _VaultControllerAddress(overrides?: CallOverrides): Promise<[string]>;
+
     _baseLiability(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     _id(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    _masterAddress(overrides?: CallOverrides): Promise<[string]>;
 
     _minter(overrides?: CallOverrides): Promise<[string]>;
 
@@ -241,11 +241,11 @@ export interface Vault extends BaseContract {
 
   Minter(overrides?: CallOverrides): Promise<string>;
 
+  _VaultControllerAddress(overrides?: CallOverrides): Promise<string>;
+
   _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
   _id(overrides?: CallOverrides): Promise<BigNumber>;
-
-  _masterAddress(overrides?: CallOverrides): Promise<string>;
 
   _minter(overrides?: CallOverrides): Promise<string>;
 
@@ -285,11 +285,11 @@ export interface Vault extends BaseContract {
 
     Minter(overrides?: CallOverrides): Promise<string>;
 
+    _VaultControllerAddress(overrides?: CallOverrides): Promise<string>;
+
     _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
     _id(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _masterAddress(overrides?: CallOverrides): Promise<string>;
 
     _minter(overrides?: CallOverrides): Promise<string>;
 
@@ -344,11 +344,11 @@ export interface Vault extends BaseContract {
 
     Minter(overrides?: CallOverrides): Promise<BigNumber>;
 
+    _VaultControllerAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
     _baseLiability(overrides?: CallOverrides): Promise<BigNumber>;
 
     _id(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _masterAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
     _minter(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -389,11 +389,13 @@ export interface Vault extends BaseContract {
 
     Minter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    _VaultControllerAddress(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     _baseLiability(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _id(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _masterAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _minter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
