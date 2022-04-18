@@ -69,7 +69,7 @@ interface IVaultController {
   ) external;
 
   // events
-  event Interest(uint256 epoch, uint256 amount);
+  event Interest(uint256 epoch, uint256 amount, uint256 curve_val);
   event NewProtocolFee(uint256 protocol_fee);
   event RegisteredErc20(address token_address, uint256 LTVe4, address oracle_address, uint256 liquidationIncentivee4);
   event UpdateRegisteredErc20(
