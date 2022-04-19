@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import "../IOracleRelay.sol";
 import "../../_external/chainlink/IAggregator.sol";
 
+/// @title Oracle that wraps a chainlink oracle
+/// @notice The oracle returns (chainlinkPrice) * mul / div
 contract ChainlinkOracleRelay is IOracleRelay {
   address public _feedAddress;
   IAggregator private _aggregator;
@@ -11,6 +13,10 @@ contract ChainlinkOracleRelay is IOracleRelay {
   uint256 public _multiply;
   uint256 public _divide;
 
+  /// @notice all values set at construction time
+  /// @param  feed_address address of chainlink feed
+  /// @param mul numerator of scalar
+  /// @param div denominator of scalar
   constructor(
     address feed_address,
     uint256 mul,
@@ -22,6 +28,9 @@ contract ChainlinkOracleRelay is IOracleRelay {
     _divide = div;
   }
 
+  /// @notice the current reported value of the oracle
+  /// @return the current value
+  /// @dev implementation in getLastSecond
   function currentValue() external view override returns (uint256) {
     return getLastSecond();
   }

@@ -10,7 +10,7 @@ import "../_external/openzeppelin/Initializable.sol";
 /**
  * @title uFragments ERC20 token
  * @dev USDI uses the uFragments concept from the Ideal Money project to play interest
- *      implementation is shamelessly borrowed from Ampleforth project
+ *      Implementation is shamelessly borrowed from Ampleforth project
  *      uFragments is a normal ERC20 token, but its supply can be adjusted by splitting and
  *      combining tokens proportionally across all wallets.
  *
