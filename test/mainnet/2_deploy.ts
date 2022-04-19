@@ -84,8 +84,6 @@ const deployProxy = async () => {
     await USDi.deployed()
     await mineBlock()
     await USDi.initialize(s.usdcAddress)
-
-
 }
 
 
@@ -95,7 +93,7 @@ describe("Deploy Contracts", () => {
 
     it("Deploy USDI core", async () => {
         showBody("deploying usdi")
-        s.USDI = await new USDI__factory(s.Frank).deploy()
+        s.USDI = (await new USDI__factory(s.Frank).deploy()) as any
         await mineBlock()
         await s.USDI.initialize(s.usdcAddress)
         await mineBlock()
