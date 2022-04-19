@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+
+/// @title VaultController Interface
+/// @notice Interface for interacting with the VaultController
 interface IVaultController {
   // view functions
   function _lastInterestTime() external view returns(uint256);
