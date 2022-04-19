@@ -1,27 +1,46 @@
+image: cr.gfx.cafe/build/img/nodejs:latest
+
 lint:
   stage: test
-  image: cr.gfx.cafe/build/img/nodejs:latest
   cache:
     paths:
       - node_modules/
     key:
       files:
-        - package-lock.json
+        - yarn.lock
   script:
     - npm i
     - npm run lint
 
 test:
   stage: test
-  image: cr.gfx.cafe/build/img/nodejs:latest
   cache:
     paths:
       - node_modules/
     key:
       files:
-        - package-lock.json
+        - yarn.lock
   script:
     - npm i
     - npx hardhat clean
     - npx hardhat compile
     - npm run test
+
+pages:
+  stage: deploy
+  cache:
+    - key:
+        files:
+          - yarn.lock
+        prefix: yarn
+      paths:
+        - node_modules/
+  script:
+    - npx yarn install
+    - npx hardhat compile
+    - mv docs public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
