@@ -3,6 +3,10 @@ pragma solidity ^0.8.0;
 
 import "../IOracleRelay.sol";
 
+/// @title implementation of compounds' AnchoredView
+/// @notice using a main relay and an anchor relay, the AnchoredView
+/// ensures that the main relay's price is within some amount of the anchor relay price
+/// if not, the call reverts, effectively disabling the oracle & any actions which require it
 contract AnchoredViewRelay is IOracleRelay {
   address public _anchorAddress;
   IOracleRelay public _anchorRelay;
@@ -12,7 +16,11 @@ contract AnchoredViewRelay is IOracleRelay {
 
   uint256 public _widthNumerator;
   uint256 public _widthDenominator;
-
+  /// @notice all values set at construction time
+  /// @param anchor_address address of OracleRelay to use as anchor
+  /// @param main_address address of OracleRelay to use as main
+  /// @param widthNumerator numerator of the allowable deviation width
+  /// @param widthDenominator denominator of the allowable deviation width
   constructor(
     address anchor_address,
     address main_address,
@@ -28,7 +36,9 @@ contract AnchoredViewRelay is IOracleRelay {
     _widthNumerator = widthNumerator;
     _widthDenominator = widthDenominator;
   }
-
+  /// @notice returns current value of oracle
+  /// @return current value of oracle
+  /// @dev implementation in getLastSecond
   function currentValue() external view override returns (uint256) {
     return getLastSecond();
   }
