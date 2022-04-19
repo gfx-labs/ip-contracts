@@ -215,10 +215,10 @@ contract VaultController is
     uint256 total_liquidity_value = get_vault_borrowing_power(vault);
 
     require(total_liquidity_value >= usdi_liability, "account insolvent");
+    uint256 al = _AccountLiability(id);
+    _usdi.vault_master_mint(_msgSender(), al);
 
-    _usdi.vault_master_mint(_msgSender(), _AccountLiability(id));
-
-    emit BorrowUSDi(id, vault_address, _AccountLiability(id));
+    emit BorrowUSDi(id, vault_address, al);
   }
 
   /// @notice repay usdi to a vault. anyone may repay a vaults liabilities
