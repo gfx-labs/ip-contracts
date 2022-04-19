@@ -192,7 +192,7 @@ contract USDI is
     }
 
     /// @notice get reserve ratio
-    /// @return the usdi reserve ratio
+    /// @return e18_reserve_ratio the usdi reserve ratio
     function reserveRatio()
         external
         view

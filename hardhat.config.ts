@@ -1,4 +1,3 @@
-import * as dotenv from "dotenv" 
 
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
@@ -6,8 +5,10 @@ import "hardhat-watcher";
 import "@openzeppelin/hardhat-upgrades";
 
 import "@typechain/hardhat";
+import "hardhat-docgen"
+
 import { HardhatUserConfig } from "hardhat/types";
-dotenv.config();
+
 const config: HardhatUserConfig = {
     defaultNetwork: "hardhat",
     networks: {
@@ -55,6 +56,11 @@ const config: HardhatUserConfig = {
     mocha: {
         timeout: 20000000,
     },
+    docgen: {
+        path: './docs',
+        clear: true,
+        runOnCompile: true,
+    }
 };
 
 export default config;
