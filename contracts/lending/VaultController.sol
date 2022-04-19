@@ -17,8 +17,10 @@ import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
-import "hardhat/console.sol";
-
+/// @title Controller of all vaults in the USDI borrow/lend system
+/// @notice VaultController contains all business logic for borrowing/lending with the protocol
+/// it is also in charge of calculating interest
+/// proceeds from liquidations go to the USDI contract
 contract VaultController is
   Initializable,
   PausableUpgradeable,
@@ -53,6 +55,8 @@ contract VaultController is
   uint256 public _interestFactor;
   uint256 public _protocolFee;
 
+  /// @title A users vault
+  /// @notice our implentation of maker-vault like vault
   modifier paysInterest() {
     pay_interest();
     _;
