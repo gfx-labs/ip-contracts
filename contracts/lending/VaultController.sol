@@ -17,6 +17,8 @@ import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 contract VaultController is
   Initializable,
   PausableUpgradeable,
@@ -172,14 +174,15 @@ contract VaultController is
 
     _totalBaseLiability = _totalBaseLiability + base_amount;
 
-    uint256 usdi_liability = truncate(_interestFactor * base_liability);
+    uint256 usdi_liability = truncate((_interestFactor - 1) * base_liability);
+
     uint256 total_liquidity_value = get_vault_borrowing_power(vault);
 
     require(total_liquidity_value >= usdi_liability, "account insolvent");
 
-    _usdi.vault_master_mint(_msgSender(), amount);
+    _usdi.vault_master_mint(_msgSender(), _AccountLiability(id));
 
-    emit BorrowUSDi(id, vault_address, amount);
+    emit BorrowUSDi(id, vault_address, _AccountLiability(id));
   }
 
   function repayUSDi(uint256 id, uint256 amount) external override paysInterest whenNotPaused {
@@ -339,21 +342,20 @@ contract VaultController is
     require(int_curve_val >= 0, "rate too small");
 
     uint256 curve_val = uint256(int_curve_val);
+
     uint256 e18_factor_increase = truncate(
       truncate((timeDifference * 1e18 * curve_val) / (365 days + 6 hours)) * _interestFactor
     );
-
     uint256 valueBefore = truncate(_totalBaseLiability * _interestFactor);
     _interestFactor = _interestFactor + e18_factor_increase;
     uint256 valueAfter = truncate(_totalBaseLiability * _interestFactor);
-
     if (valueAfter > valueBefore) {
       uint256 protocolAmount = truncate((valueAfter - valueBefore) * (_protocolFee));
       _usdi.vault_master_donate(valueAfter - valueBefore - protocolAmount);
       _usdi.vault_master_mint(owner(), protocolAmount);
     }
     _lastInterestTime = block.timestamp;
-    emit Interest(block.timestamp, e18_factor_increase);
+    emit Interest(block.timestamp, e18_factor_increase, curve_val);
     return e18_factor_increase;
   }
 }
