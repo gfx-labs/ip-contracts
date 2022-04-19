@@ -5,6 +5,9 @@ import "../IOracleRelay.sol";
 import "../../_external/uniswap/IUniswapV3PoolDerivedState.sol";
 import "../../_external/uniswap/TickMath.sol";
 
+/// @title Oracle that wraps a univ3 pool
+/// @notice The oracle returns (univ3) * mul / div
+/// if quote_token_is_token0 == true, then the reciprocal is returned
 contract UniswapV3OracleRelay is IOracleRelay {
   address public _poolAddress;
   bool public _quoteTokenIsToken0;
@@ -13,6 +16,11 @@ contract UniswapV3OracleRelay is IOracleRelay {
   uint256 _mul;
   uint256 _div;
 
+  /// @notice all values set at construction time
+  /// @param  pool_address address of chainlink feed
+  /// @param quote_token_is_token0 marker for which token to use as quote/base in calculation
+  /// @param mul numerator of scalar
+  /// @param div denominator of scalar
   constructor(
     address pool_address,
     bool quote_token_is_token0,
@@ -26,6 +34,10 @@ contract UniswapV3OracleRelay is IOracleRelay {
     _pool = IUniswapV3PoolDerivedState(_poolAddress);
   }
 
+  /// @notice the current reported value of the oracle
+  /// @return the current value
+  /// @dev implementation in getLastSecond
+  /// TODO: perhaps look at more than just the last tick :)
   function currentValue() external view override returns (uint256) {
     return getLastSecond();
   }
