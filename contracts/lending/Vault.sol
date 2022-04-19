@@ -6,6 +6,7 @@ import "../IUSDI.sol";
 import "./IVault.sol";
 import "./IVaultController.sol";
 
+import "../_external/CompLike.sol";
 import "../_external/IERC20.sol";
 import "../_external/Context.sol";
 import "../_external/compound/ExponentialNoError.sol";
@@ -92,10 +93,10 @@ contract Vault is IVault, ExponentialNoError, Context {
     }
 
     function delegateCompLikeTo(
-        address compLikeDelegatee,
-        address CompLikeToken
+        address delegatee,
+        address token_address,
     ) external override onlyMinter {
-        CompLike(CompLikeToken).delegate(compLikeDelegatee);
+        CompLike(token_address).delegate(delegatee);
     }
 
     function masterTransfer(
