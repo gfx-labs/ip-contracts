@@ -55,13 +55,13 @@ contract VaultController is
   uint256 public _interestFactor;
   uint256 public _protocolFee;
 
-  /// @title A users vault
-  /// @notice our implentation of maker-vault like vault
+  /// @notice any function with this modifier will call the pay_interest() function before 
   modifier paysInterest() {
     pay_interest();
     _;
   }
 
+  /// @notice no initialization arguments.
   function initialize() external override initializer {
     __Ownable_init();
     __Pausable_init();
@@ -73,18 +73,26 @@ contract VaultController is
     _lastInterestTime = block.timestamp;
   }
 
+  /// @notice get current interest factor
+  /// @return the interest factor
   function InterestFactor() external view override returns (uint256) {
     return _interestFactor;
   }
 
+  /// @notice get current protocol fee
+  /// @return the interest factor
   function ProtocolFee() external view override returns (uint256) {
     return _protocolFee;
   }
 
+  /// @notice get vault address of id
+  /// @return the address of vault 
   function VaultAddress(uint256 id) external view override returns (address) {
     return _vaultId_vaultAddress[id];
   }
 
+  /// @notice create a new vault
+  /// @return the address of the new vault
   function mintVault() public override returns (address) {
     _vaultsMinted = _vaultsMinted + 1;
     address vault_address = address(new Vault(_vaultsMinted, _msgSender(), address(this), address(_usdi)));
@@ -94,36 +102,49 @@ contract VaultController is
     return vault_address;
   }
 
+  /// @notice pause the contract
   function pause() external override onlyOwner {
     _pause();
   }
 
+  /// @notice unpause the contract
   function unpause() external override onlyOwner {
     _unpause();
   }
 
+  /// @notice register the USDi contract
+  /// @param usdi_address address to register as usdi
   function register_usdi(address usdi_address) external override onlyOwner {
     _usdi = IUSDI(usdi_address);
   }
 
+  /// @notice register the OracleMaster contract
+  /// @param master_oracle_address address to register as usdi
   function register_oracle_master(address master_oracle_address) external override onlyOwner {
     _oracleMaster = OracleMaster(master_oracle_address);
 
     emit RegisterOracleMaster(master_oracle_address);
   }
 
+  /// @notice register the CurveMaster address
+  /// @param master_curve_address address to register as usdi
   function register_curve_master(address master_curve_address) external override onlyOwner {
     _curveMaster = CurveMaster(master_curve_address);
     emit RegisterCurveMaster(master_curve_address);
   }
 
+  /// @notice register the CurveMaster address
+  /// @param new_protocol_fee the fee, in terms of 1e18=100%
   function change_protocol_fee(uint256 new_protocol_fee) external override onlyOwner {
-    require(new_protocol_fee < 5000, "fee is too large");
+    require(new_protocol_fee < 1e18, "fee is too large");
     _protocolFee = new_protocol_fee;
-
     emit NewProtocolFee(_protocolFee);
   }
 
+  /// @notice register a new token as valid collateral
+  /// @param token_address the token to register
+  /// @param oracle_address the oracle to attach to the token
+  /// @param liquidationIncentive the liquidation incentive for that token
   function register_erc20(
     address token_address,
     uint256 LTV,
@@ -142,6 +163,10 @@ contract VaultController is
     emit RegisteredErc20(token_address, LTV, oracle_address, liquidationIncentive);
   }
 
+  /// @notice update an existing token with new collateral settings
+  /// @param token_address the token to modify
+  /// @param oracle_address the new oracle to attach to the token
+  /// @param liquidationIncentive the new liquidation incentive for that token
   function update_registered_erc20(
     address token_address,
     uint256 LTV,
@@ -157,6 +182,9 @@ contract VaultController is
     emit UpdateRegisteredErc20(token_address, LTV, oracle_address, liquidationIncentive);
   }
 
+  /// @notice checks an account for solvency
+  /// @param id the vault to check
+  /// @return true = vault solvent; false = vault not solvent
   function checkAccount(uint256 id) external view override returns (bool) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
@@ -166,6 +194,10 @@ contract VaultController is
     return (total_liquidity_value >= usdi_liability);
   }
 
+  /// @notice borrow usdi from a vault. only the minter of the vault may borrow from their vault
+  /// @param id the vault to borrow using
+  /// @param amount amount of usdi to pull
+  /// @dev pays interest
   function borrowUsdi(uint256 id, uint256 amount) external override paysInterest whenNotPaused {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x00), "vault does not exist");
@@ -189,6 +221,10 @@ contract VaultController is
     emit BorrowUSDi(id, vault_address, _AccountLiability(id));
   }
 
+  /// @notice repay usdi to a vault. anyone may repay a vaults liabilities
+  /// @param id the vault to repay
+  /// @param amount amount of usdi to repay
+  /// @dev pays interest
   function repayUSDi(uint256 id, uint256 amount) external override paysInterest whenNotPaused {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
@@ -202,6 +238,10 @@ contract VaultController is
     emit RepayUSDi(id, vault_address, amount);
   }
 
+
+  /// @notice repay all of a vaults usdi. anyone may repay a vaults liabilities
+  /// @param id the vault to repay
+  /// @dev pays interest
   function repayAllUSDi(uint256 id) external override paysInterest whenNotPaused {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
@@ -215,7 +255,13 @@ contract VaultController is
     emit RepayUSDi(id, vault_address, usdi_liability);
   }
 
-  ///@param tokens_to_liquidate - number of tokens to liquidate
+
+  /// @notice liquidate an underwater vault
+  /// vaults may be liquidated up to the point where they are exactly solvent
+  /// @param id the vault liquidate
+  /// @param asset_address the token the liquidator wishes to liquidate
+  /// @param tokens_to_liquidate - number of tokens to liquidate
+  /// @dev pays interest
   function liquidate_account(
     uint256 id,
     address asset_address,
@@ -246,8 +292,12 @@ contract VaultController is
 
   /******* getters things *******/
 
-  ///@dev - returns the amount of tokens underwater this vault is
-  ///@dev - the amount owed is a moving target and changes with each block
+  /// @notice calculate amount of tokens to liquidate for a vault
+  /// @param id the vault to get info for
+  /// @param asset_address the token to calculate how many tokens to liquidate 
+  /// @param tokens_to_liquidate the max amount of tokens one wishes to liquidate
+  /// @return the amount of tokens underwater this vault is
+  /// @dev the amount owed is a moving target and changes with each block
   function TokensToLiquidate(
     uint256 id,
     address asset_address,
@@ -260,7 +310,12 @@ contract VaultController is
 
     return tokenAmount;
   }
-
+  /// @notice internal function with business logic for liquidation math
+  /// @param id the vault to get info for
+  /// @param asset_address the token to calculate how many tokens to liquidate 
+  /// @param tokens_to_liquidate the max amount of tokens one wishes to liquidate
+  /// @return the amount of tokens underwater this vault is
+  /// @return the bad fill price for the token
   function _liquidationMath(
     uint256 id,
     address asset_address,
@@ -295,12 +350,19 @@ contract VaultController is
     return (tokens_to_liquidate, badFillPrice);
   }
 
+  /// @notice internal function to wrap getting of vaults
+  /// @param id id of vault
+  /// @return vault IVault contract of 
   function getVault(uint256 id) internal view returns (IVault vault) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     vault = IVault(vault_address);
   }
 
+  /// @notice get account liability of vault
+  /// @param id id of vault
+  /// @return amount of USDI the vault owes 
+  /// @dev implementation _AccountLiability
   function AccountLiability(uint256 id) external view override returns (uint256) {
     return _AccountLiability(id);
   }
@@ -312,11 +374,14 @@ contract VaultController is
     return truncate(vault.BaseLiability() * _interestFactor);
   }
 
+  /// @notice get account borrowing power for vault
+  /// @param id id of vault
+  /// @return amount of USDI the vault owes 
+  /// @dev implementation in get_vault_borrowing_power
   function AccountBorrowingPower(uint256 id) external view override returns (uint256) {
     return get_vault_borrowing_power(IVault(_vaultId_vaultAddress[id]));
   }
 
-  ///@dev total_liquidity_value
   function get_vault_borrowing_power(IVault vault) private view returns (uint256) {
     uint256 total_liquidity_value = 0;
     for (uint256 i = 1; i <= _tokensRegistered; i++) {
@@ -331,7 +396,8 @@ contract VaultController is
     return total_liquidity_value;
   }
 
-  /******* calculate and pay interest *******/
+  /// @notice calls the pay interest function
+  /// @dev implementation in pay_interest
   function calculateInterest() external override returns (uint256) {
     return pay_interest();
   }
