@@ -9,7 +9,7 @@ lint:
       files:
         - yarn.lock
   script:
-    - npm i
+    - npm run setup
     - npm run lint
 
 test:
@@ -21,7 +21,7 @@ test:
       files:
         - yarn.lock
   script:
-    - npm i
+    - npm run setup
     - npx hardhat clean
     - npx hardhat compile
     - npm run test
@@ -36,7 +36,8 @@ pages:
       paths:
         - node_modules/
   script:
-    - npx yarn install
+    - npm run setup
+    - npx hardhat clean
     - npx hardhat compile
     - mv docs public
   artifacts:
