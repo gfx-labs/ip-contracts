@@ -5,8 +5,8 @@
 ## setup
 
 ```
-npm install
-npx hardhat compile
+npm run setup
+npm run compile
 ```
 
 to run local node with fork from rpc:
@@ -18,5 +18,5 @@ npx hardhat node --fork <http(s)://rpc_address.xyz>
 
 test from fresh deployment:
 ```
-npx hardhat test  test/mainnet/index.ts
+npm run test
 ```

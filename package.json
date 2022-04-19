@@ -7,6 +7,8 @@
         "test": "test"
     },
     "scripts": {
+        "setup": "npx yarn install",
+        "compile": "npx hardhat compile",
         "test": "npx hardhat test test/mainnet/index.ts",
         "lint": "npx solhint contracts/**/*.sol",
         "fmt": "npx prettier --write 'contracts/*/*.sol'",
