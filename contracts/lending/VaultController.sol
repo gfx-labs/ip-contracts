@@ -208,7 +208,7 @@ contract VaultController is
     require(_msgSender() == vault.Minter(), "sender not creator");
 
     uint256 base_amount = div_(amount * 1e18, _interestFactor);
-    uint256 base_liability = vault.increase_liability(base_amount);
+    uint256 base_liability = vault.modify_liability(true, base_amount);
     _totalBaseLiability = _totalBaseLiability + base_amount;
 
     uint256 usdi_liability = truncate((_interestFactor - 1) * base_liability);
@@ -236,7 +236,7 @@ contract VaultController is
     uint256 base_amount = div_(amount * 1e18, _interestFactor);
     _totalBaseLiability = _totalBaseLiability - base_amount;
     require(base_amount <= vault.BaseLiability(), "repay > borrow amount");
-    vault.decrease_liability(base_amount);
+    vault.modify_liability(false, base_amount);
     _usdi.vault_master_burn(_msgSender(), amount);
     emit RepayUSDi(id, vault_address, amount);
   }
@@ -251,7 +251,7 @@ contract VaultController is
 
     Exp memory interest_factor = Exp({mantissa: _interestFactor});
     uint256 usdi_liability = truncate(ExponentialNoError.mul_ScalarTruncate(interest_factor, vault.BaseLiability()));
-    vault.decrease_liability(vault.BaseLiability());
+    vault.modify_liability(false, vault.BaseLiability());
     _usdi.vault_master_burn(_msgSender(), usdi_liability);
 
     emit RepayUSDi(id, vault_address, usdi_liability);
@@ -278,7 +278,7 @@ contract VaultController is
     IVault vault = getVault(id);
 
     //decrease by base amount -- switch to truncate?
-    vault.decrease_liability(div_(usdi_to_repurchase * 1e18, _interestFactor));
+    vault.modify_liability(false, div_(usdi_to_repurchase * 1e18, _interestFactor));
 
     //decrease liquidators usdi balance
     _usdi.vault_master_burn(_msgSender(), usdi_to_repurchase);
