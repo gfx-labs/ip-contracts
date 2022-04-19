@@ -9,6 +9,9 @@ import "@typechain/hardhat";
 import "hardhat-docgen"
 
 import { HardhatUserConfig } from "hardhat/types";
+import { readdirSync } from "fs";
+import path from "path";
+
 
 const config: HardhatUserConfig = {
     defaultNetwork: "hardhat",
@@ -29,6 +32,9 @@ const config: HardhatUserConfig = {
         localhost: {
             url: "http://localhost:8545",
         },
+    },
+    gasReporter: {
+        enabled: true,
     },
     solidity: {
         version: "0.8.9",
