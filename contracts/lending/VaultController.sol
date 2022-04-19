@@ -405,14 +405,16 @@ contract VaultController is
   }
 
   function pay_interest() private returns (uint256) {
+    // calculate time diff
     uint256 timeDifference = block.timestamp - _lastInterestTime;
     if (timeDifference == 0) {
       return 0;
     }
+    // query reserve ratio
     int256 reserve_ratio = int256(_usdi.reserveRatio());
+    // get current interest rate cure value
     int256 int_curve_val = _curveMaster.getValueAt(address(0x00), reserve_ratio);
     require(int_curve_val >= 0, "rate too small");
-
     uint256 curve_val = uint256(int_curve_val);
 
     uint256 e18_factor_increase = truncate(
