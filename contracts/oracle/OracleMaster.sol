@@ -34,7 +34,6 @@ contract OracleMaster is IOracleMaster, Ownable {
   /// @notice admin only, sets relay for a token address to the relay addres
   /// @param token_address address of the token 
   /// @param relay_address address of the relay 
-  /// @return the value of the token
   function set_relay(address token_address, address relay_address) public override onlyOwner {
     _relays[token_address] = relay_address;
   }
