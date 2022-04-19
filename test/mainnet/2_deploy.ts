@@ -1,5 +1,5 @@
 import { s } from "./scope";
-import { upgrades } from "hardhat";
+import { upgrades, ethers } from "hardhat";
 import { expect, assert } from "chai";
 import { showBody } from "../util/format";
 import { BN } from "../util/number";
@@ -15,6 +15,9 @@ import {
     IOracleRelay,
     OracleMaster,
     OracleMaster__factory,
+    ProxyAdmin,
+    ProxyAdmin__factory,
+    TransparentUpgradeableProxy__factory,
     ThreeLines0_100,
     ThreeLines0_100__factory,
     UniswapV3OracleRelay__factory,
@@ -26,7 +29,64 @@ import {
     IVOTE,
     IVOTE__factory,
 } from "../../typechain-types";
-import { mineBlock } from "../util/block";
+import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../util/block";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+
+let VaultController: VaultController
+let USDi: USDI
+let ProxyController: ProxyAdmin
+
+let deployer: SignerWithAddress,
+    alice: SignerWithAddress,
+    bob: SignerWithAddress,
+    carol: SignerWithAddress,
+    dave: SignerWithAddress,
+    ethan: SignerWithAddress;
+let ganga: Array<SignerWithAddress>;
+
+const deployProxy = async () => {
+
+    [deployer, alice, bob, carol, dave, ethan] = await ethers.getSigners();
+    ganga = [deployer, alice, bob, carol, dave, ethan];
+    await mineBlock()
+
+
+    const uVC = await new VaultController__factory(s.Frank).connect(s.Frank).deploy()
+    await mineBlock()
+
+    ProxyController = await new ProxyAdmin__factory(s.Frank).connect(s.Frank).deploy()
+    await mineBlock()
+
+    let vc = await new TransparentUpgradeableProxy__factory(
+        deployer
+    ).connect(s.Frank).deploy(uVC.address, ProxyController!.address, "0x");
+    await mineBlock()
+
+    VaultController = await new VaultController__factory(s.Frank).attach(vc.address)
+    await mineBlock()
+    await VaultController.deployed()
+    await mineBlock()
+
+    await VaultController.initialize()
+    await mineBlock()
+
+
+    const uUSDi = await new USDI__factory(s.Frank).connect(s.Frank).deploy()
+    await mineBlock()
+    
+    let usd = await new TransparentUpgradeableProxy__factory(
+        deployer
+    ).connect(s.Frank).deploy(uUSDi.address, ProxyController!.address, "0x")
+    await mineBlock()
+
+    USDi = await new USDI__factory(s.Frank).attach(usd.address)
+    await mineBlock()
+    await USDi.deployed()
+    await mineBlock()
+    await USDi.initialize(s.usdcAddress)
+
+
+}
 
 
 require('chai').should()
