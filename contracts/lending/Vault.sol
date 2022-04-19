@@ -11,16 +11,14 @@ import "../_external/IERC20.sol";
 import "../_external/Context.sol";
 import "../_external/compound/ExponentialNoError.sol";
 
-interface CompLike {
-    function delegate(address delegatee) external;
-}
 
-// the mantissa for ExponentialNoError is 1e18
-// so to store 5, you store 5e18
 
-// our implentation of maker-vault like vault
-// vaults are multi-collateral
-// vaults generate interest in USDI
+/// @title A users vault
+/// @notice our implentation of maker-vault like vault
+/// major differences:
+/// 1. multi-collateral
+/// 2. generate interest in USDI
+/// 3. can delegate voting power of contained tokens
 contract Vault is IVault, ExponentialNoError, Context {
     uint256 public _id;
     address public _minter;
@@ -35,6 +33,7 @@ contract Vault is IVault, ExponentialNoError, Context {
 
     uint256 public _baseLiability;
 
+    /// @notice checks if _msgSender is the controller of the vault
     modifier onlyVaultController() {
         require(
             _msgSender() == _VaultControllerAddress,
@@ -43,11 +42,17 @@ contract Vault is IVault, ExponentialNoError, Context {
         _;
     }
 
+    /// @notice checks if _msgSender is the minter of the vault
     modifier onlyMinter() {
         require(_msgSender() == _minter, "sender not minter");
         _;
     }
 
+    /// @notice must be called by VaultController, else it will not be registered as a vault in system
+    /// @param id unique id of the vault, ever increasing and tracked by VaultController
+    /// @param minter address of the person who created this vault
+    /// @param master_address address of the VaultController
+    /// @param usdi_address address of the Usdi contract
     constructor(
         uint256 id,
         address minter,
@@ -62,14 +67,22 @@ contract Vault is IVault, ExponentialNoError, Context {
         _master = IVaultController(master_address);
     }
 
+    /// @notice minter of the vault
+    /// @return address of minter
     function Minter() external view override returns (address) {
         return _minter;
     }
 
+    /// @notice current vault base liability
+    /// @return base liability of vault
     function BaseLiability() external view override returns (uint256) {
         return _baseLiability;
     }
 
+    /// @notice get vaults balance of an erc20 token
+    /// @param addr address of the erc20 token
+    /// @dev all this does is call IERC20(addr).balanceOf(address(this))
+    /// this is here to serve as a reminder that we can possibly modify this function in the future
     function tokenBalance(address addr)
         external
         view
@@ -79,6 +92,11 @@ contract Vault is IVault, ExponentialNoError, Context {
         return IERC20(addr).balanceOf(address(this));
     }
 
+    /// @notice withdraw an erc20 token from the vault
+    /// this can only be called by the minter
+    /// the withdraw will be denied if ones vault would become insolvent
+    /// @param token_address address of erc20 token
+    /// @param amount amount of erc20 token to withdraw
     function withdrawErc20(address token_address, uint256 amount)
         external
         override
@@ -91,14 +109,21 @@ contract Vault is IVault, ExponentialNoError, Context {
 
         emit Withdraw(token_address, amount);
     }
-
+    /// @notice delegate the voting power of a comp-like erc20 token to another address
+    /// @param delegatee address that will receive the votes
+    /// @param token_address address of comp-like erc20 token
     function delegateCompLikeTo(
         address delegatee,
-        address token_address,
+        address token_address
     ) external override onlyMinter {
         CompLike(token_address).delegate(delegatee);
     }
 
+    /// @notice function used by the VaultController to transfer tokens
+    /// callable by the VaultController only
+    /// @param _token token to transfer
+    /// @param _to person to send the coins to
+    /// @param _amount amount of coins to move
     function masterTransfer(
         address _token,
         address _to,
@@ -110,6 +135,9 @@ contract Vault is IVault, ExponentialNoError, Context {
         );
     }
 
+    /// @notice function used by the VaultController to reduce a vaults liability
+    /// callable by the VaultController only
+    /// @param base_amount amount to reduce base liability by
     function decrease_liability(uint256 base_amount)
         external
         override
@@ -124,6 +152,9 @@ contract Vault is IVault, ExponentialNoError, Context {
         return _baseLiability;
     }
 
+    /// @notice function used by the VaultController to increase a vaults liability
+    /// callable by the VaultController only
+    /// @param base_amount amount to reduce base liability by
     function increase_liability(uint256 base_amount)
         external
         override
