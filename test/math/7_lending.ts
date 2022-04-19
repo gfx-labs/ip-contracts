@@ -62,28 +62,33 @@ const payInterestMath = async (interestFactor: BigNumber) => {
     return interestFactor.add(calculatedIF)
 }
 
+/**
+ * 
+ * @param borrowAmount original borrow amount
+ * @param currentInterestFactor current interest factor read from contract 
+ * @param initialInterestFactor original interest factor from when borrow took place
+ * @returns 
+ */
 const calculateAccountLiability = async (borrowAmount: BigNumber, currentInterestFactor: BigNumber, initialInterestFactor: BigNumber) => {
-    //showBody("calculateAccountLiability calculateAccountLiability calculateAccountLiability")
-    const baseLiability = await s.BobVault.BaseLiability()
-    //showBody("baseLiability FROM CONTRACT: ", baseLiability)
+    showBody("calculateAccountLiability calculateAccountLiability")
+    showBody("borrowAmount: ", borrowAmount)
+    showBody("currentInterestFactor: ", currentInterestFactor)
+    showBody("initialInterestFactor: ", initialInterestFactor)
 
-    const baseAmount = (borrowAmount.mul(BN("1e18"))).div(initialInterestFactor)
-    //showBody("baseAmount SHOULD MATCH baseLiability: ", baseAmount)
-    const currentLiability = (baseAmount.mul(currentInterestFactor)).div(BN("1e18"))
-    //showBody("currentLiability: ", currentLiability)
+    let baseAmount = borrowAmount.mul(BN("1e18"))
+    baseAmount = baseAmount.div(initialInterestFactor)
+    showBody("baseAmount: ", baseAmount)
+    let currentLiability = baseAmount.mul(currentInterestFactor)
+    currentLiability = currentLiability.div(BN("1e18"))
 
 
     return currentLiability
 }
-
-
 const initIF = BN("1e18")
-
 //initIF is 1e18, pay_interest() is called before the first loan is taken, resulting in firstBorrowIF
-const firstBorrowIF = BN("1000000433493041295")
+let firstBorrowIF: BigNumber
 const borrowAmount = BN("5000e18")
 const nullAddr = "0x0000000000000000000000000000000000000000"
-
 describe("TOKEN-DEPOSITS", async () => {
 
     //bob tries to borrow usdi against 10 eth as if eth is $100k
@@ -101,46 +106,33 @@ describe("TOKEN-DEPOSITS", async () => {
         const initUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
         assert.equal(initUSDiBalance.toString(), "0", "Bob starts with 0 USDi")
 
-        //initial interest factor
+        //set initial interest factor
         const initInterestFactor = await s.VaultController.InterestFactor()
+        
         assert.equal(initInterestFactor.toString(), initIF.toString(), "Initial interest factor is correct")
 
-        //calculate base liability
-        //const calculatedBaseLiability = await calculateAccountLiability(borrowAmount, initInterestFactor, initIF)
-
-        expectedInterestFactor = await payInterestMath(initInterestFactor)
-        showBody(expectedInterestFactor)
-        showBody(firstBorrowIF)
-
-        //error
-        //assert.equal(expectedInterestFactor.toString(), firstBorrowIF.toString(), "Expected interest factor is correct for first borrow")
-        //calculate liability - should match base - og interest factor == current interest factor
-        const calculatedBaseLiability = await calculateAccountLiability(borrowAmount, expectedInterestFactor, firstBorrowIF)
-
+        expectedInterestFactor = await payInterestMath(initIF)
+        firstBorrowIF = expectedInterestFactor
+        const calculatedBaseLiability = await calculateAccountLiability(borrowAmount, expectedInterestFactor, expectedInterestFactor)
 
         const borrowResult = await s.VaultController.connect(s.Bob).borrowUsdi(1, borrowAmount)
         await advanceBlockHeight(1)
         const args = await getArgs(borrowResult)
         actualBorrowAmount = args!.borrowAmount
 
-        //calculate the new interest factor - starting interest factor is 1e18 as confirmed in tests above
         //actual new interest factor from contract
         const newInterestFactor = await s.VaultController.InterestFactor()
-
         assert.equal(newInterestFactor.toString(), expectedInterestFactor.toString(), "New Interest Factor is correct")
 
         const liability = await s.VaultController.connect(s.Bob).AccountLiability(1)
-
-        //showBody("Actual Liability: ", liability)
-        //showBody("calculated liabi: ", calculatedBaseLiability)
-
-        //assert.equal(liability.toString(), calculatedBaseLiability.sub(1).toString(), "Calculated base liability is correct")
+        assert.equal(liability.toString(), calculatedBaseLiability.toString(), "Calculated base liability is correct")
 
         const resultingUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
         assert.equal(resultingUSDiBalance.toString(), actualBorrowAmount.toString(), "Bob received the correct amount of USDi")
 
     });
     it(`after 1 week, bob should have a liability greater than ${"BN(5000e18)"}`, async () => {
+        
         await advanceBlockHeight(1)
         const initLiability = await s
             .VaultController.connect(s.Bob)
@@ -162,13 +154,19 @@ describe("TOKEN-DEPOSITS", async () => {
         assert.equal(interestFactor.toString(), interestMath.toString(), "Interest factor is correct")
 
         const expectedLiability = await calculateAccountLiability(borrowAmount, interestMath, firstBorrowIF)
+        showBody("interestMath: ", interestMath)
+        showBody("interestMath: ", firstBorrowIF)
+        
+
+        let checkBaseLiab = await s.BobVault.BaseLiability()
+        showBody("checkBaseLiab: ", checkBaseLiab)
 
         //TODO calculate new liability based on interest factor
         const liability_amount = await s
             .VaultController.connect(s.Bob)
             .AccountLiability(1);
-        //showBody("expectedLiability ", expectedLiability)
-        //showBody("ending liability  ", liability_amount)
+        showBody("expectedLiability ", expectedLiability)
+        showBody("TARGET liability  ", liability_amount)
         expect(liability_amount).to.be.gt(BN("5000e18"));
 
         //assert.equal(liability_amount.toString(), expectedLiability.toString(), "Liability calculations are correct")
@@ -202,13 +200,6 @@ describe("Checking interest generation", () => {
         expect(balance > initBalance)
     })
 })
-/**
- untested functions: 
-  repayUSDi + repayAllUSDi WIP
-  liquidate_account WIP
-  checkAccount
-  getInterestFactor
- */
 
 describe("Testing repay", () => {
     const borrowAmount = BN("10e18")
