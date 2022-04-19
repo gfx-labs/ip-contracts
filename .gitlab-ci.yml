@@ -32,7 +32,6 @@ pages:
     - key:
         files:
           - yarn.lock
-        prefix: yarn
       paths:
         - node_modules/
   script:
