@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// @title Vault Interface
+/// @notice Interface for interacting directly with a vault
 interface IVault {
   function BaseLiability() external view returns (uint256);
 
