@@ -4,13 +4,14 @@ import { expect, assert } from "chai";
 import { showBody } from "../util/format";
 import { BN } from "../util/number";
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../util/block";
-import { Event, utils } from "ethers";
+import { Event, utils, BigNumber } from "ethers";
+
 /**
  * 
  * @param result object returned from a transaction that emits an event 
  * @returns the args from the last event emitted from the transaction
  */
- const getArgs = async (result: any) => {
+const getArgs = async (result: any) => {
     await advanceBlockHeight(1)
     const receipt = await result.wait()
     await advanceBlockHeight(1)
@@ -20,10 +21,46 @@ import { Event, utils } from "ethers";
     return args
 }
 
+/**
+ * @dev takes interest factor and returns new interest factor - pulls block time from network and latestInterestTime from contract
+ * @param interestFactor  - current interest factor read from contract
+ * @returns new interest factor based on time elapsed and reserve ratio (read from contract atm)
+ */
+const payInterestMath = async (interestFactor: BigNumber) => {
+    const latestInterestTime = await s.VaultController._lastInterestTime()//calculate? 
+    const currentBlock = await ethers.provider.getBlockNumber()
+    const currentTime = (await ethers.provider.getBlock(currentBlock)).timestamp
+    let timeDifference = currentTime - latestInterestTime.toNumber() + 1 //account for change when fetching from provider
+
+    const reserveRatio = await s.USDI.reserveRatio()//todo - calculate
+    const curve = await s.Curve.getValueAt(nullAddr, reserveRatio)//todo - calculate
+
+    let calculation = BN(timeDifference).mul(BN("1e18").mul(curve))//correct step 1
+    calculation = calculation.div(OneYear)//correct step 2 - divide by OneYear
+    calculation = calculation.div(BN("1e18"))//truncate
+    calculation = calculation.mul(interestFactor)
+    calculation = calculation.div(BN("1e18"))//truncate again
+
+    //showBody("Interest Factor increase: ", calculation)
+    //showBody("Provided Interest Factor: ", interestFactor)
+    //showBody("New Interest Factor: ", interestFactor.add(calculation))
+
+    //new interest factor
+    return interestFactor.add(calculation)
+}
+
+
+
+const nullAddr = "0x0000000000000000000000000000000000000000"
+const borrowAmount = BN("5000e18")
+const initIF = BN("1e18")
 
 describe("TOKEN-DEPOSITS", async () => {
+
     //bob tries to borrow usdi against 10 eth as if eth is $100k
     // remember bob has 10 eth
+    let actualBorrowAmount: any
+    let expectedInterestFactor: BigNumber
     it(`bob should not be able to borrow 1e6 * 1e18 * ${s.Bob_WETH} usdi`, async () => {
         await expect(s.VaultController.connect(s.Bob).borrowUsdi(1,
             s.Bob_WETH.mul(BN("1e18")).mul(1e6),
@@ -31,19 +68,61 @@ describe("TOKEN-DEPOSITS", async () => {
     });
 
     it(`bob should be able to borrow ${"5000e18"} usdi`, async () => {
-        await expect(s.VaultController.connect(s.Bob).borrowUsdi(1, BN("5000e18"))).to.not.be
-            .revertedWith("account insolvent");
+
+        const initUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
+        assert.equal(initUSDiBalance.toString(), "0", "Bob starts with 0 USDi")
+
+        //initial interest factor
+        const initInterestFactor = await s.VaultController.InterestFactor()
+        assert.equal(initInterestFactor.toString(), initIF.toString(), "Initial interest factor is correct")
+
+        expectedInterestFactor = await payInterestMath(initInterestFactor)
+
+        const borrowResult = await s.VaultController.connect(s.Bob).borrowUsdi(1, borrowAmount)
+        await advanceBlockHeight(1)
+        const args = await getArgs(borrowResult)
+        actualBorrowAmount = args!.borrowAmount
+
+        //calculate the new interest factor - starting interest factor is 1e18 as confirmed in tests above
+        //actual new interest factor from contract
+        const newInterestFactor = await s.VaultController.InterestFactor()
+
+        assert.equal(newInterestFactor.toString(), expectedInterestFactor.toString(), "New Interest Factor is correct")
+
+        const resultingUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
+        assert.equal(resultingUSDiBalance.toString(), actualBorrowAmount.toString(), "Bob received the correct amount of USDi")
+
     });
-    it(`after a few days, bob should have a liability greater than ${"BN(5000e18)"}`, async () => {
-        await fastForward(60 * 60 * 24 * 7);//1 week
+    it(`after 1 week, bob should have a liability greater than ${"BN(5000e18)"}`, async () => {
         await advanceBlockHeight(1)
-        await s.VaultController.connect(s.Frank).calculateInterest();
+        const initLiability = await s
+            .VaultController.connect(s.Bob)
+            .AccountLiability(1);
+        await fastForward(OneWeek);//1 week
         await advanceBlockHeight(1)
+
+        let interestFactor = await s.VaultController.InterestFactor()
+        const interestMath = await payInterestMath(interestFactor)
+
+
+        const interestResult = await s.VaultController.connect(s.Frank).calculateInterest();
+        await advanceBlockHeight(1)
+        const e18_factor_increase = await getArgs(interestResult)
+
+
+        interestFactor = await s.VaultController.InterestFactor()
+
+        assert.equal(interestFactor.toString(), interestMath.toString(), "Interest factor is correct")
+
+
+        //TODO calculate new liability based on interest factor
         const liability_amount = await s
             .VaultController.connect(s.Bob)
             .AccountLiability(1);
-        showBody("bobs liability", liability_amount)
+        //showBody("start liability ", initLiability)
+        //showBody("ending liability", liability_amount)
         expect(liability_amount).to.be.gt(BN("5000e18"));
+        
     });
 });
 
@@ -76,10 +155,10 @@ describe("Testing repay", () => {
     it("partial repay", async () => {
         const liability = await s.BobVault.connect(s.Bob).BaseLiability()
         const partialLiability = liability.div(2) //half
-        showBody("Partial liability: ", partialLiability)
+        //showBody("Partial liability: ", partialLiability)
         const vaultId = 1
         const initBalance = await s.USDI.balanceOf(s.Bob.address)
-        showBody("Bob's Initial Balance: ", initBalance)
+        //showBody("Bob's Initial Balance: ", initBalance)
 
         //check pauseable 
         await s.VaultController.connect(s.Frank).pause()
@@ -92,9 +171,9 @@ describe("Testing repay", () => {
         await advanceBlockHeight(1)
         let updatedLiability = await s.BobVault.connect(s.Bob).BaseLiability()
         let balance = await s.USDI.balanceOf(s.Bob.address)
-        showBody("Balance after repay", balance.toString())
+        //showBody("Balance after repay", balance.toString())
         expect(balance < initBalance)
-        showBody("Updated Liability after repay: ", updatedLiability.toString())
+        //showBody("Updated Liability after repay: ", updatedLiability.toString())
         expect(updatedLiability < liability)
 
         //TODO - TEST MATH
@@ -119,7 +198,7 @@ describe("Testing repay", () => {
         expect(updatedLiability).to.eq(0)
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
-        showBody("Balance after complete repay: ", balance)
+        //showBody("Balance after complete repay: ", balance)
     })
 })
 
@@ -181,7 +260,7 @@ describe("Testing liquidations", () => {
         //check ending liability
         let liabiltiy = await s.VaultController.AccountLiability(vaultID)
         //showBody("initLiability: ", initLiability)
-        showBody("End liability: ", liabiltiy)
+        //showBody("End liability: ", liabiltiy)
 
         //Bob's vault has less collateral than before
         let balance = await s.WETH.balanceOf(s.BobVault.address)
@@ -213,13 +292,14 @@ describe("Testing liquidations", () => {
         //let formatPrice = (await s.Oracle.getLivePrice(s.compAddress)).div(1e14).toNumber() / 1e4
         const vaultID = 2
 
-        showBody("scaled COMP price: ", rawPrice.mul(BN("1e18")))
+        //showBody("scaled COMP price: ", rawPrice.mul(BN("1e18")))
         //get values for total collateral value and loan amount
         const carolVaultTotalTokens = await s.COMP.balanceOf(s.CarolVault.address)
         const collateralValue = carolVaultTotalTokens.mul(BN("1e18")).mul(rawPrice.mul(BN("1e18")))
-        showBody("carol's TCV: ", collateralValue)
+        //showBody("carol's TCV: ", collateralValue)
         //borrow usdi
         const carolBorrowPower = await s.VaultController.AccountBorrowingPower(2)
+        await advanceBlockHeight(1)
         const borrowResult = await s.VaultController.connect(s.Carol).borrowUsdi(vaultID, carolBorrowPower)
         await advanceBlockHeight(1)
         const args = await getArgs(borrowResult)
@@ -229,37 +309,37 @@ describe("Testing liquidations", () => {
         expect(await s.USDI.balanceOf(s.Carol.address)).to.eq(actualBorrowAmount)
 
         let solvency = await s.VaultController.checkAccount(vaultID)
-        showBody("carol's vault should be solvent")
+        //showBody("carol's vault should be solvent")
         assert.equal(solvency, true, "Carol's vault is solvent")
 
-        showBody("advance 1 week and then calculate interest")
+        //showBody("advance 1 week and then calculate interest")
         await fastForward(OneWeek)
         await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
 
         let bn = await ethers.provider.getBlockNumber()
-        showBody("current block", bn)
+        //showBody("current block", bn)
         //this check is silly, each new mineBlock() advances by 1
         //expect(bn).to.eq(BN("14546874"))
 
         let bt = (await ethers.provider.getBlock(bn)).timestamp
-        showBody("current timestamp", bt)
+        //showBody("current timestamp", bt)
 
         solvency = await s.VaultController.checkAccount(vaultID)
-        showBody("carol vault should be insolvent")
+        //showBody("carol vault should be insolvent")
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
         let liquidatableTokens = await s.VaultController.TokensToLiquidate(vaultID, s.compAddress, BN("1e25"))
-        showBody("liquidatableTokens:", liquidatableTokens)
+        //showBody("liquidatableTokens:", liquidatableTokens)
         //tiny liquidation 
-        showBody("calculating amount to liquidate");
+        //showBody("calculating amount to liquidate");
 
         //callStatic does not actually make the call and change the state of the contract, thus liquidateAmount == liquidatableTokens
         const liquidateAmount = await s.VaultController.connect(s.Dave).callStatic.liquidate_account(vaultID, s.compAddress, BN("1e25"))
-        showBody("liquidating at IF", await s.VaultController.InterestFactor());
+        //showBody("liquidating at IF", await s.VaultController.InterestFactor());
         await expect(s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.compAddress, BN("1e25"))).to.not.reverted
         await advanceBlockHeight(1)
-        showBody("dave liquidated:", liquidateAmount, "comp")
+        //showBody("dave liquidated:", liquidateAmount, "comp")
         expect(liquidateAmount).to.eq(liquidatableTokens)
 
         //let balance = await s.USDI.balanceOf(Dave.address)
