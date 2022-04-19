@@ -17,6 +17,8 @@ import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 /// @title Controller of all vaults in the USDI borrow/lend system
 /// @notice VaultController contains all business logic for borrowing/lending with the protocol
 /// it is also in charge of calculating interest
@@ -55,7 +57,7 @@ contract VaultController is
   uint256 public _interestFactor;
   uint256 public _protocolFee;
 
-  /// @notice any function with this modifier will call the pay_interest() function before 
+  /// @notice any function with this modifier will call the pay_interest() function before
   modifier paysInterest() {
     pay_interest();
     _;
@@ -86,7 +88,7 @@ contract VaultController is
   }
 
   /// @notice get vault address of id
-  /// @return the address of vault 
+  /// @return the address of vault
   function VaultAddress(uint256 id) external view override returns (address) {
     return _vaultId_vaultAddress[id];
   }
@@ -207,7 +209,6 @@ contract VaultController is
 
     uint256 base_amount = div_(amount * 1e18, _interestFactor);
     uint256 base_liability = vault.increase_liability(base_amount);
-
     _totalBaseLiability = _totalBaseLiability + base_amount;
 
     uint256 usdi_liability = truncate((_interestFactor - 1) * base_liability);
@@ -238,7 +239,6 @@ contract VaultController is
     emit RepayUSDi(id, vault_address, amount);
   }
 
-
   /// @notice repay all of a vaults usdi. anyone may repay a vaults liabilities
   /// @param id the vault to repay
   /// @dev pays interest
@@ -254,7 +254,6 @@ contract VaultController is
 
     emit RepayUSDi(id, vault_address, usdi_liability);
   }
-
 
   /// @notice liquidate an underwater vault
   /// vaults may be liquidated up to the point where they are exactly solvent
@@ -294,7 +293,7 @@ contract VaultController is
 
   /// @notice calculate amount of tokens to liquidate for a vault
   /// @param id the vault to get info for
-  /// @param asset_address the token to calculate how many tokens to liquidate 
+  /// @param asset_address the token to calculate how many tokens to liquidate
   /// @param tokens_to_liquidate the max amount of tokens one wishes to liquidate
   /// @return the amount of tokens underwater this vault is
   /// @dev the amount owed is a moving target and changes with each block
@@ -310,9 +309,10 @@ contract VaultController is
 
     return tokenAmount;
   }
+
   /// @notice internal function with business logic for liquidation math
   /// @param id the vault to get info for
-  /// @param asset_address the token to calculate how many tokens to liquidate 
+  /// @param asset_address the token to calculate how many tokens to liquidate
   /// @param tokens_to_liquidate the max amount of tokens one wishes to liquidate
   /// @return the amount of tokens underwater this vault is
   /// @return the bad fill price for the token
@@ -352,7 +352,7 @@ contract VaultController is
 
   /// @notice internal function to wrap getting of vaults
   /// @param id id of vault
-  /// @return vault IVault contract of 
+  /// @return vault IVault contract of
   function getVault(uint256 id) internal view returns (IVault vault) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
@@ -361,7 +361,7 @@ contract VaultController is
 
   /// @notice get account liability of vault
   /// @param id id of vault
-  /// @return amount of USDI the vault owes 
+  /// @return amount of USDI the vault owes
   /// @dev implementation _AccountLiability
   function AccountLiability(uint256 id) external view override returns (uint256) {
     return _AccountLiability(id);
@@ -371,12 +371,15 @@ contract VaultController is
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
+    //console.log("base: ", vault.BaseLiability());
+    //console.log("base * if: ", vault.BaseLiability() * _interestFactor);
+    //console.log("result: ", truncate(vault.BaseLiability() * _interestFactor));
     return truncate(vault.BaseLiability() * _interestFactor);
   }
 
   /// @notice get account borrowing power for vault
   /// @param id id of vault
-  /// @return amount of USDI the vault owes 
+  /// @return amount of USDI the vault owes
   /// @dev implementation in get_vault_borrowing_power
   function AccountBorrowingPower(uint256 id) external view override returns (uint256) {
     return get_vault_borrowing_power(IVault(_vaultId_vaultAddress[id]));
