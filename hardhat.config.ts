@@ -3,6 +3,7 @@ import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-watcher";
 import "@openzeppelin/hardhat-upgrades";
+import "hardhat-gas-reporter"
 
 import "@typechain/hardhat";
 import "hardhat-docgen"
