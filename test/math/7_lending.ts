@@ -26,21 +26,27 @@ const truncate = async (value:BigNumber) => {
 }
 
 const calculateBalance = async (interestFactor:BigNumber) => {
-    
+
+    await mineBlock()
+
     const totalBaseLiability = await s.VaultController._totalBaseLiability()
     const protocolFee = await s.VaultController._protocolFee()
     let before = totalBaseLiability.mul(interestFactor)
-    interestFactor = await payInterestMath()
+    before = await truncate(before)
+    showBody("Before: ", before)
+    interestFactor = await payInterestMath(interestFactor)
+    showBody("Calc IF: ", interestFactor)
     let after = await truncate(totalBaseLiability.mul(interestFactor))
+    showBody("After: ", after)
     const dif = after.sub(before)
     let protocolAmount = dif.mul(protocolFee)
     protocolAmount = await truncate(protocolAmount)
 
     const donateAmount = after.sub(before).sub(protocolAmount)
-    showBody("donateAmount: ", donateAmount)
+    //showBody("donateAmount: ", donateAmount)
 
-    showBody("Mint amount: ", protocolAmount)
-    showBody("Formatted Mint: ", utils.formatEther(protocolAmount.toString()))
+    //showBody("Mint amount: ", protocolAmount)
+    //showBody("Formatted Mint: ", utils.formatEther(protocolAmount.toString()))
 
     showBody("CALCULATING INTEREST")
     await s.VaultController.calculateInterest()
@@ -51,9 +57,9 @@ const calculateBalance = async (interestFactor:BigNumber) => {
  * @param interestFactor  - current interest factor read from contract
  * @returns new interest factor based on time elapsed and reserve ratio (read from contract atm)
  */
-const payInterestMath = async () => {
+const payInterestMath = async (interestFactor:BigNumber) => {
 
-    let interestFactor = await s.VaultController.InterestFactor()
+    //let interestFactor = await s.VaultController.InterestFactor()
 
     const latestInterestTime = await s.VaultController._lastInterestTime()//calculate? 
     const currentBlock = await ethers.provider.getBlockNumber()
@@ -114,7 +120,7 @@ describe("TOKEN-DEPOSITS", async () => {
         //get initial interest factor
         const initInterestFactor = await s.VaultController.InterestFactor()
 
-        expectedInterestFactor = await payInterestMath()
+        expectedInterestFactor = await payInterestMath(initInterestFactor)
         firstBorrowIF = expectedInterestFactor
         const calculatedBaseLiability = await calculateAccountLiability(borrowAmount, initInterestFactor, initInterestFactor)
 
@@ -141,7 +147,7 @@ describe("TOKEN-DEPOSITS", async () => {
         await advanceBlockHeight(1)
 
         let interestFactor = await s.VaultController.InterestFactor()
-        const calculatedInterestFactor = await payInterestMath()
+        const calculatedInterestFactor = await payInterestMath(interestFactor)
 
         await s.VaultController.connect(s.Frank).calculateInterest();
         await advanceBlockHeight(1)
@@ -172,7 +178,7 @@ describe("Checking interest generation", () => {
 
         //preCalculate interestFactor
         let interestFactor = await s.VaultController.InterestFactor()
-        const calculatedInterestFactor = await payInterestMath()
+        const calculatedInterestFactor = await payInterestMath(interestFactor)
         const expectedBalance = await calculateBalance(interestFactor)
 
         //check for yeild before calculateInterest - should be 0
