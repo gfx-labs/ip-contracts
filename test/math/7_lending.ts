@@ -21,12 +21,40 @@ const getArgs = async (result: any) => {
     return args
 }
 
+const truncate = async (value:BigNumber) => {
+    return value.div(BN("1e18"))
+}
+
+const calculateBalance = async (interestFactor:BigNumber) => {
+    
+    const totalBaseLiability = await s.VaultController._totalBaseLiability()
+    const protocolFee = await s.VaultController._protocolFee()
+    let before = totalBaseLiability.mul(interestFactor)
+    interestFactor = await payInterestMath()
+    let after = await truncate(totalBaseLiability.mul(interestFactor))
+    const dif = after.sub(before)
+    let protocolAmount = dif.mul(protocolFee)
+    protocolAmount = await truncate(protocolAmount)
+
+    const donateAmount = after.sub(before).sub(protocolAmount)
+    showBody("donateAmount: ", donateAmount)
+
+    showBody("Mint amount: ", protocolAmount)
+    showBody("Formatted Mint: ", utils.formatEther(protocolAmount.toString()))
+
+    showBody("CALCULATING INTEREST")
+    await s.VaultController.calculateInterest()
+}
+
 /**
  * @dev takes interest factor and returns new interest factor - pulls block time from network and latestInterestTime from contract
  * @param interestFactor  - current interest factor read from contract
  * @returns new interest factor based on time elapsed and reserve ratio (read from contract atm)
  */
-const payInterestMath = async (interestFactor: BigNumber) => {
+const payInterestMath = async () => {
+
+    let interestFactor = await s.VaultController.InterestFactor()
+
     const latestInterestTime = await s.VaultController._lastInterestTime()//calculate? 
     const currentBlock = await ethers.provider.getBlockNumber()
     const currentTime = (await ethers.provider.getBlock(currentBlock)).timestamp
@@ -37,13 +65,9 @@ const payInterestMath = async (interestFactor: BigNumber) => {
 
     let calculation = BN(timeDifference).mul(BN("1e18").mul(curve))//correct step 1
     calculation = calculation.div(OneYear)//correct step 2 - divide by OneYear
-    calculation = calculation.div(BN("1e18"))//truncate
+    calculation = await truncate(calculation)//truncate
     calculation = calculation.mul(interestFactor)
-    calculation = calculation.div(BN("1e18"))//truncate again
-
-    //showBody("Interest Factor increase: ", calculation)
-    //showBody("Provided Interest Factor: ", interestFactor)
-    //showBody("New Interest Factor: ", interestFactor.add(calculation))
+    calculation = await truncate(calculation)//truncate again
 
     //new interest factor
     return interestFactor.add(calculation)
@@ -57,17 +81,11 @@ const payInterestMath = async (interestFactor: BigNumber) => {
  * @returns 
  */
 const calculateAccountLiability = async (borrowAmount: BigNumber, currentInterestFactor: BigNumber, initialInterestFactor: BigNumber) => {
-    showBody("calculateAccountLiability calculateAccountLiability")
-    showBody("borrowAmount: ", borrowAmount)
-    showBody("currentInterestFactor: ", currentInterestFactor)
-    showBody("initialInterestFactor: ", initialInterestFactor)
-
+    
     let baseAmount = borrowAmount.mul(BN("1e18"))
     baseAmount = baseAmount.div(initialInterestFactor)
-    showBody("baseAmount: ", baseAmount)
     let currentLiability = baseAmount.mul(currentInterestFactor)
-    currentLiability = currentLiability.div(BN("1e18"))
-
+    currentLiability = await truncate(currentLiability)
 
     return currentLiability
 }
@@ -96,7 +114,7 @@ describe("TOKEN-DEPOSITS", async () => {
         //get initial interest factor
         const initInterestFactor = await s.VaultController.InterestFactor()
 
-        expectedInterestFactor = await payInterestMath(initInterestFactor)
+        expectedInterestFactor = await payInterestMath()
         firstBorrowIF = expectedInterestFactor
         const calculatedBaseLiability = await calculateAccountLiability(borrowAmount, initInterestFactor, initInterestFactor)
 
@@ -119,40 +137,28 @@ describe("TOKEN-DEPOSITS", async () => {
     it(`after 1 week, bob should have a liability greater than ${"BN(5000e18)"}`, async () => {
         
         await advanceBlockHeight(1)
-        const initLiability = await s
-            .VaultController.connect(s.Bob)
-            .AccountLiability(1);
-        await fastForward(OneWeek);//1 week
+        await fastForward(OneWeek)
         await advanceBlockHeight(1)
 
         let interestFactor = await s.VaultController.InterestFactor()
-        const interestMath = await payInterestMath(interestFactor)
+        const calculatedInterestFactor = await payInterestMath()
 
-
-        const interestResult = await s.VaultController.connect(s.Frank).calculateInterest();
+        await s.VaultController.connect(s.Frank).calculateInterest();
         await advanceBlockHeight(1)
-        const e18_factor_increase = await getArgs(interestResult)
-
 
         interestFactor = await s.VaultController.InterestFactor()
+        assert.equal(interestFactor.toString(), calculatedInterestFactor.toString(), "Interest factor is correct")
 
-        assert.equal(interestFactor.toString(), interestMath.toString(), "Interest factor is correct")
-
-        const expectedLiability = await calculateAccountLiability(borrowAmount, interestMath, firstBorrowIF)
-        showBody("interestMath: ", interestMath)
-        showBody("interestMath: ", firstBorrowIF)
-        
-
-        let checkBaseLiab = await s.BobVault.BaseLiability()
-        showBody("checkBaseLiab: ", checkBaseLiab)
+        const expectedLiability = await calculateAccountLiability(borrowAmount, calculatedInterestFactor, firstBorrowIF)        
 
         //TODO calculate new liability based on interest factor
         const liability_amount = await s
             .VaultController.connect(s.Bob)
             .AccountLiability(1);
-        showBody("expectedLiability ", expectedLiability)
-        showBody("TARGET liability  ", liability_amount)
+        
         expect(liability_amount).to.be.gt(BN("5000e18"));
+
+        assert.equal(expectedLiability.toString(), liability_amount.toString(), "Liability calculation is correcet" )
         
     });
 });
@@ -163,10 +169,31 @@ describe("Checking interest generation", () => {
         //fastForward
         await fastForward(OneYear);//1 year
         await advanceBlockHeight(1)
-        //calculate and pay interest
-        await expect(s.VaultController.calculateInterest()).to.not.reverted
-        //check for yeild    
+
+        //preCalculate interestFactor
+        let interestFactor = await s.VaultController.InterestFactor()
+        const calculatedInterestFactor = await payInterestMath()
+        const expectedBalance = await calculateBalance(interestFactor)
+
+        //check for yeild before calculateInterest - should be 0
         let balance = await s.USDI.balanceOf(s.Dave.address)
+
+        assert.equal(balance.toString(), initBalance.toString(), "No yield before calculateInterest")
+
+        //calculate and pay interest on the contract
+        await expect(s.VaultController.calculateInterest()).to.not.reverted
+        await mineBlock()
+
+        //check for yeild before calculateInterest - should be 0
+        balance = await s.USDI.balanceOf(s.Dave.address)
+        
+
+        showBody("initialBalance: ", initBalance)
+        showBody("ending balance: ", balance)
+        let difference = utils.formatEther(balance.sub(initBalance).toString())
+        showBody(difference)
+
+
         expect(balance > initBalance)
     })
 })
