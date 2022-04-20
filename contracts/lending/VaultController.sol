@@ -17,8 +17,6 @@ import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
-import "hardhat/console.sol";
-
 /// @title Controller of all vaults in the USDI borrow/lend system
 /// @notice VaultController contains all business logic for borrowing and lending through the protocol.
 /// It is also in charge of accruing interest.
@@ -56,7 +54,7 @@ contract VaultController is
   uint256 public _interestFactor;
   uint256 public _protocolFee;
 
-  /// @notice any function with this modifier will start by calling the pay_interest() function
+  /// @notice any function with this modifier will call the pay_interest() function before 
   modifier paysInterest() {
     pay_interest();
     _;
@@ -87,7 +85,7 @@ contract VaultController is
   }
 
   /// @notice get vault address of id
-  /// @return address of vault
+  /// @return the address of vault 
   function VaultAddress(uint256 id) external view override returns (address) {
     return _vaultId_vaultAddress[id];
   }
@@ -208,7 +206,8 @@ contract VaultController is
     require(_msgSender() == vault.Minter(), "sender not minter");
 
     uint256 base_amount = div_(amount * 1e18, _interestFactor);
-    uint256 base_liability = vault.modify_liability(true, base_amount);
+    uint256 base_liability = vault.increase_liability(base_amount);
+
     _totalBaseLiability = _totalBaseLiability + base_amount;
 
     uint256 usdi_liability = truncate((_interestFactor - 1) * base_liability);
@@ -236,13 +235,14 @@ contract VaultController is
     uint256 base_amount = div_(amount * 1e18, _interestFactor);
     _totalBaseLiability = _totalBaseLiability - base_amount;
     require(base_amount <= vault.BaseLiability(), "repay > borrow amount");
-    vault.modify_liability(false, base_amount);
+    vault.decrease_liability(base_amount);
     _usdi.vault_master_burn(_msgSender(), amount);
     emit RepayUSDi(id, vault_address, amount);
   }
 
-  /// @notice repay the entirety of a vault's usdi loan. anyone may repay
-  /// @param id vault to repay
+
+  /// @notice repay all of a vaults usdi. anyone may repay a vaults liabilities
+  /// @param id the vault to repay
   /// @dev pays interest
   function repayAllUSDi(uint256 id) external override paysInterest whenNotPaused {
     address vault_address = _vaultId_vaultAddress[id];
@@ -251,17 +251,18 @@ contract VaultController is
 
     Exp memory interest_factor = Exp({mantissa: _interestFactor});
     uint256 usdi_liability = truncate(ExponentialNoError.mul_ScalarTruncate(interest_factor, vault.BaseLiability()));
-    vault.modify_liability(false, vault.BaseLiability());
+    vault.decrease_liability(vault.BaseLiability());
     _usdi.vault_master_burn(_msgSender(), usdi_liability);
 
     emit RepayUSDi(id, vault_address, usdi_liability);
   }
 
-  /// @notice liquidate an under-collateralized vault.
-  /// vaults may be liquidated up to the point where they are exactly collateralized
-  /// @param id vault to liquidate
-  /// @param asset_address collateral token to liquidate
-  /// @param tokens_to_liquidate amount of collateral token to liquidate
+
+  /// @notice liquidate an underwater vault
+  /// vaults may be liquidated up to the point where they are exactly solvent
+  /// @param id the vault liquidate
+  /// @param asset_address the token the liquidator wishes to liquidate
+  /// @param tokens_to_liquidate - number of tokens to liquidate
   /// @dev pays interest
   function liquidate_account(
     uint256 id,
@@ -294,12 +295,12 @@ contract VaultController is
 
   /******* getters things *******/
 
-  /// @notice view function to calculate liquidation amount and fill price
-  /// @param id vault to get info for
-  /// @param asset_address token to calculate how many tokens to liquidate
-  /// @param tokens_to_liquidate max amount of tokens one wishes to liquidate
-  /// @return amount of tokens that will be liquidated
-  /// @dev amount owed is a moving target and changes with each block
+  /// @notice calculate amount of tokens to liquidate for a vault
+  /// @param id the vault to get info for
+  /// @param asset_address the token to calculate how many tokens to liquidate 
+  /// @param tokens_to_liquidate the max amount of tokens one wishes to liquidate
+  /// @return the amount of tokens underwater this vault is
+  /// @dev the amount owed is a moving target and changes with each block
   function TokensToLiquidate(
     uint256 id,
     address asset_address,
@@ -312,13 +313,12 @@ contract VaultController is
 
     return tokenAmount;
   }
-
-  /// @notice internal function with logic for liquidation math
-  /// @param id vault to liquidate
-  /// @param asset_address collateral token to liquidate
-  /// @param tokens_to_liquidate max amount of collateral tokens one wishes to liquidate
-  /// @return amount of collateral tokens that will be liquidated
-  /// @return price of collateral token discounted by liquidation penalty
+  /// @notice internal function with business logic for liquidation math
+  /// @param id the vault to get info for
+  /// @param asset_address the token to calculate how many tokens to liquidate 
+  /// @param tokens_to_liquidate the max amount of tokens one wishes to liquidate
+  /// @return the amount of tokens underwater this vault is
+  /// @return the bad fill price for the token
   function _liquidationMath(
     uint256 id,
     address asset_address,
@@ -355,7 +355,7 @@ contract VaultController is
 
   /// @notice internal function to wrap getting of vaults
   /// @param id id of vault
-  /// @return vault IVault contract of
+  /// @return vault IVault contract of 
   function getVault(uint256 id) internal view returns (IVault vault) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
@@ -364,7 +364,7 @@ contract VaultController is
 
   /// @notice get account liability of vault
   /// @param id id of vault
-  /// @return amount of USDi the vault owes
+  /// @return amount of USDI the vault owes 
   /// @dev implementation _AccountLiability
   function AccountLiability(uint256 id) external view override returns (uint256) {
     return _AccountLiability(id);
@@ -374,15 +374,12 @@ contract VaultController is
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
-    //console.log("base: ", vault.BaseLiability());
-    //console.log("base * if: ", vault.BaseLiability() * _interestFactor);
-    //console.log("result: ", truncate(vault.BaseLiability() * _interestFactor));
     return truncate(vault.BaseLiability() * _interestFactor);
   }
 
   /// @notice get account borrowing power for vault
   /// @param id id of vault
-  /// @return amount of USDI the vault owes
+  /// @return amount of USDI the vault owes 
   /// @dev implementation in get_vault_borrowing_power
   function AccountBorrowingPower(uint256 id) external view override returns (uint256) {
     return get_vault_borrowing_power(IVault(_vaultId_vaultAddress[id]));
@@ -411,16 +408,14 @@ contract VaultController is
   /// @notice accrue interest to borrowers and distribute it to USDi holders.
   /// this function is called before any function that changes the reserve ratio
   function pay_interest() private returns (uint256) {
-    // calculate the time passed since the last time pay_interest() was called
     uint256 timeDifference = block.timestamp - _lastInterestTime;
     if (timeDifference == 0) {
       return 0;
     }
-    // get reserve ratio
     int256 reserve_ratio = int256(_usdi.reserveRatio());
-    // get current interest rate
     int256 int_curve_val = _curveMaster.getValueAt(address(0x00), reserve_ratio);
     require(int_curve_val >= 0, "rate too small");
+
     uint256 curve_val = uint256(int_curve_val);
     
     // calculate the amount of total outstanding loans before and after this interest accrual
