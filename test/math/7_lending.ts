@@ -21,35 +21,38 @@ const getArgs = async (result: any) => {
     return args
 }
 
-const truncate = async (value:BigNumber) => {
+const truncate = async (value: BigNumber) => {
     return value.div(BN("1e18"))
 }
 
-const calculateBalance = async (interestFactor:BigNumber) => {
-
-    await mineBlock()
-
+const calculateBalance = async (interestFactor: BigNumber) => {
     const totalBaseLiability = await s.VaultController._totalBaseLiability()
     const protocolFee = await s.VaultController._protocolFee()
-    let before = totalBaseLiability.mul(interestFactor)
-    before = await truncate(before)
-    showBody("Before: ", before)
-    interestFactor = await payInterestMath(interestFactor)
-    showBody("Calc IF: ", interestFactor)
-    let after = await truncate(totalBaseLiability.mul(interestFactor))
-    showBody("After: ", after)
-    const dif = after.sub(before)
-    let protocolAmount = dif.mul(protocolFee)
-    protocolAmount = await truncate(protocolAmount)
 
-    const donateAmount = after.sub(before).sub(protocolAmount)
-    //showBody("donateAmount: ", donateAmount)
+    let valueBefore = await truncate(totalBaseLiability.mul(interestFactor))
 
-    //showBody("Mint amount: ", protocolAmount)
-    //showBody("Formatted Mint: ", utils.formatEther(protocolAmount.toString()))
+    const calcInterestFactor = await payInterestMath(interestFactor)
 
-    showBody("CALCULATING INTEREST")
-    await s.VaultController.calculateInterest()
+    let valueAfter = await truncate(totalBaseLiability.mul(calcInterestFactor))
+
+    const protocolAmount = await truncate((valueAfter.sub(valueBefore)).mul(protocolFee))
+
+    const donationAmount = valueAfter.sub(valueBefore).sub(protocolAmount)
+    const currentTotalSupply = await s.USDI.totalSupply()
+    let newSupply = currentTotalSupply.add(donationAmount)
+
+    //totalGons
+    const totalGons = await s.USDI._totalGons()
+
+    //gpf
+    const gpf = totalGons.div(newSupply)
+
+    //calculate balance 
+    //get gon balance - calculate? 
+    const gonBalance = await s.USDI.scaledBalanceOf(s.Dave.address)
+
+    const expectedBalance = gonBalance.div(gpf)
+    return expectedBalance
 }
 
 /**
@@ -57,7 +60,7 @@ const calculateBalance = async (interestFactor:BigNumber) => {
  * @param interestFactor  - current interest factor read from contract
  * @returns new interest factor based on time elapsed and reserve ratio (read from contract atm)
  */
-const payInterestMath = async (interestFactor:BigNumber) => {
+const payInterestMath = async (interestFactor: BigNumber) => {
 
     //let interestFactor = await s.VaultController.InterestFactor()
 
@@ -87,7 +90,7 @@ const payInterestMath = async (interestFactor:BigNumber) => {
  * @returns 
  */
 const calculateAccountLiability = async (borrowAmount: BigNumber, currentInterestFactor: BigNumber, initialInterestFactor: BigNumber) => {
-    
+
     let baseAmount = borrowAmount.mul(BN("1e18"))
     baseAmount = baseAmount.div(initialInterestFactor)
     let currentLiability = baseAmount.mul(currentInterestFactor)
@@ -141,7 +144,7 @@ describe("TOKEN-DEPOSITS", async () => {
 
     });
     it(`after 1 week, bob should have a liability greater than ${"BN(5000e18)"}`, async () => {
-        
+
         await advanceBlockHeight(1)
         await fastForward(OneWeek)
         await advanceBlockHeight(1)
@@ -155,17 +158,17 @@ describe("TOKEN-DEPOSITS", async () => {
         interestFactor = await s.VaultController.InterestFactor()
         assert.equal(interestFactor.toString(), calculatedInterestFactor.toString(), "Interest factor is correct")
 
-        const expectedLiability = await calculateAccountLiability(borrowAmount, calculatedInterestFactor, firstBorrowIF)        
+        const expectedLiability = await calculateAccountLiability(borrowAmount, calculatedInterestFactor, firstBorrowIF)
 
         //TODO calculate new liability based on interest factor
         const liability_amount = await s
             .VaultController.connect(s.Bob)
             .AccountLiability(1);
-        
+
         expect(liability_amount).to.be.gt(BN("5000e18"));
 
-        assert.equal(expectedLiability.toString(), liability_amount.toString(), "Liability calculation is correcet" )
-        
+        assert.equal(expectedLiability.toString(), liability_amount.toString(), "Liability calculation is correcet")
+
     });
 });
 
@@ -176,9 +179,8 @@ describe("Checking interest generation", () => {
         await fastForward(OneYear);//1 year
         await advanceBlockHeight(1)
 
-        //preCalculate interestFactor
+        //get current interestFactor
         let interestFactor = await s.VaultController.InterestFactor()
-        const calculatedInterestFactor = await payInterestMath(interestFactor)
         const expectedBalance = await calculateBalance(interestFactor)
 
         //check for yeild before calculateInterest - should be 0
@@ -188,21 +190,20 @@ describe("Checking interest generation", () => {
 
         //calculate and pay interest on the contract
         await expect(s.VaultController.calculateInterest()).to.not.reverted
-        await mineBlock()
+        await advanceBlockHeight(1)
 
         //check for yeild before calculateInterest - should be 0
         balance = await s.USDI.balanceOf(s.Dave.address)
-        
 
-        showBody("initialBalance: ", initBalance)
-        showBody("ending balance: ", balance)
-        let difference = utils.formatEther(balance.sub(initBalance).toString())
-        showBody(difference)
-
+        assert.equal(balance.toString(), expectedBalance.toString(), "Expected balance is correct")
 
         expect(balance > initBalance)
     })
 })
+
+
+
+
 
 describe("Testing repay", () => {
     const borrowAmount = BN("10e18")
