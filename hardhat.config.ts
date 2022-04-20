@@ -9,9 +9,6 @@ import "@typechain/hardhat";
 import "hardhat-docgen"
 
 import { HardhatUserConfig } from "hardhat/types";
-import { readdirSync } from "fs";
-import path from "path";
-
 
 const config: HardhatUserConfig = {
     defaultNetwork: "hardhat",
@@ -33,9 +30,6 @@ const config: HardhatUserConfig = {
             url: "http://localhost:8545",
         },
     },
-    gasReporter: {
-        enabled: true,
-    },
     solidity: {
         version: "0.8.9",
         settings: {
@@ -50,8 +44,8 @@ const config: HardhatUserConfig = {
             tasks: ["compile"],
         },
         test: {//npx hardhat watch test -- run test when a file is saved
-            tasks: [{ command: 'test', params: { testFiles: ['./test/mainnet/test_all.ts'] } }], //test this file
-            files: ['./test/mainnet/*'] //test when this file is saved
+            tasks: [{ command: 'test', params: { testFiles: ['./test/math/test_all.ts'] } }], //test this file
+            files: ['./test/math/*'] //test when this file is saved
         }
     },
     paths: {
@@ -66,7 +60,7 @@ const config: HardhatUserConfig = {
     docgen: {
         path: './docs',
         clear: true,
-        runOnCompile: false,
+        runOnCompile: true,
     }
 };
 

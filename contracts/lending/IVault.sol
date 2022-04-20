@@ -21,5 +21,7 @@ interface IVault {
   function delegateCompLikeTo(address compLikeDelegatee, address CompLikeToken) external;
 
   // administrative functions
-  function modify_liability(bool increase, uint256 base_amount) external returns (uint256);
+  function decrease_liability(uint256 base_amount) external returns (uint256);
+
+  function increase_liability(uint256 base_amount) external returns (uint256);
 }
