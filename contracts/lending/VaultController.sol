@@ -18,9 +18,8 @@ import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
 /// @title Controller of all vaults in the USDI borrow/lend system
-/// @notice VaultController contains all business logic for borrowing/lending with the protocol
-/// it is also in charge of calculating interest
-/// proceeds from liquidations go to the USDI contract
+/// @notice VaultController contains all business logic for borrowing and lending through the protocol.
+/// It is also in charge of accruing interest.
 contract VaultController is
   Initializable,
   PausableUpgradeable,
@@ -74,13 +73,13 @@ contract VaultController is
   }
 
   /// @notice get current interest factor
-  /// @return the interest factor
+  /// @return interest factor
   function InterestFactor() external view override returns (uint256) {
     return _interestFactor;
   }
 
   /// @notice get current protocol fee
-  /// @return the interest factor
+  /// @return protocol fee
   function ProtocolFee() external view override returns (uint256) {
     return _protocolFee;
   }
@@ -92,7 +91,7 @@ contract VaultController is
   }
 
   /// @notice create a new vault
-  /// @return the address of the new vault
+  /// @return address of the new vault
   function mintVault() public override returns (address) {
     _vaultsMinted = _vaultsMinted + 1;
     address vault_address = address(new Vault(_vaultsMinted, _msgSender(), address(this), address(_usdi)));
@@ -113,13 +112,13 @@ contract VaultController is
   }
 
   /// @notice register the USDi contract
-  /// @param usdi_address address to register as usdi
+  /// @param usdi_address address to register as USDi
   function register_usdi(address usdi_address) external override onlyOwner {
     _usdi = IUSDI(usdi_address);
   }
 
   /// @notice register the OracleMaster contract
-  /// @param master_oracle_address address to register as usdi
+  /// @param master_oracle_address address to register as OracleMaster
   function register_oracle_master(address master_oracle_address) external override onlyOwner {
     _oracleMaster = OracleMaster(master_oracle_address);
 
@@ -127,24 +126,24 @@ contract VaultController is
   }
 
   /// @notice register the CurveMaster address
-  /// @param master_curve_address address to register as usdi
+  /// @param master_curve_address address to register as CurveMaster
   function register_curve_master(address master_curve_address) external override onlyOwner {
     _curveMaster = CurveMaster(master_curve_address);
     emit RegisterCurveMaster(master_curve_address);
   }
 
   /// @notice register the CurveMaster address
-  /// @param new_protocol_fee the fee, in terms of 1e18=100%
+  /// @param new_protocol_fee protocol fee in terms of 1e18=100%
   function change_protocol_fee(uint256 new_protocol_fee) external override onlyOwner {
     require(new_protocol_fee < 1e18, "fee is too large");
     _protocolFee = new_protocol_fee;
     emit NewProtocolFee(_protocolFee);
   }
 
-  /// @notice register a new token as valid collateral
-  /// @param token_address the token to register
-  /// @param oracle_address the oracle to attach to the token
-  /// @param liquidationIncentive the liquidation incentive for that token
+  /// @notice register a new token to be used as collateral
+  /// @param token_address token to register
+  /// @param oracle_address oracle to attach to the token
+  /// @param liquidationIncentive liquidation penalty for the token
   function register_erc20(
     address token_address,
     uint256 LTV,
@@ -163,10 +162,11 @@ contract VaultController is
     emit RegisteredErc20(token_address, LTV, oracle_address, liquidationIncentive);
   }
 
-  /// @notice update an existing token with new collateral settings
+  /// @notice update an existing collateral with new collateral parameters
   /// @param token_address the token to modify
-  /// @param oracle_address the new oracle to attach to the token
-  /// @param liquidationIncentive the new liquidation incentive for that token
+  /// @param LTV new loan-to-value of the token
+  /// @param oracle_address new oracle to attach to the token
+  /// @param liquidationIncentive new liquidation penalty for the token
   function update_registered_erc20(
     address token_address,
     uint256 LTV,
@@ -182,9 +182,9 @@ contract VaultController is
     emit UpdateRegisteredErc20(token_address, LTV, oracle_address, liquidationIncentive);
   }
 
-  /// @notice checks an account for solvency
+  /// @notice check an account for over-collateralization. returns false if amount borrowed is greater than borrowing power.
   /// @param id the vault to check
-  /// @return true = vault solvent; false = vault not solvent
+  /// @return true = vault over-collateralized; false = vault under-collaterlized
   function checkAccount(uint256 id) external view override returns (bool) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
@@ -194,16 +194,16 @@ contract VaultController is
     return (total_liquidity_value >= usdi_liability);
   }
 
-  /// @notice borrow usdi from a vault. only the minter of the vault may borrow from their vault
-  /// @param id the vault to borrow using
-  /// @param amount amount of usdi to pull
+  /// @notice borrow usdi from a vault. only vault minter may borrow from their vault
+  /// @param id vault to borrow from
+  /// @param amount amount of usdi to borrow
   /// @dev pays interest
   function borrowUsdi(uint256 id, uint256 amount) external override paysInterest whenNotPaused {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x00), "vault does not exist");
     IVault vault = IVault(vault_address);
 
-    require(_msgSender() == vault.Minter(), "sender not creator");
+    require(_msgSender() == vault.Minter(), "sender not minter");
 
     uint256 base_amount = div_(amount * 1e18, _interestFactor);
     uint256 base_liability = vault.increase_liability(base_amount);
@@ -214,7 +214,7 @@ contract VaultController is
 
     uint256 total_liquidity_value = get_vault_borrowing_power(vault);
 
-    require(total_liquidity_value >= usdi_liability, "account insolvent");
+    require(total_liquidity_value >= usdi_liability, "insufficient borrowing power");
 
     uint256 al = _AccountLiability(id);
 
@@ -223,8 +223,8 @@ contract VaultController is
     emit BorrowUSDi(id, vault_address, al);
   }
 
-  /// @notice repay usdi to a vault. anyone may repay a vaults liabilities
-  /// @param id the vault to repay
+  /// @notice repay a vault's usdi loan. anyone may repay
+  /// @param id vault to repay
   /// @param amount amount of usdi to repay
   /// @dev pays interest
   function repayUSDi(uint256 id, uint256 amount) external override paysInterest whenNotPaused {
@@ -278,15 +278,17 @@ contract VaultController is
     uint256 usdi_to_repurchase = truncate(badFillPrice * tokens_to_liquidate);
     IVault vault = getVault(id);
 
-    //decrease by base amount -- switch to truncate?
-    vault.decrease_liability(div_(usdi_to_repurchase * 1e18, _interestFactor));
+    //decrease vault's liability -- switch to truncate?
+    vault.modify_liability(false, div_(usdi_to_repurchase * 1e18, _interestFactor));
 
-    //decrease liquidators usdi balance
+    //decrease liquidator's USDi balance
     _usdi.vault_master_burn(_msgSender(), usdi_to_repurchase);
 
-    // finally, we deliver the tokens to the liquidator
+    // finally, deliver tokens to liquidator
     vault.masterTransfer(asset_address, _msgSender(), tokens_to_liquidate);
 
+    require(get_vault_borrowing_power(vault) <= _AccountLiability(id), "overliquidation"); 
+    // I don't think we need this. Will always be true because it is already implied by _liquidationMath.
     emit Liquidate(id, asset_address, usdi_to_repurchase, tokens_to_liquidate);
     return tokens_to_liquidate;
   }
@@ -324,10 +326,10 @@ contract VaultController is
   ) internal view returns (uint256, uint256) {
     IVault vault = getVault(id);
 
-    //get the price of the asset scaled to decimal 18
+    //get price of asset scaled to decimal 18
     uint256 price = _oracleMaster.getLivePrice(asset_address);
 
-    // liquidation penalty
+    // get price discounted by liquidation penalty
     uint256 badFillPrice = truncate(price * (1e18 - _tokenAddress_liquidationIncentive[asset_address]));
 
     uint256 denominator = truncate(
@@ -336,15 +338,15 @@ contract VaultController is
           _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]])
     );
     uint256 max_tokens_to_liquidate = truncate(
-      ((_AccountLiability(id) - get_vault_borrowing_power(vault)) * 1e36) / denominator
+      ((_AccountLiability(id) - get_vault_borrowing_power(vault)) * 1e36) / denominator // what happens if this is negative?
     );
 
-    //if ideal amount isnt possible update with vault balance
+    //Cannot liquidate more than is necessary to make account over-collateralized
     if (tokens_to_liquidate > max_tokens_to_liquidate) {
       tokens_to_liquidate = max_tokens_to_liquidate;
     }
 
-    //if ideal amount isnt possible update with vault balance
+    //Cannot liquidate more collateral than there is in the vault
     if (tokens_to_liquidate > vault.tokenBalance(asset_address)) {
       tokens_to_liquidate = vault.tokenBalance(asset_address);
     }
@@ -403,6 +405,8 @@ contract VaultController is
     return pay_interest();
   }
 
+  /// @notice accrue interest to borrowers and distribute it to USDi holders.
+  /// this function is called before any function that changes the reserve ratio
   function pay_interest() private returns (uint256) {
     uint256 timeDifference = block.timestamp - _lastInterestTime;
     if (timeDifference == 0) {
@@ -413,13 +417,16 @@ contract VaultController is
     require(int_curve_val >= 0, "rate too small");
 
     uint256 curve_val = uint256(int_curve_val);
-
+    
+    // calculate the amount of total outstanding loans before and after this interest accrual
     uint256 e18_factor_increase = truncate(
       truncate((timeDifference * 1e18 * curve_val) / (365 days + 6 hours)) * _interestFactor
     );
     uint256 valueBefore = truncate(_totalBaseLiability * _interestFactor);
     _interestFactor = _interestFactor + e18_factor_increase;
     uint256 valueAfter = truncate(_totalBaseLiability * _interestFactor);
+
+    // take protocol fee and distribute the rest to all USDi holders
     if (valueAfter > valueBefore) {
       uint256 protocolAmount = truncate((valueAfter - valueBefore) * (_protocolFee));
       _usdi.vault_master_donate(valueAfter - valueBefore - protocolAmount);
