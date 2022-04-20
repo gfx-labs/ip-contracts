@@ -18,6 +18,7 @@
     "include": [
         "./scripts/**/*",
         "./test/**/*",
+        "./test/util/*",
         "./typechain-types/**/*"
     ],
     "files": [
