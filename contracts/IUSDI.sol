@@ -24,6 +24,8 @@ interface IUSDI is IERC20 {
 
   function burn(uint256 usdc_amount) external;
 
+  function donate(uint256 usdc_amount) external;
+
   function setVaultController(address vault_master_address) external;
 
   function vault_master_burn(address target, uint256 amount) external;
