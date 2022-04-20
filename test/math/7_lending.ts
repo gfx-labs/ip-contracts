@@ -93,14 +93,12 @@ describe("TOKEN-DEPOSITS", async () => {
         const initUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
         assert.equal(initUSDiBalance.toString(), "0", "Bob starts with 0 USDi")
 
-        //set initial interest factor
+        //get initial interest factor
         const initInterestFactor = await s.VaultController.InterestFactor()
-        
-        assert.equal(initInterestFactor.toString(), initIF.toString(), "Initial interest factor is correct")
 
-        expectedInterestFactor = await payInterestMath(initIF)
+        expectedInterestFactor = await payInterestMath(initInterestFactor)
         firstBorrowIF = expectedInterestFactor
-        const calculatedBaseLiability = await calculateAccountLiability(borrowAmount, expectedInterestFactor, expectedInterestFactor)
+        const calculatedBaseLiability = await calculateAccountLiability(borrowAmount, initInterestFactor, initInterestFactor)
 
         const borrowResult = await s.VaultController.connect(s.Bob).borrowUsdi(1, borrowAmount)
         await advanceBlockHeight(1)
