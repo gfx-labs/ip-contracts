@@ -101,9 +101,7 @@ describe("TOKEN-DEPOSITS", async () => {
     });
 
     it("Withdraw total reserves", async () => {
-        let balance = await s.USDI.balanceOf(s.Dave.address)
-        //showBody("Current balance: ", balance)
-        //showBody("formatt balance: ", utils.formatEther(balance.toString()))
+        
 
         let reserve = await s.USDC.balanceOf(s.USDI.address)
         let reserve_e18 = reserve.mul(BN("1e18"))
@@ -116,11 +114,31 @@ describe("TOKEN-DEPOSITS", async () => {
         reserve = await s.USDC.balanceOf(s.USDI.address)
         reserve_e18 = reserve.mul(BN("1e18"))
         formatReserve = utils.formatEther((reserve_e18.sub(BN("1e6"))).toString())
-        //showBody("Ending Reserve: ", reserve_e18)
 
         assert.equal(reserve.toString(), "0", "reserve is empty")
 
         await expect(s.USDI.connect(s.Dave).withdraw(1)).to.be.reverted
 
     })
+    it("Anyone can donate USDC to the protocol", async () => {
+        let balance = await s.USDC.balanceOf(s.Dave.address)
+        let reserve = await s.USDC.balanceOf(s.USDI.address)
+
+        assert.equal(reserve.toString(), "0", "reserve is 0, donations welcome :)")
+        
+        //todo check totalSupply and confirm interest rate changes
+        
+        //Dave approves and donates half of his USDC
+        await s.USDC.connect(s.Dave).approve(s.USDI.address, balance.div(2))
+        await s.USDI.connect(s.Dave).donate(balance.div(2))
+        await mineBlock()
+
+
+        let updatedBalance = await s.USDC.balanceOf(s.Dave.address)
+        let updatedReserve = await s.USDC.balanceOf(s.USDI.address)
+
+        assert.equal(updatedBalance.toString(), updatedReserve.toString(), "Donate successful")
+        
+    })
+
 });
