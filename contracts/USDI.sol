@@ -27,7 +27,7 @@ contract USDI is
     address public _VaultControllerAddress;
     IVaultController private _VaultController;
 
-    /// @notice modifier which checks if _msgSender() 
+    /// @notice checks if _msgSender() is VaultController
     modifier onlyVaultController() {
         require(_msgSender() == _VaultControllerAddress, "only VaultController");
         _;
@@ -49,17 +49,17 @@ contract USDI is
         _reserve = IERC20(_reserveAddress);
     }
 
-    /// @notice pause usdi, owner only
+    /// @notice pause contract, owner only
     function pause() external override onlyOwner {
         _pause();
     }
 
-    /// @notice unpause usdi, owner only
+    /// @notice unpause contract, owner only
     function unpause() external override onlyOwner {
         _unpause();
     }
 
-    /// @notice deposit USDC to gain USDi
+    /// @notice deposit USDC to mint USDi
     /// caller should obtain 1e12 USDi for each USDC
     /// @param usdc_amount amount of USDC to deposit
     function deposit(uint256 usdc_amount) external override whenNotPaused {
@@ -77,7 +77,7 @@ contract USDI is
         emit Deposit(_msgSender(), amount);
     }
 
-    /// @notice withdraw USDC using USDi
+    /// @notice withdraw USDC by burning USDi
     /// caller should obtain 1 USDC for every 1e12 USDi 
     /// @param usdc_amount amount of USDC to withdraw
     function withdraw(uint256 usdc_amount) external override whenNotPaused {
@@ -97,6 +97,8 @@ contract USDI is
         _totalGons = _totalGons - amount * _gonsPerFragment;
         emit Withdraw(_msgSender(), amount);
     }
+
+    // I think we want withdraw_all()
 
     /// @notice set the VaultController addr so that vault_master may mint/burn USDi without restriction
     /// @param vault_master_address address of vault master
@@ -126,7 +128,7 @@ contract USDI is
         emit Mint(_msgSender(), amount);
     }
 
-    /// @notice admin function to mint USDi out of thin air
+    /// @notice admin function to burn USDi
     /// @param usdc_amount the amount of USDi to burn, denominated in USDC
     function burn(uint256 usdc_amount) external override onlyOwner {
         _VaultController.calculateInterest();
@@ -145,7 +147,7 @@ contract USDI is
 
 
     /// @notice function for the vaultController to mint
-    /// @param target who to mint the usdi to 
+    /// @param target whom to mint the USDi to 
     /// @param amount the amount of USDi to mint
     function vault_master_mint(address target, uint256 amount)
         external
@@ -159,7 +161,7 @@ contract USDI is
     }
 
     /// @notice function for the vaultController to burn
-    /// @param target who to burn the usdi from 
+    /// @param target whom to burn the USDi from 
     /// @param amount the amount of USDi to burn
     function vault_master_burn(address target, uint256 amount)
         external
@@ -176,8 +178,8 @@ contract USDI is
         emit Burn(target, amount);
     }
 
-    /// @notice function for the vaultController to donate usdi
-    /// @param amount the amount of USDi to donate
+    /// @notice function for the vaultController to scale all USDi balances
+    /// @param amount amount of USDi to donate
     function vault_master_donate(uint256 amount)
         external
         override
@@ -192,7 +194,7 @@ contract USDI is
     }
 
     /// @notice get reserve ratio
-    /// @return e18_reserve_ratio the usdi reserve ratio
+    /// @return e18_reserve_ratio USDi reserve ratio
     function reserveRatio()
         external
         view
