@@ -180,6 +180,8 @@ contract USDI is
         emit Burn(target, amount);
     }
 
+    //todo public donate
+
     /// @notice function for the vaultController to scale all USDi balances
     /// @param amount amount of USDi to donate
     function vault_master_donate(uint256 amount)
