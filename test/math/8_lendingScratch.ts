@@ -29,16 +29,30 @@ const calculateBalance = async (interestFactor: BigNumber) => {
     const totalBaseLiability = await s.VaultController._totalBaseLiability()
     const protocolFee = await s.VaultController._protocolFee()
 
-    let valueBefore = await truncate(totalBaseLiability.mul(interestFactor))//check
+    let valueBefore = await truncate(totalBaseLiability.mul(interestFactor))
 
-    const calcInterestFactor = await payInterestMath(interestFactor)//check
+    const calcInterestFactor = await payInterestMath(interestFactor)
 
-    let valueAfter = await truncate(totalBaseLiability.mul(calcInterestFactor))//check
+    let valueAfter = await truncate(totalBaseLiability.mul(calcInterestFactor))
 
-    const protocolAmount = await truncate((valueAfter.sub(valueBefore)).mul(protocolFee))//check
-    
+    const protocolAmount = await truncate((valueAfter.sub(valueBefore)).mul(protocolFee))
+
     const donationAmount = valueAfter.sub(valueBefore).sub(protocolAmount)
-    return donationAmount
+    const currentTotalSupply = await s.USDI.totalSupply()
+    let newSupply = currentTotalSupply.add(donationAmount)
+
+    //totalGons
+    const totalGons = await s.USDI._totalGons()
+
+    //gpf
+    const gpf = totalGons.div(newSupply)
+
+    //calculate balance 
+    //get gon balance - calculate? 
+    const gonBalance = await s.USDI.scaledBalanceOf(s.Dave.address)
+
+    const expectedBalance = gonBalance.div(gpf)
+    return expectedBalance
 }
 
 /**
@@ -166,14 +180,8 @@ describe("Checking interest generation", () => {
         await advanceBlockHeight(1)
 
         //get current interestFactor
-        let interestFactor = await s.VaultController.InterestFactor()//check
-
-        const donationAmount = await calculateBalance(interestFactor)//check
-
-        const currentTotalSupply = await s.USDI.totalSupply()
-        showBody(currentTotalSupply)
-
-
+        let interestFactor = await s.VaultController.InterestFactor()
+        const expectedBalance = await calculateBalance(interestFactor)
 
         //check for yeild before calculateInterest - should be 0
         let balance = await s.USDI.balanceOf(s.Dave.address)
@@ -187,12 +195,7 @@ describe("Checking interest generation", () => {
         //check for yeild before calculateInterest - should be 0
         balance = await s.USDI.balanceOf(s.Dave.address)
 
-
-        //showBody("initialBalance: ", initBalance)
-        //showBody("ending balance: ", balance)
-        let difference = utils.formatEther(balance.sub(initBalance).toString())
-        //showBody(difference)
-
+        assert.equal(balance.toString(), expectedBalance.toString(), "Expected balance is correct")
 
         expect(balance > initBalance)
     })
