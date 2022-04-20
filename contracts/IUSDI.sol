@@ -3,8 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./_external/IERC20.sol";
 
-/// @title interface which defines the USDI contract
-/// @notice to interact with the contract, usd IUSDIFull
+/// @title interface to interact with USDI contract
 interface IUSDI is IERC20 {
 
   function initialize(address reserveAddress) external;
