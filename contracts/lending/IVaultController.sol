@@ -6,7 +6,9 @@ pragma solidity ^0.8.0;
 /// @notice Interface for interacting with the VaultController
 interface IVaultController {
   // view functions
+  function _totalBaseLiability() external view returns(uint256);
   function _lastInterestTime() external view returns(uint256);
+  function _protocolFee() external view returns(uint256);
   function InterestFactor() external view returns (uint256);
 
   function ProtocolFee() external view returns (uint256);
