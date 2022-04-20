@@ -21,14 +21,18 @@ export const mineBlock = async () => {
     return
 }
 
-export const reset = async () => {
+export const reset = async (block:number) => {
+    //pass 0 to return to starting block
+    if(block == 0){
+        block = 14546835
+    }
     await network.provider.request({
         method: "hardhat_reset",
         params: [
             {
                 forking: {
                     jsonRpcUrl: "https://mainnet.rpc.gfx.xyz",
-                    blockNumber: 14546835
+                    blockNumber: block
                 },
             },
         ],

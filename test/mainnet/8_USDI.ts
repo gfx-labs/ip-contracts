@@ -1,10 +1,11 @@
 import { s } from "./scope";
 import { ethers } from "hardhat";
+import { BigNumber, Event, utils } from "ethers";
 import { expect, assert } from "chai";
 import { stealMoney } from "../util/money";
 import { showBody } from "../util/format";
 import { BN } from "../util/number";
-import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../util/block";
+import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear, reset } from "../util/block";
 
 
 const usdcAmount = BN("5000e6")
@@ -21,12 +22,18 @@ const fundDave = async () => {
 }
 
 //set balances
-
 describe("TOKEN-DEPOSITS", async () => {
+    let startingUSDIAmount: BigNumber
+    let startBlock:number
     before(async () => {
+        startBlock = await ethers.provider.getBlockNumber()
         await mineBlock()
         await fundDave()
         await mineBlock()
+    })
+    after(async() => {
+        //reset to previous block to fix balances
+        await reset(startBlock)
     })
     it("check starting balance and deposit USDC", async () => {
 
@@ -34,7 +41,7 @@ describe("TOKEN-DEPOSITS", async () => {
         assert.equal(startingUSDCamount.toString(), s.Dave_USDC.toString(), "Starting USDC balance is correct")
 
         //Dave already holds some USDi at this point
-        const startingUSDIamount = await s.USDI.balanceOf(s.Dave.address)
+        startingUSDIAmount = await s.USDI.balanceOf(s.Dave.address)
 
         //approve
         await s.USDC.connect(s.Dave).approve(s.USDI.address, usdcAmount)
@@ -56,24 +63,27 @@ describe("TOKEN-DEPOSITS", async () => {
         assert.equal(usdcBalance.toString(), s.Dave_USDC.sub(usdcAmount).toString(), "Dave deposited USDC tokens")
 
         let usdiBalance = await s.USDI.balanceOf(s.Dave.address)
-        assert.equal(usdiBalance.toString(), startingUSDIamount.add(usdcAmount.mul(1e12)).toString(), "USDi balance is correct")
+        //some interest has accrued, USDI balance should be slightly higher than existingUSDI balance + USDC amount deposited 
+        expect(usdiBalance).to.be.gt(startingUSDIAmount.add(usdcAmount.mul(1e12)))
+        //assert.equal(usdiBalance.toString(), startingUSDIamount.add(usdcAmount.mul(1e12)).toString(), "USDi balance is correct")
 
     });
 
     //fixed bug in withdraw
     it("redeem USDC for USDI", async () => {
-        const startingUSDCamount = await s.USDC.balanceOf(s.Dave.address)
-        assert.equal(startingUSDCamount.toString(), s.Dave_USDC.sub(usdcAmount).toString(), "Starting USDC balance is correct")
 
-        const startingUSDIamount = await s.USDI.balanceOf(s.Dave.address)
 
-        
+
         //check pauseable 
         await s.USDI.connect(s.Frank).pause()
         await advanceBlockHeight(1)
         await expect(s.USDI.connect(s.Dave).withdraw(usdcAmount)).to.be.revertedWith("Pausable: paused")
         await s.USDI.connect(s.Frank).unpause()
         await advanceBlockHeight(1)
+        const startingUSDCamount = await s.USDC.balanceOf(s.Dave.address)
+        assert.equal(startingUSDCamount.toString(), s.Dave_USDC.sub(usdcAmount).toString(), "Starting USDC balance is correct")
+
+
 
         const withdrawResult = await s.USDI.connect(s.Dave).withdraw(usdcAmount)
         await mineBlock()
@@ -83,12 +93,34 @@ describe("TOKEN-DEPOSITS", async () => {
 
         //Return Dave to his original amount of USDi holdings
         let usdiBalance = await s.USDI.balanceOf(s.Dave.address)
-        assert.equal(usdiBalance.toString(), startingUSDIamount.sub(usdcAmount.mul(1e12)).toString(), "USDi balance is correct")
+        //should end up with slightly more USDI than original due to interest 
+        expect(usdiBalance).to.be.gt(startingUSDIAmount)
+        //showBody("Diference: ", usdiBalance.sub(startingUSDIamount))
+        //assert.equal(usdiBalance.toString(), startingUSDIamount.sub(usdcAmount.mul(1e12)).toString(), "USDi balance is correct")
 
     });
 
-    it("checks other things", async () => {
-        let rr = await s.USDI.reserveRatio()
-        showBody(rr)
+    it("Withdraw total reserves", async () => {
+        let balance = await s.USDI.balanceOf(s.Dave.address)
+        //showBody("Current balance: ", balance)
+        //showBody("formatt balance: ", utils.formatEther(balance.toString()))
+
+        let reserve = await s.USDC.balanceOf(s.USDI.address)
+        let reserve_e18 = reserve.mul(BN("1e18"))
+        let formatReserve = utils.formatEther(reserve_e18.toString())
+
+        const withdrawResult = await s.USDI.connect(s.Dave).withdraw(reserve)
+        await mineBlock()
+
+
+        reserve = await s.USDC.balanceOf(s.USDI.address)
+        reserve_e18 = reserve.mul(BN("1e18"))
+        formatReserve = utils.formatEther((reserve_e18.sub(BN("1e6"))).toString())
+        //showBody("Ending Reserve: ", reserve_e18)
+
+        assert.equal(reserve.toString(), "0", "reserve is empty")
+
+        await expect(s.USDI.connect(s.Dave).withdraw(1)).to.be.reverted
+
     })
 });

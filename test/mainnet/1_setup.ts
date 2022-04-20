@@ -31,7 +31,7 @@ let carol_voting_address = "0x1F2AB8Ac759Fb0E3185630277A554Ae3110bF530";
 
 describe("hardhat settings", () => {
   it("reset hardhat network each run", async () => {
-    expect(await reset()).to.not.throw;
+    expect(await reset(0)).to.not.throw;
   });
   it("set automine OFF", async () => {
     expect(await network.provider.send("evm_setAutomine", [false])).to.not
