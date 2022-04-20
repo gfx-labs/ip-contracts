@@ -74,6 +74,7 @@ contract USDI is
             _gonsPerFragment;
         _totalSupply = _totalSupply + amount;
         _totalGons = _totalGons + amount * _gonsPerFragment;
+        _VaultController.calculateInterest();
         emit Deposit(_msgSender(), amount);
     }
 
@@ -95,6 +96,7 @@ contract USDI is
             _gonsPerFragment;
         _totalSupply = _totalSupply - amount;
         _totalGons = _totalGons - amount * _gonsPerFragment;
+        _VaultController.calculateInterest();
         emit Withdraw(_msgSender(), amount);
     }
 
