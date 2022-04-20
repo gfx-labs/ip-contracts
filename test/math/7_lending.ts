@@ -22,44 +22,31 @@ const getArgs = async (result: any) => {
 }
 
 /**
- * @dev takes the current interest factor from the contract and returns the new interest factor - pulls block time from network and latestInterestTime from contract
- * @param interestFactor  - current interest factor read from contract (before pay_interest())
- * @returns interest factor that would result from calling calculate_interest() at this time/block
+ * @dev takes interest factor and returns new interest factor - pulls block time from network and latestInterestTime from contract
+ * @param interestFactor  - current interest factor read from contract
+ * @returns new interest factor based on time elapsed and reserve ratio (read from contract atm)
  */
 const payInterestMath = async (interestFactor: BigNumber) => {
-
-    //get time difference
     const latestInterestTime = await s.VaultController._lastInterestTime()//calculate? 
     const currentBlock = await ethers.provider.getBlockNumber()
     const currentTime = (await ethers.provider.getBlock(currentBlock)).timestamp
     let timeDifference = currentTime - latestInterestTime.toNumber() + 1 //account for change when fetching from provider
 
+    const reserveRatio = await s.USDI.reserveRatio()//todo - calculate
+    const curve = await s.Curve.getValueAt(nullAddr, reserveRatio)//todo - calculate
 
-    //calculate reserve ratio
-    let totalSupply = await s.USDI.totalSupply()
-    const reserve = await s.USDC.balanceOf(s.USDI.address)
-    let calculatedRR = reserve.mul(BN("1e18"))
-    calculatedRR = calculatedRR.div(totalSupply)
-    calculatedRR = calculatedRR.mul(BN("1e12"))
-    const reserveRatio = await s.USDI.reserveRatio()
-    assert.equal(reserveRatio.toString(), calculatedRR.toString(), "calculatedIF for reserve ratio is correct")
+    let calculation = BN(timeDifference).mul(BN("1e18").mul(curve))//correct step 1
+    calculation = calculation.div(OneYear)//correct step 2 - divide by OneYear
+    calculation = calculation.div(BN("1e18"))//truncate
+    calculation = calculation.mul(interestFactor)
+    calculation = calculation.div(BN("1e18"))//truncate again
 
-    //calculate curve
-    const curve = await s.Curve.getValueAt(nullAddr, calculatedRR)//todo - calculate
-
-    //calculate new interest factor
-    let calculatedIF = BN(timeDifference).mul(BN("1e18").mul(curve))//correct step 1
-    calculatedIF = calculatedIF.div(OneYear)//correct step 2 - divide by OneYear
-    calculatedIF = calculatedIF.div(BN("1e18"))//truncate
-    calculatedIF = calculatedIF.mul(interestFactor)
-    calculatedIF = calculatedIF.div(BN("1e18"))//truncate again
-
-    //showBody("Interest Factor increase: ", calculatedIF)
+    //showBody("Interest Factor increase: ", calculation)
     //showBody("Provided Interest Factor: ", interestFactor)
-    //showBody("New Interest Factor: ", interestFactor.add(calculatedIF))
+    //showBody("New Interest Factor: ", interestFactor.add(calculation))
 
     //new interest factor
-    return interestFactor.add(calculatedIF)
+    return interestFactor.add(calculation)
 }
 
 /**
@@ -168,24 +155,9 @@ describe("TOKEN-DEPOSITS", async () => {
         showBody("expectedLiability ", expectedLiability)
         showBody("TARGET liability  ", liability_amount)
         expect(liability_amount).to.be.gt(BN("5000e18"));
-
-        //assert.equal(liability_amount.toString(), expectedLiability.toString(), "Liability calculations are correct")
-
+        
     });
 });
-
-//what happens when reserve is 0? 
-describe("redeem?", async () => {
-    before(async () => {
-
-    })
-    it("Bob tries to redeem USDC for the USDi he borrowed", async () => {
-        const reserveRatio = await s.USDI.reserveRatio()//todo - calculate
-        //showBody(reserveRatio)
-        const reserve = await s.USDC.balanceOf(s.USDI.address)
-        //showBody(reserve)
-    })
-})
 
 describe("Checking interest generation", () => {
     it("check change in balance over a long period of time", async () => {
