@@ -393,8 +393,10 @@ contract VaultController is
       uint256 raw_price = uint256(_oracleMaster.getLivePrice(token_address));
       if (raw_price != 0) {
         uint256 balance = vault.tokenBalance(token_address);
-        uint256 token_value = truncate(truncate(raw_price * balance * _tokenId_tokenLTV[i]));
-        total_liquidity_value = total_liquidity_value + token_value;
+        if (balance != 0) {
+          uint256 token_value = truncate(truncate(raw_price * balance * _tokenId_tokenLTV[i]));
+          total_liquidity_value = total_liquidity_value + token_value;
+        }
       }
     }
     return total_liquidity_value;
