@@ -32,25 +32,14 @@ import {
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../util/block";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-let VaultController: VaultController
-let USDi: USDI
+
 let ProxyController: ProxyAdmin
 
-let deployer: SignerWithAddress,
-    alice: SignerWithAddress,
-    bob: SignerWithAddress,
-    carol: SignerWithAddress,
-    dave: SignerWithAddress,
-    ethan: SignerWithAddress;
-let ganga: Array<SignerWithAddress>;
+
 
 const deployProxy = async () => {
 
-    [deployer, alice, bob, carol, dave, ethan] = await ethers.getSigners();
-    ganga = [deployer, alice, bob, carol, dave, ethan];
     await mineBlock()
-
-
     const uVC = await new VaultController__factory(s.Frank).connect(s.Frank).deploy()
     await mineBlock()
 
@@ -58,64 +47,80 @@ const deployProxy = async () => {
     await mineBlock()
 
     let vc = await new TransparentUpgradeableProxy__factory(
-        deployer
+        s.Frank
     ).connect(s.Frank).deploy(uVC.address, ProxyController!.address, "0x");
     await mineBlock()
 
-    VaultController = await new VaultController__factory(s.Frank).attach(vc.address)
+    s.VaultController = await new VaultController__factory(s.Frank).attach(vc.address)
     await mineBlock()
-    await VaultController.deployed()
-    await mineBlock()
-
-    await VaultController.initialize()
+    await s.VaultController.deployed()
     await mineBlock()
 
+    await s.VaultController.initialize()
+    await mineBlock()
 
     const uUSDi = await new USDI__factory(s.Frank).connect(s.Frank).deploy()
     await mineBlock()
-    
+
     let usd = await new TransparentUpgradeableProxy__factory(
-        deployer
+        s.Frank
     ).connect(s.Frank).deploy(uUSDi.address, ProxyController!.address, "0x")
     await mineBlock()
 
-    USDi = await new USDI__factory(s.Frank).attach(usd.address)
+    s.USDI = await new USDI__factory(s.Frank).attach(usd.address)
     await mineBlock()
-    await USDi.deployed()
+    await s.USDI.deployed()
     await mineBlock()
-    await USDi.initialize(s.usdcAddress)
+    await s.USDI.initialize(s.usdcAddress)
+
+    let owner = await s.USDI.owner()
+    showBody("OWNER: ", owner)
+    showBody("Frank: ", s.Frank.address)
+
+    //await expect(s.USDI.owner()).to.equal(s.Frank.address)
+    showBody("vault controller set vault owner")
+    await s.USDI.setVaultController(s.VaultController.address)
+    //await expect(s.USDI.setVaultController(s.VaultController.address)).to.not.reverted
+    await mineBlock()
 }
 
 
 require('chai').should()
-
 describe("Deploy Contracts", () => {
-
-    it("Deploy USDI core", async () => {
-        showBody("deploying usdi")
-        s.USDI = (await new USDI__factory(s.Frank).deploy()) as any
-        await mineBlock()
-        await s.USDI.initialize(s.usdcAddress)
-        await mineBlock()
-        expect(await s.USDI.owner()).to.equal(s.Frank.address)
-
-        showBody("set usdi owner")
-        await expect(s.USDI.connect(s.Frank).setMonetaryPolicy(s.Frank.address)).to.not.reverted
-        await mineBlock()
-        expect(await s.USDI.monetaryPolicy()).to.equal(s.Frank.address)
-
-        showBody("deploying vault controller")
-        await mineBlock()
-        s.VaultController = await new VaultController__factory(s.Frank).deploy();
-        await mineBlock()
-        let result = await s.VaultController.initialize()
-        await mineBlock()
-
-        expect(await s.USDI.owner()).to.equal(s.Frank.address)
-        showBody("vault controller set vault owner")
-        await expect(s.USDI.setVaultController(s.VaultController.address)).to.not.reverted
-        await mineBlock()
+    before(async () => {
+        await deployProxy()
     })
+    it("Verify deployment of VaultController proxy", async () => {
+
+        const protocolFee = await s.VaultController.connect(s.Andy).ProtocolFee()
+        await mineBlock()
+        const expectedProtocolFee = BN("1e14")
+        assert.equal(protocolFee.toString(), expectedProtocolFee.toString(), "VaultController Initialized")
+
+    })
+    it("Verify deployment of USDi proxy", async () => {
+        const reserveAddress = await s.USDI._reserveAddress()
+        await mineBlock()
+        const expectedReserveAddress = s.usdcAddress
+        assert.equal(reserveAddress, expectedReserveAddress, "USDi Initialized")
+    })
+    describe("Sanity check USDI deploy", () => {
+        it("Should return the right name, symbol, and decimals", async () => {
+            expect(await s.USDI.name()).to.equal("USDI Token");
+            expect(await s.USDI.symbol()).to.equal("USDI");
+            expect(await s.USDI.decimals()).to.equal(18);
+            expect(await s.USDI.owner()).to.equal(s.Frank.address)
+        });
+        it(`The contract creator should have ${BN("1e18").toLocaleString()} fragment`, async () => {
+            expect(await s.USDI.balanceOf(await s.Frank.getAddress())).to.eq(BN("1e18"));
+        });
+        it(`the totalSupply should be ${BN("1e18").toLocaleString()}`, async () => {
+            expect(await s.USDI.totalSupply()).to.eq(BN("1e18"));
+        });
+        it("the owner should be the Frank", async () => {
+            expect(await s.USDI.owner()).to.eq(await s.Frank.getAddress());
+        });
+    });
 
     it("Deploy Curve", async () => {
         await mineBlock()
@@ -232,19 +237,4 @@ describe("Deploy Contracts", () => {
     })
 })
 
-describe("Sanity check USDI deploy", () => {
-    it("Should return the right name, symbol, and decimals", async () => {
-        expect(await s.USDI.name()).to.equal("USDI Token");
-        expect(await s.USDI.symbol()).to.equal("USDI");
-        expect(await s.USDI.decimals()).to.equal(18);
-    });
-    it(`The contract creator should have ${BN("1e18").toLocaleString()} fragment`, async () => {
-        expect(await s.USDI.balanceOf(await s.Frank.getAddress())).to.eq(BN("1e18"));
-    });
-    it(`the totalSupply should be ${BN("1e18").toLocaleString()}`, async () => {
-        expect(await s.USDI.totalSupply()).to.eq(BN("1e18"));
-    });
-    it("the owner should be the Frank", async () => {
-        expect(await s.USDI.owner()).to.eq(await s.Frank.getAddress());
-    });
-});
+

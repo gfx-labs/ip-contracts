@@ -9,6 +9,9 @@ import "./IVaultController.sol";
 import "../_external/CompLike.sol";
 import "../_external/IERC20.sol";
 import "../_external/Context.sol";
+import "../_external/compound/ExponentialNoError.sol";
+
+
 
 /// @title A users vault
 /// @notice our implentation of maker-vault like vault
@@ -16,12 +19,14 @@ import "../_external/Context.sol";
 /// 1. multi-collateral
 /// 2. generate interest in USDI
 /// 3. can delegate voting power of contained tokens
-contract Vault is IVault, Context {
+contract Vault is IVault, ExponentialNoError, Context {
     uint256 public _id;
     address public _minter;
+    address private _usdiAddress;
+    IUSDI private _usdi;
 
-    IUSDI public _usdi;
-    IVaultController public _master;
+    address public _VaultControllerAddress;
+    IVaultController private _master;
 
     event Deposit(address token_address, uint256 amount);
     event Withdraw(address token_address, uint256 amount);
@@ -31,7 +36,7 @@ contract Vault is IVault, Context {
     /// @notice checks if _msgSender is the controller of the vault
     modifier onlyVaultController() {
         require(
-            _msgSender() == address(_master),
+            _msgSender() == _VaultControllerAddress,
             "sender not VaultController"
         );
         _;
@@ -56,7 +61,9 @@ contract Vault is IVault, Context {
     ) {
         _id = id;
         _minter = minter;
+        _usdiAddress = usdi_address;
         _usdi = IUSDI(usdi_address);
+        _VaultControllerAddress = master_address;
         _master = IVaultController(master_address);
     }
 
@@ -131,17 +138,30 @@ contract Vault is IVault, Context {
     /// @notice function used by the VaultController to reduce a vaults liability
     /// callable by the VaultController only
     /// @param base_amount amount to reduce base liability by
-    function modify_liability(bool increase, uint256 base_amount)
+    function decrease_liability(uint256 base_amount)
         external
         override
         onlyVaultController
         returns (uint256)
-    { 
-        if(increase){
-            _baseLiability = _baseLiability + base_amount;
-            return _baseLiability;
-        }
+    {
+        require(
+            _baseLiability >= base_amount,
+            "cannot repay more than is owed"
+        );
         _baseLiability = _baseLiability - base_amount;
+        return _baseLiability;
+    }
+
+    /// @notice function used by the VaultController to increase a vaults liability
+    /// callable by the VaultController only
+    /// @param base_amount amount to reduce base liability by
+    function increase_liability(uint256 base_amount)
+        external
+        override
+        onlyVaultController
+        returns (uint256)
+    {
+        _baseLiability = _baseLiability + base_amount;
         return _baseLiability;
     }
 }
