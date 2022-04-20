@@ -287,7 +287,6 @@ contract VaultController is
     // finally, we deliver the tokens to the liquidator
     vault.masterTransfer(asset_address, _msgSender(), tokens_to_liquidate);
 
-    require(get_vault_borrowing_power(vault) <= _AccountLiability(id), "overliquidation");
     emit Liquidate(id, asset_address, usdi_to_repurchase, tokens_to_liquidate);
     return tokens_to_liquidate;
   }
