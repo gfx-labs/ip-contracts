@@ -1,10 +1,11 @@
 import { s } from "./scope";
 import { ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody } from "../../util/format";
+import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
 import { Event, utils, BigNumber } from "ethers";
+import { getGas } from "../../util/math";
 
 /**
  * 
@@ -153,8 +154,10 @@ describe("TOKEN-DEPOSITS", async () => {
         let interestFactor = await s.VaultController.InterestFactor()
         const calculatedInterestFactor = await payInterestMath(interestFactor)
 
-        await s.VaultController.connect(s.Frank).calculateInterest();
+        const result = await s.VaultController.connect(s.Frank).calculateInterest();
         await advanceBlockHeight(1)
+        const interestGas = await getGas(result)
+        showBodyCyan("Gas cost to calculate interest: ", interestGas)
 
         interestFactor = await s.VaultController.InterestFactor()
         assert.equal(interestFactor.toString(), calculatedInterestFactor.toString(), "Interest factor is correct")
@@ -189,8 +192,10 @@ describe("Checking interest generation", () => {
         assert.equal(balance.toString(), initBalance.toString(), "No yield before calculateInterest")
 
         //calculate and pay interest on the contract
-        await expect(s.VaultController.calculateInterest()).to.not.reverted
+        const result = await s.VaultController.connect(s.Frank).calculateInterest();
         await advanceBlockHeight(1)
+        const interestGas = await getGas(result)
+        showBodyCyan("Gas cost to calculate interest: ", interestGas)
 
         //check for yeild before calculateInterest - should be 0
         balance = await s.USDI.balanceOf(s.Dave.address)
