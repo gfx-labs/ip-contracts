@@ -230,8 +230,12 @@ describe("Testing repay", () => {
         await s.VaultController.connect(s.Frank).unpause()
         await advanceBlockHeight(1)
 
-        await s.VaultController.connect(s.Bob).repayUSDi(vaultId, partialLiability)
+        const repayResult = await s.VaultController.connect(s.Bob).repayUSDi(vaultId, partialLiability)
         await advanceBlockHeight(1)
+        const repayGas = await getGas(repayResult)
+        showBodyCyan("Gas cost do partial repay: ", repayGas)
+    
+
         let updatedLiability = await s.BobVault.connect(s.Bob).BaseLiability()
         let balance = await s.USDI.balanceOf(s.Bob.address)
         //showBody("Balance after repay", balance.toString())
@@ -254,8 +258,10 @@ describe("Testing repay", () => {
         await advanceBlockHeight(1)
 
 
-        await s.VaultController.connect(s.Bob).repayAllUSDi(1)
+        const repayResult = await s.VaultController.connect(s.Bob).repayAllUSDi(1)
         await advanceBlockHeight(1)
+        const repayGas = await getGas(repayResult)
+        showBodyCyan("Gas cost do total repay: ", repayGas)
 
         let updatedLiability = await s.BobVault.connect(s.Bob).BaseLiability()
         expect(updatedLiability).to.eq(0)
