@@ -1,26 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-
 /// @title VaultController Interface
 /// @notice Interface for interacting with the VaultController
 interface IVaultController {
   // view functions
-  function _totalBaseLiability() external view returns(uint256);
-  function _lastInterestTime() external view returns(uint256);
-  function _protocolFee() external view returns(uint256);
+  function _totalBaseLiability() external view returns (uint256);
+
+  function _lastInterestTime() external view returns (uint256);
+
+  function _protocolFee() external view returns (uint256);
+
   function InterestFactor() external view returns (uint256);
 
   function ProtocolFee() external view returns (uint256);
 
-  function VaultAddress(uint256 id) external view returns (address);
+  function VaultAddress(uint96 id) external view returns (address);
 
-  function AccountLiability(uint256 id) external view returns (uint256);
+  function AccountLiability(uint96 id) external view returns (uint256);
 
-  function AccountBorrowingPower(uint256 id) external view returns (uint256);
+  function AccountBorrowingPower(uint96 id) external view returns (uint256);
 
   function TokensToLiquidate(
-    uint256 id,
+    uint96 id,
     address token,
     uint256 num
   ) external view returns (uint256);
@@ -30,19 +32,19 @@ interface IVaultController {
 
   function mintVault() external returns (address);
 
-  function checkAccount(uint256 id) external view returns (bool);
+  function checkAccount(uint96 id) external view returns (bool);
 
   function liquidate_account(
-    uint256 id,
+    uint96 id,
     address asset_address,
     uint256 tokenAmount
   ) external returns (uint256);
 
-  function borrowUsdi(uint256 id, uint256 amount) external;
+  function borrowUsdi(uint96 id, uint256 amount) external;
 
-  function repayUSDi(uint256 id, uint256 amount) external;
+  function repayUSDi(uint96 id, uint256 amount) external;
 
-  function repayAllUSDi(uint256 id) external;
+  function repayAllUSDi(uint96 id) external;
 
   function calculateInterest() external returns (uint256);
 

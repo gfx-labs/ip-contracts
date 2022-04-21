@@ -8,6 +8,8 @@ interface IVault {
 
   function Minter() external view returns (address);
 
+  function Id() external view returns (uint96);
+
   function tokenBalance(address) external view returns (uint256);
 
   function withdrawErc20(address token_address, uint256 amount) external;

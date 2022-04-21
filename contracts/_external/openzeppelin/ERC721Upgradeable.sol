@@ -394,7 +394,7 @@ contract ERC721Upgradeable is
    *
    * @param from address representing the previous owner of the given token ID
    * @param to target address that will receive the tokens
-   * @param tokenId uint256 ID of the token to be transferred
+   * @param tokenId uint96 id of the token to be transferred
    * @param _data bytes optional data to send along with the call
    * @return bool whether the call correctly returned the expected magic value
    */
