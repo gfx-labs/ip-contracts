@@ -1,5 +1,5 @@
 import { expect, assert } from "chai";
-import { ethers, network } from "hardhat";
+import { ethers, network, tenderly } from "hardhat";
 import { stealMoney } from "../../util/money";
 import { showBody } from "../../util/format";
 import { BN } from "../../util/number";
@@ -29,6 +29,15 @@ let weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 
 let carol_voting_address = "0x1F2AB8Ac759Fb0E3185630277A554Ae3110bF530";
 
+if (process.env.TENDERLY_KEY) {
+    if (!(process.env.TENDERLY_KEY!.toLowerCase().includes("none"))) {
+        let provider = new ethers.providers.Web3Provider(tenderly.network())
+        ethers.provider = provider
+
+    }
+}
+
+
 describe("hardhat settings", () => {
     it("reset hardhat network each run", async () => {
         expect(await reset(0)).to.not.throw;
@@ -37,6 +46,7 @@ describe("hardhat settings", () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
             .throw;
     });
+
 });
 
 describe("Token Setup", () => {
