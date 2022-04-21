@@ -58,12 +58,13 @@ describe("TOKEN-DEPOSITS", async () => {
         const depositReceipt = await depositResult.wait()
         const depositArgs = depositReceipt.events![depositReceipt.events!.length - 1]
         assert.equal(depositArgs.event!, "Deposit", "correct event emitted")
-
         let usdcBalance = await s.USDC.balanceOf(s.Dave.address)
         assert.equal(usdcBalance.toString(), s.Dave_USDC.sub(usdcAmount).toString(), "Dave deposited USDC tokens")
 
-        let usdiBalance = await s.USDI.balanceOf(s.Dave.address)
         //some interest has accrued, USDI balance should be slightly higher than existingUSDI balance + USDC amount deposited 
+        await s.VaultController.calculateInterest()
+        await mineBlock();
+        let usdiBalance = await s.USDI.balanceOf(s.Dave.address)
         expect(usdiBalance).to.be.gt(startingUSDIAmount.add(usdcAmount.mul(1e12)))
         //assert.equal(usdiBalance.toString(), startingUSDIamount.add(usdcAmount.mul(1e12)).toString(), "USDi balance is correct")
 
@@ -71,8 +72,6 @@ describe("TOKEN-DEPOSITS", async () => {
 
     //fixed bug in withdraw
     it("redeem USDC for USDI", async () => {
-
-
 
         //check pauseable 
         await s.USDI.connect(s.Frank).pause()
@@ -101,7 +100,7 @@ describe("TOKEN-DEPOSITS", async () => {
     });
 
     it("Withdraw total reserves", async () => {
-        
+
 
         let reserve = await s.USDC.balanceOf(s.USDI.address)
         let reserve_e18 = reserve.mul(BN("1e18"))
@@ -125,9 +124,9 @@ describe("TOKEN-DEPOSITS", async () => {
         let reserve = await s.USDC.balanceOf(s.USDI.address)
 
         assert.equal(reserve.toString(), "0", "reserve is 0, donations welcome :)")
-        
+
         //todo check totalSupply and confirm interest rate changes
-        
+
         //Dave approves and donates half of his USDC
         await s.USDC.connect(s.Dave).approve(s.USDI.address, balance.div(2))
         await s.USDI.connect(s.Dave).donate(balance.div(2))
@@ -138,7 +137,7 @@ describe("TOKEN-DEPOSITS", async () => {
         let updatedReserve = await s.USDC.balanceOf(s.USDI.address)
 
         assert.equal(updatedBalance.toString(), updatedReserve.toString(), "Donate successful")
-        
+
     })
 
 });

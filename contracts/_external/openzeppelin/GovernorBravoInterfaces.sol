@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 contract GovernorBravoEvents {
   /// @notice An event emitted when a new proposal is created
   event ProposalCreated(
-    uint256 id,
+    uint96 id,
     address proposer,
     address[] targets,
     uint256[] values,
@@ -25,13 +25,13 @@ contract GovernorBravoEvents {
   event VoteCast(address indexed voter, uint256 proposalId, uint8 support, uint256 votes, string reason);
 
   /// @notice An event emitted when a proposal has been canceled
-  event ProposalCanceled(uint256 id);
+  event ProposalCanceled(uint96 id);
 
   /// @notice An event emitted when a proposal has been queued in the Timelock
-  event ProposalQueued(uint256 id, uint256 eta);
+  event ProposalQueued(uint96 id, uint256 eta);
 
   /// @notice An event emitted when a proposal has been executed in the Timelock
-  event ProposalExecuted(uint256 id);
+  event ProposalExecuted(uint96 id);
 
   /// @notice An event emitted when the voting delay is set
   event VotingDelaySet(uint256 oldVotingDelay, uint256 newVotingDelay);
@@ -105,7 +105,7 @@ contract GovernorBravoDelegateStorageV1 is GovernorBravoDelegatorStorage {
 
   struct Proposal {
     /// @notice Unique id for looking up a proposal
-    uint256 id;
+    uint96 id;
     /// @notice Creator of the proposal
     address proposer;
     /// @notice The timestamp that the proposal will be available for execution, set once the vote succeeds

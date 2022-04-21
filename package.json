@@ -17,6 +17,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@tenderly/hardhat-tenderly": "1.1.0-beta.8",
         "@typechain/truffle-v5": "^8.0.0",
         "@typechain/web3-v1": "^6.0.0",
         "big-number": "^2.0.0",
