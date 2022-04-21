@@ -18,28 +18,29 @@ import "../_external/compound/ExponentialNoError.sol";
 /// 2. generate interest in USDI
 /// 3. can delegate voting power of contained tokens
 contract Vault is IVault, ExponentialNoError, Context {
-  uint256 public _id;
-  address public _minter;
-  address private _usdiAddress;
-  IUSDI private _usdi;
+  struct VaultInfo {
+    uint96 id;
+    address minter;
+  }
 
-  address public _VaultControllerAddress;
-  IVaultController private _master;
+  VaultInfo public _vaultInfo;
+
+  IVaultController public _master;
+
+  uint256 public _baseLiability;
 
   event Deposit(address token_address, uint256 amount);
   event Withdraw(address token_address, uint256 amount);
 
-  uint256 public _baseLiability;
-
   /// @notice checks if _msgSender is the controller of the vault
   modifier onlyVaultController() {
-    require(_msgSender() == _VaultControllerAddress, "sender not VaultController");
+    require(_msgSender() == address(_master), "sender not VaultController");
     _;
   }
 
   /// @notice checks if _msgSender is the minter of the vault
   modifier onlyMinter() {
-    require(_msgSender() == _minter, "sender not minter");
+    require(_msgSender() == _vaultInfo.minter, "sender not minter");
     _;
   }
 
@@ -47,25 +48,25 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// @param id unique id of the vault, ever increasing and tracked by VaultController
   /// @param minter address of the person who created this vault
   /// @param master_address address of the VaultController
-  /// @param usdi_address address of the Usdi contract
   constructor(
-    uint256 id,
+    uint96 id,
     address minter,
-    address master_address,
-    address usdi_address
+    address master_address
   ) {
-    _id = id;
-    _minter = minter;
-    _usdiAddress = usdi_address;
-    _usdi = IUSDI(usdi_address);
-    _VaultControllerAddress = master_address;
+    _vaultInfo = VaultInfo(id, minter);
     _master = IVaultController(master_address);
   }
 
   /// @notice minter of the vault
   /// @return address of minter
   function Minter() external view override returns (address) {
-    return _minter;
+    return _vaultInfo.minter;
+  }
+
+  /// @notice id of the vault
+  /// @return address of minter
+  function Id() external view override returns (uint96) {
+    return _vaultInfo.id;
   }
 
   /// @notice current vault base liability
@@ -90,7 +91,7 @@ contract Vault is IVault, ExponentialNoError, Context {
   function withdrawErc20(address token_address, uint256 amount) external override onlyMinter {
     IERC20 token = IERC20(token_address);
     token.transferFrom(address(this), _msgSender(), amount);
-    bool solvency = _master.checkAccount(_id);
+    bool solvency = _master.checkAccount(_vaultInfo.id);
     require(solvency, "over-withdrawal");
 
     emit Withdraw(token_address, amount);
