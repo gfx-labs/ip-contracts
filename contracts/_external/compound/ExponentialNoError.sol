@@ -13,6 +13,8 @@ contract ExponentialNoError {
   uint256 constant doubleScale = 1e36;
   uint256 constant halfExpScale = expScale / 2;
   uint256 constant mantissaOne = expScale;
+  uint256 constant uint192Max = 2**192 - 1;
+  uint256 constant uint128Max = 2**128 - 1;
 
   struct Exp {
     uint256 mantissa;
@@ -32,6 +34,16 @@ contract ExponentialNoError {
 
   function truncate(uint256 u) internal pure returns (uint256) {
     return u / expScale;
+  }
+
+  function safeu192(uint256 u) internal pure returns (uint192) {
+    require(u < uint192Max, "overflow");
+    return uint192(u);
+  }
+
+  function safeu128(uint256 u) internal pure returns (uint128) {
+    require(u < uint128Max, "overflow");
+    return uint128(u);
   }
 
   /**
