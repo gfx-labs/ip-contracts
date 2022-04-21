@@ -67,8 +67,10 @@ const payInterestMath = async (interestFactor: BigNumber) => {
 
     const latestInterestTime = await s.VaultController.LastInterestTime()//calculate? 
     const currentBlock = await ethers.provider.getBlockNumber()
+    showBody("Current Block: ", currentBlock)
     const currentTime = (await ethers.provider.getBlock(currentBlock)).timestamp
     let timeDifference = currentTime - latestInterestTime.toNumber() + 1 //account for change when fetching from provider
+    showBody("Calculated time difference: ", timeDifference)
 
     const reserveRatio = await s.USDI.reserveRatio()//todo - calculate
     const curve = await s.Curve.getValueAt(nullAddr, reserveRatio)//todo - calculate
@@ -104,30 +106,39 @@ const initIF = BN("1e18")
 let firstBorrowIF: BigNumber
 const borrowAmount = BN("5000e18")
 const nullAddr = "0x0000000000000000000000000000000000000000"
-describe("TOKEN-DEPOSITS", async () => {
+describe("BORROW USDi", async () => {
 
     //bob tries to borrow usdi against 10 eth as if eth is $100k
     // remember bob has 10 eth
     let actualBorrowAmount: any
     let expectedInterestFactor: BigNumber
-    it(`bob should not be able to borrow 1e6 * 1e18 * ${s.Bob_WETH} usdi`, async () => {
+    /**
+     it(`bob should not be able to borrow 1e6 * 1e18 * ${s.Bob_WETH} usdi`, async () => {
         await expect(s.VaultController.connect(s.Bob).borrowUsdi(1,
             s.Bob_WETH.mul(BN("1e18")).mul(1e6),
         )).to.be.revertedWith("account insolvent");
     });
+     */
 
     it(`bob should be able to borrow ${"5000e18"} usdi`, async () => {
+
+        //await network.provider.send("evm_mine")
 
         const initUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
         assert.equal(initUSDiBalance.toString(), "0", "Bob starts with 0 USDi")
 
         //get initial interest factor
+        //await advanceBlockHeight(1)
         const initInterestFactor = await s.VaultController.InterestFactor()
+        //showBody("Interest Factor read from contract: ", initInterestFactor)
 
         expectedInterestFactor = await payInterestMath(initInterestFactor)
+        //showBody("expectedInterestFactor: ", expectedInterestFactor)
         firstBorrowIF = expectedInterestFactor
         const calculatedBaseLiability = await calculateAccountLiability(borrowAmount, initInterestFactor, initInterestFactor)
 
+
+        showBody("BORROWING USDI")
         const borrowResult = await s.VaultController.connect(s.Bob).borrowUsdi(1, borrowAmount)
         await advanceBlockHeight(1)
         const args = await getArgs(borrowResult)
@@ -135,6 +146,7 @@ describe("TOKEN-DEPOSITS", async () => {
 
         //actual new interest factor from contract
         const newInterestFactor = await s.VaultController.InterestFactor()
+        //showBody("New interest factor read from contract: ", newInterestFactor)
         assert.equal(newInterestFactor.toString(), expectedInterestFactor.toString(), "New Interest Factor is correct")
 
         await s.VaultController.calculateInterest()
@@ -234,7 +246,7 @@ describe("Testing repay", () => {
         await advanceBlockHeight(1)
         const repayGas = await getGas(repayResult)
         showBodyCyan("Gas cost do partial repay: ", repayGas)
-    
+
 
         let updatedLiability = await s.BobVault.connect(s.Bob).BaseLiability()
         let balance = await s.USDI.balanceOf(s.Bob.address)
