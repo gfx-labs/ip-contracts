@@ -13,6 +13,15 @@ export const DeployContractWithProxy = async (
     admin: ProxyAdmin,
     ...args: any[]
 ): Promise<any> => {
+    if (process.env.NOPROXY == "TRUE" || process.env.NOPROXY == "true") {
+        const vc = await factory.connect(deployer).deploy()
+        await mineBlock()
+        await vc.deployed()
+        await mineBlock()
+        const con = factory.attach(vc.address)
+        await con.initialize(...args)
+        return mineBlock().then(() => { return con })
+    }
     const uVC = await factory.connect(deployer).deploy()
     let vc = await new TransparentUpgradeableProxy__factory(deployer).connect(deployer).deploy(uVC.address, admin.address, "0x");
     await mineBlock()
@@ -25,7 +34,6 @@ export const DeployContractWithProxy = async (
     //        name: con.,
     //        address: con.address
     //    })
-
 
     return mineBlock().then(() => { return con })
 }
