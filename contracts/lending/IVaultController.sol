@@ -5,21 +5,21 @@ pragma solidity ^0.8.0;
 /// @notice Interface for interacting with the VaultController
 interface IVaultController {
   // view functions
-  function _totalBaseLiability() external view returns (uint256);
+  function _totalBaseLiability() external view returns (uint192);
 
-  function _lastInterestTime() external view returns (uint256);
+  function _protocolFee() external view returns (uint192);
 
-  function _protocolFee() external view returns (uint256);
+  function LastInterestTime() external view returns (uint64);
 
-  function InterestFactor() external view returns (uint256);
+  function InterestFactor() external view returns (uint192);
 
-  function ProtocolFee() external view returns (uint256);
+  function ProtocolFee() external view returns (uint192);
 
   function VaultAddress(uint96 id) external view returns (address);
 
-  function AccountLiability(uint96 id) external view returns (uint256);
+  function AccountLiability(uint96 id) external view returns (uint192);
 
-  function AccountBorrowingPower(uint96 id) external view returns (uint256);
+  function AccountBorrowingPower(uint96 id) external view returns (uint192);
 
   function TokensToLiquidate(
     uint96 id,
@@ -40,9 +40,9 @@ interface IVaultController {
     uint256 tokenAmount
   ) external returns (uint256);
 
-  function borrowUsdi(uint96 id, uint256 amount) external;
+  function borrowUsdi(uint96 id, uint192 amount) external;
 
-  function repayUSDi(uint96 id, uint256 amount) external;
+  function repayUSDi(uint96 id, uint192 amount) external;
 
   function repayAllUSDi(uint96 id) external;
 
@@ -57,7 +57,7 @@ interface IVaultController {
 
   function register_curve_master(address master_curve_address) external;
 
-  function change_protocol_fee(uint256 new_protocol_fee) external;
+  function change_protocol_fee(uint192 new_protocol_fee) external;
 
   function register_erc20(
     address token_address,
@@ -76,7 +76,7 @@ interface IVaultController {
   ) external;
 
   // events
-  event Interest(uint256 epoch, uint256 amount, uint256 curve_val);
+  event InterestEvent(uint64 epoch, uint192 amount, uint256 curve_val);
   event NewProtocolFee(uint256 protocol_fee);
   event RegisteredErc20(address token_address, uint256 LTVe4, address oracle_address, uint256 liquidationIncentivee4);
   event UpdateRegisteredErc20(
