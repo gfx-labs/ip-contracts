@@ -17,6 +17,8 @@ import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 /// @title Controller of all vaults in the USDI borrow/lend system
 /// @notice VaultController contains all business logic for borrowing and lending through the protocol.
 /// It is also in charge of accruing interest.
@@ -391,8 +393,10 @@ contract VaultController is
       uint256 raw_price = uint256(_oracleMaster.getLivePrice(token_address));
       if (raw_price != 0) {
         uint256 balance = vault.tokenBalance(token_address);
-        uint256 token_value = truncate(truncate(raw_price * balance * _tokenId_tokenLTV[i]));
-        total_liquidity_value = total_liquidity_value + token_value;
+        if (balance != 0) {
+          uint256 token_value = truncate(truncate(raw_price * balance * _tokenId_tokenLTV[i]));
+          total_liquidity_value = total_liquidity_value + token_value;
+        }
       }
     }
     return total_liquidity_value;
@@ -408,6 +412,7 @@ contract VaultController is
   /// this function is called before any function that changes the reserve ratio
   function pay_interest() private returns (uint256) {
     uint256 timeDifference = block.timestamp - _lastInterestTime;
+
     if (timeDifference == 0) {
       return 0;
     }
