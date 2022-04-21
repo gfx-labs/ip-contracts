@@ -1,8 +1,8 @@
 import { s } from "./scope";
 import { upgrades, ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody } from "../util/format";
-import { BN } from "../util/number";
+import { showBody } from "../../util/format";
+import { BN } from "../../util/number";
 import {
     AnchoredViewRelay,
     AnchoredViewRelay__factory,
@@ -29,7 +29,7 @@ import {
     IVOTE,
     IVOTE__factory,
 } from "../../typechain-types";
-import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../util/block";
+import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 
