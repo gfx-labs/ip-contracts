@@ -2,23 +2,11 @@ import { s } from "./scope";
 import { ethers } from "hardhat";
 import { expect, assert } from "chai";
 import { showBody } from "../../util/format";
+import { getArgs } from "../../util/math"
 import { BN } from "../../util/number";
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
 import { Event, utils } from "ethers";
-/**
- * 
- * @param result object returned from a transaction that emits an event 
- * @returns the args from the last event emitted from the transaction
- */
-const getArgs = async (result: any) => {
-    await advanceBlockHeight(1)
-    const receipt = await result.wait()
-    await advanceBlockHeight(1)
-    const events = receipt.events
-    const args = events[events.length - 1].args
 
-    return args
-}
 
 
 describe("TOKEN-DEPOSITS", async () => {
@@ -181,7 +169,7 @@ describe("Testing liquidations", () => {
         //check ending liability
         let liabiltiy = await s.VaultController.AccountLiability(vaultID)
         //showBody("initLiability: ", initLiability)
-        showBody("End liability: ", liabiltiy)
+        //showBody("End liability: ", liabiltiy)
 
         //Bob's vault has less collateral than before
         let balance = await s.WETH.balanceOf(s.BobVault.address)
