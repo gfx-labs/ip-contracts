@@ -1,1 +1,1 @@
-import "./mainnet/test_all"
+import "./mainnet/index.ts"

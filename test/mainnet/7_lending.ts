@@ -1,16 +1,16 @@
 import { s } from "./scope";
 import { ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody } from "../util/format";
-import { BN } from "../util/number";
-import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../util/block";
+import { showBody } from "../../util/format";
+import { BN } from "../../util/number";
+import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
 import { Event, utils } from "ethers";
 /**
  * 
  * @param result object returned from a transaction that emits an event 
  * @returns the args from the last event emitted from the transaction
  */
- const getArgs = async (result: any) => {
+const getArgs = async (result: any) => {
     await advanceBlockHeight(1)
     const receipt = await result.wait()
     await advanceBlockHeight(1)
