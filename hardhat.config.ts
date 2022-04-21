@@ -66,7 +66,7 @@ const config: HardhatUserConfig = {
 };
 
 if (process.env.TENDERLY_KEY) {
-    if (!(process.env.TENDERLY_KEY!.toLowerCase().includes("none"))) {
+    if (process.env.TENDERLY_ENABLE == "true") {
         import("@tenderly/hardhat-tenderly").then(() => {
             console.log("enabling tenderly")
             config.tenderly = {
