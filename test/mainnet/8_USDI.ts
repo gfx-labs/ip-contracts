@@ -2,8 +2,9 @@ import { s } from "./scope";
 import { ethers } from "hardhat";
 import { BigNumber, Event, utils } from "ethers";
 import { expect, assert } from "chai";
+import { getGas, getArgs } from "../../util/math"
 import { stealMoney } from "../../util/money";
-import { showBody } from "../../util/format";
+import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear, reset } from "../../util/block";
 
@@ -54,11 +55,17 @@ describe("TOKEN-DEPOSITS", async () => {
         await advanceBlockHeight(1)
 
         const depositResult = await s.USDI.connect(s.Dave).deposit(usdcAmount)
-        await mineBlock()
-        const depositReceipt = await depositResult.wait()
-        showBody("gas gost for dave deposit:", depositReceipt.gasUsed)
-        const depositArgs = depositReceipt.events![depositReceipt.events!.length - 1]
-        assert.equal(depositArgs.event!, "Deposit", "correct event emitted")
+        await advanceBlockHeight(1)
+        const gasUsed = await getGas(depositResult)
+        showBody("CYAN NEXT")
+        showBodyCyan("Gas cost for Dave deposit: ", gasUsed)
+
+        const depositArgs = await getArgs(depositResult)
+        //scale expected USDC amount to 1e18
+        assert.equal(depositArgs._value.toString(), usdcAmount.mul(BN("1e12")).toString(), "Deposit amount correct from event receipt")
+
+        //const depositArgs = depositReceipt.events![depositReceipt.events!.length - 1]
+        //assert.equal(depositArgs.event!, "Deposit", "correct event emitted")
         let usdcBalance = await s.USDC.balanceOf(s.Dave.address)
         assert.equal(usdcBalance.toString(), s.Dave_USDC.sub(usdcAmount).toString(), "Dave deposited USDC tokens")
 
@@ -83,10 +90,10 @@ describe("TOKEN-DEPOSITS", async () => {
         const startingUSDCamount = await s.USDC.balanceOf(s.Dave.address)
         assert.equal(startingUSDCamount.toString(), s.Dave_USDC.sub(usdcAmount).toString(), "Starting USDC balance is correct")
 
-
-
         const withdrawResult = await s.USDI.connect(s.Dave).withdraw(usdcAmount)
-        await mineBlock()
+        await advanceBlockHeight(1)
+        const withdrawGas = await getGas(withdrawResult)
+        showBodyCyan("Gas cost for Dave to withdraw: ", withdrawGas)
 
         let usdcBalance = await s.USDC.balanceOf(s.Dave.address)
         assert.equal(usdcBalance.toString(), s.Dave_USDC.toString(), "Dave redeemed all USDC tokens")
@@ -95,9 +102,6 @@ describe("TOKEN-DEPOSITS", async () => {
         let usdiBalance = await s.USDI.balanceOf(s.Dave.address)
         //should end up with slightly more USDI than original due to interest 
         expect(usdiBalance).to.be.gt(startingUSDIAmount)
-        //showBody("Diference: ", usdiBalance.sub(startingUSDIamount))
-        //assert.equal(usdiBalance.toString(), startingUSDIamount.sub(usdcAmount.mul(1e12)).toString(), "USDi balance is correct")
-
     });
 
     it("Withdraw total reserves", async () => {
@@ -130,8 +134,10 @@ describe("TOKEN-DEPOSITS", async () => {
 
         //Dave approves and donates half of his USDC
         await s.USDC.connect(s.Dave).approve(s.USDI.address, balance.div(2))
-        await s.USDI.connect(s.Dave).donate(balance.div(2))
-        await mineBlock()
+        const donateResult = await s.USDI.connect(s.Dave).donate(balance.div(2))
+        await advanceBlockHeight(1)
+        const donateGas = await getGas(donateResult)
+        showBodyCyan("Gas cost to donate: ", donateGas)
 
 
         let updatedBalance = await s.USDC.balanceOf(s.Dave.address)
