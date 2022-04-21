@@ -56,6 +56,7 @@ describe("TOKEN-DEPOSITS", async () => {
         const depositResult = await s.USDI.connect(s.Dave).deposit(usdcAmount)
         await mineBlock()
         const depositReceipt = await depositResult.wait()
+        showBody("gas gost for dave deposit:", depositReceipt.gasUsed)
         const depositArgs = depositReceipt.events![depositReceipt.events!.length - 1]
         assert.equal(depositArgs.event!, "Deposit", "correct event emitted")
         let usdcBalance = await s.USDC.balanceOf(s.Dave.address)

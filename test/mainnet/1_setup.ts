@@ -30,10 +30,9 @@ let weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 let carol_voting_address = "0x1F2AB8Ac759Fb0E3185630277A554Ae3110bF530";
 
 if (process.env.TENDERLY_KEY) {
-    if (!(process.env.TENDERLY_KEY!.toLowerCase().includes("none"))) {
+    if (process.env.TENDERLY_ENABLE == "true") {
         let provider = new ethers.providers.Web3Provider(tenderly.network())
         ethers.provider = provider
-
     }
 }
 
