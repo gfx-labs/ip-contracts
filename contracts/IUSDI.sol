@@ -5,11 +5,10 @@ import "./_external/IERC20.sol";
 
 /// @title interface to interact with USDI contract
 interface IUSDI is IERC20 {
-
   function initialize(address reserveAddress) external;
 
   // getters
-  function reserveRatio() external view returns (uint256);
+  function reserveRatio() external view returns (uint192);
 
   // business
   function deposit(uint256 usdc_amount) external;
@@ -18,6 +17,7 @@ interface IUSDI is IERC20 {
 
   // admin & internal use functions
   function pause() external;
+
   function unpause() external;
 
   function mint(uint256 usdc_amount) external;
