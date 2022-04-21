@@ -30,7 +30,7 @@ contract VaultController is
   OwnableUpgradeable
 {
   // mapping of vault id to vault address
-  mapping(uint256 => address) public _vaultId_vaultAddress;
+  mapping(uint96 => address) public _vaultId_vaultAddress;
 
   // mapping of token address to token id
   mapping(address => uint256) public _tokenAddress_tokenId;
@@ -49,7 +49,8 @@ contract VaultController is
   CurveMaster public _curveMaster;
   IUSDI public _usdi;
 
-  uint256 public _vaultsMinted;
+  uint96 public _vaultsMinted;
+
   uint256 public _tokensRegistered;
   uint256 public _totalBaseLiability;
   uint256 public _lastInterestTime;
@@ -88,7 +89,7 @@ contract VaultController is
 
   /// @notice get vault address of id
   /// @return the address of vault
-  function VaultAddress(uint256 id) external view override returns (address) {
+  function VaultAddress(uint96 id) external view override returns (address) {
     return _vaultId_vaultAddress[id];
   }
 
@@ -96,7 +97,7 @@ contract VaultController is
   /// @return address of the new vault
   function mintVault() public override returns (address) {
     _vaultsMinted = _vaultsMinted + 1;
-    address vault_address = address(new Vault(_vaultsMinted, _msgSender(), address(this), address(_usdi)));
+    address vault_address = address(new Vault(_vaultsMinted, _msgSender(), address(this)));
     _vaultId_vaultAddress[_vaultsMinted] = vault_address;
 
     emit NewVault(vault_address, _vaultsMinted, _msgSender());
@@ -187,7 +188,7 @@ contract VaultController is
   /// @notice check an account for over-collateralization. returns false if amount borrowed is greater than borrowing power.
   /// @param id the vault to check
   /// @return true = vault over-collateralized; false = vault under-collaterlized
-  function checkAccount(uint256 id) external view override returns (bool) {
+  function checkAccount(uint96 id) external view override returns (bool) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
@@ -200,7 +201,7 @@ contract VaultController is
   /// @param id vault to borrow from
   /// @param amount amount of usdi to borrow
   /// @dev pays interest
-  function borrowUsdi(uint256 id, uint256 amount) external override paysInterest whenNotPaused {
+  function borrowUsdi(uint96 id, uint256 amount) external override paysInterest whenNotPaused {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x00), "vault does not exist");
     IVault vault = IVault(vault_address);
@@ -229,7 +230,7 @@ contract VaultController is
   /// @param id vault to repay
   /// @param amount amount of usdi to repay
   /// @dev pays interest
-  function repayUSDi(uint256 id, uint256 amount) external override paysInterest whenNotPaused {
+  function repayUSDi(uint96 id, uint256 amount) external override paysInterest whenNotPaused {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
@@ -245,7 +246,7 @@ contract VaultController is
   /// @notice repay all of a vaults usdi. anyone may repay a vaults liabilities
   /// @param id the vault to repay
   /// @dev pays interest
-  function repayAllUSDi(uint256 id) external override paysInterest whenNotPaused {
+  function repayAllUSDi(uint96 id) external override paysInterest whenNotPaused {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
@@ -265,7 +266,7 @@ contract VaultController is
   /// @param tokens_to_liquidate - number of tokens to liquidate
   /// @dev pays interest
   function liquidate_account(
-    uint256 id,
+    uint96 id,
     address asset_address,
     uint256 tokens_to_liquidate
   ) external override paysInterest whenNotPaused returns (uint256) {
@@ -302,7 +303,7 @@ contract VaultController is
   /// @return the amount of tokens underwater this vault is
   /// @dev the amount owed is a moving target and changes with each block
   function TokensToLiquidate(
-    uint256 id,
+    uint96 id,
     address asset_address,
     uint256 tokens_to_liquidate
   ) public view override returns (uint256) {
@@ -321,7 +322,7 @@ contract VaultController is
   /// @return the amount of tokens underwater this vault is
   /// @return the bad fill price for the token
   function _liquidationMath(
-    uint256 id,
+    uint96 id,
     address asset_address,
     uint256 tokens_to_liquidate
   ) internal view returns (uint256, uint256) {
@@ -357,7 +358,7 @@ contract VaultController is
   /// @notice internal function to wrap getting of vaults
   /// @param id id of vault
   /// @return vault IVault contract of
-  function getVault(uint256 id) internal view returns (IVault vault) {
+  function getVault(uint96 id) internal view returns (IVault vault) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     vault = IVault(vault_address);
@@ -367,11 +368,11 @@ contract VaultController is
   /// @param id id of vault
   /// @return amount of USDI the vault owes
   /// @dev implementation _AccountLiability
-  function AccountLiability(uint256 id) external view override returns (uint256) {
+  function AccountLiability(uint96 id) external view override returns (uint256) {
     return _AccountLiability(id);
   }
 
-  function _AccountLiability(uint256 id) internal view returns (uint256) {
+  function _AccountLiability(uint96 id) internal view returns (uint256) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
@@ -382,7 +383,7 @@ contract VaultController is
   /// @param id id of vault
   /// @return amount of USDI the vault owes
   /// @dev implementation in get_vault_borrowing_power
-  function AccountBorrowingPower(uint256 id) external view override returns (uint256) {
+  function AccountBorrowingPower(uint96 id) external view override returns (uint256) {
     return get_vault_borrowing_power(IVault(_vaultId_vaultAddress[id]));
   }
 

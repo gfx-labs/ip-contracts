@@ -65,7 +65,11 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] + amount * _gonsPerFragment;
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
-    _VaultController.calculateInterest();
+
+    /// explicit note that the interest rate is NOT updated when somebody deposits 
+    //KEEP THIS COMMENTED!!! _VaultController.calculateInterest(); !!!KEEP THIS COMMENTED
+    // explicit note that the interest rate is NOT updated when somebody deposits 
+    
     emit Deposit(_msgSender(), amount);
   }
 
