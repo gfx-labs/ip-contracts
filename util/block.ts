@@ -21,9 +21,9 @@ export const mineBlock = async () => {
     return
 }
 
-export const reset = async (block:number) => {
+export const reset = async (block: number) => {
     //pass 0 to return to starting block
-    if(block == 0){
+    if (block == 0) {
         block = 14546835
     }
     await network.provider.request({

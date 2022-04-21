@@ -43,19 +43,24 @@ contract VaultController is
 
   //mapping of token address to its corresponding liquidation incentive
   mapping(address => uint256) public _tokenAddress_liquidationIncentive;
-
   address[] public _enabledTokens;
+
   OracleMaster public _oracleMaster;
   CurveMaster public _curveMaster;
-  IUSDI public _usdi;
 
+  IUSDI public _usdi;
   uint96 public _vaultsMinted;
 
   uint256 public _tokensRegistered;
-  uint256 public _totalBaseLiability;
-  uint256 public _lastInterestTime;
-  uint256 public _interestFactor;
-  uint256 public _protocolFee;
+  uint192 public _totalBaseLiability;
+
+  uint192 public _protocolFee;
+
+  struct Interest {
+    uint64 lastTime;
+    uint192 factor;
+  }
+  Interest public _interest;
 
   /// @notice any function with this modifier will call the pay_interest() function before
   modifier paysInterest() {
@@ -69,21 +74,26 @@ contract VaultController is
     __Pausable_init();
     _vaultsMinted = 0;
     _tokensRegistered = 0;
-    _interestFactor = 1e18; // initialize at 1e18;
+    _interest = Interest(uint64(block.timestamp), 1e18);
     _totalBaseLiability = 0;
     _protocolFee = 1e14;
-    _lastInterestTime = block.timestamp;
   }
 
   /// @notice get current interest factor
   /// @return interest factor
-  function InterestFactor() external view override returns (uint256) {
-    return _interestFactor;
+  function InterestFactor() external view override returns (uint192) {
+    return _interest.factor;
+  }
+
+  /// @notice get last interest time
+  /// @return interest time
+  function LastInterestTime() external view override returns (uint64) {
+    return _interest.lastTime;
   }
 
   /// @notice get current protocol fee
   /// @return protocol fee
-  function ProtocolFee() external view override returns (uint256) {
+  function ProtocolFee() external view override returns (uint192) {
     return _protocolFee;
   }
 
@@ -137,7 +147,7 @@ contract VaultController is
 
   /// @notice register the CurveMaster address
   /// @param new_protocol_fee protocol fee in terms of 1e18=100%
-  function change_protocol_fee(uint256 new_protocol_fee) external override onlyOwner {
+  function change_protocol_fee(uint192 new_protocol_fee) external override onlyOwner {
     require(new_protocol_fee < 1e18, "fee is too large");
     _protocolFee = new_protocol_fee;
     emit NewProtocolFee(_protocolFee);
@@ -193,7 +203,7 @@ contract VaultController is
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
     uint256 total_liquidity_value = get_vault_borrowing_power(vault);
-    uint256 usdi_liability = truncate((vault.BaseLiability() * _interestFactor));
+    uint256 usdi_liability = truncate((vault.BaseLiability() * _interest.factor));
     return (total_liquidity_value >= usdi_liability);
   }
 
@@ -201,19 +211,17 @@ contract VaultController is
   /// @param id vault to borrow from
   /// @param amount amount of usdi to borrow
   /// @dev pays interest
-  function borrowUsdi(uint96 id, uint256 amount) external override paysInterest whenNotPaused {
+  function borrowUsdi(uint96 id, uint192 amount) external override paysInterest whenNotPaused {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x00), "vault does not exist");
     IVault vault = IVault(vault_address);
 
     require(_msgSender() == vault.Minter(), "sender not minter");
 
-    uint256 base_amount = div_(amount * 1e18, _interestFactor);
+    uint192 base_amount = safeu192(uint256(amount * expScale) / uint256(_interest.factor));
     uint256 base_liability = vault.modify_liability(true, base_amount);
-
-    _totalBaseLiability = _totalBaseLiability + base_amount;
-
-    uint256 usdi_liability = truncate((_interestFactor - 1) * base_liability);
+    _totalBaseLiability = _totalBaseLiability + safeu192(base_amount);
+    uint256 usdi_liability = truncate(uint256(_interest.factor - 1) * base_liability);
 
     uint256 total_liquidity_value = get_vault_borrowing_power(vault);
 
@@ -230,12 +238,12 @@ contract VaultController is
   /// @param id vault to repay
   /// @param amount amount of usdi to repay
   /// @dev pays interest
-  function repayUSDi(uint96 id, uint256 amount) external override paysInterest whenNotPaused {
+  function repayUSDi(uint96 id, uint192 amount) external override paysInterest whenNotPaused {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
 
-    uint256 base_amount = div_(amount * 1e18, _interestFactor);
+    uint192 base_amount = (amount * 1e18) / _interest.factor;
     _totalBaseLiability = _totalBaseLiability - base_amount;
     require(base_amount <= vault.BaseLiability(), "repay > borrow amount");
     vault.modify_liability(false, base_amount);
@@ -251,7 +259,7 @@ contract VaultController is
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
 
-    Exp memory interest_factor = Exp({mantissa: _interestFactor});
+    Exp memory interest_factor = Exp({mantissa: _interest.factor});
     uint256 usdi_liability = truncate(ExponentialNoError.mul_ScalarTruncate(interest_factor, vault.BaseLiability()));
     vault.modify_liability(false, vault.BaseLiability());
     _usdi.vault_master_burn(_msgSender(), usdi_liability);
@@ -280,7 +288,7 @@ contract VaultController is
     IVault vault = getVault(id);
 
     //decrease vault's liability -- switch to truncate?
-    vault.modify_liability(false, div_(usdi_to_repurchase * 1e18, _interestFactor));
+    vault.modify_liability(false, div_(usdi_to_repurchase * 1e18, _interest.factor));
 
     //decrease liquidator's USDi balance
     _usdi.vault_master_burn(_msgSender(), usdi_to_repurchase);
@@ -339,9 +347,9 @@ contract VaultController is
         ((1e18 - _tokenAddress_liquidationIncentive[asset_address]) -
           _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]])
     );
-    uint256 max_tokens_to_liquidate = truncate(
-      ((_AccountLiability(id) - get_vault_borrowing_power(vault)) * 1e36) / denominator // what happens if this is negative?
-    );
+
+    uint256 max_tokens_to_liquidate = (uint256(_AccountLiability(id) - get_vault_borrowing_power(vault)) * 1e18) /
+      denominator;
 
     //Cannot liquidate more than is necessary to make account over-collateralized
     if (tokens_to_liquidate > max_tokens_to_liquidate) {
@@ -368,34 +376,34 @@ contract VaultController is
   /// @param id id of vault
   /// @return amount of USDI the vault owes
   /// @dev implementation _AccountLiability
-  function AccountLiability(uint96 id) external view override returns (uint256) {
+  function AccountLiability(uint96 id) external view override returns (uint192) {
     return _AccountLiability(id);
   }
 
-  function _AccountLiability(uint96 id) internal view returns (uint256) {
+  function _AccountLiability(uint96 id) internal view returns (uint192) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
-    return truncate(vault.BaseLiability() * _interestFactor);
+    return safeu192(truncate(vault.BaseLiability() * _interest.factor));
   }
 
   /// @notice get account borrowing power for vault
   /// @param id id of vault
   /// @return amount of USDI the vault owes
   /// @dev implementation in get_vault_borrowing_power
-  function AccountBorrowingPower(uint96 id) external view override returns (uint256) {
+  function AccountBorrowingPower(uint96 id) external view override returns (uint192) {
     return get_vault_borrowing_power(IVault(_vaultId_vaultAddress[id]));
   }
 
-  function get_vault_borrowing_power(IVault vault) private view returns (uint256) {
-    uint256 total_liquidity_value = 0;
-    for (uint256 i = 1; i <= _tokensRegistered; i++) {
+  function get_vault_borrowing_power(IVault vault) private view returns (uint192) {
+    uint192 total_liquidity_value = 0;
+    for (uint192 i = 1; i <= _tokensRegistered; i++) {
       address token_address = _enabledTokens[i - 1];
-      uint256 raw_price = uint256(_oracleMaster.getLivePrice(token_address));
+      uint192 raw_price = safeu192(_oracleMaster.getLivePrice(token_address));
       if (raw_price != 0) {
         uint256 balance = vault.tokenBalance(token_address);
         if (balance != 0) {
-          uint256 token_value = truncate(truncate(raw_price * balance * _tokenId_tokenLTV[i]));
+          uint192 token_value = safeu192(truncate(truncate(raw_price * balance * _tokenId_tokenLTV[i])));
           total_liquidity_value = total_liquidity_value + token_value;
         }
       }
@@ -412,33 +420,33 @@ contract VaultController is
   /// @notice accrue interest to borrowers and distribute it to USDi holders.
   /// this function is called before any function that changes the reserve ratio
   function pay_interest() private returns (uint256) {
-    uint256 timeDifference = block.timestamp - _lastInterestTime;
-
+    uint64 timeDifference = uint64(block.timestamp) - _interest.lastTime;
     if (timeDifference == 0) {
       return 0;
     }
-    int256 reserve_ratio = int256(_usdi.reserveRatio());
+    uint256 ui18 = uint256(_usdi.reserveRatio());
+    int256 reserve_ratio = int256(ui18);
     int256 int_curve_val = _curveMaster.getValueAt(address(0x00), reserve_ratio);
     require(int_curve_val >= 0, "rate too small");
 
-    uint256 curve_val = uint256(int_curve_val);
+    uint192 curve_val = safeu192(uint256(int_curve_val));
 
     // calculate the amount of total outstanding loans before and after this interest accrual
-    uint256 e18_factor_increase = truncate(
-      truncate((timeDifference * 1e18 * curve_val) / (365 days + 6 hours)) * _interestFactor
+    uint192 e18_factor_increase = safeu192(
+      truncate(
+        truncate((uint256(timeDifference) * uint256(1e18) * uint256(curve_val)) / (365 days + 6 hours)) *
+          uint256(_interest.factor)
+      )
     );
-    uint256 valueBefore = truncate(_totalBaseLiability * _interestFactor);
-    _interestFactor = _interestFactor + e18_factor_increase;
-    uint256 valueAfter = truncate(_totalBaseLiability * _interestFactor);
 
+    uint192 valueBefore = safeu192(truncate(uint256(_totalBaseLiability) * uint256(_interest.factor)));
+    _interest = Interest(uint64(block.timestamp), _interest.factor + e18_factor_increase);
+    uint192 valueAfter = safeu192(truncate(uint256(_totalBaseLiability) * uint256(_interest.factor)));
     // take protocol fee and distribute the rest to all USDi holders
-    if (valueAfter > valueBefore) {
-      uint256 protocolAmount = truncate((valueAfter - valueBefore) * (_protocolFee));
-      _usdi.vault_master_donate(valueAfter - valueBefore - protocolAmount);
-      _usdi.vault_master_mint(owner(), protocolAmount);
-    }
-    _lastInterestTime = block.timestamp;
-    emit Interest(block.timestamp, e18_factor_increase, curve_val);
+    uint192 protocolAmount = safeu192(truncate(uint256(valueAfter - valueBefore) * uint256(_protocolFee)));
+    _usdi.vault_master_donate(valueAfter - valueBefore - protocolAmount);
+    _usdi.vault_master_mint(owner(), protocolAmount);
+    emit InterestEvent(uint64(block.timestamp), e18_factor_increase, curve_val);
     return e18_factor_increase;
   }
 }

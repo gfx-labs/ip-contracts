@@ -164,9 +164,9 @@ describe("Testing liquidations", () => {
         await advanceBlockHeight(1)
         const receipt = await result.wait()
         let interestEvent = receipt.events?.filter((x: Event) => {
-            return x.event == "Interest"
+            return x.event == "InterestEvent"
         }).pop()?.event
-        assert.equal(interestEvent, "Interest", "Correct event captured and emitted")
+        assert.equal(interestEvent, "InterestEvent", "Correct event captured and emitted")
 
         let liquidateEvent = receipt.events![receipt.events!.length - 1]
         let args = liquidateEvent.args

@@ -57,6 +57,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// caller should obtain 1e12 USDi for each USDC
   /// @param usdc_amount amount of USDC to deposit
   function deposit(uint256 usdc_amount) external override whenNotPaused {
+    _VaultController.calculateInterest();
     uint256 amount = usdc_amount * 1e12;
     require(amount > 0, "Cannot deposit 0");
     uint256 allowance = _reserve.allowance(_msgSender(), address(this));
@@ -66,10 +67,6 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
 
-    /// explicit note that the interest rate is NOT updated when somebody deposits 
-    //KEEP THIS COMMENTED!!! _VaultController.calculateInterest(); !!!KEEP THIS COMMENTED
-    // explicit note that the interest rate is NOT updated when somebody deposits 
-    
     emit Deposit(_msgSender(), amount);
   }
 
@@ -77,10 +74,9 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// caller should obtain 1 USDC for every 1e12 USDi
   /// @param usdc_amount amount of USDC to withdraw
   function withdraw(uint256 usdc_amount) external override whenNotPaused {
+    _VaultController.calculateInterest();
     uint256 amount = usdc_amount * 1e12;
     require(amount > 0, "Cannot withdraw 0");
-    //uint256 allowance = this.allowance(_msgSender(), address(this));
-    //require(allowance >= usdc_amount, "Insufficient Allowance");
     uint256 balance = _reserve.balanceOf(address(this));
     require(balance >= usdc_amount, "Insufficient Reserve in Bank");
     _reserve.approve(address(this), usdc_amount);
@@ -88,7 +84,6 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - amount * _gonsPerFragment;
-    _VaultController.calculateInterest();
     emit Withdraw(_msgSender(), amount);
   }
 
@@ -134,7 +129,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     require(amount > 0, "Cannot deposit 0");
     uint256 allowance = _reserve.allowance(_msgSender(), address(this));
     require(allowance >= usdc_amount, "Insufficient Allowance");
-    require(_reserve.transferFrom(_msgSender(), address(this), usdc_amount), "transfer failed" );
+    require(_reserve.transferFrom(_msgSender(), address(this), usdc_amount), "transfer failed");
 
     _donation(usdc_amount);
   }
@@ -177,7 +172,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
 
   /// @notice get reserve ratio
   /// @return e18_reserve_ratio USDi reserve ratio
-  function reserveRatio() external view override returns (uint256 e18_reserve_ratio) {
-    e18_reserve_ratio = ((_reserve.balanceOf(address(this)) * ExponentialNoError.expScale) / _totalSupply) * 1e12;
+  function reserveRatio() external view override returns (uint192 e18_reserve_ratio) {
+    e18_reserve_ratio = safeu192(((_reserve.balanceOf(address(this)) * expScale) / _totalSupply) * 1e12);
   }
 }

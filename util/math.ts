@@ -1,4 +1,4 @@
-import { s } from "../mainnet/scope";
+import { s } from "../test/mainnet/scope";
 import { BigNumber, Event, utils } from "ethers";
 import { ethers } from "hardhat"
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "./block";
@@ -15,7 +15,7 @@ export const payInterestMath = async (interestFactor: BigNumber) => {
 
     console.log(s.VaultController.address)
 
-    const latestInterestTime = await s.VaultController._lastInterestTime()//calculate? 
+    const latestInterestTime = await s.VaultController.LastInterestTime()//calculate? 
     const currentBlock = await ethers.provider.getBlockNumber()
     const currentTime = (await ethers.provider.getBlock(currentBlock)).timestamp
     let timeDifference = currentTime - latestInterestTime.toNumber() + 1 //account for change when fetching from provider
