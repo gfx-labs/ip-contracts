@@ -19,7 +19,7 @@
         "./scripts/**/*",
         "./test/**/*",
         "./typechain-types/**/*",
-        "util"
+        "./util/**/*"
     ],
     "files": [
         "./hardhat.config.ts"
