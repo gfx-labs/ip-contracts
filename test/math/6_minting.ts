@@ -1,9 +1,9 @@
 import { s } from "./scope";
 import { ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody } from "../util/format";
-import { BN } from "../util/number";
-import { advanceBlockHeight, mineBlock } from "../util/block";
+import { showBody } from "../../util/format";
+import { BN } from "../../util/number";
+import { advanceBlockHeight, mineBlock } from "../../util/block";
 
 describe("Vault setup:", () => {
     it("andy deposits usdc for usdi", async () => {

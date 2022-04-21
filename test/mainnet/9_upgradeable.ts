@@ -1,11 +1,11 @@
 import { s } from "./scope";
 import { ethers, upgrades } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody } from "../util/format";
-import { BN } from "../util/number";
+import { showBody } from "../../util/format";
+import { BN } from "../../util/number";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../util/block";
+import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
 
 import {
     AnchoredViewRelay,
@@ -76,7 +76,7 @@ const deployProxy = async () => {
 
     const uUSDi = await new USDI__factory(deployer).connect(deployer).deploy()
     await mineBlock()
-    
+
     let usd = await new TransparentUpgradeableProxy__factory(
         deployer
     ).connect(deployer).deploy(uUSDi.address, ProxyController!.address, "0x")
@@ -97,7 +97,7 @@ describe("Test upgradeable", () => {
         await deployProxy()
     })
     it("Verify deployment of VaultController proxy", async () => {
-        
+
         const protocolFee = await VaultController.connect(alice).ProtocolFee()
         await mineBlock()
         const expectedProtocolFee = BN("1e14")
@@ -109,6 +109,6 @@ describe("Test upgradeable", () => {
         await mineBlock()
         const expectedReserveAddress = s.usdcAddress
         assert.equal(reserveAddress, expectedReserveAddress, "USDi Initialized")
-    })  
+    })
 
 })

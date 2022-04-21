@@ -1,9 +1,9 @@
 import { s } from "./scope";
 import { ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody } from "../util/format";
-import { BN } from "../util/number";
-import { mineBlock } from "../util/block";
+import { showBody } from "../../util/format";
+import { BN } from "../../util/number";
+import { mineBlock } from "../../util/block";
 
 describe("ETH:", () => {
     it("fetch uniswap relay price", async () => {

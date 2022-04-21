@@ -1,8 +1,8 @@
 import { s } from "./scope";
 import { ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody } from "../util/format";
-import { BN } from "../util/number";
+import { showBody } from "../../util/format";
+import { BN } from "../../util/number";
 
 describe("curve-threelines:", () => {
     it("test getting curve from curve master via 0 addr", async () => {

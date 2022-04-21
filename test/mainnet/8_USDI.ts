@@ -2,10 +2,10 @@ import { s } from "./scope";
 import { ethers } from "hardhat";
 import { BigNumber, Event, utils } from "ethers";
 import { expect, assert } from "chai";
-import { stealMoney } from "../util/money";
-import { showBody } from "../util/format";
-import { BN } from "../util/number";
-import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear, reset } from "../util/block";
+import { stealMoney } from "../../util/money";
+import { showBody } from "../../util/format";
+import { BN } from "../../util/number";
+import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear, reset } from "../../util/block";
 
 
 const usdcAmount = BN("5000e6")
@@ -24,14 +24,14 @@ const fundDave = async () => {
 //set balances
 describe("TOKEN-DEPOSITS", async () => {
     let startingUSDIAmount: BigNumber
-    let startBlock:number
+    let startBlock: number
     before(async () => {
         startBlock = await ethers.provider.getBlockNumber()
         await mineBlock()
         await fundDave()
         await mineBlock()
     })
-    after(async() => {
+    after(async () => {
         //reset to previous block to fix balances
         await reset(startBlock)
     })
