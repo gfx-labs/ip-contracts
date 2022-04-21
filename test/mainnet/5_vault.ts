@@ -1,9 +1,9 @@
 import { s } from "./scope";
 import { ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody, showHeader } from "../util/format";
-import { BN } from "../util/number";
-import { mineBlock } from "../util/block";
+import { showBody, showHeader } from "../../util/format";
+import { BN } from "../../util/number";
+import { mineBlock } from "../../util/block";
 import { IVault__factory } from "../../typechain-types";
 
 

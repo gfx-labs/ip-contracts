@@ -1,8 +1,8 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ethers } from "hardhat";
 import { USDI, IERC20, IVOTE, VaultController, OracleMaster, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController } from "../../typechain-types";
-import { Addresser, MainnetAddresses } from "../util/addresser";
-import { BN } from "../util/number";
+import { Addresser, MainnetAddresses } from "../../util/addresser";
+import { BN } from "../../util/number";
 
 export class TestScope extends MainnetAddresses {
     USDI!: USDI;

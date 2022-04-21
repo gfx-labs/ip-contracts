@@ -1,10 +1,10 @@
 import { expect, assert } from "chai";
 import { ethers, network } from "hardhat";
-import { stealMoney } from "../util/money";
-import { showBody } from "../util/format";
-import { BN } from "../util/number";
+import { stealMoney } from "../../util/money";
+import { showBody } from "../../util/format";
+import { BN } from "../../util/number";
 import { s } from "./scope";
-import { advanceBlockHeight, reset, mineBlock } from "../util/block";
+import { advanceBlockHeight, reset, mineBlock } from "../../util/block";
 import { IERC20__factory, IVOTE__factory } from "../../typechain-types";
 //import { assert } from "console";
 

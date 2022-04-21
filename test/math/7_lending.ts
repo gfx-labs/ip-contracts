@@ -1,9 +1,9 @@
 import { s } from "./scope";
 import { ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody } from "../util/format";
-import { BN } from "../util/number";
-import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../util/block";
+import { showBody } from "../../util/format";
+import { BN } from "../../util/number";
+import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
 import { Event, utils, BigNumber } from "ethers";
 
 /**
@@ -117,7 +117,7 @@ describe("TOKEN-DEPOSITS", async () => {
 
     });
     it(`after 1 week, bob should have a liability greater than ${"BN(5000e18)"}`, async () => {
-        
+
         await advanceBlockHeight(1)
         const initLiability = await s
             .VaultController.connect(s.Bob)
@@ -141,7 +141,7 @@ describe("TOKEN-DEPOSITS", async () => {
         const expectedLiability = await calculateAccountLiability(borrowAmount, interestMath, firstBorrowIF)
         showBody("interestMath: ", interestMath)
         showBody("interestMath: ", firstBorrowIF)
-        
+
 
         let checkBaseLiab = await s.BobVault.BaseLiability()
         showBody("checkBaseLiab: ", checkBaseLiab)
@@ -153,7 +153,7 @@ describe("TOKEN-DEPOSITS", async () => {
         showBody("expectedLiability ", expectedLiability)
         showBody("TARGET liability  ", liability_amount)
         expect(liability_amount).to.be.gt(BN("5000e18"));
-        
+
     });
 });
 
