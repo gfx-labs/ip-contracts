@@ -62,6 +62,9 @@ const config: HardhatUserConfig = {
         path: './docs',
         clear: true,
         runOnCompile: true,
+    },
+    gasReporter: {
+        enabled: false,
     }
 };
 

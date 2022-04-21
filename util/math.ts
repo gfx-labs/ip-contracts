@@ -36,3 +36,23 @@ export const payInterestMath = async (interestFactor: BigNumber) => {
     //new interest factor
     return interestFactor.add(calculation)
 }
+
+export const getGas = async (result: any) => {
+    const receipt = await result.wait()
+    return receipt.gasUsed
+}
+
+/**
+ * 
+ * @param result object returned from a transaction that emits an event 
+ * @returns the args from the last event emitted from the transaction
+ */
+ export const getArgs = async (result: any) => {
+    await advanceBlockHeight(1)
+    const receipt = await result.wait()
+    await advanceBlockHeight(1)
+    const events = receipt.events
+    const args = events[events.length - 1].args
+
+    return args
+}
