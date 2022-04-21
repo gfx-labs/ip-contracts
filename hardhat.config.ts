@@ -57,11 +57,26 @@ const config: HardhatUserConfig = {
     mocha: {
         timeout: 20000000,
     },
+
     docgen: {
         path: './docs',
         clear: true,
         runOnCompile: true,
     }
 };
+
+if (process.env.TENDERLY_KEY) {
+    if (!(process.env.TENDERLY_KEY!.toLowerCase().includes("none"))) {
+        import("@tenderly/hardhat-tenderly").then(() => {
+            console.log("enabling tenderly")
+            config.tenderly = {
+                project: "ip",
+                username: "getty",
+                forkNetwork: "1" //Network id of the network we want to fork
+            }
+        })
+    }
+}
+
 
 export default config;

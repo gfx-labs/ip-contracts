@@ -136,6 +136,7 @@ describe("TOKEN-DEPOSITS", async () => {
         const newInterestFactor = await s.VaultController.InterestFactor()
         assert.equal(newInterestFactor.toString(), expectedInterestFactor.toString(), "New Interest Factor is correct")
 
+        await s.VaultController.calculateInterest()
         const liability = await s.VaultController.connect(s.Bob).AccountLiability(1)
         assert.equal(liability.toString(), calculatedBaseLiability.toString(), "Calculated base liability is correct")
 
