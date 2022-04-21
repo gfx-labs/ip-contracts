@@ -1,4 +1,4 @@
-import { s } from "./scope";
+import { s, TestScope } from "./scope";
 import { upgrades, ethers } from "hardhat";
 import { expect, assert } from "chai";
 import { showBody } from "../../util/format";
@@ -30,6 +30,7 @@ import {
     IVOTE__factory,
 } from "../../typechain-types";
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
+import { DeployContract, DeployContractWithProxy } from "../../util/deploy";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 
@@ -38,41 +39,21 @@ let ProxyController: ProxyAdmin
 
 
 const deployProxy = async () => {
-
+    s.ProxyAdmin = await DeployContract(new ProxyAdmin__factory(s.Frank), s.Frank)
     await mineBlock()
-    const uVC = await new VaultController__factory(s.Frank).connect(s.Frank).deploy()
+    s.VaultController = await DeployContractWithProxy(
+        new VaultController__factory(s.Frank),
+        s.Frank,
+        s.ProxyAdmin
+    )
     await mineBlock()
-
-    ProxyController = await new ProxyAdmin__factory(s.Frank).connect(s.Frank).deploy()
+    s.USDI = await DeployContractWithProxy(
+        new USDI__factory(s.Frank),
+        s.Frank,
+        s.ProxyAdmin,
+        s.usdcAddress
+    )
     await mineBlock()
-
-    let vc = await new TransparentUpgradeableProxy__factory(
-        s.Frank
-    ).connect(s.Frank).deploy(uVC.address, ProxyController!.address, "0x");
-    await mineBlock()
-
-    s.VaultController = await new VaultController__factory(s.Frank).attach(vc.address)
-    await mineBlock()
-    await s.VaultController.deployed()
-    await mineBlock()
-
-    await s.VaultController.initialize()
-    await mineBlock()
-
-    const uUSDi = await new USDI__factory(s.Frank).connect(s.Frank).deploy()
-    await mineBlock()
-
-    let usd = await new TransparentUpgradeableProxy__factory(
-        s.Frank
-    ).connect(s.Frank).deploy(uUSDi.address, ProxyController!.address, "0x")
-    await mineBlock()
-
-    s.USDI = await new USDI__factory(s.Frank).attach(usd.address)
-    await mineBlock()
-    await s.USDI.deployed()
-    await mineBlock()
-    await s.USDI.initialize(s.usdcAddress)
-
     let owner = await s.USDI.owner()
     showBody("OWNER: ", owner)
     showBody("Frank: ", s.Frank.address)
@@ -91,7 +72,6 @@ describe("Deploy Contracts", () => {
         await deployProxy()
     })
     it("Verify deployment of VaultController proxy", async () => {
-
         const protocolFee = await s.VaultController.connect(s.Andy).ProtocolFee()
         await mineBlock()
         const expectedProtocolFee = BN("1e14")
@@ -124,7 +104,7 @@ describe("Deploy Contracts", () => {
 
     it("Deploy Curve", async () => {
         await mineBlock()
-        s.Curve = await new CurveMaster__factory(s.Frank).deploy();
+        s.Curve = await DeployContract(new CurveMaster__factory(s.Frank), s.Frank);
         await mineBlock()
         await s.VaultController.register_curve_master(s.Curve.address)
         //await expect(s.VaultController.register_curve_master(s.Curve.address)).to.not.reverted;

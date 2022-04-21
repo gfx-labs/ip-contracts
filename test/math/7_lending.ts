@@ -158,19 +158,7 @@ describe("TOKEN-DEPOSITS", async () => {
         interestFactor = await s.VaultController.InterestFactor()
         assert.equal(interestFactor.toString(), calculatedInterestFactor.toString(), "Interest factor is correct")
 
-<<<<<<< HEAD
-        assert.equal(interestFactor.toString(), interestMath.toString(), "Interest factor is correct")
-
-        const expectedLiability = await calculateAccountLiability(borrowAmount, interestMath, firstBorrowIF)
-        showBody("interestMath: ", interestMath)
-        showBody("interestMath: ", firstBorrowIF)
-
-
-        let checkBaseLiab = await s.BobVault.BaseLiability()
-        showBody("checkBaseLiab: ", checkBaseLiab)
-=======
         const expectedLiability = await calculateAccountLiability(borrowAmount, calculatedInterestFactor, firstBorrowIF)
->>>>>>> origin/dev
 
         //TODO calculate new liability based on interest factor
         const liability_amount = await s
@@ -179,11 +167,7 @@ describe("TOKEN-DEPOSITS", async () => {
 
         expect(liability_amount).to.be.gt(BN("5000e18"));
 
-<<<<<<< HEAD
-=======
         assert.equal(expectedLiability.toString(), liability_amount.toString(), "Liability calculation is correcet")
-
->>>>>>> origin/dev
     });
 });
 
