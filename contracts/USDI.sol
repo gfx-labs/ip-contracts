@@ -26,6 +26,11 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     require(_msgSender() == _VaultControllerAddress, "only VaultController");
     _;
   }
+  /// @notice any function with this modifier will call the pay_interest() function before
+  modifier paysInterest() {
+    _VaultController.calculateInterest();
+    _;
+  }
 
   event Deposit(address indexed _from, uint256 _value);
   event Withdraw(address indexed _from, uint256 _value);
@@ -56,8 +61,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice deposit USDC to mint USDi
   /// caller should obtain 1e12 USDi for each USDC
   /// @param usdc_amount amount of USDC to deposit
-  function deposit(uint256 usdc_amount) external override whenNotPaused {
-    _VaultController.calculateInterest();
+  function deposit(uint256 usdc_amount) external override paysInterest whenNotPaused {
     uint256 amount = usdc_amount * 1e12;
     require(amount > 0, "Cannot deposit 0");
     uint256 allowance = _reserve.allowance(_msgSender(), address(this));
@@ -73,8 +77,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice withdraw USDC by burning USDi
   /// caller should obtain 1 USDC for every 1e12 USDi
   /// @param usdc_amount amount of USDC to withdraw
-  function withdraw(uint256 usdc_amount) external override whenNotPaused {
-    _VaultController.calculateInterest();
+  function withdraw(uint256 usdc_amount) external override paysInterest whenNotPaused {
     uint256 amount = usdc_amount * 1e12;
     require(amount > 0, "Cannot withdraw 0");
     uint256 balance = _reserve.balanceOf(address(this));
@@ -98,8 +101,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
 
   /// @notice admin function to mint USDi out of thin air
   /// @param usdc_amount the amount of USDi to mint, denominated in USDC
-  function mint(uint256 usdc_amount) external override onlyOwner {
-    _VaultController.calculateInterest();
+  function mint(uint256 usdc_amount) external override paysInterest onlyOwner {
     uint256 amount = usdc_amount * 1e12;
     if (amount <= 0) {
       return;
@@ -112,8 +114,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
 
   /// @notice admin function to burn USDi
   /// @param usdc_amount the amount of USDi to burn, denominated in USDC
-  function burn(uint256 usdc_amount) external override onlyOwner {
-    _VaultController.calculateInterest();
+  function burn(uint256 usdc_amount) external override paysInterest onlyOwner {
     if (usdc_amount <= 0) {
       return;
     }
@@ -124,7 +125,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     emit Burn(_msgSender(), amount);
   }
 
-  function donate(uint256 usdc_amount) external override whenNotPaused {
+  function donate(uint256 usdc_amount) external override paysInterest whenNotPaused {
     uint256 amount = usdc_amount * 1e12;
     require(amount > 0, "Cannot deposit 0");
     uint256 allowance = _reserve.allowance(_msgSender(), address(this));
