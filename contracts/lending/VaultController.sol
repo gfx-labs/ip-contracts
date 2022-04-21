@@ -421,6 +421,9 @@ contract VaultController is
   /// this function is called before any function that changes the reserve ratio
   function pay_interest() private returns (uint256) {
     uint64 timeDifference = uint64(block.timestamp) - _interest.lastTime;
+    console.log("timeDifference: ", timeDifference);
+    console.log("Blocknumber: ", block.number);
+    
     if (timeDifference == 0) {
       return 0;
     }
@@ -438,10 +441,10 @@ contract VaultController is
           uint256(_interest.factor)
       )
     );
-
     uint192 valueBefore = safeu192(truncate(uint256(_totalBaseLiability) * uint256(_interest.factor)));
     _interest = Interest(uint64(block.timestamp), _interest.factor + e18_factor_increase);
     uint192 valueAfter = safeu192(truncate(uint256(_totalBaseLiability) * uint256(_interest.factor)));
+
     // take protocol fee and distribute the rest to all USDi holders
     uint192 protocolAmount = safeu192(truncate(uint256(valueAfter - valueBefore) * uint256(_protocolFee)));
     _usdi.vault_master_donate(valueAfter - valueBefore - protocolAmount);
