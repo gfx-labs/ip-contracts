@@ -5,6 +5,12 @@ import { showBody } from "../../util/format";
 import { BN } from "../../util/number";
 
 describe("curve-threelines:", () => {
+    it("test setting a new curve value ", async () => {
+        await expect(s.Curve.connect(s.Frank).set_curve(
+            "0x0000000000000000000000000000000000000000",
+            s.ThreeLines.address
+        )).to.not.reverted;
+    })
     it("test getting curve from curve master via 0 addr", async () => {
         let val = (await s.Curve.getValueAt("0x0000000000000000000000000000000000000000", "0")).div(1e14).toNumber() / (1e4)
         expect(val).to.eq(2);

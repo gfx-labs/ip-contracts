@@ -1,4 +1,4 @@
-import { s, TestScope } from "./scope";
+import { s } from "./scope";
 import { upgrades, ethers } from "hardhat";
 import { expect, assert } from "chai";
 import { showBody } from "../../util/format";
@@ -30,15 +30,17 @@ import {
     IVOTE__factory,
 } from "../../typechain-types";
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
-import { DeployContract, DeployContractWithProxy } from "../../util/deploy";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 
+
+import { DeployContract, DeployContractWithProxy } from "../../util/deploy";
 let ProxyController: ProxyAdmin
 
 
 
 const deployProxy = async () => {
+
     s.ProxyAdmin = await DeployContract(new ProxyAdmin__factory(s.Frank), s.Frank)
     await mineBlock()
     s.VaultController = await DeployContractWithProxy(
@@ -63,6 +65,7 @@ const deployProxy = async () => {
     await s.USDI.setVaultController(s.VaultController.address)
     //await expect(s.USDI.setVaultController(s.VaultController.address)).to.not.reverted
     await mineBlock()
+
 }
 
 
@@ -72,6 +75,7 @@ describe("Deploy Contracts", () => {
         await deployProxy()
     })
     it("Verify deployment of VaultController proxy", async () => {
+
         const protocolFee = await s.VaultController.connect(s.Andy).ProtocolFee()
         await mineBlock()
         const expectedProtocolFee = BN("1e14")
@@ -104,14 +108,8 @@ describe("Deploy Contracts", () => {
 
     it("Deploy Curve", async () => {
         await mineBlock()
-        s.Curve = await DeployContract(new CurveMaster__factory(s.Frank), s.Frank);
-        await mineBlock()
-        await s.VaultController.register_curve_master(s.Curve.address)
-        //await expect(s.VaultController.register_curve_master(s.Curve.address)).to.not.reverted;
-        await mineBlock()
-        s.ThreeLines = await new ThreeLines0_100__factory(
-            s.Frank
-        ).deploy(
+
+        s.ThreeLines = await DeployContract(new ThreeLines0_100__factory(s.Frank), s.Frank,
             BN("200e16"),
             BN("5e16"),
             BN("45e15"),
@@ -119,50 +117,56 @@ describe("Deploy Contracts", () => {
             BN("55e16"),
         );
         await mineBlock()
-        await expect(s.Curve.connect(s.Frank).set_curve(
-            "0x0000000000000000000000000000000000000000",
-            s.ThreeLines.address
-        )).to.not.reverted;
+        /**s.Curve = await DeployContract(new CurveMaster__factory(s.Frank), s.Frank, ["0x0000000000000000000000000000000000000000",
+            s.ThreeLines.address]) */
+        const curveFactory = await ethers.getContractFactory("CurveMaster")
+        s.Curve = await curveFactory.deploy("0x0000000000000000000000000000000000000000",
+            s.ThreeLines.address)
+        await mineBlock()
+        await s.Curve.deployed()
+        await mineBlock()
+        await s.VaultController.register_curve_master(s.Curve.address)
+        //await expect(s.VaultController.register_curve_master(s.Curve.address)).to.not.reverted;
         await mineBlock()
     })
 
 
     it("Deploy Oracles", async () => {
-        s.Oracle = await new OracleMaster__factory(s.Frank).deploy();
+        s.Oracle = await DeployContract(new OracleMaster__factory(s.Frank), s.Frank);
         showBody("set vault oraclemaster")
         await expect(s.VaultController.connect(s.Frank).register_oracle_master(
             s.Oracle.address
         )).to.not.reverted;
 
         showBody("create uniswap comp relay")
-        s.UniswapRelayCompUsdc = await new UniswapV3OracleRelay__factory(
+        s.UniswapRelayCompUsdc = await DeployContract(new UniswapV3OracleRelay__factory(
             s.Frank
-        ).deploy(s.usdcCompPool, true, BN("1e12"), BN("1"));
+        ), s.Frank, s.usdcCompPool, true, BN("1e12"), BN("1"));
         await mineBlock()
         expect(await s.UniswapRelayCompUsdc.currentValue()).to.not.eq(0)
 
         showBody("create uniswap eth relay")
-        s.UniswapRelayEthUsdc = await new UniswapV3OracleRelay__factory(
-            s.Frank
-        ).deploy(s.usdcWethPool, true, BN("1e12"), BN("1"));
+        s.UniswapRelayEthUsdc = await DeployContract(new UniswapV3OracleRelay__factory(s.Frank),
+            s.Frank,
+            s.usdcWethPool, true, BN("1e12"), BN("1"));
         await mineBlock()
 
         showBody("create chainlink comp relay")
-        s.ChainlinkComp = await new ChainlinkOracleRelay__factory(s.Frank).deploy(
+        s.ChainlinkComp = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
             "0xdbd020caef83efd542f4de03e3cf0c28a4428bd5", BN("1e10"), BN("1")
         );
         await mineBlock()
         expect(await s.ChainlinkComp.currentValue()).to.not.eq(0)
 
         showBody("create chainlink eth relay")
-        s.ChainlinkEth = await new ChainlinkOracleRelay__factory(s.Frank).deploy(
+        s.ChainlinkEth = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
             "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419", BN("1e10"), BN("1")
         )
         await mineBlock()
         expect(await s.ChainlinkEth.currentValue()).to.not.eq(0)
 
         showBody("create COMP anchoredview")
-        s.AnchoredViewComp = await new AnchoredViewRelay__factory(s.Frank).deploy(
+        s.AnchoredViewComp = await DeployContract(new AnchoredViewRelay__factory(s.Frank), s.Frank,
             s.UniswapRelayCompUsdc.address,
             s.ChainlinkComp.address,
             BN("30"),
@@ -172,7 +176,7 @@ describe("Deploy Contracts", () => {
         expect(await s.AnchoredViewComp.currentValue()).to.not.eq(0)
 
         showBody("create ETH anchoredview")
-        s.AnchoredViewEth = await new AnchoredViewRelay__factory(s.Frank).deploy(
+        s.AnchoredViewEth = await DeployContract(new AnchoredViewRelay__factory(s.Frank), s.Frank,
             s.UniswapRelayEthUsdc.address,
             s.ChainlinkEth.address,
             BN("10"),
