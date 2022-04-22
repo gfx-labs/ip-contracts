@@ -21,6 +21,10 @@ export const mineBlock = async () => {
     return
 }
 
+export const nextBlockTime = async (blockNumber:number) => {
+    await network.provider.send("evm_setNextBlockTimestamp", [blockNumber + 1])
+}
+
 export const reset = async (block: number) => {
     //pass 0 to return to starting block
     if (block == 0) {
