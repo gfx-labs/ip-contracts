@@ -1,9 +1,9 @@
 import { s } from "./scope";
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
 import { expect, assert } from "chai";
 import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
-import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
+import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
 import { Event, utils, BigNumber } from "ethers";
 import { getGas } from "../../util/math";
 
@@ -67,10 +67,11 @@ const payInterestMath = async (interestFactor: BigNumber) => {
 
     const latestInterestTime = await s.VaultController.LastInterestTime()//calculate? 
     const currentBlock = await ethers.provider.getBlockNumber()
-    showBody("Current Block: ", currentBlock)
     const currentTime = (await ethers.provider.getBlock(currentBlock)).timestamp
+    await nextBlockTime(currentTime)
+    //await network.provider.send("evm_mine")
+
     let timeDifference = currentTime - latestInterestTime.toNumber() + 1 //account for change when fetching from provider
-    showBody("Calculated time difference: ", timeDifference)
 
     const reserveRatio = await s.USDI.reserveRatio()//todo - calculate
     const curve = await s.Curve.getValueAt(nullAddr, reserveRatio)//todo - calculate
@@ -84,6 +85,7 @@ const payInterestMath = async (interestFactor: BigNumber) => {
     //new interest factor
     return interestFactor.add(calculation)
 }
+
 
 /**
  * 
@@ -138,7 +140,6 @@ describe("BORROW USDi", async () => {
         const calculatedBaseLiability = await calculateAccountLiability(borrowAmount, initInterestFactor, initInterestFactor)
 
 
-        showBody("BORROWING USDI")
         const borrowResult = await s.VaultController.connect(s.Bob).borrowUsdi(1, borrowAmount)
         await advanceBlockHeight(1)
         const args = await getArgs(borrowResult)
