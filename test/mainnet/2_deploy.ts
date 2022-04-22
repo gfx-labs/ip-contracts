@@ -65,6 +65,7 @@ const deployProxy = async () => {
     await s.USDI.setVaultController(s.VaultController.address)
     //await expect(s.USDI.setVaultController(s.VaultController.address)).to.not.reverted
     await mineBlock()
+
 }
 
 
@@ -107,11 +108,7 @@ describe("Deploy Contracts", () => {
 
     it("Deploy Curve", async () => {
         await mineBlock()
-        s.Curve = await DeployContract(new CurveMaster__factory(s.Frank), s.Frank)
-        await mineBlock()
-        await s.VaultController.register_curve_master(s.Curve.address)
-        //await expect(s.VaultController.register_curve_master(s.Curve.address)).to.not.reverted;
-        await mineBlock()
+
         s.ThreeLines = await DeployContract(new ThreeLines0_100__factory(s.Frank), s.Frank,
             BN("200e16"),
             BN("5e16"),
@@ -120,10 +117,16 @@ describe("Deploy Contracts", () => {
             BN("55e16"),
         );
         await mineBlock()
-        await expect(s.Curve.connect(s.Frank).set_curve(
-            "0x0000000000000000000000000000000000000000",
-            s.ThreeLines.address
-        )).to.not.reverted;
+        /**s.Curve = await DeployContract(new CurveMaster__factory(s.Frank), s.Frank, ["0x0000000000000000000000000000000000000000",
+            s.ThreeLines.address]) */
+        const curveFactory = await ethers.getContractFactory("CurveMaster")
+        s.Curve = await curveFactory.deploy("0x0000000000000000000000000000000000000000",
+            s.ThreeLines.address)
+        await mineBlock()
+        await s.Curve.deployed()
+        await mineBlock()
+        await s.VaultController.register_curve_master(s.Curve.address)
+        //await expect(s.VaultController.register_curve_master(s.Curve.address)).to.not.reverted;
         await mineBlock()
     })
 
