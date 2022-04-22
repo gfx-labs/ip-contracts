@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "../_external/Ownable.sol";
 import "./ICurveMaster.sol";
 import "./ICurveSlave.sol";
+import "../lending/IVaultController.sol";
 
 /// @title Curve Master
 /// @notice Curve master keeps a record of CurveSlave contracts and links it with an address
@@ -13,8 +14,19 @@ contract CurveMaster is ICurveMaster, Ownable {
   mapping(address => address) public _curves;
   mapping(address => bool) public _paused;
 
-  /// @notice no curves are populated by default
-  constructor() Ownable() {}
+  address public _VaultControllerAddress;
+  IVaultController private _VaultController;
+
+  /// @notice any function with this modifier will call the pay_interest() function before
+  modifier paysInterest() {
+    _VaultController.calculateInterest();
+    _;
+  }
+
+   /// @notice no curves are populated by default
+  constructor(address token_address, address curve_address) Ownable() {
+    _curves[token_address] = curve_address;
+  }
 
   /// @notice gets the return value of curve labled curve_address at x_value
   /// @param curve_address the key to lookup the curve with in the mapping
@@ -29,7 +41,14 @@ contract CurveMaster is ICurveMaster, Ownable {
     return value;
   }
 
-  function set_curve(address token_address, address curve_address) public override onlyOwner {
+  /// @notice set the VaultController addr so that vault_master may mint/burn USDi without restriction
+  /// @param vault_master_address address of vault master
+  function setVaultController(address vault_master_address) external override onlyOwner {
+    _VaultControllerAddress = vault_master_address;
+    _VaultController = IVaultController(vault_master_address);
+  }
+
+  function set_curve(address token_address, address curve_address) external override onlyOwner paysInterest{
     _curves[token_address] = curve_address;
   }
 }
