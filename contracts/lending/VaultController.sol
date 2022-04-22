@@ -17,7 +17,7 @@ import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 /// @title Controller of all vaults in the USDI borrow/lend system
 /// @notice VaultController contains all business logic for borrowing and lending through the protocol.
@@ -420,10 +420,7 @@ contract VaultController is
   /// @notice accrue interest to borrowers and distribute it to USDi holders.
   /// this function is called before any function that changes the reserve ratio
   function pay_interest() private returns (uint256) {
-    uint64 timeDifference = uint64(block.timestamp) - _interest.lastTime;
-    console.log("timeDifference: ", timeDifference);
-    console.log("Blocknumber: ", block.number);
-    
+    uint64 timeDifference = uint64(block.timestamp) - _interest.lastTime;    
     if (timeDifference == 0) {
       return 0;
     }
