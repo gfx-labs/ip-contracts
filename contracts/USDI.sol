@@ -90,7 +90,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     emit Withdraw(_msgSender(), amount);
   }
 
-  // I think we want withdraw_all()
+  // todo I think we want withdraw_all()
 
   /// @notice set the VaultController addr so that vault_master may mint/burn USDi without restriction
   /// @param vault_master_address address of vault master
