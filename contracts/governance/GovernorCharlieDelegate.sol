@@ -21,7 +21,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
     uint public constant GRACE_PERIOD = 14 days;
 
     /// @notice The proposal holding period
-    uint public delay;
+    uint public standardDelay;
 
     /// @notice The count proposals
     uint public proposalCount;
@@ -34,16 +34,19 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @param proposalThreshold_ The initial proposal threshold
       * @param delay_ The initial proposal holding period
       */
-    function initialize(address ipt_, uint votingPeriod_, uint votingDelay_, uint proposalThreshold_, uint delay_, uint emergencyQuorumVotes_, uint quorumVotes_) public {
-        require(msg.sender == address(this), "GovernorCharlie::initialize: admin only");
+    function initialize(address ipt_, uint votingPeriod_, uint votingDelay_, uint proposalThreshold_, uint delay_, uint emergencyQuorumVotes_, uint quorumVotes_, uint emergencyVotingPeriod_, uint emergencyDelay_) external {
+        require(_msgSender() == address(this), "initialize: admin only");
         ipt = CompInterface(ipt_);
         votingPeriod = votingPeriod_;
         votingDelay = votingDelay_;
         proposalThreshold = proposalThreshold_;
-        delay = delay_;
+        standardDelay = delay_;
         proposalCount = 0;
         emergencyQuorumVotes = emergencyQuorumVotes_;
         quorumVotes = quorumVotes_;
+        emergencyVotingPeriod = emergencyVotingPeriod_;
+        emergencyDelay = emergencyDelay_;
+
     }
 
     /**
@@ -51,8 +54,8 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @param delay_ The proposal holding period
       */
     function setDelay(uint delay_) public {
-        require(msg.sender == address(this), "Timelock::setDelay: Call must come from the governor.");
-        delay = delay_;
+        require(_msgSender() == address(this), "setDelay: Call must come from the governor.");
+        standardDelay = delay_;
 
         emit NewDelay(delay);
     }
@@ -66,29 +69,38 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @param description String description of the proposal
       * @return Proposal id of new proposal
       */
-    function propose(address[] memory targets, uint[] memory values, string[] memory signatures, bytes[] memory calldatas, string memory description) public returns (uint) {
+    function propose(address[] memory targets, uint[] memory values, string[] memory signatures, bytes[] memory calldatas, string memory description, bool memory emergency) public returns (uint) {
         // Reject proposals before initiating as Governor
-        require(quorumVotes != 0, "GovernorCharlie::propose: Governor Charlie not active");
+        require(quorumVotes != 0, "propose: Governor Charlie not active");
         // Allow addresses above proposal threshold and whitelisted addresses to propose
-        require(ipt.getPriorVotes(msg.sender, sub256(block.number, 1)) > proposalThreshold || isWhitelisted(msg.sender), "GovernorCharlie::propose: proposer votes below proposal threshold");
-        require(targets.length == values.length && targets.length == signatures.length && targets.length == calldatas.length, "GovernorCharlie::propose: proposal function information arity mismatch");
-        require(targets.length != 0, "GovernorCharlie::propose: must provide actions");
-        require(targets.length <= proposalMaxOperations, "GovernorCharlie::propose: too many actions");
+        require(ipt.getPriorVotes(_msgSender(), sub256(block.number, 1)) > proposalThreshold || isWhitelisted(_msgSender()), "propose: proposer votes below proposal threshold");
+        require(targets.length == values.length && targets.length == signatures.length && targets.length == calldatas.length, "propose: proposal function information arity mismatch");
+        require(targets.length != 0, "propose: must provide actions");
+        require(targets.length <= proposalMaxOperations, "propose: too many actions");
 
-        uint latestProposalId = latestProposalIds[msg.sender];
+        uint latestProposalId = latestProposalIds[_msgSender()];
         if (latestProposalId != 0) {
           ProposalState proposersLatestProposalState = state(latestProposalId);
-          require(proposersLatestProposalState != ProposalState.Active, "GovernorCharlie::propose: one live proposal per proposer, found an already active proposal");
-          require(proposersLatestProposalState != ProposalState.Pending, "GovernorCharlie::propose: one live proposal per proposer, found an already pending proposal");
+          require(proposersLatestProposalState != ProposalState.Active, "propose: one live proposal per proposer, found an already active proposal");
+          require(proposersLatestProposalState != ProposalState.Pending, "propose: one live proposal per proposer, found an already pending proposal");
         }
 
         uint startBlock = add256(block.number, votingDelay);
         uint endBlock = add256(startBlock, votingPeriod);
+        uint votesRequired = quorumVotes;
+        uint delay = standardDelay;
+
+        if (emergency = true){
+            startBlock = add256(block.number, emergencyDelay);
+            endBlock = add256(startBlock, emergencyVotingPeriod);
+            votesRequired = emergencyQuorumVotes;
+            delay = emergencyDelay;
+        }
 
         proposalCount++;
         Proposal memory newProposal = Proposal({
             id: proposalCount,
-            proposer: msg.sender,
+            proposer: _msgSender(),
             eta: 0,
             targets: targets,
             values: values,
@@ -100,13 +112,16 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
             againstVotes: 0,
             abstainVotes: 0,
             canceled: false,
-            executed: false
+            executed: false,
+            emergency: emergency,
+            quorumVotes : votesRequired,
+            delay : delay,
         });
 
         proposals[newProposal.id] = newProposal;
         latestProposalIds[newProposal.proposer] = newProposal.id;
 
-        emit ProposalCreated(newProposal.id, msg.sender, targets, values, signatures, calldatas, startBlock, endBlock, description);
+        emit ProposalCreated(newProposal.id, _msgSender(), targets, values, signatures, calldatas, startBlock, endBlock, description);
         return newProposal.id;
     }
 
@@ -115,23 +130,28 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @param proposalId The id of the proposal to queue
       */
     function queue(uint proposalId) external {
-        require(state(proposalId) == ProposalState.Succeeded, "GovernorCharlie::queue: proposal can only be queued if it is succeeded");
+        require(state(proposalId) == ProposalState.Succeeded, "queue: proposal can only be queued if it is succeeded");
         Proposal storage proposal = proposals[proposalId];
-        uint eta = add256(block.timestamp, delay);
+        uint eta = add256(block.timestamp, proposal.delay);
         for (uint i = 0; i < proposal.targets.length; i++) {
-            queueOrRevertInternal(proposal.targets[i], proposal.values[i], proposal.signatures[i], proposal.calldatas[i], eta);
+            require(!queuedTransactions(keccak256(abi.encode(proposal.targets[i], proposal.values[i], proposal.signatures[i], proposal.calldatas[i], eta))), "queueOrRevertInternal: identical proposal action already queued at eta");
+            require(eta >= getBlockTimestamp().add(proposal.delay), "queueTransaction: Estimated execution block must satisfy delay.");
+            bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
+            queuedTransactions[txHash] = true;
+            proposal.eta = eta;
+            emit QueueTransaction(txHash, target, value, signature, data, eta);
         }
-        proposal.eta = eta;
+        
         emit ProposalQueued(proposalId, eta);
     }
-
+    /*
     function queueOrRevertInternal(address target, uint value, string memory signature, bytes memory data, uint eta) internal {
-        require(!queuedTransactions(keccak256(abi.encode(target, value, signature, data, eta))), "GovernorCharlie::queueOrRevertInternal: identical proposal action already queued at eta");
+        require(!queuedTransactions(keccak256(abi.encode(target, value, signature, data, eta))), "queueOrRevertInternal: identical proposal action already queued at eta");
         queueTransaction(target, value, signature, data, eta);
     }
 
     function queueTransaction(address target, uint value, string memory signature, bytes memory data, uint eta) internal returns (bytes32) {
-        require(eta >= getBlockTimestamp().add(delay), "Timelock::queueTransaction: Estimated execution block must satisfy delay.");
+        require(eta >= getBlockTimestamp().add(proposal.delay), "queueTransaction: Estimated execution block must satisfy delay.");
 
         bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
         queuedTransactions[txHash] = true;
@@ -139,13 +159,14 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
         emit QueueTransaction(txHash, target, value, signature, data, eta);
         return txHash;
     }
+    */
 
     /**
       * @notice Executes a queued proposal if eta has passed
       * @param proposalId The id of the proposal to execute
       */
     function execute(uint proposalId) external payable {
-        require(state(proposalId) == ProposalState.Queued, "GovernorCharlie::execute: proposal can only be executed if it is queued");
+        require(state(proposalId) == ProposalState.Queued, "execute: proposal can only be executed if it is queued");
         Proposal storage proposal = proposals[proposalId];
         proposal.executed = true;
         for (uint i = 0; i < proposal.targets.length; i++) {
@@ -184,18 +205,18 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @param proposalId The id of the proposal to cancel
       */
     function cancel(uint proposalId) external {
-        require(state(proposalId) != ProposalState.Executed, "GovernorCharlie::cancel: cannot cancel executed proposal");
+        require(state(proposalId) != ProposalState.Executed, "cancel: cannot cancel executed proposal");
 
         Proposal storage proposal = proposals[proposalId];
 
         // Proposer can cancel
-        if(msg.sender != proposal.proposer) {
+        if(_msgSender() != proposal.proposer) {
             // Whitelisted proposers can't be canceled for falling below proposal threshold
             if(isWhitelisted(proposal.proposer)) {
-                require((ipt.getPriorVotes(proposal.proposer, sub256(block.number, 1)) < proposalThreshold) && msg.sender == whitelistGuardian, "GovernorCharlie::cancel: whitelisted proposer");
+                require((ipt.getPriorVotes(proposal.proposer, sub256(block.number, 1)) < proposalThreshold) && _msgSender() == whitelistGuardian, "GovernorCharlie::cancel: whitelisted proposer");
             }
             else {
-                require((ipt.getPriorVotes(proposal.proposer, sub256(block.number, 1)) < proposalThreshold), "GovernorCharlie::cancel: proposer above threshold");
+                require((ipt.getPriorVotes(proposal.proposer, sub256(block.number, 1)) < proposalThreshold), "cancel: proposer above threshold");
             }
         }
         
@@ -240,7 +261,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @return Proposal state
       */
     function state(uint proposalId) public view returns (ProposalState) {
-        require(proposalCount >= proposalId && proposalId > initialProposalId, "GovernorCharlie::state: invalid proposal id");
+        require(proposalCount >= proposalId && proposalId > initialProposalId, "state: invalid proposal id");
         Proposal storage proposal = proposals[proposalId];
         if (proposal.canceled) {
             return ProposalState.Canceled;
@@ -248,17 +269,18 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
             return ProposalState.Pending;
         } else if (block.number <= proposal.endBlock) {
             return ProposalState.Active;
-        } else if (proposal.forVotes <= proposal.againstVotes || proposal.forVotes < quorumVotes) {
+        } else if (proposal.forVotes <= proposal.againstVotes || proposal.forVotes < proposal.quorumVotes) {
             return ProposalState.Defeated;
         } else if (proposal.eta == 0) {
             return ProposalState.Succeeded;
         } else if (proposal.executed) {
             return ProposalState.Executed;
-        } else if (block.timestamp >= add256(proposal.eta, timelock.GRACE_PERIOD())) {
+        } else if (block.timestamp >= add256(proposal.eta, GRACE_PERIOD)) {
             return ProposalState.Expired;
         } else {
             return ProposalState.Queued;
         }
+
     }
 
     /**
@@ -267,7 +289,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @param support The support value for the vote. 0=against, 1=for, 2=abstain
       */
     function castVote(uint proposalId, uint8 support) external {
-        emit VoteCast(msg.sender, proposalId, support, castVoteInternal(msg.sender, proposalId, support), "");
+        emit VoteCast(_msgSender(), proposalId, support, castVoteInternal(_msgSender(), proposalId, support), "");
     }
 
     /**
@@ -277,7 +299,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @param reason The reason given for the vote by the voter
       */
     function castVoteWithReason(uint proposalId, uint8 support, string calldata reason) external {
-        emit VoteCast(msg.sender, proposalId, support, castVoteInternal(msg.sender, proposalId, support), reason);
+        emit VoteCast(_msgSender(), proposalId, support, castVoteInternal(_msgSender(), proposalId, support), reason);
     }
 
     /**
@@ -289,7 +311,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
         bytes32 structHash = keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, support));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
         address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "GovernorCharlie::castVoteBySig: invalid signature");
+        require(signatory != address(0), "castVoteBySig: invalid signature");
         emit VoteCast(signatory, proposalId, support, castVoteInternal(signatory, proposalId, support), "");
     }
 
@@ -301,11 +323,11 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @return The number of votes cast
       */
     function castVoteInternal(address voter, uint proposalId, uint8 support) internal returns (uint96) {
-        require(state(proposalId) == ProposalState.Active, "GovernorCharlie::castVoteInternal: voting is closed");
-        require(support <= 2, "GovernorCharlie::castVoteInternal: invalid vote type");
+        require(state(proposalId) == ProposalState.Active, "castVoteInternal: voting is closed");
+        require(support <= 2, "castVoteInternal: invalid vote type");
         Proposal storage proposal = proposals[proposalId];
         Receipt storage receipt = proposal.receipts[voter];
-        require(receipt.hasVoted == false, "GovernorCharlie::castVoteInternal: voter already voted");
+        require(receipt.hasVoted == false, "castVoteInternal: voter already voted");
         uint96 votes = comp.getPriorVotes(voter, proposal.startBlock);
 
         if (support == 0) {
@@ -337,8 +359,8 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @param newVotingDelay new voting delay, in blocks
       */
     function _setVotingDelay(uint newVotingDelay) external {
-        require(msg.sender == address(this), "GovernorCharlie::_setVotingDelay: governance only");
-        require(newVotingDelay >= MIN_VOTING_DELAY && newVotingDelay <= MAX_VOTING_DELAY, "GovernorCharlie::_setVotingDelay: invalid voting delay");
+        require(_msgSender() == address(this), "_setVotingDelay: governance only");
+        require(newVotingDelay >= MIN_VOTING_DELAY && newVotingDelay <= MAX_VOTING_DELAY, "_setVotingDelay: invalid voting delay");
         uint oldVotingDelay = votingDelay;
         votingDelay = newVotingDelay;
 
@@ -350,8 +372,8 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @param newVotingPeriod new voting period, in blocks
       */
     function _setVotingPeriod(uint newVotingPeriod) external {
-        require(msg.sender == address(this), "GovernorCharlie::_setVotingPeriod: governance only");
-        require(newVotingPeriod >= MIN_VOTING_PERIOD && newVotingPeriod <= MAX_VOTING_PERIOD, "GovernorCharlie::_setVotingPeriod: invalid voting period");
+        require(_msgSender() == address(this), "_setVotingPeriod: governance only");
+        require(newVotingPeriod >= MIN_VOTING_PERIOD && newVotingPeriod <= MAX_VOTING_PERIOD, "_setVotingPeriod: invalid voting period");
         uint oldVotingPeriod = votingPeriod;
         votingPeriod = newVotingPeriod;
 
@@ -363,8 +385,8 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
       * @dev newProposalThreshold must be greater than the hardcoded min
       * @param newProposalThreshold new proposal threshold
       */
-    function _setProposalThreshold(uint newProposalThreshold) external {
-        require(msg.sender == address(this), "GovernorCharlie::_setProposalThreshold: governance only");
+    function _setProposalThreshold(uint newProposalThreshold) external  {
+        require(_msgSender() == address(this), "_setProposalThreshold: governance only");
         require(newProposalThreshold >= MIN_PROPOSAL_THRESHOLD && newProposalThreshold <= MAX_PROPOSAL_THRESHOLD, "_setProposalThreshold: invalid proposal threshold");
         uint oldProposalThreshold = proposalThreshold;
         proposalThreshold = newProposalThreshold;
@@ -378,7 +400,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
      * @param expiration Expiration for account whitelist status as timestamp (if now < expiration, whitelisted)
      */
     function _setWhitelistAccountExpiration(address account, uint expiration) external {
-        require(msg.sender == address(this) || msg.sender == whitelistGuardian, "_setWhitelistAccountExpiration: governance only");
+        require(_msgSender() == address(this) || _msgSender() == whitelistGuardian, "_setWhitelistAccountExpiration: governance only");
         whitelistAccountExpirations[account] = expiration;
 
         emit WhitelistAccountExpirationSet(account, expiration);
@@ -389,7 +411,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
      * @param account Account to set whitelistGuardian to (0x0 to remove whitelistGuardian)
      */
      function _setWhitelistGuardian(address account) external {
-        require(msg.sender == address(this), "_setWhitelistGuardian: governance only");
+        require(_msgSender() == address(this), "_setWhitelistGuardian: governance only");
         address oldGuardian = whitelistGuardian;
         whitelistGuardian = account;
 
@@ -417,4 +439,8 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
         // solium-disable-next-line security/no-block-members
         return block.timestamp;
     }
+
+    function _msgSender() internal view virtual returns (address) {
+    return msg.sender;
+  }
 }
