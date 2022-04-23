@@ -103,6 +103,9 @@ contract GovernorCharlieDelegateStorage is GovernorCharlieDelegatorStorage {
     /// @notice The latest proposal for each proposer
     mapping (address => uint) public latestProposalIds;
 
+    /// @notice The latest proposal for each proposer
+    mapping (bytes32 => bool) public queuedTransactions;
+
 
     struct Proposal {
         /// @notice Unique id for looking up a proposal
