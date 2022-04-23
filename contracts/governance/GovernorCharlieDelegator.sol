@@ -12,7 +12,8 @@ contract GovernorCharlieDelegator is GovernorCharlieDelegatorStorage, GovernorCh
             uint proposalThreshold_,
             uint delay_, 
             uint emergencyQuorumVotes_,
-            uint quorumVotes_) public {
+            uint quorumVotes_,
+            uint emergencyVotingPeriod_) public {
 
         delegateTo(implementation_, abi.encodeWithSignature("initialize(address,uint256,uint256,uint256)",
                                                             ipt_,
@@ -21,7 +22,9 @@ contract GovernorCharlieDelegator is GovernorCharlieDelegatorStorage, GovernorCh
                                                             proposalThreshold_,
                                                             delay_,
                                                             emergencyQuorumVotes_,
-                                                            quorumVotes_));
+                                                            quorumVotes_,
+                                                            emergencyVotingPeriod_,
+                                                            emergencyDelay_));
 
         _setImplementation(implementation_);
 	}
