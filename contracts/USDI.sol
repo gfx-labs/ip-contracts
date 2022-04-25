@@ -60,6 +60,17 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _unpause();
   }
 
+
+  /**
+  fallback() external payable {
+    revert("Fallback");
+  }
+
+  receive() external payable {
+    revert("Cannot receive ether");
+  }
+   */
+
   /// @notice deposit USDC to mint USDi
   /// caller should obtain 1e12 USDi for each USDC
   /// @param usdc_amount amount of USDC to deposit
@@ -81,7 +92,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// caller should obtain 1 USDC for every 1e12 USDi
   /// @param usdc_amount amount of USDC to withdraw
   function withdraw(uint256 usdc_amount) external override paysInterest whenNotPaused {
-    uint256 amount = usdc_amount * 1e12;    
+    uint256 amount = usdc_amount * 1e12;
     require(amount <= this.balanceOf(_msgSender()), "insufficient funds");
     require(amount > 0, "Cannot withdraw 0");
     uint256 balance = _reserve.balanceOf(address(this));
@@ -169,6 +180,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @param target whom to burn the USDi from
   /// @param amount the amount of USDi to burn
   function vault_master_burn(address target, uint256 amount) external override onlyVaultController {
+    //console.log("vault_master_burn: ", amount);
     require(_gonBalances[target] > (amount * _gonsPerFragment), "USDI: not enough balance");
     _gonBalances[target] = _gonBalances[target] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
