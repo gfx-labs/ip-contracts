@@ -7,6 +7,7 @@ import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, One
 import { Event, utils, BigNumber } from "ethers";
 import { getGas } from "../../util/math";
 import { first } from "underscore";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 /**
  * 
@@ -27,7 +28,7 @@ const truncate = async (value: BigNumber) => {
     return value.div(BN("1e18"))
 }
 
-const calculateBalance = async (interestFactor: BigNumber) => {
+const calculateBalance = async (interestFactor: BigNumber, user:SignerWithAddress) => {
     const totalBaseLiability = await s.VaultController._totalBaseLiability()
     const protocolFee = await s.VaultController._protocolFee()
 
@@ -51,7 +52,7 @@ const calculateBalance = async (interestFactor: BigNumber) => {
 
     //calculate balance 
     //get gon balance - calculate? 
-    const gonBalance = await s.USDI.scaledBalanceOf(s.Dave.address)
+    const gonBalance = await s.USDI.scaledBalanceOf(user.address)
 
     const expectedBalance = gonBalance.div(gpf)
     return expectedBalance
@@ -204,7 +205,7 @@ describe("Checking interest generation", () => {
 
         //get current interestFactor
         let interestFactor = await s.VaultController.InterestFactor()
-        const expectedBalance = await calculateBalance(interestFactor)
+        const expectedBalance = await calculateBalance(interestFactor, s.Dave)
 
         //check for yeild before calculateInterest - should be 0
         let balance = await s.USDI.balanceOf(s.Dave.address)
@@ -217,11 +218,11 @@ describe("Checking interest generation", () => {
         const interestGas = await getGas(result)
         showBodyCyan("Gas cost to calculate interest: ", interestGas)
 
-        //check for yeild after calculateInterest
+        //check for yeild after calculateInterest TODO
         balance = await s.USDI.balanceOf(s.Dave.address)
 
-        showBody("initBalance    : ", initBalance)
-        showBody("expectedBalance: ", expectedBalance)
+        //showBody("initBalance    : ", initBalance)
+        //showBody("expectedBalance: ", expectedBalance)
 
         assert.equal(balance.toString(), expectedBalance.toString(), "Expected balance is correct")
 
@@ -296,11 +297,19 @@ describe("Testing repay", () => {
         await s.VaultController.connect(s.Frank).unpause()
         await advanceBlockHeight(1)
 
+        const initialUSDIbalance = await s.USDI.balanceOf(s.Bob.address)
+        showBody("initialUSDIbalance: ", initialUSDIbalance)
+
+
         //current interest factor
         let interestFactor = await s.VaultController.InterestFactor()
         let liability = await s.BobVault.connect(s.Bob).BaseLiability()
         //next interest factor if pay_interest was called now
         const calculatedInterestFactor = await payInterestMath(interestFactor)
+
+        const expectedBalanceWithInterest = await calculateBalance(calculatedInterestFactor, s.Bob)
+       
+
 
         const expectedUSDIliability = await truncate(calculatedInterestFactor.mul(liability))
 
@@ -318,6 +327,11 @@ describe("Testing repay", () => {
         //calculate? todo 
         let balance = await s.USDI.balanceOf(s.Bob.address)
         showBody("Balance after complete repay: ", balance)
+
+        //UGH
+        showBody("expected amount after     ? : ", expectedBalanceWithInterest.sub(expectedUSDIliability))
+
+
     })
 })
 
