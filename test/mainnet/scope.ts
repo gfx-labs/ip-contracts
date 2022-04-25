@@ -29,7 +29,7 @@ export class TestScope extends MainnetAddresses {
     Bob!: SignerWithAddress    // bob is an eth holder. He wishes to deposit his eth and borrow USDI
     Carol!: SignerWithAddress  // carol is a comp holder. she wishes to deposit her comp and then vote
     Dave!: SignerWithAddress   // dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
-
+    Eric!: SignerWithAddress   // eric only holds ETH and generally does not use IP unless a clean slate is needed
 
     BobVault!: IVault
     CarolVault!: IVault
