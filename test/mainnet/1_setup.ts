@@ -52,6 +52,7 @@ describe("Token Setup", () => {
     it("connect to signers", async () => {
         let accounts = await ethers.getSigners();
         s.Frank = accounts[0];
+        s.Eric = accounts[5];
         s.Andy = accounts[6];
         s.Bob = accounts[7];
         s.Carol = accounts[8];
