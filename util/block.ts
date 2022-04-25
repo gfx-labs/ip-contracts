@@ -21,6 +21,7 @@ export const mineBlock = async () => {
     return
 }
 
+//set next TX timestamp to be current time + 1, cannot set next TX to be current time
 export const nextBlockTime = async (blockNumber:number) => {
     await network.provider.send("evm_setNextBlockTimestamp", [blockNumber + 1])
 }
