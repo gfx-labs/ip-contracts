@@ -76,15 +76,13 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     emit Deposit(_msgSender(), amount);
   }
 
-  /// BUG no check for user's balance? 
+  /// BUG no check for user's balance?
   /// @notice withdraw USDC by burning USDi
   /// caller should obtain 1 USDC for every 1e12 USDi
   /// @param usdc_amount amount of USDC to withdraw
   function withdraw(uint256 usdc_amount) external override paysInterest whenNotPaused {
-
-    //require(usdc_amount < _reserve.balanceOf(_msgSender()), "insufficient funds" );
-
-    uint256 amount = usdc_amount * 1e12;
+    uint256 amount = usdc_amount * 1e12;    
+    require(amount <= this.balanceOf(_msgSender()), "insufficient funds");
     require(amount > 0, "Cannot withdraw 0");
     uint256 balance = _reserve.balanceOf(address(this));
     require(balance >= usdc_amount, "Insufficient Reserve in Bank");
@@ -102,7 +100,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     require(reserve != 0, "Reserve is empty");
     uint256 usdc_amount = (this.balanceOf(_msgSender())) / 1e12;
     //user's USDI value is more than reserve
-    if(usdc_amount > reserve){
+    if (usdc_amount > reserve) {
       usdc_amount = reserve;
     }
     uint256 amount = usdc_amount * 1e12;
