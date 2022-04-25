@@ -119,11 +119,9 @@ describe("TESTING USDI CONTRACT", async () => {
         const transferGas = await getGas(transferResult)
         showBodyCyan("Gas cost to transfer USDi: ", transferGas)
 
-        showBodyCyan("INVALID WITHDRAW")
         let balance = await s.USDI.balanceOf(s.Eric.address)
         assert.equal(balance.toString(), smallAmount.toString(), "Balance is correct")
-        showBody("INVALID WITHDRAW")
-        
+
         //Eric tries to withdraw way more than should be allowed
         await expect(s.USDI.connect(s.Eric).withdraw(tryAmount)).to.be.revertedWith("insufficient funds")
 
@@ -187,13 +185,13 @@ describe("TESTING USDI CONTRACT", async () => {
         //TODO calculate interest over time to pre determine difference
         //expect(difference).to.be.gt(BN("0"))
         //expect(difference).to.be.lt(BN("51515426655222589"))
-        
+
         assert.equal(end_reserve.toString(), "0", "reserve is empty")
 
         //cannot withdraw when reserve is empty
         await expect(s.USDI.connect(s.Dave).withdraw(1)).to.be.reverted
         await expect(s.USDI.connect(s.Dave).withdraw_all()).to.be.revertedWith("Reserve is empty")
-        
+
     })
     it("Anyone can donate USDC to the protocol", async () => {
         let balance = await s.USDC.balanceOf(s.Dave.address)
@@ -217,5 +215,49 @@ describe("TESTING USDI CONTRACT", async () => {
         assert.equal(updatedBalance.toString(), updatedReserve.toString(), "Donate successful")
 
     })
+
+    //WIP
+    it("what happens when someone simply transfers ether to USDi contract? ", async () => {
+        const usdcBalance = await s.USDC.balanceOf(s.Dave.address)
+        const startingReserve = await s.USDC.balanceOf(s.USDI.address)
+        const startingReserveRatio = await s.USDI.reserveRatio()
+        const startingSupply = await s.USDI.totalSupply()
+        //showBody(startingSupply)
+
+        //eroniouisly transfer USDC to USDi contract
+        const smallAmount = utils.parseEther("1")
+        const smallAmount_e6 = smallAmount.div(BN("1e12"))//1 USDC = 1,000,000
+        const tryAmount = smallAmount_e6.mul(5)
+
+        await mineBlock()
+        const transferResult = await s.USDC.connect(s.Dave).transfer(s.USDI.address, smallAmount_e6)
+        await mineBlock()
+        //showBody(transferResult)
+
+        const receipt = await transferResult.wait()
+        await mineBlock()
+        //showBody(receipt.events)
+
+        const transferArgs = await getArgs(transferResult)
+        //showBody(transferArgs)
+
+
+        let reserve = await s.USDC.balanceOf(s.USDI.address)
+        let reserveRatio = await s.USDI.reserveRatio()
+        let totalSupply = await s.USDI.totalSupply()
+        //showBody(totalSupply)
+
+
+    })
+    /**
+     it("test receive function: ", async () => {
+        let tx = {
+            to: s.USDI.address,
+            value: utils.parseEther("1")
+        }
+        await expect(s.Dave.sendTransaction(tx)).to.be.revertedWith("Fallback")
+        await mineBlock()
+    })
+     */
 
 });
