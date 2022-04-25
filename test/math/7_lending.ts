@@ -114,28 +114,25 @@ describe("BORROW USDi", async () => {
     // remember bob has 10 eth
     let actualBorrowAmount: any
     let expectedInterestFactor: BigNumber
-    /**
      it(`bob should not be able to borrow 1e6 * 1e18 * ${s.Bob_WETH} usdi`, async () => {
         await expect(s.VaultController.connect(s.Bob).borrowUsdi(1,
             s.Bob_WETH.mul(BN("1e18")).mul(1e6),
         )).to.be.revertedWith("account insolvent");
     });
-     */
+     
 
     it(`bob should be able to borrow ${"5000e18"} usdi`, async () => {
 
-        //await network.provider.send("evm_mine")
+       
 
         const initUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
         assert.equal(initUSDiBalance.toString(), "0", "Bob starts with 0 USDi")
 
         //get initial interest factor
-        //await advanceBlockHeight(1)
         const initInterestFactor = await s.VaultController.InterestFactor()
-        //showBody("Interest Factor read from contract: ", initInterestFactor)
 
         expectedInterestFactor = await payInterestMath(initInterestFactor)
-        //showBody("expectedInterestFactor: ", expectedInterestFactor)
+
         firstBorrowIF = expectedInterestFactor
         const calculatedBaseLiability = await calculateAccountLiability(borrowAmount, initInterestFactor, initInterestFactor)
 
@@ -147,7 +144,7 @@ describe("BORROW USDi", async () => {
 
         //actual new interest factor from contract
         const newInterestFactor = await s.VaultController.InterestFactor()
-        //showBody("New interest factor read from contract: ", newInterestFactor)
+
         assert.equal(newInterestFactor.toString(), expectedInterestFactor.toString(), "New Interest Factor is correct")
 
         await s.VaultController.calculateInterest()
@@ -177,14 +174,13 @@ describe("BORROW USDi", async () => {
 
         const expectedLiability = await calculateAccountLiability(borrowAmount, calculatedInterestFactor, firstBorrowIF)
 
-        //TODO calculate new liability based on interest factor
-        const liability_amount = await s
+        const readLiability = await s
             .VaultController.connect(s.Bob)
             .AccountLiability(1);
 
-        expect(liability_amount).to.be.gt(BN("5000e18"));
+        expect(readLiability).to.be.gt(BN("5000e18"));
 
-        assert.equal(expectedLiability.toString(), liability_amount.toString(), "Liability calculation is correcet")
+        assert.equal(expectedLiability.toString(), readLiability.toString(), "Liability calculation is correcet")
     });
 });
 
@@ -218,10 +214,6 @@ describe("Checking interest generation", () => {
         expect(balance > initBalance)
     })
 })
-
-
-
-
 
 describe("Testing repay", () => {
     const borrowAmount = BN("10e18")

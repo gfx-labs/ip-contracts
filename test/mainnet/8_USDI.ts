@@ -7,6 +7,7 @@ import { stealMoney } from "../../util/money";
 import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear, reset } from "../../util/block";
+import { setMaxListeners } from "events";
 
 
 const usdcAmount = BN("5000e6")
@@ -23,7 +24,7 @@ const fundDave = async () => {
 }
 
 //set balances
-describe("TOKEN-DEPOSITS", async () => {
+describe("TESTING USDI CONTRACT", async () => {
     let startingUSDIAmount: BigNumber
     let startBlock: number
     before(async () => {
@@ -57,7 +58,6 @@ describe("TOKEN-DEPOSITS", async () => {
         const depositResult = await s.USDI.connect(s.Dave).deposit(usdcAmount)
         await advanceBlockHeight(1)
         const gasUsed = await getGas(depositResult)
-        showBody("CYAN NEXT")
         showBodyCyan("Gas cost for Dave deposit: ", gasUsed)
 
         const depositArgs = await getArgs(depositResult)
@@ -107,22 +107,78 @@ describe("TOKEN-DEPOSITS", async () => {
     it("Withdraw total reserves", async () => {
 
 
-        let reserve = await s.USDC.balanceOf(s.USDI.address)
-        let reserve_e18 = reserve.mul(BN("1e18"))
+        /**
+         * Dave should loose USDI and gain USDC
+         */
+
+
+
+
+        const usdcBalance = await s.USDC.balanceOf(s.Dave.address)
+        let formatUSDC = utils.formatEther(usdcBalance.mul(BN("1e12")).toString())
+        const usdiBalance = await s.USDI.balanceOf(s.Dave.address)
+        const reserve = await s.USDC.balanceOf(s.USDI.address)
+        const reserve_e18 = reserve.mul(BN("1e12"))
         let formatReserve = utils.formatEther(reserve_e18.toString())
 
-        const withdrawResult = await s.USDI.connect(s.Dave).withdraw(reserve)
+        showBody("Reserve: ", reserve)
+        showBody(reserve_e18.toString())
+
+
+        /**
+         showBody("Dave's USDI Balance: : ", utils.formatEther(usdiBalance.toString()))
+        showBody("Dave's raw USDI bal  : ", usdiBalance)
+        showBody("Dave's USDC Balance: : ", usdcBalance)
+        showBody("Dave's USDC format   : ", formatUSDC)
+        showBody("Reserve amount USDC  : ", reserve)
+        showBody("Reserve format 1e18  : ", formatReserve)
+         */
+
+        //let reserve_e18 = reserve.mul(BN("1e18"))
+        //let formatReserve = utils.formatEther(reserve_e18.toString())
+
+        //const withdrawResult = await s.USDI.connect(s.Dave).withdraw(reserve)
+        const withdrawResult = await s.USDI.connect(s.Dave).withdraw_all()
         await mineBlock()
+        const withdrawGas = await getGas(withdrawResult)
+        const withdrawArgs = await getArgs(withdrawResult)
+        assert.equal(withdrawArgs._value.toString(), reserve_e18.toString(), "Withdrawl amount correct on event receipt")
+        showBodyCyan("withdraw all gas: ", withdrawGas)
 
 
-        reserve = await s.USDC.balanceOf(s.USDI.address)
-        reserve_e18 = reserve.mul(BN("1e18"))
-        formatReserve = utils.formatEther((reserve_e18.sub(BN("1e6"))).toString())
+        let ending_usdcBalance = await s.USDC.balanceOf(s.Dave.address)
+        formatUSDC = utils.formatEther(ending_usdcBalance.mul(BN("1e12")).toString())
+        let ending_usdiBalance = await s.USDI.balanceOf(s.Dave.address)
+        const end_reserve = await s.USDC.balanceOf(s.USDI.address)
+        const end_reserve_e18 = reserve.mul(BN("1e12"))
+        formatReserve = utils.formatEther(end_reserve_e18.toString())
+        /**
+         showBody("Dave's USDI Balance: : ", utils.formatEther(ending_usdiBalance.toString()))
+        showBody("Dave's raw USDI bal  : ", ending_usdiBalance)
+        showBody("Dave's USDC Balance: : ", ending_usdcBalance)
+        showBody("Dave's USDC format   : ", formatUSDC)
+        showBody("Reserve amount USDC  : ", end_reserve)
+        showBody("Reserve format 1e18  : ", formatReserve)
+         */
 
-        assert.equal(reserve.toString(), "0", "reserve is empty")
 
+        //verify things
+        //const expectedUSDIamount = usdiBalance.sub(reserve)
+        const expectedUSDCamount = usdcBalance.add(reserve)
+        assert.equal(expectedUSDCamount.toString(), ending_usdcBalance.toString(), "Expected USDC balance is correct")
+        const expectedUSDIamount = usdiBalance.sub(reserve_e18)
+        const difference = ending_usdiBalance.sub(expectedUSDIamount)
+
+        //TODO calculate interest over time to pre determine difference
+        expect(difference).to.be.gt(BN("0"))
+        expect(difference).to.be.lt(BN("51515426655222589"))
+        
+        assert.equal(end_reserve.toString(), "0", "reserve is empty")
+
+        //cannot withdraw when reserve is empty
         await expect(s.USDI.connect(s.Dave).withdraw(1)).to.be.reverted
-
+        await expect(s.USDI.connect(s.Dave).withdraw_all()).to.be.revertedWith("Reserve is empty")
+        
     })
     it("Anyone can donate USDC to the protocol", async () => {
         let balance = await s.USDC.balanceOf(s.Dave.address)
