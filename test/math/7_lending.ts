@@ -5,8 +5,8 @@ import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
 import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
 import { Event, utils, BigNumber } from "ethers";
-import { getGas, truncate } from "../../util/math";
-import { first } from "underscore";
+import { getGas, truncate, getEvent } from "../../util/math";
+import _, { first } from "underscore";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 /**
@@ -85,7 +85,7 @@ const payInterestMath = async (interestFactor: BigNumber) => {
     await nextBlockTime(currentTime)
     //await network.provider.send("evm_mine")
 
-    let timeDifference = currentTime - latestInterestTime.toNumber() + 1 //account for change when fetching from provider
+    let timeDifference = currentTime - latestInterestTime.toNumber() + 1 //new block must have time ++1
 
     const reserveRatio = await s.USDI.reserveRatio()//todo - calculate
     const curve = await s.Curve.getValueAt(nullAddr, reserveRatio)//todo - calculate
@@ -276,7 +276,7 @@ describe("Testing repay", () => {
 
         let updatedLiability = await s.BobVault.connect(s.Bob).BaseLiability()
         let balance = await s.USDI.balanceOf(s.Bob.address)
-        
+
         assert.equal(expectedBaseLiability.toString(), updatedLiability.toString(), "Updated liability matches calculated liability")
         assert.equal(balance.toString(), (expectedBalanceWithInterest.sub(partialLiability)).toString(), "Balances are correct")
 
@@ -323,26 +323,32 @@ describe("Testing liquidations", () => {
         const vaultID = 1
         const bobVaultInit = await s.WETH.balanceOf(s.BobVault.address)
 
-        //borrow maximum - borrow amount == collateral value 
+        //borrow maximum -> borrow amount == collateral value 
+        const borrowInterestFactor = await s.VaultController.InterestFactor()
+        let calcIF = await payInterestMath(borrowInterestFactor)
         const AccountBorrowingPower = await s.VaultController.AccountBorrowingPower(vaultID)
+        await nextBlockTime(0)
         await s.VaultController.connect(s.Bob).borrowUsdi(vaultID, AccountBorrowingPower)
         await advanceBlockHeight(1)
+        let IF = await s.VaultController.InterestFactor()
+        const initIF = IF
+        assert.equal(IF.toString(), calcIF.toString())
 
         /******** CHECK WITHDRAW BEFORE CALCULATE INTEREST ********/
         //skip time so we can put vault below liquidation threshold 
         await fastForward(OneYear * 10);//10 year
         await advanceBlockHeight(1)
+        const tenYearIF = await payInterestMath(calcIF)
 
-        //await bob_vault.connect(Bob).withdrawErc20(s.wethAddress, BN("9e17"))
         //calculate interest to update protocol, vault is now able to be liquidated 
+        await nextBlockTime(0)
         await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
+        IF = await s.VaultController.InterestFactor()
+        assert.equal(tenYearIF.toString(), IF.toString(), "Interest factor calculation is correct after 10 years")
 
         //init balances after calculate interest
-        const initBalanceDave = await s.USDI.balanceOf(s.Dave.address)
-        const initBalanceBob = await s.USDI.balanceOf(s.Bob.address)
         const initWethBalanceDave = await s.WETH.balanceOf(s.Dave.address)
-        const initLiability = await s.VaultController.AccountLiability(vaultID)
 
         //check pauseable 
         await s.VaultController.connect(s.Frank).pause()
@@ -351,14 +357,21 @@ describe("Testing liquidations", () => {
         await s.VaultController.connect(s.Frank).unpause()
         await advanceBlockHeight(1)
 
+        //expectedBalanceWithInterest must be calced here - TODO why? 
+        const expectedBalanceWithInterest = await calculateBalance(IF, s.Dave)
+
         //liquidate account
+        await nextBlockTime(0)
         const result = await s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.wethAddress, BN("1e16"))
         await advanceBlockHeight(1)
         const receipt = await result.wait()
-        let interestEvent = receipt.events?.filter((x: Event) => {
-            return x.event == "InterestEvent"
-        }).pop()?.event
-        assert.equal(interestEvent, "InterestEvent", "Correct event captured and emitted")
+        await nextBlockTime(0)
+
+        IF = await s.VaultController.InterestFactor()
+        let expectedLiability = await calculateAccountLiability(AccountBorrowingPower, IF, initIF)
+
+        let interestEvent = await getEvent(result, "InterestEvent")
+        assert.equal(interestEvent.event, "InterestEvent", "Correct event captured and emitted")
 
         let liquidateEvent = receipt.events![receipt.events!.length - 1]
         let args = liquidateEvent.args
@@ -366,25 +379,28 @@ describe("Testing liquidations", () => {
         assert.equal(args!.asset_address.toString().toUpperCase(), s.wethAddress.toString().toUpperCase(), "Asset address is correct")
         const usdi_to_repurchase = args!.usdi_to_repurchase
         const tokens_to_liquidate = args!.tokens_to_liquidate
-        //console.log("Formatted usdi_to_repurchase: ", utils.formatEther(usdi_to_repurchase.toString()))
 
         /******** check ending balances ********/
-
-        //check ending liability
+        //check ending liability 
         let liabiltiy = await s.VaultController.AccountLiability(vaultID)
-        //showBody("initLiability: ", initLiability)
-        //showBody("End liability: ", liabiltiy)
+         
+        //TODO - result is off by 0-8, and is inconsistant -- oracle price? Rounding error? 
+        if (liabiltiy == expectedLiability.sub(usdi_to_repurchase)) {
+            showBodyCyan("LIABILITY MATCH")
+        }
+        expect(liabiltiy).to.be.gt((expectedLiability.sub(usdi_to_repurchase)).sub(10))
+        expect(liabiltiy).to.be.lt((expectedLiability.sub(usdi_to_repurchase)).add(10))
+        //assert.equal(liabiltiy.toString(), expectedLiability.sub(usdi_to_repurchase).toString(), "Calculated liability is correct")
 
         //Bob's vault has less collateral than before
         let balance = await s.WETH.balanceOf(s.BobVault.address)
         let difference = bobVaultInit.sub(balance)
         assert.equal(difference.toString(), tokens_to_liquidate.toString(), "Correct number of tokens liquidated from vault")
 
-        //Dave spent USDi to liquidate
+        //Dave spent USDi to liquidate -- TODO: precalc balance
         balance = await s.USDI.balanceOf(s.Dave.address)
-        difference = initBalanceDave.sub(balance)
-        //assert.equal(difference.toString(), usdi_to_repurchase.toString(), "Dave spent the correct amount of usdi")
-        //expect(difference.toString()).to.not.equal("0")
+        difference = expectedBalanceWithInterest.sub(balance)
+        assert.equal(difference.toString(), usdi_to_repurchase.toString(), "Dave spent the correct amount of usdi")
 
         //Dave received wETH
         balance = await s.WETH.balanceOf(s.Dave.address)
@@ -396,8 +412,6 @@ describe("Testing liquidations", () => {
         /**
          * 
          * TODO: test exploit: liquidate max -> borrowing power reduced -> account insolvant again -> repeat -> profit
-         * 
-         * Should AccountBorrowingPower reflect the current borrow power of the vault, as in the amount should go down once a loan is taken? Currently it does not. 
          * 
          */
         const rawPrice = await s.Oracle.getLivePrice(s.compAddress)

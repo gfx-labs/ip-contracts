@@ -1,4 +1,4 @@
-import { network } from "hardhat";
+import { network, ethers } from "hardhat";
 
 export const advanceBlockHeight = async (blocks: number) => {
     for (let i = 0; i < blocks; i++) {
@@ -22,8 +22,14 @@ export const mineBlock = async () => {
 }
 
 //set next TX timestamp to be current time + 1, cannot set next TX to be current time
-export const nextBlockTime = async (blockNumber:number) => {
-    await network.provider.send("evm_setNextBlockTimestamp", [blockNumber + 1])
+export const nextBlockTime = async (blockTime:number) => {
+    if(blockTime == 0){
+        const currentBlock = await ethers.provider.getBlockNumber()
+        const currentTime = (await ethers.provider.getBlock(currentBlock)).timestamp
+        blockTime = currentTime
+    }
+    
+    await network.provider.send("evm_setNextBlockTimestamp", [blockTime + 1])
 }
 
 export const reset = async (block: number) => {
