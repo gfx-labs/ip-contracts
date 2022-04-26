@@ -42,6 +42,10 @@ export const getGas = async (result: any) => {
     return receipt.gasUsed
 }
 
+export const truncate = async (value: BigNumber) => {
+    return value.div(BN("1e18"))
+}
+
 /**
  * 
  * @param result object returned from a transaction that emits an event 
