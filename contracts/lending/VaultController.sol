@@ -305,17 +305,17 @@ contract VaultController is
 
   /******* getters things *******/
 
-  /// @notice calculate amount of tokens to liquidate for a vault
+  /// @dev calculate amount of tokens to liquidate for a vault
   /// @param id the vault to get info for
   /// @param asset_address the token to calculate how many tokens to liquidate
   /// @param tokens_to_liquidate the max amount of tokens one wishes to liquidate
-  /// @return the amount of tokens underwater this vault is
-  /// @dev the amount owed is a moving target and changes with each block
+  /// @return - amount of tokens owed
+  /// @notice the amount of tokens owed is a moving target and changes with each block as pay_interest is called
   function TokensToLiquidate(
     uint96 id,
     address asset_address,
     uint256 tokens_to_liquidate
-  ) public view override returns (uint256) {
+  ) external view override returns (uint256) {
     (
       uint256 tokenAmount, /*uint256 badFillPrice*/
 
