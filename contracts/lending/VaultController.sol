@@ -441,6 +441,7 @@ contract VaultController is
           uint256(_interest.factor)
       )
     );
+
     uint192 valueBefore = safeu192(truncate(uint256(_totalBaseLiability) * uint256(_interest.factor)));
     _interest = Interest(uint64(block.timestamp), _interest.factor + e18_factor_increase);
     uint192 valueAfter = safeu192(truncate(uint256(_totalBaseLiability) * uint256(_interest.factor)));
