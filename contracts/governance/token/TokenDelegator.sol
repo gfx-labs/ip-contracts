@@ -16,7 +16,7 @@ contract InterestProtocolToken is TokenDelegatorStorage, TokenEvents, ITokenDele
     owner = owner_;
     delegateTo(
       implementation_,
-      abi.encodeWithSignature("initialize(address,address,uint256)", account_, initialSupply_)
+      abi.encodeWithSignature("initialize(address,uint256)", account_, initialSupply_)
     );
 
     implementation = implementation_;
