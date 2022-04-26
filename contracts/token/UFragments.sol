@@ -7,6 +7,7 @@ import "../_external/ERC20Detailed.sol";
 import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 
+
 /**
  * @title uFragments ERC20 token
  * @dev USDI uses the uFragments concept from the Ideal Money project to play interest
