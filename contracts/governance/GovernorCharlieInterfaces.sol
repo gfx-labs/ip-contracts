@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 
@@ -77,7 +77,7 @@ contract GovernorCharlieDelegateStorage is GovernorCharlieDelegatorStorage {
     uint public quorumVotes;
 
     /// @notice The number of votes in support of a proposal required in order for an emergency quorum to be reached and for a vote to succeed
-    uint public emergencyQuorumVotes
+    uint public emergencyQuorumVotes;
 
     /// @notice The delay before voting on a proposal may take place, once proposed, in blocks
     uint public votingDelay;
@@ -105,6 +105,15 @@ contract GovernorCharlieDelegateStorage is GovernorCharlieDelegatorStorage {
 
     /// @notice The latest proposal for each proposer
     mapping (bytes32 => bool) public queuedTransactions;
+
+    /// @notice The proposal holding period
+    uint public proposalTimelockDelay;
+
+    /// @notice Stores the expiration of account whitelist status as a timestamp
+    mapping (address => uint) public whitelistAccountExpirations;
+
+    /// @notice Address which manages whitelisted proposals and whitelist accounts
+    address public whitelistGuardian;
 
 
     struct Proposal {
@@ -177,14 +186,6 @@ contract GovernorCharlieDelegateStorage is GovernorCharlieDelegatorStorage {
         Expired,
         Executed
     }
-}
-
-contract GovernorCharlieDelegateStorageV2 is GovernorCharlieDelegateStorageV1 {
-    /// @notice Stores the expiration of account whitelist status as a timestamp
-    mapping (address => uint) public whitelistAccountExpirations;
-
-    /// @notice Address which manages whitelisted proposals and whitelist accounts
-    address public whitelistGuardian;
 }
 
 interface IptInterface {
