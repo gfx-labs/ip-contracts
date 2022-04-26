@@ -198,7 +198,7 @@ contract VaultController is
   /// @notice check an account for over-collateralization. returns false if amount borrowed is greater than borrowing power.
   /// @param id the vault to check
   /// @return true = vault over-collateralized; false = vault under-collaterlized
-  function checkAccount(uint96 id) external view override returns (bool) {
+  function checkAccount(uint96 id) public view override returns (bool) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
@@ -279,6 +279,8 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) external override paysInterest whenNotPaused returns (uint256) {
+    require(tokens_to_liquidate != 0, "must liquidate >0");
+    require(!checkAccount(id), "Vault is solvent");
     (uint256 tokenAmount, uint256 badFillPrice) = _liquidationMath(id, asset_address, tokens_to_liquidate);
 
     if (tokenAmount != 0) {
