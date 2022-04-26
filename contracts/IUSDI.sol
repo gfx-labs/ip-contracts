@@ -15,6 +15,8 @@ interface IUSDI is IERC20 {
 
   function withdraw(uint256 usdc_amount) external;
 
+  function withdraw_all() external;
+
   // admin & internal use functions
   function pause() external;
 
