@@ -13,8 +13,8 @@ contract UniswapV3OracleRelay is IOracleRelay {
   bool public _quoteTokenIsToken0;
   IUniswapV3PoolDerivedState public _pool;
 
-  uint256 _mul;
-  uint256 _div;
+  uint256 public _mul;
+  uint256 public _div;
 
   /// @notice all values set at construction time
   /// @param  pool_address address of chainlink feed
