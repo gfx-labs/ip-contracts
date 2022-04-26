@@ -1,11 +1,11 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ethers } from "hardhat";
-import { USDI, IERC20, IVOTE, VaultController, OracleMaster, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin } from "../../typechain-types";
+import { USDI, IERC20, IVOTE, VaultController, OracleMaster, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
 export class TestScope extends MainnetAddresses {
-    USDI!: USDI;
+    USDI!: IUSDI;
     USDC!: IERC20;
     COMP!: IVOTE;
     WETH!: IERC20;
@@ -21,7 +21,7 @@ export class TestScope extends MainnetAddresses {
     UniswapRelayEthUsdc!: IOracleRelay;
     UniswapRelayCompUsdc!: IOracleRelay;
 
-    Curve!: CurveMaster;
+    Curve!: ICurveMaster;
     ThreeLines!: ThreeLines0_100;
 
     Frank!: SignerWithAddress  // frank is the Frank and master of USDI

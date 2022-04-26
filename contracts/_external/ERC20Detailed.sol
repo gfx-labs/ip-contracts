@@ -35,21 +35,21 @@ abstract contract ERC20Detailed is Initializable, IERC20 {
   /**
    * @return the name of the token.
    */
-  function name() public view returns (string memory) {
+  function name() public view virtual returns (string memory) {
     return _name;
   }
 
   /**
    * @return the symbol of the token.
    */
-  function symbol() public view returns (string memory) {
+  function symbol() public view virtual returns (string memory) {
     return _symbol;
   }
 
   /**
    * @return the number of decimals of the token.
    */
-  function decimals() public view returns (uint8) {
+  function decimals() public view virtual returns (uint8) {
     return _decimals;
   }
 
