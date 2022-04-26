@@ -10,6 +10,8 @@ import "./_external/IERC20.sol";
 import "./_external/compound/ExponentialNoError.sol";
 import "./_external/openzeppelin/PausableUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 /// @title USDI token contract
 /// @notice handles all minting/burning of usdi
 /// @dev extends UFragments
@@ -58,6 +60,17 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _unpause();
   }
 
+
+  /**
+  fallback() external payable {
+    revert("Fallback");
+  }
+
+  receive() external payable {
+    revert("Cannot receive ether");
+  }
+   */
+
   /// @notice deposit USDC to mint USDi
   /// caller should obtain 1e12 USDi for each USDC
   /// @param usdc_amount amount of USDC to deposit
@@ -74,11 +87,13 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     emit Deposit(_msgSender(), amount);
   }
 
+  /// BUG no check for user's balance?
   /// @notice withdraw USDC by burning USDi
   /// caller should obtain 1 USDC for every 1e12 USDi
   /// @param usdc_amount amount of USDC to withdraw
   function withdraw(uint256 usdc_amount) external override paysInterest whenNotPaused {
     uint256 amount = usdc_amount * 1e12;
+    require(amount <= this.balanceOf(_msgSender()), "insufficient funds");
     require(amount > 0, "Cannot withdraw 0");
     uint256 balance = _reserve.balanceOf(address(this));
     require(balance >= usdc_amount, "Insufficient Reserve in Bank");
@@ -91,6 +106,22 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   }
 
   // todo I think we want withdraw_all()
+  function withdraw_all() external override paysInterest whenNotPaused {
+    uint256 reserve = _reserve.balanceOf(address(this));
+    require(reserve != 0, "Reserve is empty");
+    uint256 usdc_amount = (this.balanceOf(_msgSender())) / 1e12;
+    //user's USDI value is more than reserve
+    if (usdc_amount > reserve) {
+      usdc_amount = reserve;
+    }
+    uint256 amount = usdc_amount * 1e12;
+    _reserve.approve(address(this), usdc_amount);
+    require(_reserve.transferFrom(address(this), _msgSender(), usdc_amount), "transfer failed");
+    _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - (amount * _gonsPerFragment);
+    _totalSupply = _totalSupply - amount;
+    _totalGons = _totalGons - (amount * _gonsPerFragment);
+    emit Withdraw(_msgSender(), amount);
+  }
 
   /// @notice set the VaultController addr so that vault_master may mint/burn USDi without restriction
   /// @param vault_master_address address of vault master
@@ -149,6 +180,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @param target whom to burn the USDi from
   /// @param amount the amount of USDi to burn
   function vault_master_burn(address target, uint256 amount) external override onlyVaultController {
+    //console.log("vault_master_burn: ", amount);
     require(_gonBalances[target] > (amount * _gonsPerFragment), "USDI: not enough balance");
     _gonBalances[target] = _gonBalances[target] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
