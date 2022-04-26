@@ -37,7 +37,7 @@ contract ChainlinkOracleRelay is IOracleRelay {
 
   function getLastSecond() private view returns (uint256) {
     int256 latest = _aggregator.latestAnswer();
-    require(latest > 0, "chainlink oracle reported price below 0");
+    require(latest > 0, "chainlink: px < 0");
     uint256 scaled = (uint256(latest) * _multiply) / _divide;
     return scaled;
   }
