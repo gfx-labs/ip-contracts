@@ -400,13 +400,15 @@ contract VaultController is
     for (uint192 i = 1; i <= _tokensRegistered; i++) {
       address token_address = _enabledTokens[i - 1];
       uint192 raw_price = safeu192(_oracleMaster.getLivePrice(token_address));
-      if (raw_price != 0) {
-        uint256 balance = vault.tokenBalance(token_address);
-        if (balance != 0) {
-          uint192 token_value = safeu192(truncate(truncate(raw_price * balance * _tokenId_tokenLTV[i])));
-          total_liquidity_value = total_liquidity_value + token_value;
-        }
+      if (raw_price == 0) {
+        continue;
       }
+      uint256 balance = vault.tokenBalance(token_address);
+      if (balance == 0) {
+        continue;
+      }
+      uint192 token_value = safeu192(truncate(truncate(raw_price * balance * _tokenId_tokenLTV[i])));
+      total_liquidity_value = total_liquidity_value + token_value;
     }
     return total_liquidity_value;
   }

@@ -8,5 +8,6 @@ interface IOracleMaster {
 
   // admin functions
   function set_relay(address token_address, address relay_address) external;
+
   function pause_relay(address token_address, bool state) external;
 }
