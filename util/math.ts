@@ -46,12 +46,20 @@ export const truncate = async (value: BigNumber) => {
     return value.div(BN("1e18"))
 }
 
+export const getEvent = async (result: any, event: string) => {
+    const receipt = await result.wait()
+    let parsedEvent = receipt.events?.filter((x: Event) => {
+        return x.event == event
+    }).pop()//?.event//get just event name
+    return parsedEvent
+}
+
 /**
  * 
  * @param result object returned from a transaction that emits an event 
  * @returns the args from the last event emitted from the transaction
  */
- export const getArgs = async (result: any) => {
+export const getArgs = async (result: any) => {
     await advanceBlockHeight(1)
     const receipt = await result.wait()
     await advanceBlockHeight(1)
