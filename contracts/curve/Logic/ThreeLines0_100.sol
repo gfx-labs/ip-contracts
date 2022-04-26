@@ -4,9 +4,10 @@ pragma solidity ^0.8.0;
 import "../ICurveSlave.sol";
 
 /// @title Piecewise linear curve f(x)
-/// @notice returns values for input values 0 to 1e18, 
-/// described by variables _r0, _r1, and _r2, along with _s1 and _s2 
+/// @notice returns values for input values 0 to 1e18,
+/// described by variables _r0, _r1, and _r2, along with _s1 and _s2
 /// graph of function appears below code
+// solhint-disable-next-line contract-name-camelcase
 contract ThreeLines0_100 is ICurveSlave {
   int256 public _r0;
   int256 public _r1;
@@ -14,7 +15,7 @@ contract ThreeLines0_100 is ICurveSlave {
   int256 public _s1;
   int256 public _s2;
 
-  /// @notice curve is constructed on deploy and may not be modified 
+  /// @notice curve is constructed on deploy and may not be modified
   /// @param r0 y value at x=0
   /// @param r1 y value at the x=s1
   /// @param r2 y value at x > s2 && x < 1e18
@@ -54,7 +55,7 @@ contract ThreeLines0_100 is ICurveSlave {
     if (x_value <= max) {
       return _r2;
     }
-    revert();
+    revert("bad curve");
   }
 
   /// @notice linear interpolation, g(x) = mx+b
@@ -69,7 +70,7 @@ contract ThreeLines0_100 is ICurveSlave {
     int256 run,
     int256 distance,
     int256 b
-  ) public pure returns (int256) {
+  ) private pure returns (int256) {
     int256 mE6 = (rise * 1e6) / run;
     int256 result = (mE6 * distance) / 1e6 + b;
     return result;
