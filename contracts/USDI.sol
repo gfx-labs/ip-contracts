@@ -218,6 +218,10 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     if (_totalSupply > MAX_SUPPLY) {
       _totalSupply = MAX_SUPPLY;
     }
+    //console.log("amount   : ", amount);
+    //console.log("totalGons   : ", _totalGons);
+    //console.log("_totalSupply: ", _totalSupply);
+
     _gonsPerFragment = _totalGons / _totalSupply;
     emit Donation(_msgSender(), amount, _totalSupply);
   }
