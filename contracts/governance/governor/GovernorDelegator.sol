@@ -33,7 +33,9 @@ contract GovernorCharlieDelegator is GovernorCharlieDelegatorStorage, GovernorCh
         emergencyTimelockDelay_
       )
     );
-    _setImplementation(implementation_);
+    address oldImplementation = implementation;
+    implementation = implementation_;
+    emit NewImplementation(oldImplementation, implementation);
   }
 
   /**
