@@ -21,12 +21,16 @@ export const mineBlock = async () => {
     return
 }
 
+export const currentBlock = async () => {
+    const currentBlock = await ethers.provider.getBlockNumber()
+    return await ethers.provider.getBlock(currentBlock)
+}
+
 //set next TX timestamp to be current time + 1, cannot set next TX to be current time
 export const nextBlockTime = async (blockTime:number) => {
     if(blockTime == 0){
-        const currentBlock = await ethers.provider.getBlockNumber()
-        const currentTime = (await ethers.provider.getBlock(currentBlock)).timestamp
-        blockTime = currentTime
+        let currentTime = await currentBlock()
+        blockTime = currentTime.timestamp
     }
     
     await network.provider.send("evm_setNextBlockTimestamp", [blockTime + 1])
