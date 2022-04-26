@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./Structs.sol";
 
+/// @title interface to interact with TokenDelgator
 interface IGovernorCharlieDelegator {
   function _setImplementation(address implementation_) external;
 
@@ -11,6 +12,7 @@ interface IGovernorCharlieDelegator {
   receive() external payable;
 }
 
+/// @title interface to interact with TokenDelgate
 interface IGovernorCharlieDelegate {
   function initialize(
     address ipt_,
@@ -100,6 +102,7 @@ interface IGovernorCharlieDelegate {
   function _setWhitelistGuardian(address account) external;
 }
 
+/// @title interface which contains all events emitted by delegator & delegate
 interface GovernorCharlieEvents {
   /// @notice An event emitted when a new proposal is created
   event ProposalCreated(

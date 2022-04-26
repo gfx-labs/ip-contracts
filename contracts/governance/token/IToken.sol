@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
+/// @title interface to interact with TokenDelgator
 interface ITokenDelegator {
   function _setImplementation(address implementation_) external;
 
@@ -10,6 +11,7 @@ interface ITokenDelegator {
   receive() external payable;
 }
 
+/// @title interface to interact with TokenDelgate
 interface ITokenDelegate {
   function initialize(address account_, uint256 initialSupply_) external;
 
@@ -59,6 +61,7 @@ interface ITokenDelegate {
   function getPriorVotes(address account, uint256 blockNumber) external view returns (uint96);
 }
 
+/// @title interface which contains all events emitted by delegator & delegate
 interface TokenEvents {
   /// @notice An event thats emitted when an account changes its delegate
   event DelegateChanged(address indexed delegator, address indexed fromDelegate, address indexed toDelegate);
