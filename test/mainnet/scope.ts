@@ -5,7 +5,7 @@ import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
 export class TestScope extends MainnetAddresses {
-    USDI!: IUSDI;
+    USDI!: USDI;
     USDC!: IERC20;
     COMP!: IVOTE;
     WETH!: IERC20;
