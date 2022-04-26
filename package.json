@@ -8,7 +8,9 @@
     },
     "scripts": {
         "setup": "npx yarn install",
+        "clean": "npx hardhat clean",
         "compile": "npx hardhat compile",
+        "pretest": "npx hardhat compile",
         "test": "npx hardhat test test/mainnet/index.ts",
         "fasttest": "npx hardhat test --no-compile test/mainnet/index.ts",
         "lint": "bash -c \"shopt -s globstar && shopt -s extglob && npx solhint 'contracts/!(_external)/**/*.sol'\"",
