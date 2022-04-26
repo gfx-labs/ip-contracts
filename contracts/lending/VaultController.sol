@@ -17,7 +17,7 @@ import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
-//import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 /// @title Controller of all vaults in the USDI borrow/lend system
 /// @notice VaultController contains all business logic for borrowing and lending through the protocol.
@@ -242,7 +242,6 @@ contract VaultController is
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
-
     uint192 base_amount = (amount * 1e18) / _interest.factor;
     _totalBaseLiability = _totalBaseLiability - base_amount;
     require(base_amount <= vault.BaseLiability(), "repay > borrow amount");
@@ -260,7 +259,9 @@ contract VaultController is
     IVault vault = IVault(vault_address);
 
     Exp memory interest_factor = Exp({mantissa: _interest.factor});
-    uint256 usdi_liability = truncate(ExponentialNoError.mul_ScalarTruncate(interest_factor, vault.BaseLiability()));
+    //uint256 usdi_liability = truncate(ExponentialNoError.mul_ScalarTruncate(interest_factor, vault.BaseLiability()));//BUG - not mul_ScalarTruncate
+    uint256 usdi_liability = truncate(ExponentialNoError.mul_(interest_factor, vault.BaseLiability()));
+    
     vault.modify_liability(false, vault.BaseLiability());
     _usdi.vault_master_burn(_msgSender(), usdi_liability);
 
@@ -422,7 +423,7 @@ contract VaultController is
   /// @notice accrue interest to borrowers and distribute it to USDi holders.
   /// this function is called before any function that changes the reserve ratio
   function pay_interest() private returns (uint256) {
-    uint64 timeDifference = uint64(block.timestamp) - _interest.lastTime;    
+    uint64 timeDifference = uint64(block.timestamp) - _interest.lastTime;
     if (timeDifference == 0) {
       return 0;
     }
