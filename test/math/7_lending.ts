@@ -360,7 +360,7 @@ describe("Testing liquidations", () => {
         //expectedBalanceWithInterest must be calced here - TODO why? 
         const expectedBalanceWithInterest = await calculateBalance(IF, s.Dave)
 
-        //liquidate account
+        //liquidate account with large amount - TODO - confirm contract calculation for amount to liquidate and compare to event arg
         await nextBlockTime(0)
         const result = await s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.wethAddress, BN("1e16"))
         await advanceBlockHeight(1)
@@ -383,16 +383,17 @@ describe("Testing liquidations", () => {
         /******** check ending balances ********/
         //check ending liability 
         let liabiltiy = await s.VaultController.AccountLiability(vaultID)
-         
+
         //TODO - result is off by 0-8, and is inconsistant -- oracle price? Rounding error? 
         if (liabiltiy == expectedLiability.sub(usdi_to_repurchase)) {
             showBodyCyan("LIABILITY MATCH")
         }
+        //accept a range to account for miniscule error
         expect(liabiltiy).to.be.gt((expectedLiability.sub(usdi_to_repurchase)).sub(10))
         expect(liabiltiy).to.be.lt((expectedLiability.sub(usdi_to_repurchase)).add(10))
         //assert.equal(liabiltiy.toString(), expectedLiability.sub(usdi_to_repurchase).toString(), "Calculated liability is correct")
 
-        //Bob's vault has less collateral than before
+        //Bob's vault's collateral has been reduced by the expected amount
         let balance = await s.WETH.balanceOf(s.BobVault.address)
         let difference = bobVaultInit.sub(balance)
         assert.equal(difference.toString(), tokens_to_liquidate.toString(), "Correct number of tokens liquidated from vault")
@@ -415,28 +416,29 @@ describe("Testing liquidations", () => {
          * 
          */
         const rawPrice = await s.Oracle.getLivePrice(s.compAddress)
-        //showBody("rawPrice: ", rawPrice)
-        //let formatPrice = (await s.Oracle.getLivePrice(s.compAddress)).div(1e14).toNumber() / 1e4
         const vaultID = 2
+        const carolVaultInit = await s.COMP.balanceOf(s.CarolVault.address)
+        const initCOMPBalanceDave = await s.COMP.balanceOf(s.Dave.address)
 
-        //showBody("scaled COMP price: ", rawPrice.mul(BN("1e18")))
         //get values for total collateral value and loan amount
-        const carolVaultTotalTokens = await s.COMP.balanceOf(s.CarolVault.address)
-        const collateralValue = carolVaultTotalTokens.mul(BN("1e18")).mul(rawPrice.mul(BN("1e18")))
+        //const carolVaultTotalTokens = await s.COMP.balanceOf(s.CarolVault.address)
+        //const collateralValue = carolVaultTotalTokens.mul(BN("1e18")).mul(rawPrice.mul(BN("1e18")))
         //showBody("carol's TCV: ", collateralValue)
-        //borrow usdi
+
+        //borrow maximum usdi
         const carolBorrowPower = await s.VaultController.AccountBorrowingPower(2)
         await advanceBlockHeight(1)
         const borrowResult = await s.VaultController.connect(s.Carol).borrowUsdi(vaultID, carolBorrowPower)
         await advanceBlockHeight(1)
+        let IF = await s.VaultController.InterestFactor()
+        const initIF = IF
         const args = await getArgs(borrowResult)
         const actualBorrowAmount = args!.borrowAmount
 
-
+        //carol did not have any USDi before borrowing some
         expect(await s.USDI.balanceOf(s.Carol.address)).to.eq(actualBorrowAmount)
 
         let solvency = await s.VaultController.checkAccount(vaultID)
-        //showBody("carol's vault should be solvent")
         assert.equal(solvency, true, "Carol's vault is solvent")
 
         //showBody("advance 1 week and then calculate interest")
@@ -444,39 +446,66 @@ describe("Testing liquidations", () => {
         await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
 
-        let bn = await ethers.provider.getBlockNumber()
-        //showBody("current block", bn)
-        //this check is silly, each new mineBlock() advances by 1
-        //expect(bn).to.eq(BN("14546874"))
-
-        let bt = (await ethers.provider.getBlock(bn)).timestamp
-        //showBody("current timestamp", bt)
-
         solvency = await s.VaultController.checkAccount(vaultID)
-        //showBody("carol vault should be insolvent")
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
         let liquidatableTokens = await s.VaultController.TokensToLiquidate(vaultID, s.compAddress, BN("1e25"))
-        //showBody("liquidatableTokens:", liquidatableTokens)
-        //tiny liquidation 
+
         //showBody("calculating amount to liquidate");
 
         //callStatic does not actually make the call and change the state of the contract, thus liquidateAmount == liquidatableTokens
         const liquidateAmount = await s.VaultController.connect(s.Dave).callStatic.liquidate_account(vaultID, s.compAddress, BN("1e25"))
-        //showBody("liquidating at IF", await s.VaultController.InterestFactor());
-        await expect(s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.compAddress, BN("1e25"))).to.not.reverted
-        await advanceBlockHeight(1)
-        //showBody("dave liquidated:", liquidateAmount, "comp")
         expect(liquidateAmount).to.eq(liquidatableTokens)
 
-        //let balance = await s.USDI.balanceOf(Dave.address)
-        //console.log("Dave USDi Balance: ", utils.formatEther(balance.toString()))
+        IF = await s.VaultController.InterestFactor()
+        const expectedBalanceWithInterest = await calculateBalance(IF, s.Dave)
 
 
-        //balance = await s.USDI.balanceOf(Dave.address)
-        //console.log("Dave USDi Balance: ", utils.formatEther(balance.toString()))
 
-        //await s.VaultController.connect(Dave).liquidate_account(vaultID, s.wethAddress, bobVaultTotal.div(2)).should.be.revertedWith("vault solvent")
+
+        //await expect(s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.compAddress, BN("1e25"))).to.not.reverted
+        //showBody("dave liquidated:", liquidateAmount, "comp")
+
+        //tiny liquidation 
+        //liquidate account with large amount - TODO - confirm contract calculation for amount to liquidate and compare to event arg
+        await nextBlockTime(0)
+        const result = await s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.compAddress, BN("1e25"))
+        await advanceBlockHeight(1)
+        const liquidateArgs = await getArgs(result)
+        //showBody(liquidateArgs)
+        const usdi_to_repurchase = liquidateArgs.usdi_to_repurchase
+        const tokens_to_liquidate = liquidateArgs.tokens_to_liquidate
+
+        IF = await s.VaultController.InterestFactor()
+        let expectedLiability = await calculateAccountLiability(carolBorrowPower, IF, initIF)
+
+
+        //TODO
+        /******** check ending balances ********/
+        //check ending liability 
+        let liabiltiy = await s.VaultController.AccountLiability(vaultID)
+        //TODO - result is off by 0-8, and is inconsistant -- oracle price? Rounding error? 
+        if (liabiltiy == expectedLiability.sub(usdi_to_repurchase)) {
+            showBodyCyan("LIABILITY MATCH")
+        }
+        //accept a range to account for miniscule error
+        expect(liabiltiy).to.be.gt((expectedLiability.sub(usdi_to_repurchase)).sub(10))
+        expect(liabiltiy).to.be.lt((expectedLiability.sub(usdi_to_repurchase)).add(10))
+
+        //Carol's vault's collateral has been reduced by the expected amount
+        let balance = await s.COMP.balanceOf(s.CarolVault.address)
+        let difference = carolVaultInit.sub(balance)
+        assert.equal(difference.toString(), tokens_to_liquidate.toString(), "Correct number of tokens liquidated from vault")
+
+        //Dave spent USDi to liquidate -- TODO: precalc balance
+        balance = await s.USDI.balanceOf(s.Dave.address)
+        difference = expectedBalanceWithInterest.sub(balance)
+        assert.equal(difference.toString(), usdi_to_repurchase.toString(), "Dave spent the correct amount of usdi")
+
+        //Dave received COMP
+        balance = await s.COMP.balanceOf(s.Dave.address)
+        difference = balance.sub(initCOMPBalanceDave)
+        assert.equal(difference.toString(), tokens_to_liquidate.toString(), "Correct number of tokens liquidated from vault")
     })
 })
 
