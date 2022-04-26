@@ -16,6 +16,7 @@ contract AnchoredViewRelay is IOracleRelay {
 
   uint256 public _widthNumerator;
   uint256 public _widthDenominator;
+
   /// @notice all values set at construction time
   /// @param anchor_address address of OracleRelay to use as anchor
   /// @param main_address address of OracleRelay to use as main
@@ -36,6 +37,7 @@ contract AnchoredViewRelay is IOracleRelay {
     _widthNumerator = widthNumerator;
     _widthDenominator = widthDenominator;
   }
+
   /// @notice returns current value of oracle
   /// @return current value of oracle
   /// @dev implementation in getLastSecond
