@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./_external/IERC20.sol";
+import "./_external/IERC20Metadata.sol";
 
 /// @title interface to interact with USDI contract
-interface IUSDI is IERC20 {
+interface IUSDI is IERC20Metadata {
   function initialize(address reserveAddress) external;
 
   // getters
   function reserveRatio() external view returns (uint192);
+
+  function reserveAddress() external view returns (address);
+
+  // owner
+  function owner() external view returns (address);
 
   // business
   function deposit(uint256 usdc_amount) external;
