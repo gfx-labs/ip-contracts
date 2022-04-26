@@ -83,7 +83,7 @@ describe("Deploy Contracts", () => {
 
     })
     it("Verify deployment of USDi proxy", async () => {
-        const reserveAddress = await s.USDI._reserveAddress()
+        const reserveAddress = await s.USDI.reserveAddress()
         await mineBlock()
         const expectedReserveAddress = s.usdcAddress
         assert.equal(reserveAddress, expectedReserveAddress, "USDi Initialized")
@@ -120,10 +120,11 @@ describe("Deploy Contracts", () => {
         /**s.Curve = await DeployContract(new CurveMaster__factory(s.Frank), s.Frank, ["0x0000000000000000000000000000000000000000",
             s.ThreeLines.address]) */
         const curveFactory = await ethers.getContractFactory("CurveMaster")
-        s.Curve = await curveFactory.deploy("0x0000000000000000000000000000000000000000",
-            s.ThreeLines.address)
+        s.Curve = await curveFactory.deploy()
         await mineBlock()
         await s.Curve.deployed()
+        await mineBlock()
+        await s.Curve.set_curve("0x0000000000000000000000000000000000000000", s.ThreeLines.address)
         await mineBlock()
         await s.VaultController.register_curve_master(s.Curve.address)
         //await expect(s.VaultController.register_curve_master(s.Curve.address)).to.not.reverted;
