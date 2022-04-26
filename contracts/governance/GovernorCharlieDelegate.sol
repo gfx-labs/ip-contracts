@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 import "./GovernorCharlieInterfaces.sol";
@@ -9,7 +9,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
     string public constant name = "Interest Protocol Governor";
 
     /// @notice The maximum number of actions that can be included in a proposal
-    uint public constant proposalMaxOperations = 10; // 10 actions
+    uint public constant proposalMaxOperations = 10;
 
     /// @notice The EIP-712 typehash for the contract's domain
     bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)");
@@ -19,12 +19,6 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
 
     /// @notice The time for a proposal to be executed after passing
     uint public constant GRACE_PERIOD = 14 days;
-
-    /// @notice The proposal holding period
-    uint public standardDelay;
-
-    /// @notice The count proposals
-    uint public proposalCount;
 
     /**
       * @notice Used to initialize the contract during delegator contructor
@@ -40,22 +34,21 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
         votingPeriod = votingPeriod_;
         votingDelay = votingDelay_;
         proposalThreshold = proposalThreshold_;
-        standardDelay = delay_;
+        proposalTimelockDelay = proposalTimelockDelay_;
         proposalCount = 0;
         emergencyQuorumVotes = emergencyQuorumVotes_;
         quorumVotes = quorumVotes_;
         emergencyVotingPeriod = emergencyVotingPeriod_;
-        emergencyDelay = emergencyDelay_;
-
+        emergencyTimelockDelay = emergencyTimelockDelay_;
     }
 
     /**
       * @notice Used to update the delay period
-      * @param delay_ The proposal holding period
+      * @param proposalTimelockDelay_ The proposal holding period
       */
-    function setDelay(uint delay_) public {
+    function setDelay(uint proposalTimelockDelay_) public {
         require(_msgSender() == address(this), "setDelay: Call must come from the governor.");
-        standardDelay = delay_;
+        proposalTimelockDelay = proposalTimelockDelay_;
 
         emit NewDelay(delay);
     }
@@ -88,13 +81,13 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
         uint startBlock = add256(block.number, votingDelay);
         uint endBlock = add256(startBlock, votingPeriod);
         uint votesRequired = quorumVotes;
-        uint delay = standardDelay;
+        uint delay = proposalTimelockDelay;
 
         if (emergency = true){
-            startBlock = add256(block.number, emergencyDelay);
+            startBlock = block.number;
             endBlock = add256(startBlock, emergencyVotingPeriod);
             votesRequired = emergencyQuorumVotes;
-            delay = emergencyDelay;
+            delay = emergencyTimelockDelay;
         }
 
         proposalCount++;
@@ -115,7 +108,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
             executed: false,
             emergency: emergency,
             quorumVotes : votesRequired,
-            delay : delay,
+            delay : delay
         });
 
         proposals[newProposal.id] = newProposal;
@@ -175,7 +168,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorageV2, GovernorCh
         emit ProposalExecuted(proposalId);
     }
 
-    function executeTransaction(address target, uint value, string memory signature, bytes memory data, uint eta) public payable returns (bytes memory) internal {
+    function executeTransaction(address target, uint value, string memory signature, bytes memory data, uint eta) public payable returns (bytes memory) {
         bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
         require(queuedTransactions[txHash], "executeTransaction: Transaction hasn't been queued.");
         require(getBlockTimestamp() >= eta, "executeTransaction: Transaction hasn't surpassed time lock.");
