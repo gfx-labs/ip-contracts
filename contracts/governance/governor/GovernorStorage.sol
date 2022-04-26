@@ -67,4 +67,7 @@ contract GovernorCharlieDelegateStorage is GovernorCharlieDelegatorStorage {
 
   /// all receipts for proposal
   mapping(uint256 => mapping(address => Receipt)) public proposalReceipts;
+
+  /// @notice The emergency proposal holding period
+  bool public initialized;
 }

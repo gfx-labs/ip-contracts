@@ -41,7 +41,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     uint256 emergencyVotingPeriod_,
     uint256 emergencyTimelockDelay_
   ) external override {
-    require(_msgSender() == address(this), "initialize: admin only");
+    require(!initialized, "already been initialized");
     ipt = IIpt(ipt_);
     votingPeriod = votingPeriod_; //yes
     votingDelay = votingDelay_; //yes
@@ -52,6 +52,8 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     emergencyQuorumVotes = emergencyQuorumVotes_; //yes
     emergencyVotingPeriod = emergencyVotingPeriod_; //yes
     emergencyTimelockDelay = emergencyTimelockDelay_;
+
+    initialized = true;
   }
 
   /**
