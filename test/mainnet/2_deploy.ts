@@ -40,7 +40,6 @@ let ProxyController: ProxyAdmin
 
 
 const deployProxy = async () => {
-
     s.ProxyAdmin = await DeployContract(new ProxyAdmin__factory(s.Frank), s.Frank)
     await mineBlock()
     s.VaultController = await DeployContractWithProxy(
@@ -83,7 +82,7 @@ describe("Deploy Contracts", () => {
 
     })
     it("Verify deployment of USDi proxy", async () => {
-        const reserveAddress = await s.USDI._reserveAddress()
+        const reserveAddress = await s.USDI.reserveAddress()
         await mineBlock()
         const expectedReserveAddress = s.usdcAddress
         assert.equal(reserveAddress, expectedReserveAddress, "USDi Initialized")
@@ -108,7 +107,6 @@ describe("Deploy Contracts", () => {
 
     it("Deploy Curve", async () => {
         await mineBlock()
-
         s.ThreeLines = await DeployContract(new ThreeLines0_100__factory(s.Frank), s.Frank,
             BN("200e16"),
             BN("5e16"),
@@ -117,16 +115,9 @@ describe("Deploy Contracts", () => {
             BN("55e16"),
         );
         await mineBlock()
-        /**s.Curve = await DeployContract(new CurveMaster__factory(s.Frank), s.Frank, ["0x0000000000000000000000000000000000000000",
-            s.ThreeLines.address]) */
-        const curveFactory = await ethers.getContractFactory("CurveMaster")
-        s.Curve = await curveFactory.deploy("0x0000000000000000000000000000000000000000",
-            s.ThreeLines.address)
+        s.Curve = await DeployContract(new CurveMaster__factory(s.Frank), s.Frank)
         await mineBlock()
-        await s.Curve.deployed()
-        await mineBlock()
-        await s.VaultController.register_curve_master(s.Curve.address)
-        //await expect(s.VaultController.register_curve_master(s.Curve.address)).to.not.reverted;
+        await expect(s.VaultController.register_curve_master(s.Curve.address)).to.not.reverted;
         await mineBlock()
     })
 
