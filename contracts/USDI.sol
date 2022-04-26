@@ -41,12 +41,12 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   event Donation(address indexed _from, uint256 _value, uint256 _totalSupply);
 
   /// @notice initializer for contract
-  /// @param reserveAddress the address of USDC
+  /// @param reserveAddr the address of USDC
   /// @dev consider adding decimals?
-  function initialize(address reserveAddress) public override initializer {
+  function initialize(address reserveAddr) public override initializer {
     __UFragments_init("USDI Token", "USDI");
     __Pausable_init();
-    _reserveAddress = reserveAddress;
+    _reserveAddress = reserveAddr;
     _reserve = IERC20(_reserveAddress);
   }
 
@@ -60,6 +60,25 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _unpause();
   }
 
+  function owner() public view override(IUSDI, OwnableUpgradeable) returns (address) {
+    return super.owner();
+  }
+
+  function name() public view override(IERC20Metadata, ERC20Detailed) returns (string memory) {
+    return super.name();
+  }
+
+  function symbol() public view override(IERC20Metadata, ERC20Detailed) returns (string memory) {
+    return super.symbol();
+  }
+
+  function decimals() public view override(IERC20Metadata, ERC20Detailed) returns (uint8) {
+    return super.decimals();
+  }
+
+  function reserveAddress() public view override returns (address) {
+    return _reserveAddress;
+  }
 
   /**
   fallback() external payable {
