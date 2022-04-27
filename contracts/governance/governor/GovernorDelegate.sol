@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
+import "hardhat/console.sol";
 
 import "./IGovernor.sol";
 import "./GovernorStorage.sol";
@@ -93,6 +94,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
       require(proposersLatestProposalState != ProposalState.Active, "one live proposal per proposer");
       require(proposersLatestProposalState != ProposalState.Pending, "one live proposal per proposer");
     }
+
     proposalCount++;
     Proposal memory newProposal = Proposal({
       id: proposalCount,
@@ -114,7 +116,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
       delay: proposalTimelockDelay
     });
 
-    if (emergency = true) {
+    if (emergency) {
       newProposal.startBlock = block.number;
       newProposal.endBlock = block.number + emergencyVotingPeriod;
       newProposal.quorumVotes = emergencyQuorumVotes;
@@ -164,7 +166,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
         proposal.delay
       );
     }
-
+    proposal.eta = eta;
     emit ProposalQueued(proposalId, eta);
   }
 
