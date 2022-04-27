@@ -225,7 +225,6 @@ describe("Governance & IPT Contracts", () => {
         await mineBlock()
         let state = await s.GOV.state(proposalId);
         showBody("state: ", state)
-        console.log(typeof state)
         await expect(state).to.equal(5)
     })
 
@@ -284,24 +283,68 @@ describe("Governance & IPT Contracts", () => {
         expect(newVotes).to.be.gt(0)
     })
     //a proposal can fail for two reasons: not enough votes or not enough time
-    it("Verify Frank can't queue the proposal", async () => {
+    it("Verify Frank can't queue the proposal bc time", async () => {
         const proposalId = await s.GOV.proposalCount()
         showBody("proposal count", proposalId)
         await expect(s.GOV.connect(s.Andy).queue(proposalId)).to.be.revertedWith("can only be queued if succeeded")
         
     })
-    it("Verify Frank can't queue the proposal", async () => {
+    it("Verify Frank can't queue the proposal bc votes", async () => {
         await advanceBlockHeight((await s.GOV.emergencyVotingPeriod()).toNumber())
         const proposalId = await s.GOV.proposalCount()
         showBody("proposal count", proposalId)
         await expect(s.GOV.connect(s.Andy).queue(proposalId)).to.be.revertedWith("can only be queued if succeeded")
     })
-    
+    it("Verify emergency proposals work", async () => {
+        await mineBlock()
+        const targets = [s.USDC.address]
+        const values = ["0"]
+        const signatures = ["transfer(address,uint256)"]
+        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000005f5e100"]
+        const description = "test proposal"
+        const emergency = true
+        await s.GOV.connect(s.Andy).propose(targets,values,signatures,calldatas,description,emergency)
+        await mineBlock()
+        const proposalId = await s.GOV.proposalCount()
+        let proposalInfo = await s.GOV.proposals(proposalId)
+        let bn = await ethers.provider.getBlockNumber()
+        let bnData = await ethers.provider.getBlock(bn)
+        //showBody("time at propose: ", bnData.timestamp)
+        showBody("currentBlockNumber: ", bn)
+        showBody("start block: ",proposalInfo['startBlock'])
+        showBody("end vote: ",proposalInfo['endBlock'])
+        expect (proposalId).to.be.gt(2)
+        const support = 1
+        const reason = "good proposal"
+        await s.GOV.connect(s.Andy).castVoteWithReason(proposalId, support, reason)
+        await mineBlock()
+        proposalInfo = await s.GOV.proposals(proposalId);
+        let newVotes = proposalInfo['forVotes']
+        showBody("newVotes: ", newVotes)
+        expect(newVotes).to.be.gt(0)
+        await s.GOV.castVoteWithReason(proposalId, support, reason)
+        await mineBlock()
+        await advanceBlockHeight((await s.GOV.emergencyVotingPeriod()).toNumber()) //
+        bn = await ethers.provider.getBlockNumber()
+        bnData = await ethers.provider.getBlock(bn)
+        showBody("before queue time: ", bnData.timestamp)
+        showBody("expected eta: ", proposalInfo['delay'].add(bnData.timestamp))
+        await s.GOV.connect(s.Andy).queue(proposalId)
+        await mineBlock()
+        await fastForward((await s.GOV.emergencyTimelockDelay()).toNumber())
+        let startingBalance = await s.USDC.balanceOf(s.GOV.address)
+        await mineBlock()
+        bn = await ethers.provider.getBlockNumber()
+        bnData = await ethers.provider.getBlock(bn)
+        showBody("time at execute: ", bnData.timestamp)
+        proposalInfo = await s.GOV.proposals(proposalId);
+        showBody("eta: ", proposalInfo['eta'])
+        await s.GOV.execute(proposalId)
+        await mineBlock()
+        let endingBalance = await s.USDC.balanceOf(s.GOV.address)
+        expect(startingBalance).to.be.gt(endingBalance)
+    })
 
 })
 
-
-//frank delegates votes to someone else but not enough
-//frank delegates enough votes to someone else and they can make a proposal
-//no one votes so the proposal fails 
 //someone makes an emergeny proposal - expect it to function as expected. 
