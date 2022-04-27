@@ -1,11 +1,15 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, InterestProtocolToken, GovernorCharlieDelegate, GovernorCharlieDelegator, ITokenDelegate, IGovernorCharlieDelegate} from "../../typechain-types";
+import { IERC20, InterestProtocolTokenDelegate, InterestProtocolToken, GovernorCharlieDelegate, GovernorCharlieDelegator, ITokenDelegate, IGovernorCharlieDelegate} from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
 export class TestScope extends MainnetAddresses {
-    IPT!: ITokenDelegate;
+    USDC!: IERC20;
+
+    Frank_USDC = BN("1e10")
+
+    IPT!: InterestProtocolTokenDelegate;
 
     InterestProtocolTokenDelegate!: InterestProtocolTokenDelegate;
     InterestProtocolToken!: InterestProtocolToken;
