@@ -78,7 +78,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     require(quorumVotes != 0, "Charlie not active");
     // Allow addresses above proposal threshold and whitelisted addresses to propose
     require(
-      ipt.getPriorVotes(_msgSender(), sub256(block.number, 1)) > proposalThreshold || isWhitelisted(_msgSender()),
+      ipt.getPriorVotes(_msgSender(), sub256(block.number, 1)) >= proposalThreshold || isWhitelisted(_msgSender()),
       "votes below proposal threshold"
     );
     require(
