@@ -4,6 +4,7 @@ import { expect, assert } from "chai";
 import { showBody } from "../../util/format";
 import { BN } from "../../util/number";
 import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear, reset } from "../../util/block";
+import { stealMoney } from "../../util/money";
 
 import {
     InterestProtocolTokenDelegate,
@@ -14,6 +15,7 @@ import {
     GovernorCharlieDelegate__factory,
     GovernorCharlieDelegator,
     GovernorCharlieDelegator__factory,
+    IERC20__factory
 } from "../../typechain-types";
 
 describe("hardhat settings", () => {
@@ -27,10 +29,22 @@ describe("hardhat settings", () => {
 
 });
 
+let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
+
 describe("Token Setup", () => {
     it("connect to signers", async () => {
         let accounts = await ethers.getSigners();
         s.Frank = accounts[0];
+    });
+    it("Connect to existing contracts", async () => {
+        s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
+    });
+    it("Should succesfully transfer money", async () => {
+        showBody(`stealing ${s.Frank_USDC} to andy from ${s.usdcAddress}`);
+        await expect(
+            stealMoney(usdc_minter, "0x70bDA08DBe07363968e9EE53d899dFE48560605B", s.usdcAddress, s.Frank_USDC)
+        ).to.not.be.reverted;
+        await mineBlock();
     });
 });
 
@@ -38,69 +52,199 @@ import { DeployContract, DeployContractWithProxy } from "../../util/deploy";
 
 const deployGovAndToken = async () => {
     let txCount = await s.Frank.getTransactionCount()
-    console.log("tx count: "+txCount)
+    //console.log("tx count: "+txCount)
     const futureAddressOne = ethers.utils.getContractAddress({from:s.Frank.address ,nonce: txCount})
     //address one is the token delegate
-    console.log("futureAddressOne: "+futureAddressOne)
+    //console.log("futureAddressOne: "+futureAddressOne)
     const futureAddressTwo = ethers.utils.getContractAddress({from:s.Frank.address,nonce: txCount+1})
     //address two is the token delegator
-    console.log("futureAddressTwo: "+futureAddressTwo)
+    //console.log("futureAddressTwo: "+futureAddressTwo)
     const futureAddressThree = ethers.utils.getContractAddress({from:s.Frank.address,nonce: txCount+2})
     //address three is the gov delegate
-    console.log("futureAddressThree: "+futureAddressThree)
+    //console.log("futureAddressThree: "+futureAddressThree)
     const futureAddressFour = ethers.utils.getContractAddress({from:s.Frank.address,nonce: txCount+3})
     //address three is the gov delegator
-    console.log("futureAddressFour: "+futureAddressFour)    
+    //console.log("futureAddressFour: "+futureAddressFour)
+    
+    const ipt_ = futureAddressTwo;
+    const Govimplementation_ = futureAddressThree;
+    const votingPeriod_ = BN("19710")
+    const votingDelay_ = BN("13140")
+    const proposalThreshold_ = BN("250000000000000000000000")
+    const proposalTimelockDelay_ = BN("172800")
+    const quorumVotes_ = BN("50000000000000000000000000")
+    const emergencyQuorumVotes_ = BN("50000000000000000000000000")
+    const emergencyVotingPeriod_ = BN("6570")
+    const emergencyTimelockDelay_ = BN("86400")
 
     s.InterestProtocolTokenDelegate = await DeployContract(new InterestProtocolTokenDelegate__factory(s.Frank), s.Frank) 
-    console.log("test 1")
+
+    const totalSupplyReceiver_ = s.Frank.address;
+    const owner_ = futureAddressFour
+    const TokenImplementation_ = s.InterestProtocolTokenDelegate.address
+    const totalSupply_ = BN("1e26")
+
     await mineBlock()    
     s.InterestProtocolToken = await DeployContract(
         new InterestProtocolToken__factory(s.Frank),
         s.Frank,
-        s.Frank.address,
-        futureAddressFour,
-        s.InterestProtocolTokenDelegate.address,
-        BN("1e26")
+        totalSupplyReceiver_,
+        owner_,
+        TokenImplementation_,
+        totalSupply_
     )
-    console.log("test 2")
     await mineBlock()
     let owner = await s.InterestProtocolToken.owner()
     showBody("OWNER: ", owner)
     s.GovernorCharlieDelegate = await DeployContract(new GovernorCharlieDelegate__factory(s.Frank), s.Frank)
-    console.log("test 3")
     await mineBlock()
     s.GovernorCharlieDelegator = await DeployContract(
         new GovernorCharlieDelegator__factory(s.Frank),
         s.Frank,
-        futureAddressTwo,  //ipt
-        futureAddressThree, //implementation_
-        BN("19710"), //votingPeriod_
-        BN("13140"), //votingDelay_
-        BN("250000000000000000000000"), //proposalThreshold_
-        BN("172800"), //proposalTimelockDelay_
-        BN("5000000000000000000000000"), //quorumVotes_
-        BN("50000000000000000000000000"), //emergencyQuorumVotes_
-        BN("6570"), //emergencyVotingPeriod_
-        BN("86400")
+        ipt_,  //ipt
+        Govimplementation_,
+        votingPeriod_,
+        votingDelay_,
+        proposalThreshold_,
+        proposalTimelockDelay_,
+        quorumVotes_,
+        emergencyQuorumVotes_,
+        emergencyVotingPeriod_,
+        emergencyTimelockDelay_
     )
-    console.log("test 4")
     await mineBlock()
     s.GOV = GovernorCharlieDelegate__factory.connect(s.GovernorCharlieDelegator.address, s.Frank);
+    s.IPT = InterestProtocolTokenDelegate__factory.connect(s.InterestProtocolToken.address, s.Frank);
     let govToken = await s.GOV.ipt()
-    showBody("govToken: ", govToken)
-
+    showBody("IPT token: ", govToken)
 }
 
 require('chai').should()
-describe("Deploy Contracts", () => {
+describe("Governance & IPT Contracts", () => {
     before(async () => {
         await deployGovAndToken()
+        showBody("ipt_", await s.GOV.ipt())
+        showBody("votingPeriod_", await s.GOV.votingPeriod())
+        showBody("votingDelay_", await s.GOV.votingDelay())
+        showBody("proposalThreshold_", await s.GOV.proposalThreshold())
+        showBody("proposalTimelockDelay_", await s.GOV.proposalTimelockDelay())
+        showBody("quorumVotes_", await s.GOV.quorumVotes())
+        showBody("emergencyQuorumVotes_", await s.GOV.emergencyQuorumVotes())
+        showBody("emergencyVotingPeriod_", await s.GOV.emergencyVotingPeriod())
+        showBody("emergencyTimelockDelay_", await s.GOV.emergencyTimelockDelay())
+        showBody("proposalCount ", await s.GOV.proposalCount())
+    })
+    it("Verify owner of governance is IPT", async () => {
+        expect(await s.GOV.ipt()).to.equal(await s.InterestProtocolToken.address);
     })
     it("Verify gov token admin is gov", async () => {
-        const govTokenOnGovContract = await s.GOV.ipt();
-        const currentGovToken = await s.InterestProtocolToken.address;
-        expect(govTokenOnGovContract).to.equal(currentGovToken);
+        showBody("GOV owner", await s.GOV.address)
+        showBody("IPT owner", await s.IPT.owner())
+        expect(await s.GOV.address).to.equal(await s.IPT.owner());
+    })
+    it("Verify gov token admin is gov", async () => {
+        showBody("GOV owner", await s.GOV.address)
+        showBody("IPT owner", await s.IPT.owner())
+        expect(await s.GOV.address).to.equal(await s.IPT.owner());
+    })
+    it("Verify Frank can't make a proposal", async () => {
+        //should check that the start & end blocks are as expected
+        const  targets = [s.USDC.address]
+        const values = ["0"]
+        const signatures = ["Transfer(address,uint256)"]
+        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000000000000"]
+        const description = "test proposal"
+        const emergency = false
+        await expect(s.GOV.propose(targets,values,signatures,calldatas,description,emergency)).to.be.revertedWith('votes below proposal threshold')
+    })
+    it("Verify Frank delegated votes to himself", async () => {
+        showBody("Frank's votes", await s.IPT.getCurrentVotes(s.Frank.address))
+        await s.IPT.connect(s.Frank).delegate(s.Frank.address)
+        await mineBlock()
+        showBody("Frank's votes", await s.IPT.getCurrentVotes(s.Frank.address))
+        await expect(await s.IPT.getCurrentVotes(s.Frank.address)).to.be.gt(0)
+        let bn = await ethers.provider.getBlockNumber();
+        showBody("currentBlockNumber: ", bn)
+
+    })
+    it("Verify Frank can make a proposal", async () => {
+        const  targets = [s.USDC.address]
+        const values = ["0"]
+        const signatures = ["Transfer(address,uint256)"]
+        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000000000000"]
+        const description = "test proposal"
+        const emergency = false
+        await mineBlock()
+        showBody("proposal count",await s.GOV.proposalCount())
+        await s.GOV.propose(targets,values,signatures,calldatas,description,emergency)
+        await mineBlock()
+        showBody("proposal count",await s.GOV.proposalCount())
+        expect (await s.GOV.proposalCount()).to.be.gt(0)
+    })
+
+    it("Verify Frank can't vote bc review period", async () => {
+        let bn = await ethers.provider.getBlockNumber();
+        showBody("currentBlockNumber: ", bn)
+        const proposalId = await s.GOV.proposalCount()
+        let proposalInfo = await s.GOV.proposals(proposalId);
+        showBody("start block",proposalInfo['startBlock'])
+        showBody("before vote",proposalInfo['forVotes'])
+        const support = 1
+        const reason = "good proposal"
+        await expect(s.GOV.castVoteWithReason(proposalId, support, reason)).to.be.reverted
+    })
+
+    it("Verify Frank can vote after the review period", async () => {
+        await advanceBlockHeight((await s.GOV.votingDelay()).toNumber())
+        let bn = await ethers.provider.getBlockNumber();
+        showBody("currentBlockNumber: ", bn)
+        const proposalId = await s.GOV.proposalCount()
+        let proposalInfo = await s.GOV.proposals(proposalId);
+        showBody("start block",proposalInfo['startBlock'])
+        showBody("before vote",proposalInfo['forVotes'])
+        const support = 1
+        const reason = "good proposal"
+        await s.GOV.castVoteWithReason(proposalId, support, reason)
+        await mineBlock()
+        proposalInfo = await s.GOV.proposals(proposalId);
+        showBody("after vote",proposalInfo['forVotes'])
+    })
+
+    it("Verify Frank can't queue the proposal", async () => {
+        const proposalId = await s.GOV.proposalCount()
+        showBody("proposal count", proposalId)
+        await expect(s.GOV.queue(proposalId)).to.be.reverted
     })
     
+    it("Verify Frank can queue the proposal", async () => {
+        await advanceBlockHeight((await s.GOV.votingPeriod()).toNumber())
+        const proposalId = await s.GOV.proposalCount()
+        await s.GOV.queue(proposalId)
+        await mineBlock()
+        let state = await s.GOV.state(proposalId);
+        showBody("state: ", state)
+        console.log(typeof state)
+        await expect(state).to.equal(5)
+    })
+
+    it("Verify Frank can't exeucte the proposal", async () => {
+        const proposalId = await s.GOV.proposalCount()
+        await expect(s.GOV.execute(proposalId)).to.be.reverted
+    })
+
+    it("Verify Frank can exeucte the proposal", async () => {
+        await fastForward((await s.GOV.proposalTimelockDelay()).toNumber())
+        showBody("governance usdc: ", await s.USDC.balanceOf(s.GOV.address))
+        const proposalId = await s.GOV.proposalCount()
+        let proposalInfo = await s.GOV.proposals(proposalId);
+        //showBody(proposalInfo)
+        await s.GOV.execute(proposalId)
+        showBody("governance usdc: ", await s.USDC.balanceOf(s.GOV.address))
+    })
 })
+
+
+//frank delegates votes to someone else but not enough
+//frank delegates enough votes to someone else and they can make a proposal
+//no one votes so the proposal fails 
+//someone makes an emergeny proposal - expect it to function as expected. 
