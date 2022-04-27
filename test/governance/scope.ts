@@ -19,7 +19,9 @@ export class TestScope extends MainnetAddresses {
 
     GOV!: GovernorCharlieDelegate;
 
-    Frank!: SignerWithAddress  // frank is the Frank and master of USDI
+    Frank!: SignerWithAddress  // frank holds all IPT from the mint
+    Andy!: SignerWithAddress // frank sends andy some ipt
+    Eric!: SignerWithAddress // frank delegates the ipt to eric
 
     constructor() {
         super()
