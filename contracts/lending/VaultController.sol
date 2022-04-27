@@ -244,7 +244,7 @@ contract VaultController is
     IVault vault = IVault(vault_address);
     uint192 base_amount = (amount * 1e18) / _interest.factor;
     _totalBaseLiability = _totalBaseLiability - base_amount;
-    require(base_amount <= vault.BaseLiability(), "repay > borrow amount");
+    require(base_amount <= vault.BaseLiability(), "repay > borrow amount"); //repay all here if true?
     vault.modify_liability(false, base_amount);
     _usdi.vault_master_burn(_msgSender(), amount);
     emit RepayUSDi(id, vault_address, amount);
@@ -261,7 +261,7 @@ contract VaultController is
     Exp memory interest_factor = Exp({mantissa: _interest.factor});
     //uint256 usdi_liability = truncate(ExponentialNoError.mul_ScalarTruncate(interest_factor, vault.BaseLiability()));//BUG - not mul_ScalarTruncate
     uint256 usdi_liability = truncate(ExponentialNoError.mul_(interest_factor, vault.BaseLiability()));
-    
+
     vault.modify_liability(false, vault.BaseLiability());
     _usdi.vault_master_burn(_msgSender(), usdi_liability);
 
@@ -287,6 +287,8 @@ contract VaultController is
       tokens_to_liquidate = tokenAmount;
     }
 
+    //bug? - this amount is not sufficient, should be able to liquidate until you run out of USDi - not truncate?
+    //uint256 usdi_to_repurchase = truncate(badFillPrice * tokens_to_liquidate);
     uint256 usdi_to_repurchase = truncate(badFillPrice * tokens_to_liquidate);
     IVault vault = getVault(id);
 
@@ -310,18 +312,24 @@ contract VaultController is
   /// @dev calculate amount of tokens to liquidate for a vault
   /// @param id the vault to get info for
   /// @param asset_address the token to calculate how many tokens to liquidate
-  /// @param tokens_to_liquidate the max amount of tokens one wishes to liquidate
-  /// @return - amount of tokens owed
+  /// @return - amount of tokens liquidatable
   /// @notice the amount of tokens owed is a moving target and changes with each block as pay_interest is called
-  function TokensToLiquidate(
-    uint96 id,
-    address asset_address,
-    uint256 tokens_to_liquidate
-  ) external view override returns (uint256) {
+  function TokensToLiquidate(uint96 id, address asset_address) external view override returns (uint256) {
+    uint256 price = _oracleMaster.getLivePrice(asset_address);
+    IVault vault = getVault(id);
+
+    uint256 denominator = truncate(
+      price *
+        ((1e18 - _tokenAddress_liquidationIncentive[asset_address]) -
+          _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]])
+    );
+
+    uint256 max_tokens_to_liquidate = (uint256(_AccountLiability(id) - get_vault_borrowing_power(vault)) * 1e18) /
+      denominator;
     (
       uint256 tokenAmount, /*uint256 badFillPrice*/
 
-    ) = _liquidationMath(id, asset_address, tokens_to_liquidate);
+    ) = _liquidationMath(id, asset_address, max_tokens_to_liquidate);
 
     return tokenAmount;
   }
@@ -341,6 +349,7 @@ contract VaultController is
 
     //get price of asset scaled to decimal 18
     uint256 price = _oracleMaster.getLivePrice(asset_address);
+    //console.log("Price: ", price);
 
     // get price discounted by liquidation penalty
     uint256 badFillPrice = truncate(price * (1e18 - _tokenAddress_liquidationIncentive[asset_address]));
