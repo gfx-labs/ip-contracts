@@ -35,6 +35,8 @@ describe("Token Setup", () => {
     it("connect to signers", async () => {
         let accounts = await ethers.getSigners();
         s.Frank = accounts[0];
+        s.Eric = accounts[5];
+        s.Andy = accounts[6];
     });
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
@@ -149,10 +151,10 @@ describe("Governance & IPT Contracts", () => {
     })
     it("Verify Frank can't make a proposal", async () => {
         //should check that the start & end blocks are as expected
-        const  targets = [s.USDC.address]
+        const targets = [s.USDC.address]
         const values = ["0"]
-        const signatures = ["Transfer(address,uint256)"]
-        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000000000000"]
+        const signatures = ["transfer(address,uint256)"]
+        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000005f5e100"]
         const description = "test proposal"
         const emergency = false
         await expect(s.GOV.propose(targets,values,signatures,calldatas,description,emergency)).to.be.revertedWith('votes below proposal threshold')
@@ -168,10 +170,10 @@ describe("Governance & IPT Contracts", () => {
 
     })
     it("Verify Frank can make a proposal", async () => {
-        const  targets = [s.USDC.address]
+        const targets = [s.USDC.address]
         const values = ["0"]
-        const signatures = ["Transfer(address,uint256)"]
-        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000000000000"]
+        const signatures = ["transfer(address,uint256)"]
+        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000005f5e100"]
         const description = "test proposal"
         const emergency = false
         await mineBlock()
@@ -234,13 +236,68 @@ describe("Governance & IPT Contracts", () => {
 
     it("Verify Frank can exeucte the proposal", async () => {
         await fastForward((await s.GOV.proposalTimelockDelay()).toNumber())
-        showBody("governance usdc: ", await s.USDC.balanceOf(s.GOV.address))
+        let startingBalance = await s.USDC.balanceOf(s.GOV.address)
+        const proposalId = await s.GOV.proposalCount()
+        await s.GOV.execute(proposalId)
+        await mineBlock()
+        let endingBalance = await s.USDC.balanceOf(s.GOV.address)
+        expect(startingBalance).to.be.gt(endingBalance)
+    })
+    it("Verify Frank can transfer IPT to Eric", async () => {
+        let startingBalance = await s.IPT.balanceOf(s.Eric.address)
+        await s.IPT.transfer(s.Eric.address,"250000000000000000000000")
+        await mineBlock()
+        let endingBalance = await s.IPT.balanceOf(s.Eric.address)
+        expect(endingBalance).to.be.gt(startingBalance)
+    })
+    it("Verify Eric can delegate to Andy", async () => {
+        await s.IPT.connect(s.Eric).delegate(s.Andy.address)
+        await mineBlock()
+        expect(await s.IPT.getCurrentVotes(s.Andy.address)).to.be.gt(0)
+    })
+    it("Verify Andy can make an emergency proposal", async () => {
+        const targets = [s.USDC.address]
+        const values = ["0"]
+        const signatures = ["transfer(address,uint256)"]
+        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000005f5e100"]
+        const description = "test proposal"
+        const emergency = true
+        await s.GOV.connect(s.Andy).propose(targets,values,signatures,calldatas,description,emergency)
+        await mineBlock()
         const proposalId = await s.GOV.proposalCount()
         let proposalInfo = await s.GOV.proposals(proposalId);
-        //showBody(proposalInfo)
-        await s.GOV.execute(proposalId)
-        showBody("governance usdc: ", await s.USDC.balanceOf(s.GOV.address))
+        let bn = await ethers.provider.getBlockNumber();
+        showBody("currentBlockNumber: ", bn)
+        showBody("start block: ",proposalInfo['startBlock'])
+        showBody("end vote: ",proposalInfo['endBlock'])
+        expect (proposalId).to.be.gt(1)
     })
+    it("Verify Andy can immediately vote", async () => {
+        const proposalId = await s.GOV.proposalCount()
+        const support = 1
+        const reason = "good proposal"
+        await s.GOV.connect(s.Andy).castVoteWithReason(proposalId, support, reason)
+        await mineBlock()
+        let proposalInfo = await s.GOV.proposals(proposalId);
+        let newVotes = proposalInfo['forVotes']
+        showBody("newVotes: ", newVotes)
+        expect(newVotes).to.be.gt(0)
+    })
+    //a proposal can fail for two reasons: not enough votes or not enough time
+    it("Verify Frank can't queue the proposal", async () => {
+        const proposalId = await s.GOV.proposalCount()
+        showBody("proposal count", proposalId)
+        await expect(s.GOV.connect(s.Andy).queue(proposalId)).to.be.revertedWith("can only be queued if succeeded")
+        
+    })
+    it("Verify Frank can't queue the proposal", async () => {
+        await advanceBlockHeight((await s.GOV.emergencyVotingPeriod()).toNumber())
+        const proposalId = await s.GOV.proposalCount()
+        showBody("proposal count", proposalId)
+        await expect(s.GOV.connect(s.Andy).queue(proposalId)).to.be.revertedWith("can only be queued if succeeded")
+    })
+    
+
 })
 
 
