@@ -36,13 +36,6 @@ describe("ETH:", () => {
         let rawPrice = await s.Oracle.getLivePrice(s.wethAddress)
         showBody("rawPrice: ", rawPrice)
         let oraclePrice = rawPrice.div(1e14).toNumber() / 1e4
-
-
-
-
-
-
-
         showBody("oraclePrice", oraclePrice)
         let chainlinkPrice = (await s.ChainlinkEth.currentValue()).div(1e14).toNumber() / 1e4
         showBody("chainlinkPrice", chainlinkPrice)
