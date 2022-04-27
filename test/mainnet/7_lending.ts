@@ -8,6 +8,7 @@ import { Event, utils, BigNumber } from "ethers";
 import { getGas, truncate, getEvent } from "../../util/math";
 import _, { first, lastIndexOf, toArray } from "underscore";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { min } from "bn.js";
 
 /**
  * 
@@ -765,6 +766,16 @@ describe("Testing liquidations", () => {
 
         })
 
+        it("borrow against a vault that is not yours", async () => {
+            //carol's vault has no debt
+            AccountLiability = await s.VaultController.AccountLiability(vaultID)
+            assert.equal(AccountLiability.toString(), "0", "Carol's vault has no debt")
+        
+            //Eric tries to borrow against Carol's vault
+            await expect(s.VaultController.connect(s.Eric).borrowUsdi(vaultID, utils.parseEther("500"))).to.be.revertedWith("sender not minter")
+            await advanceBlockHeight(1)
+        })
+
 
 
         /**
@@ -772,7 +783,6 @@ describe("Testing liquidations", () => {
 
         })
          */
-        //test eronious inputs on TokensToLiquidate - remove TokensToLiquidate arg? 
 
 
     })
