@@ -549,20 +549,16 @@ describe("Testing liquidations", () => {
         it("test eronious inputs on external TokensToLiquidate", async () => {
             const carolCompAmount = await s.COMP.balanceOf(s.CarolVault.address)
             let AmountToLiquidate = carolCompAmount.mul(5)
-            let TokensToLiquidate:BigNumber
-            let liquidateAmount:BigNumber
-
+            let TokensToLiquidate: BigNumber
+            let liquidateAmount: BigNumber
 
             liquidateAmount = await s.VaultController.connect(s.Dave).callStatic.liquidate_account(vaultID, s.compAddress, AmountToLiquidate)
-            showBody("liquidateAmount: ", utils.formatEther(liquidateAmount.toString()))
             TokensToLiquidate = await s.VaultController.TokensToLiquidate(vaultID, s.compAddress)
             assert.equal(TokensToLiquidate.toString(), liquidateAmount.toString(), "TokensToLiquidate with same params returns the correct number of tokens to liquidate")
-
 
             //puny liquidation amount
             AmountToLiquidate = BN("100")
             liquidateAmount = await s.VaultController.connect(s.Dave).callStatic.liquidate_account(vaultID, s.compAddress, AmountToLiquidate)
-            showBody(liquidateAmount)
             assert.equal(liquidateAmount.toString(), AmountToLiquidate.toString(), "Passing a small amount to liquidate works as intended")
 
         })
@@ -687,6 +683,21 @@ describe("Testing liquidations", () => {
             await expect(s.VaultController.connect(s.Eric).liquidate_account(vaultID, s.compAddress, utils.parseEther("1"))).to.be.revertedWith("USDI: not enough balance")
             await advanceBlockHeight(1)
 
+        })
+        it("accidently send USDi to the USDI contract", async () => {
+            let EricBalance = await s.USDI.balanceOf(s.Eric.address)
+            expect(EricBalance).to.be.gt(0)
+
+            //cannot send to USDi contract, see modifier validRecipient
+            await expect(s.USDI.connect(s.Eric).transferAll(s.USDI.address)).to.be.reverted
+            await advanceBlockHeight(1)
+
+            //need to have Eric end up with 0 USDi for other tests
+            await s.USDI.connect(s.Eric).transferAll(s.Dave.address)
+            await advanceBlockHeight(1)
+            
+            EricBalance = await s.USDI.balanceOf(s.Eric.address)
+            assert.equal(EricBalance.toString(), "0", "Eric has empty balance")
         })
 
         it("repay more than what is owed", async () => {
