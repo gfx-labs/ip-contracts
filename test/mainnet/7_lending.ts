@@ -7,19 +7,11 @@ import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, One
 import { Event, utils, BigNumber } from "ethers";
 import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent } from "../../util/math";
 import _, { first, lastIndexOf, toArray } from "underscore";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { min } from "bn.js";
+import { IVault__factory } from "../../typechain-types";
 
-
-
-
-
-
-const initIF = BN("1e18")
-//initIF is 1e18, pay_interest() is called before the first loan is taken, resulting in firstBorrowIF
 let firstBorrowIF: BigNumber
 const borrowAmount = BN("5000e18")
-const nullAddr = "0x0000000000000000000000000000000000000000"
 describe("BORROW USDi", async () => {
 
     //bob tries to borrow usdi against 10 eth as if eth is $100k
@@ -32,10 +24,7 @@ describe("BORROW USDi", async () => {
         )).to.be.revertedWith("account insolvent");
     });
 
-
     it(`bob should be able to borrow ${"5000e18"} usdi`, async () => {
-
-
 
         const initUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
         assert.equal(initUSDiBalance.toString(), "0", "Bob starts with 0 USDi")
@@ -428,7 +417,7 @@ describe("Testing liquidations", () => {
         assert.equal(difference.toString(), tokens_to_liquidate.toString(), "Correct number of tokens liquidated from vault")
     })
 
-    
+
 
 
 })
@@ -598,7 +587,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         //need to have Eric end up with 0 USDi for other tests
         await s.USDI.connect(s.Eric).transferAll(s.Dave.address)
         await advanceBlockHeight(1)
-        
+
         EricBalance = await s.USDI.balanceOf(s.Eric.address)
         assert.equal(EricBalance.toString(), "0", "Eric has empty balance")
     })
@@ -672,7 +661,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         //carol's vault has no debt
         AccountLiability = await s.VaultController.AccountLiability(vaultID)
         assert.equal(AccountLiability.toString(), "0", "Carol's vault has no debt")
-    
+
         //Eric tries to borrow against Carol's vault
         await expect(s.VaultController.connect(s.Eric).borrowUsdi(vaultID, utils.parseEther("500"))).to.be.revertedWith("sender not minter")
         await advanceBlockHeight(1)
@@ -686,6 +675,124 @@ describe("Checking for eronious inputs and scenarios", () => {
     })
      */
 
+
+})
+
+describe("Testing remaining vault functions", () => {
+    /**
+     * withdrawErc20
+     *  withdrawErc20 when vault would become insolvent
+     * 
+     */
+
+    const vaultID = 2
+    let solvency: boolean
+    let AccountLiability: BigNumber, borrowPower: BigNumber, amountUnderwater: BigNumber
+    let balance: BigNumber
+
+    let startingVaultComp:BigNumber
+    let startingCarolComp:BigNumber
+
+    const withdrawAmount = utils.parseEther("1")//1 comp token
+    before(async() => {
+        
+    })
+
+    it("Withdraws some of the ERC20 tokens from vault: ", async () => {
+        startingVaultComp = await s.COMP.balanceOf(s.CarolVault.address)
+        expect(startingVaultComp).to.be.gt(0)
+        
+        startingCarolComp = await s.COMP.balanceOf(s.Carol.address)
+
+        AccountLiability = await s.VaultController.AccountLiability(vaultID)
+        borrowPower = await s.VaultController.AccountBorrowingPower(vaultID)
+        amountUnderwater = AccountLiability.sub(borrowPower)
+
+
+        solvency = await s.VaultController.checkAccount(vaultID)
+        assert.equal(solvency, true, "Carol's vault is solvent")
+
+        //withdraw comp from vault
+        const withdrawResult = await s.CarolVault.connect(s.Carol).withdrawErc20(s.compAddress, withdrawAmount)
+        await mineBlock()
+
+        balance = await s.COMP.balanceOf(s.Carol.address)
+        assert.equal(balance.toString(), withdrawAmount.toString(), "Carol has the correct amount of COMP tokens")
+        
+    })
+
+    it("withdraw from someone else's vault", async () => {        
+
+        solvency = await s.VaultController.checkAccount(vaultID)
+        assert.equal(solvency, true, "Carol's vault is solvent")
+        
+
+        //withdraw comp from vault
+        await expect(s.CarolVault.connect(s.Eric).withdrawErc20(s.compAddress, withdrawAmount)).to.be.revertedWith("sender not minter")
+        await mineBlock()       
+
+
+    })
+
+    it("withdraw more than vault contains when liability is 0", async () => {
+        //eric mints a vault
+        const ericVaultID = 3
+        await expect(s.VaultController.connect(s.Eric).mintVault()).to.not.reverted;
+        await mineBlock();
+        let getVault = await s.VaultController.VaultAddress(ericVaultID)
+        let ericVault = IVault__factory.connect(
+            getVault,
+            s.Eric,
+        );
+        expect(await ericVault.Minter()).to.eq(s.Eric.address)
+        AccountLiability = await s.VaultController.AccountLiability(ericVaultID)
+        assert.equal(AccountLiability.toString(), "0", "Eric's vault has 0 liability")
+        borrowPower = await s.VaultController.AccountBorrowingPower(ericVaultID)
+        assert.equal(borrowPower.toString(), "0", "Eric's vault has 0 borrow power, so it is empty")
+
+        //withdraw tiny amount
+        await expect(ericVault.withdrawErc20(s.COMP.address, 1)).to.be.reverted
+
+        //withdraw 0 on empty vault - withdraw 0 is allowed
+        await expect(ericVault.withdrawErc20(s.COMP.address, 0)).to.not.be.reverted      
+
+    })
+
+    it("withdraw with bad address", async () => {
+        solvency = await s.VaultController.checkAccount(vaultID)
+        assert.equal(solvency, true, "Carol's vault is solvent")
+
+        //withdraw comp from vault
+        await expect(s.CarolVault.connect(s.Carol).withdrawErc20(s.Frank.address, withdrawAmount)).to.be.reverted
+        await mineBlock()
+    })
+
+    it("makes vault insolvent", async () => {
+        const AccountBorrowingPower = await s.VaultController.AccountBorrowingPower(vaultID)
+
+        //showBodyCyan("BORROW")
+        await nextBlockTime(0)
+        await s.VaultController.connect(s.Carol).borrowUsdi(vaultID, AccountBorrowingPower)
+        await advanceBlockHeight(1)
+
+        await fastForward(OneWeek)
+        await s.VaultController.calculateInterest()
+        await advanceBlockHeight(1)
+
+        solvency = await s.VaultController.checkAccount(vaultID)
+        assert.equal(solvency, false, "Carol's vault is not solvent")
+    })
+
+    it("withdraw from a vault that is insolvent", async () => {
+        solvency = await s.VaultController.checkAccount(vaultID)
+        assert.equal(solvency, false, "Carol's vault is not solvent")
+
+        //withdraw comp from vault
+        await expect(s.CarolVault.connect(s.Carol).withdrawErc20(s.compAddress, withdrawAmount)).to.be.revertedWith("over-withdrawal")
+        await mineBlock()
+    })
+
+    
 
 })
 
