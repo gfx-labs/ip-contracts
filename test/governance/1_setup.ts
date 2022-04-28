@@ -162,14 +162,13 @@ describe("Governance & IPT Contracts", () => {
         await expect(s.GOV.propose(targets,values,signatures,calldatas,description,emergency)).to.be.revertedWith('votes below proposal threshold')
     })
     it("Verify Frank delegated votes to himself", async () => {
+        let bn = await ethers.provider.getBlockNumber();
         showBody("Frank's votes", await s.IPT.getCurrentVotes(s.Frank.address))
         await s.IPT.connect(s.Frank).delegate(s.Frank.address)
         await mineBlock()
         showBody("Frank's votes", await s.IPT.getCurrentVotes(s.Frank.address))
-        await expect(await s.IPT.getCurrentVotes(s.Frank.address)).to.be.gt(0)
-        let bn = await ethers.provider.getBlockNumber();
-        showBody("currentBlockNumber: ", bn)
-
+        expect(await s.IPT.getCurrentVotes(s.Frank.address)).to.be.gt(0)
+        expect(await s.IPT.getPriorVotes(s.Frank.address,bn)).to.eq(0)        
     })
     it("Verify Frank can make a proposal", async () => {
         const targets = [s.USDC.address]
@@ -471,12 +470,19 @@ describe("Governance & IPT Contracts", () => {
         await mineBlock()
         await expect (s.GOV.castVoteWithReason(proposalId, support, reason)).to.be.reverted
     })
-    it("Verify whitelisted address can make a proposal", async () => {
+    it("Verify whitelisted address can make a proposal & IPT onlyOwner functions work", async () => {
         await mineBlock()
-        const targets = [s.USDC.address]
-        const values = ["0"]
-        const signatures = ["transfer(address,uint256)"]
-        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000005f5e100"]
+        showBody("name: ", await s.IPT.name())
+        showBody("symbol: ", await s.IPT.symbol())
+        showBody("bob's ipt balance: ", await s.IPT.balanceOf(s.Bob.address))
+        const targets = [s.IPT.address, s.IPT.address, s.IPT.address]
+        const values = ["0","0","0"]
+        const signatures = ["changeName(string)","changeSymbol(string)","mint(address,uint256)"]
+        const calldatas = [
+            "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000d4761746577617920546f6b656e00000000000000000000000000000000000000",
+            "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000024754000000000000000000000000000000000000000000000000000000000000",
+            "0x00000000000000000000000014dc79964da2c08b23698b3d3cc7ca32193d99550000000000000000000000000000000000000000000000056bc75e2d63100000"
+        ]
         const description = "test proposal"
         const emergency = false
         showBody("proposal count: ", await s.GOV.proposalCount())
@@ -500,13 +506,25 @@ describe("Governance & IPT Contracts", () => {
         await mineBlock()
         await fastForward((await s.GOV.proposalTimelockDelay()).toNumber())
         await mineBlock()
-        let startingBalance = await s.USDC.balanceOf(s.GOV.address)
         await s.GOV.execute(proposalId)
         await mineBlock()
-        let endingBalance = await s.USDC.balanceOf(s.GOV.address)
-        expect(startingBalance).to.be.gt(endingBalance)
+        //showBody("name: ", await s.IPT.name())
+        //showBody("symbol: ", await s.IPT.symbol())
+        //showBody("bob's ipt balance: ", await s.IPT.balanceOf(s.Bob.address))
+        expect (await s.IPT.name()).to.eq("Gateway Token")
+        expect (await s.IPT.symbol()).to.eq("GT")
+        expect (await s.IPT.balanceOf(s.Bob.address)).to.be.gt(0)
+    })
+    it("allowance/transferFrom", async () => {
+        showBody("bob's allowance: ", await s.IPT.allowance(s.Bob.address, s.Eric.address))
+        showBody("andy's balance: ", await s.IPT.balanceOf(s.Andy.address))
+        await s.IPT.connect(s.Bob).approve(s.Eric.address,BN("1e28"))
+        await mineBlock()
+        showBody("bob's allowance", await s.IPT.allowance(s.Bob.address, s.Eric.address))
+        await s.IPT.connect(s.Eric).transferFrom(s.Bob.address,s.Andy.address,BN("1e18"))
+        await mineBlock()
+        showBody("andy's balance: ", await s.IPT.balanceOf(s.Andy.address))
     })
 })
 
-
-//test whitelister making a proposal
+// permit and delegateBySig not testing here
