@@ -2,7 +2,7 @@ import { s } from "./scope";
 import { ethers } from "hardhat";
 import { BigNumber, Event, utils } from "ethers";
 import { expect, assert } from "chai";
-import { getGas, getArgs } from "../../util/math"
+import { getGas, getArgs, calculateBalance, changeInBalance } from "../../util/math"
 import { stealMoney } from "../../util/money";
 import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
@@ -42,24 +42,61 @@ describe("TESTING USDI CONTRACT", async () => {
     //check admin functions
     it("check admin mint", async () => {
         await mineBlock()
+
+
         const smallAmount = utils.parseEther("100")
         const smallAmount_e6 = smallAmount.div(BN("1e12"))
         const startBalance = await s.USDI.balanceOf(s.Frank.address)
-        showBody("startBalance: ", utils.formatEther(startBalance.toString()))
 
-        await s.USDI.connect(s.Frank).mint(smallAmount_e6)
-        await mineBlock()
+
+        //test for eronious input
+        //should revert if not the admin
+        await expect(s.USDI.connect(s.Bob).mint(smallAmount_e6)).to.be.reverted
+        await expect(s.USDI.connect(s.Frank).mint(0)).to.be.reverted
+
+
+        const mintResult = await s.USDI.connect(s.Frank).mint(smallAmount_e6)
+        await advanceBlockHeight(1)
+        const mintArgs = await getArgs(mintResult)
+        assert.equal(mintArgs._value.toString(), smallAmount.toString(), "Correct amount minted from event receipt")
+
+        const mintGas = await getGas(mintResult)
+        showBodyCyan("Gas cost to mint: ", mintGas)
+
 
         let balance = await s.USDI.balanceOf(s.Frank.address)
-        showBody("enddBalance: ", utils.formatEther(balance.toString()))
 
         let difference = balance.sub(startBalance)
-        showBody("Small amount e18     : ", smallAmount)
-        showBody("Small Amount e6      : ", smallAmount_e6)
-        showBody("Difference in balance: ", difference)
+
+        //expect balance to be increased by smallAmount + interest -> TODO calc interest on smallAmount
+        expect(difference).to.be.gt(smallAmount)
 
         //assert.equal(balance.toString(), (startBalance.add(smallAmount)).toString(), `Frank has ${utils.formatEther(smallAmount)} more USDi`)
 
+    })
+    it("check admin burn", async () => {
+        const smallAmount = utils.parseEther("100")
+        const smallAmount_e6 = smallAmount.div(BN("1e12"))
+        const startBalance = await s.USDI.balanceOf(s.Frank.address)
+
+
+        //test for eronious input
+        //should revert if not the admin
+        await expect(s.USDI.connect(s.Bob).burn(smallAmount_e6)).to.be.reverted
+        await expect(s.USDI.connect(s.Frank).burn(0)).to.be.reverted
+
+        //should revert if not the admin
+
+        const burnResult = await s.USDI.connect(s.Frank).mint(smallAmount_e6)
+        await advanceBlockHeight(1)
+        const burnArgs = await getArgs(burnResult)
+        assert.equal(burnArgs._value.toString(), smallAmount.toString(), "Correct amount burned from event receipt")
+
+        let balance = await s.USDI.balanceOf(s.Frank.address)
+        let difference = balance.sub(startBalance)
+
+        //expect balance to be decreased by smallAmount - interest -> TODO calc interest on smallAmount
+        expect(difference).to.be.gt(smallAmount)
     })
 
 
