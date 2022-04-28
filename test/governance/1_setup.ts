@@ -37,6 +37,8 @@ describe("Token Setup", () => {
         s.Frank = accounts[0];
         s.Eric = accounts[5];
         s.Andy = accounts[6];
+        s.Bob = accounts[7];
+        console.log(s.Bob.address);
     });
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
@@ -324,7 +326,7 @@ describe("Governance & IPT Contracts", () => {
         expect(newVotes).to.be.gt(0)
         await s.GOV.castVoteWithReason(proposalId, support, reason)
         await mineBlock()
-        await advanceBlockHeight((await s.GOV.emergencyVotingPeriod()).toNumber()) //
+        await advanceBlockHeight((await s.GOV.emergencyVotingPeriod()).toNumber())
         bn = await ethers.provider.getBlockNumber()
         bnData = await ethers.provider.getBlock(bn)
         showBody("before queue time: ", bnData.timestamp)
@@ -344,7 +346,167 @@ describe("Governance & IPT Contracts", () => {
         let endingBalance = await s.USDC.balanceOf(s.GOV.address)
         expect(startingBalance).to.be.gt(endingBalance)
     })
-
+    it("Verify parameters update as expected", async () => {
+        await mineBlock()
+        const targets = [
+            s.GOV.address,
+            s.GOV.address,
+            s.GOV.address,
+            s.GOV.address,
+            s.GOV.address,
+            s.GOV.address,
+            s.GOV.address,
+            s.GOV.address,
+            s.GOV.address,
+            s.GOV.address
+        ]
+        const values = ["0","0","0","0","0","0","0","0","0","0"]
+        const signatures = [
+            "_setDelay(uint256)",
+            "_setEmergencyDelay(uint256)",
+            "_setVotingDelay(uint256)",
+            "_setVotingPeriod(uint256)",
+            "_setEmergencyVotingPeriod(uint256)",
+            "_setProposalThreshold(uint256)",
+            "_setQuorumVotes(uint256)",
+            "_setEmergencyQuorumVotes(uint256)",
+            "_setWhitelistGuardian(address)",
+            "_setWhitelistAccountExpiration(address,uint256)"
+        ]
+            
+        const calldatas = [
+            "0x0000000000000000000000000000000000000000000000000000000000030D40",
+            "0x00000000000000000000000000000000000000000000000000000000000186A0",
+            "0x0000000000000000000000000000000000000000000000000000000000004E20",
+            "0x0000000000000000000000000000000000000000000000000000000000004E20",
+            "0x0000000000000000000000000000000000000000000000000000000000004E20",
+            "0x000000000000000000000000000000000000000000002A5A058FC295ED000000",
+            "0x0000000000000000000000000000000000000000001232AE63C59C6BD6000000",
+            "0x000000000000000000000000000000000000000000108B2A2C28029094000000",
+            "0x0000000000000000000000009965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+            "0x00000000000000000000000014dC79964da2C08b23698B3D3cc7Ca32193d9955000000000000000000000000000000000000000000000000000000006553f100"
+        ]
+        const description = "test proposal"
+        const emergency = false
+        showBody("proposal count: ", await s.GOV.proposalCount())
+        await s.GOV.connect(s.Andy).propose(targets,values,signatures,calldatas,description,emergency)
+        await mineBlock()
+        const proposalId = await s.GOV.proposalCount()
+        showBody("proposal count: ", proposalId)
+        let proposalInfo = await s.GOV.proposals(proposalId)
+        expect (proposalId).to.be.gt(3)
+        const support = 1
+        const reason = "good proposal"
+        await advanceBlockHeight((await s.GOV.votingDelay()).toNumber())
+        await s.GOV.connect(s.Andy).castVoteWithReason(proposalId, support, reason)
+        await mineBlock()
+        proposalInfo = await s.GOV.proposals(proposalId);
+        await s.GOV.castVoteWithReason(proposalId, support, reason)
+        await mineBlock()
+        await advanceBlockHeight((await s.GOV.votingPeriod()).toNumber())
+        await s.GOV.connect(s.Andy).queue(proposalId)
+        await mineBlock()
+        await fastForward((await s.GOV.proposalTimelockDelay()).toNumber())
+        await mineBlock()
+        await s.GOV.connect(s.Andy).execute(proposalId)
+        await mineBlock()
+        showBody("proposalTimelockDelay_", await s.GOV.proposalTimelockDelay())
+        showBody("emergencyTimelockDelay_", await s.GOV.emergencyTimelockDelay())
+        showBody("votingDelay_", await s.GOV.votingDelay())
+        showBody("votingPeriod_", await s.GOV.votingPeriod())
+        showBody("emergencyVotingPeriod_", await s.GOV.emergencyVotingPeriod())
+        showBody("proposalThreshold_", await s.GOV.proposalThreshold())
+        showBody("quorumVotes_", await s.GOV.quorumVotes())
+        showBody("emergencyQuorumVotes_", await s.GOV.emergencyQuorumVotes())
+        showBody("is whitelisted?: ", await s.GOV.isWhitelisted(s.Eric.address))
+        showBody("is whitelistGuardian: ", await s.GOV.whitelistGuardian());
+        expect (await s.GOV.isWhitelisted(s.Bob.address)).to.eq(true)
+    })
+    it("Verify proposer can cancel", async () => {
+        await mineBlock()
+        const targets = [s.GOV.address]
+        const values = ["0"]
+        const signatures = ["transfer(address,uint256)"]
+        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000005f5e100"]
+        const description = "test proposal"
+        const emergency = false
+        showBody("proposal count: ", await s.GOV.proposalCount())
+        await s.GOV.connect(s.Andy).propose(targets,values,signatures,calldatas,description,emergency)
+        await mineBlock()
+        const proposalId = await s.GOV.proposalCount()
+        showBody("proposal count: ", proposalId)
+        let proposalInfo = await s.GOV.proposals(proposalId)
+        expect (proposalId).to.be.gt(4)
+        const support = 1
+        const reason = "good proposal"
+        await advanceBlockHeight((await s.GOV.votingDelay()).toNumber())
+        await s.GOV.connect(s.Andy).castVoteWithReason(proposalId, support, reason)
+        await mineBlock()
+        await s.GOV.connect(s.Andy).cancel(proposalId)
+        await mineBlock()
+        await expect (s.GOV.castVoteWithReason(proposalId, support, reason)).to.be.reverted
+    })
+    it("Verify cancel works on if votes are rugged", async () => {
+        await mineBlock()
+        const targets = [s.GOV.address]
+        const values = ["0"]
+        const signatures = ["transfer(address,uint256)"]
+        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000005f5e100"]
+        const description = "test proposal"
+        const emergency = false
+        showBody("proposal count: ", await s.GOV.proposalCount())
+        await s.GOV.connect(s.Andy).propose(targets,values,signatures,calldatas,description,emergency)
+        await mineBlock()
+        const proposalId = await s.GOV.proposalCount()
+        showBody("proposal count: ", proposalId)
+        expect (proposalId).to.be.gt(5)
+        const support = 1
+        const reason = "good proposal"
+        await advanceBlockHeight((await s.GOV.votingDelay()).toNumber())
+        await s.GOV.connect(s.Andy).castVoteWithReason(proposalId, support, reason)
+        await mineBlock()
+        await s.IPT.connect(s.Eric).delegate(s.Eric.address)
+        await mineBlock()
+        await s.GOV.connect(s.Eric).cancel(proposalId)
+        await mineBlock()
+        await expect (s.GOV.castVoteWithReason(proposalId, support, reason)).to.be.reverted
+    })
+    it("Verify whitelisted address can make a proposal", async () => {
+        await mineBlock()
+        const targets = [s.USDC.address]
+        const values = ["0"]
+        const signatures = ["transfer(address,uint256)"]
+        const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000005f5e100"]
+        const description = "test proposal"
+        const emergency = false
+        showBody("proposal count: ", await s.GOV.proposalCount())
+        await s.GOV.connect(s.Bob).propose(targets,values,signatures,calldatas,description,emergency)
+        await mineBlock()
+        const proposalId = await s.GOV.proposalCount()
+        showBody("proposal count: ", proposalId)
+        let proposalInfo = await s.GOV.proposals(proposalId)
+        expect (proposalId).to.be.gt(6)
+        const support = 1
+        const reason = "good proposal"
+        await advanceBlockHeight((await s.GOV.votingDelay()).toNumber())
+        await s.GOV.connect(s.Andy).castVoteWithReason(proposalId, support, reason)
+        await mineBlock()
+        proposalInfo = await s.GOV.proposals(proposalId);
+        await s.GOV.castVoteWithReason(proposalId, support, reason)
+        await mineBlock()
+        await advanceBlockHeight((await s.GOV.votingPeriod()).toNumber())
+        await mineBlock()
+        await s.GOV.connect(s.Andy).queue(proposalId)
+        await mineBlock()
+        await fastForward((await s.GOV.proposalTimelockDelay()).toNumber())
+        await mineBlock()
+        let startingBalance = await s.USDC.balanceOf(s.GOV.address)
+        await s.GOV.execute(proposalId)
+        await mineBlock()
+        let endingBalance = await s.USDC.balanceOf(s.GOV.address)
+        expect(startingBalance).to.be.gt(endingBalance)
+    })
 })
 
-//someone makes an emergeny proposal - expect it to function as expected. 
+
+//test whitelister making a proposal
