@@ -152,10 +152,8 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice admin function to mint USDi out of thin air
   /// @param usdc_amount the amount of USDi to mint, denominated in USDC
   function mint(uint256 usdc_amount) external override paysInterest onlyOwner {
+    require(usdc_amount != 0, "Cannot mint 0");
     uint256 amount = usdc_amount * 1e12;
-    if (amount <= 0) {
-      return;
-    }
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] + amount * _gonsPerFragment;
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
@@ -165,9 +163,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice admin function to burn USDi
   /// @param usdc_amount the amount of USDi to burn, denominated in USDC
   function burn(uint256 usdc_amount) external override paysInterest onlyOwner {
-    if (usdc_amount <= 0) {
-      return;
-    }
+    require(usdc_amount != 0, "Cannot burn 0");
     uint256 amount = usdc_amount * 1e12;
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
