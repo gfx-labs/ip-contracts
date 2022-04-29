@@ -1,14 +1,13 @@
 import { s } from "./scope";
 import { ethers } from "hardhat";
-import { BigNumber, Event, utils } from "ethers";
+import { BigNumber, utils } from "ethers";
 import { expect, assert } from "chai";
-import { getGas, getArgs, calculateBalance, changeInBalance } from "../../util/math"
+import { getGas, getArgs} from "../../util/math"
 import { stealMoney } from "../../util/money";
-import { showBody, showBodyCyan } from "../../util/format";
+import { showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
-import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear, reset } from "../../util/block";
-import { setMaxListeners } from "events";
-import { start } from "repl";
+import { advanceBlockHeight, mineBlock} from "../../util/block";
+
 
 
 const usdcAmount = BN("5000e6")
@@ -42,12 +41,9 @@ describe("TESTING USDI CONTRACT", async () => {
     //check admin functions
     it("check admin mint", async () => {
         await mineBlock()
-
-
         const smallAmount = utils.parseEther("100")
         const smallAmount_e6 = smallAmount.div(BN("1e12"))
         const startBalance = await s.USDI.balanceOf(s.Frank.address)
-
 
         //test for eronious input
         //should revert if not the admin
@@ -71,14 +67,11 @@ describe("TESTING USDI CONTRACT", async () => {
         //expect balance to be increased by smallAmount + interest -> TODO calc interest on smallAmount
         expect(difference).to.be.gt(smallAmount)
 
-        //assert.equal(balance.toString(), (startBalance.add(smallAmount)).toString(), `Frank has ${utils.formatEther(smallAmount)} more USDi`)
-
     })
     it("check admin burn", async () => {
         const smallAmount = utils.parseEther("100")
         const smallAmount_e6 = smallAmount.div(BN("1e12"))
         const startBalance = await s.USDI.balanceOf(s.Frank.address)
-
 
         //test for eronious input
         //should revert if not the admin
@@ -86,7 +79,6 @@ describe("TESTING USDI CONTRACT", async () => {
         await expect(s.USDI.connect(s.Frank).burn(0)).to.be.reverted
 
         //should revert if not the admin
-
         const burnResult = await s.USDI.connect(s.Frank).mint(smallAmount_e6)
         await advanceBlockHeight(1)
         const burnArgs = await getArgs(burnResult)
@@ -128,8 +120,6 @@ describe("TESTING USDI CONTRACT", async () => {
         //scale expected USDC amount to 1e18
         assert.equal(depositArgs._value.toString(), usdcAmount.mul(BN("1e12")).toString(), "Deposit amount correct from event receipt")
 
-        //const depositArgs = depositReceipt.events![depositReceipt.events!.length - 1]
-        //assert.equal(depositArgs.event!, "Deposit", "correct event emitted")
         let usdcBalance = await s.USDC.balanceOf(s.Dave.address)
         assert.equal(usdcBalance.toString(), s.Dave_USDC.sub(usdcAmount).toString(), "Dave deposited USDC tokens")
 
@@ -138,8 +128,6 @@ describe("TESTING USDI CONTRACT", async () => {
         await mineBlock();
         let usdiBalance = await s.USDI.balanceOf(s.Dave.address)
         expect(usdiBalance).to.be.gt(startingUSDIAmount.add(usdcAmount.mul(1e12)))
-        //assert.equal(usdiBalance.toString(), startingUSDIamount.add(usdcAmount.mul(1e12)).toString(), "USDi balance is correct")
-
     });
 
     it("call deposit with amount == 0", async () => {
@@ -197,7 +185,6 @@ describe("TESTING USDI CONTRACT", async () => {
         const smallAmount = utils.parseEther("1")
         const smallAmount_e6 = smallAmount.div(BN("1e12"))
         const tryAmount = smallAmount_e6.mul(5)
-        const reserve = await s.USDC.balanceOf(s.USDI.address)
 
         await mineBlock()
         const transferResult = await s.USDI.connect(s.Dave).transfer(s.Eric.address, smallAmount)
@@ -277,11 +264,9 @@ describe("TESTING USDI CONTRACT", async () => {
         let updatedReserve = await s.USDC.balanceOf(s.USDI.address)
 
         assert.equal(updatedBalance.toString(), updatedReserve.toString(), "Donate successful")
-
     })
 
     it("what happens when someone simply transfers ether to USDi contract? ", async () => {
-
         let tx = {
             to: s.USDI.address,
             value: utils.parseEther("1")
@@ -289,8 +274,7 @@ describe("TESTING USDI CONTRACT", async () => {
         await expect(s.Dave.sendTransaction(tx)).to.be.reverted
         await mineBlock()
     })
-
-
+    
     /**
      * when sending USDC to USDi contract accidently, the reserve ratio responds, and the USDC goes to the reserve
      * the only way for the USDC to leave the reserve is if the reserve is sufficiently depleated
