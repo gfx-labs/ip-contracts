@@ -5,6 +5,7 @@ import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, One
 import { BN } from "./number";
 import { showBody } from "./format";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { IVault } from "../typechain-types";
 
 /**
  * @dev takes interest factor and returns new interest factor - pulls block time from network and latestInterestTime from contract
@@ -80,6 +81,56 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
     const expectedBalance = gonBalance.div(gpf)
     return expectedBalance
 }
+
+/**
+ * @note - need calculatedLiability - the liability at the time of liquidation (after interest is paid and before liquidation is finished)
+ */
+ export const calculateTokensToLiquidate = async (vault: IVault, asset: string, t2l: BigNumber, calculatedLiability:BigNumber) => {
+    //get price from oracle
+    const rawPrice = await s.Oracle.getLivePrice(asset)
+
+    let LTV: BigNumber
+    if (asset == s.COMP.address) {
+        LTV = s.COMP_LTV
+    } else if (asset == s.WETH.address) {
+        LTV = s.wETH_LTV
+    }
+    const denominator = await truncate(rawPrice.mul(
+        ((BN("1e18").sub(s.LiquidationIncentive)).sub(LTV!))
+    ))
+    const vaultId = await vault.Id()
+
+    const borrowPower = await s.VaultController.AccountBorrowingPower(vaultId)
+
+    const max_tokens = ((calculatedLiability.sub(borrowPower)).mul(BN("1e18"))).div(denominator)
+
+    if (t2l > max_tokens) {
+        t2l = max_tokens
+    }
+    let tokenBalance = await vault.tokenBalance(asset)
+    if(t2l > tokenBalance){
+        t2l = tokenBalance
+    }
+
+    return t2l
+}
+
+export const calculateUSDI2repurchase = async(asset: string, tokens2liquidate:BigNumber) => {
+    const rawPrice = await s.Oracle.getLivePrice(asset)
+
+    const badFillPrice = await truncate(rawPrice.mul((BN("1e18").sub(s.LiquidationIncentive))))
+
+    const usdi2repurchase = await truncate(badFillPrice.mul(tokens2liquidate))
+
+    return usdi2repurchase
+
+}
+
+
+
+
+
+
 /**
  * @note WIP - TODO: FIX: Actual: 100,000,124,079,046,156,741 predicted: 100,000,309,438,951,680,015
  * @note proper procedure: read interest factor from contract -> elapse time -> call this to predict balance -> pay_interest() -> compare 

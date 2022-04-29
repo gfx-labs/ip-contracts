@@ -10,8 +10,6 @@ import "./_external/IERC20.sol";
 import "./_external/compound/ExponentialNoError.sol";
 import "./_external/openzeppelin/PausableUpgradeable.sol";
 
-import "hardhat/console.sol";
-
 /// @title USDI token contract
 /// @notice handles all minting/burning of usdi
 /// @dev extends UFragments
@@ -79,16 +77,6 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   function reserveAddress() public view override returns (address) {
     return _reserveAddress;
   }
-
-  /**
-  fallback() external payable {
-    revert("Fallback");
-  }
-
-  receive() external payable {
-    revert("Cannot receive ether");
-  }
-   */
 
   /// @notice deposit USDC to mint USDi
   /// caller should obtain 1e12 USDi for each USDC
@@ -195,7 +183,6 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @param target whom to burn the USDi from
   /// @param amount the amount of USDi to burn
   function vault_master_burn(address target, uint256 amount) external override onlyVaultController {
-    //console.log("vault_master_burn: ", amount);
     require(_gonBalances[target] > (amount * _gonsPerFragment), "USDI: not enough balance");
     _gonBalances[target] = _gonBalances[target] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
@@ -214,10 +201,6 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     if (_totalSupply > MAX_SUPPLY) {
       _totalSupply = MAX_SUPPLY;
     }
-    //console.log("amount   : ", amount);
-    //console.log("totalGons   : ", _totalGons);
-    //console.log("_totalSupply: ", _totalSupply);
-
     _gonsPerFragment = _totalGons / _totalSupply;
     emit Donation(_msgSender(), amount, _totalSupply);
   }

@@ -29,19 +29,19 @@ describe("ETH:", () => {
 
     });
     it("fetch oracle master price", async () => {
-        showBody("fetch oracle master price")
+        //showBody("fetch oracle master price")
         let mainPrice = (await s.AnchoredViewEth.currentValue()).div(1e14).toNumber() / 1e4
-        showBody("mainPrice", mainPrice)
+        //showBody("mainPrice", mainPrice)
         //let oraclePrice = (await s.Oracle.getLivePrice(s.wethAddress)).div(1e14).toNumber() / 1e4
         let rawPrice = await s.Oracle.getLivePrice(s.wethAddress)
-        showBody("rawPrice: ", rawPrice)
+        //showBody("rawPrice: ", rawPrice)
         let oraclePrice = rawPrice.div(1e14).toNumber() / 1e4
-        showBody("oraclePrice", oraclePrice)
+        //showBody("oraclePrice", oraclePrice)
         let chainlinkPrice = (await s.ChainlinkEth.currentValue()).div(1e14).toNumber() / 1e4
-        showBody("chainlinkPrice", chainlinkPrice)
+        //showBody("chainlinkPrice", chainlinkPrice)
         expect(mainPrice = chainlinkPrice);
         expect(oraclePrice = mainPrice);
-        showBody(oraclePrice)
+        //showBody(oraclePrice)
     });
 });
 
