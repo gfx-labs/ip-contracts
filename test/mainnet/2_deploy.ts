@@ -193,16 +193,16 @@ describe("Deploy Contracts", () => {
         showBody("register weth")
         await expect(s.VaultController.connect(s.Frank).register_erc20(
             s.wethAddress,
-            BN("5e17"),
+            s.wETH_LTV,
             s.wethAddress,
-            BN("5e16"),
+            s.LiquidationIncentive,
         )).to.not.reverted;
         showBody("register comp")
         await expect(s.VaultController.connect(s.Frank).register_erc20(
             s.compAddress,
-            BN("4e17"),
+            s.COMP_LTV,
             s.compAddress,
-            BN("5e16"),
+            s.LiquidationIncentive,
         )).to.not.reverted;
 
         showBody("register vaultcontroller usdi")
