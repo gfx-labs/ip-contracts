@@ -315,7 +315,7 @@ contract VaultController is
   /// @return - amount of tokens liquidatable
   /// @notice the amount of tokens owed is a moving target and changes with each block as pay_interest is called
   function TokensToLiquidate(uint96 id, address asset_address) external view override returns (uint256) {
-     uint256 MAX_UINT = 2 ** 256 - 1;
+    uint256 MAX_UINT = 2**256 - 1;
     (
       uint256 tokenAmount, /*uint256 badFillPrice*/
 
@@ -339,7 +339,6 @@ contract VaultController is
 
     //get price of asset scaled to decimal 18
     uint256 price = _oracleMaster.getLivePrice(asset_address);
-    //console.log("Price: ", price);
 
     // get price discounted by liquidation penalty
     uint256 badFillPrice = truncate(price * (1e18 - _tokenAddress_liquidationIncentive[asset_address]));
@@ -362,6 +361,7 @@ contract VaultController is
     if (tokens_to_liquidate > vault.tokenBalance(asset_address)) {
       tokens_to_liquidate = vault.tokenBalance(asset_address);
     }
+
     return (tokens_to_liquidate, badFillPrice);
   }
 
