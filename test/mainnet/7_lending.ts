@@ -455,6 +455,8 @@ describe("Checking for eronious inputs and scenarios", () => {
         borrowPower = await s.VaultController.AccountBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
+        
+
         //repay amount owed + 1 USDI to account for interest
         const repayResult = await s.VaultController.connect(s.Carol).repayUSDi(vaultID, amountUnderwater.add(utils.parseEther("1")))
         await advanceBlockHeight(1)
@@ -695,6 +697,14 @@ describe("Testing remaining vault functions", () => {
 
         solvency = await s.VaultController.checkAccount(vaultID)
         assert.equal(solvency, false, "Carol's vault is not solvent")
+
+        AccountLiability = await s.VaultController.AccountLiability(vaultID)
+        borrowPower = await s.VaultController.AccountBorrowingPower(vaultID)
+        amountUnderwater = AccountLiability.sub(borrowPower)
+
+        let amountToSolvency = await s.VaultController.AmountToSolvency(vaultID)
+
+        assert.equal(amountUnderwater.toString(), amountToSolvency.toString(), "AmountToSolvency is correct")
     })
 
     it("withdraw from a vault that is insolvent", async () => {
