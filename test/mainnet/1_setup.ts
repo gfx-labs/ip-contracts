@@ -64,19 +64,19 @@ describe("Token Setup", () => {
         s.COMP = IVOTE__factory.connect(s.compAddress, s.Frank);
     });
     it("Should succesfully transfer money", async () => {
-        showBody(`stealing ${s.Andy_USDC} to andy from ${s.usdcAddress}`);
+        //showBody(`stealing ${s.Andy_USDC} to andy from ${s.usdcAddress}`);
         await expect(
             stealMoney(usdc_minter, s.Andy.address, s.usdcAddress, s.Andy_USDC)
         ).to.not.be.reverted;
-        showBody(`stealing ${s.Dave_USDC} to dave from ${s.usdcAddress}`);
+        //showBody(`stealing ${s.Dave_USDC} to dave from ${s.usdcAddress}`);
         await expect(
             stealMoney(usdc_minter, s.Dave.address, s.usdcAddress, s.Dave_USDC)
         ).to.not.be.reverted;
-        showBody(`stealing ${s.Carol_COMP} to carol from ${s.compAddress}`);
+        //showBody(`stealing ${s.Carol_COMP} to carol from ${s.compAddress}`);
         await expect(
             stealMoney(comp_minter, s.Carol.address, s.compAddress, s.Carol_COMP)
         ).to.not.be.reverted;
-        showBody(`stealing ${s.Bob_WETH} to bob from ${s.wethAddress}`);
+        //showBody(`stealing ${s.Bob_WETH} to bob from ${s.wethAddress}`);
         await expect(
             stealMoney(weth_minter, s.Bob.address, s.wethAddress, s.Bob_WETH)
         ).to.not.be.reverted;

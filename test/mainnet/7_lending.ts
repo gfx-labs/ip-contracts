@@ -1,70 +1,18 @@
 import { s } from "./scope";
-import { ethers, network } from "hardhat";
 import { expect, assert } from "chai";
 import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
 import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
-import { Event, utils, BigNumber } from "ethers";
-import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent } from "../../util/math";
-import _, { first, lastIndexOf, toArray } from "underscore";
-import { min } from "bn.js";
-import { IVault__factory, IVault } from "../../typechain-types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-
-
-/**
- * @note - need calculatedLiability - the liability at the time of liquidation (after interest is paid and before liquidation is finished)
- */
-const calculateTokensToLiquidate = async (vault: IVault, asset: string, t2l: BigNumber, calculatedLiability:BigNumber) => {
-    //get price from oracle
-    const rawPrice = await s.Oracle.getLivePrice(asset)
-
-    let LTV: BigNumber
-    if (asset == s.COMP.address) {
-        LTV = s.COMP_LTV
-    } else if (asset == s.WETH.address) {
-        LTV = s.wETH_LTV
-    }
-    const denominator = await truncate(rawPrice.mul(
-        ((BN("1e18").sub(s.LiquidationIncentive)).sub(LTV!))
-    ))
-    const vaultId = await vault.Id()
-
-    const borrowPower = await s.VaultController.AccountBorrowingPower(vaultId)
-
-    const max_tokens = ((calculatedLiability.sub(borrowPower)).mul(BN("1e18"))).div(denominator)
-
-    if (t2l > max_tokens) {
-        t2l = max_tokens
-    }
-    let tokenBalance = await vault.tokenBalance(asset)
-    if(t2l > tokenBalance){
-        t2l = tokenBalance
-    }
-
-    return t2l
-}
-
-const calculateUSDI2repurchase = async(asset: string, tokens2liquidate:BigNumber) => {
-    const rawPrice = await s.Oracle.getLivePrice(asset)
-
-    const badFillPrice = await truncate(rawPrice.mul((BN("1e18").sub(s.LiquidationIncentive))))
-
-    const usdi2repurchase = await truncate(badFillPrice.mul(tokens2liquidate))
-
-    return usdi2repurchase
-
-}
-
-
-
+import { utils, BigNumber } from "ethers";
+import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculateTokensToLiquidate, calculateUSDI2repurchase } from "../../util/math";
+import { IVault__factory } from "../../typechain-types";
 
 let firstBorrowIF: BigNumber
 const borrowAmount = BN("5000e18")
 describe("BORROW USDi", async () => {
 
     //bob tries to borrow usdi against 10 eth as if eth is $100k
-    // remember bob has 10 eth
+    // remember bob has 10 wETH
     let actualBorrowAmount: any
     let expectedInterestFactor: BigNumber
     it(`bob should not be able to borrow 1e6 * 1e18 * ${s.Bob_WETH} usdi`, async () => {
@@ -85,7 +33,6 @@ describe("BORROW USDi", async () => {
 
         firstBorrowIF = expectedInterestFactor
         const calculatedBaseLiability = await calculateAccountLiability(borrowAmount, initInterestFactor, initInterestFactor)
-
 
         const borrowResult = await s.VaultController.connect(s.Bob).borrowUsdi(1, borrowAmount)
         await advanceBlockHeight(1)
@@ -267,7 +214,6 @@ describe("Testing liquidations", () => {
         const initIF = IF
         assert.equal(IF.toString(), calcIF.toString())
 
-
         /******** CHECK WITHDRAW BEFORE CALCULATE INTEREST ********/
         //skip time so we can put vault below liquidation threshold 
         await fastForward(OneYear * 10);//10 year
@@ -300,7 +246,6 @@ describe("Testing liquidations", () => {
         let daveWETH = await s.WETH.balanceOf(s.Dave.address)
         assert.equal(daveWETH.toString(), "0", "Dave does not have any wETH before liquidation ")
 
-        //liquidate account without having enough to cover TODOTODO
         IF = await s.VaultController.InterestFactor()
         const calculatedInterestFactor = await payInterestMath(IF)
         const calcLiab = await calculateAccountLiability(AccountBorrowingPower, calculatedInterestFactor, calcIF)
@@ -337,7 +282,6 @@ describe("Testing liquidations", () => {
         assert.equal(tokens_to_liquidate.toString(), expectedT2L.toString(), "Tokens to liquidate is correct")
         assert.equal(usdi_to_repurchase.toString(), expectedUSDI2Repurchase.toString(), "USDI to repurchase is correct")     
 
-        /******** check ending balances ********/
         //check ending liability 
         let liabiltiy = await s.VaultController.AccountLiability(vaultID)
 
@@ -348,7 +292,6 @@ describe("Testing liquidations", () => {
         //accept a range to account for miniscule error
         expect(liabiltiy).to.be.gt((expectedLiability.sub(usdi_to_repurchase)).sub(10))
         expect(liabiltiy).to.be.lt((expectedLiability.sub(usdi_to_repurchase)).add(10))
-        //assert.equal(liabiltiy.toString(), expectedLiability.sub(usdi_to_repurchase).toString(), "Calculated liability is correct")
 
         //Bob's vault's collateral has been reduced by the expected amount
         let balance = await s.WETH.balanceOf(s.BobVault.address)
@@ -408,7 +351,6 @@ describe("Testing liquidations", () => {
         const expectedBalanceWithInterest = await calculateBalance(IF, s.Dave)
 
         //tiny liquidation 
-        //liquidate account with large amount - TODO - confirm contract calculation for tokens to liquidate and compare to event arg
         await nextBlockTime(0)
         const result = await s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.compAddress, BN("1e25"))
         await advanceBlockHeight(1)
@@ -449,7 +391,9 @@ describe("Testing liquidations", () => {
         assert.equal(difference.toString(), tokens_to_liquidate.toString(), "Correct number of tokens liquidated from vault")
     })
 })
-
+/**
+ * TODO: liquidate a vault with exactly 0 borrow power? This is difficult to arrange
+ */
 describe("Checking for eronious inputs and scenarios", () => {
     const vaultID = 2
     let solvency: boolean
@@ -525,48 +469,6 @@ describe("Checking for eronious inputs and scenarios", () => {
         await expect(s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.compAddress, BN("1e25"))).to.be.revertedWith("Vault is solvent")
         await advanceBlockHeight(1)
     })
-
-    /**
-     it("liquidate vault with exactly 0 additional borrow power - already borrowed maximum", async () => {
-
-        balance = await s.USDI.balanceOf(s.Carol.address)
-        AccountLiability = await s.VaultController.AccountLiability(vaultID)
-        expect(balance).to.be.gt(AccountLiability)
-
-        //await s.VaultController.connect(s.Carol).repayUSDi(vaultID, utils.parseEther("500"))
-        await s.VaultController.connect(s.Carol).repayAllUSDi(vaultID)
-        await advanceBlockHeight(1)
-
-        const AccountBorrowingPower = await s.VaultController.AccountBorrowingPower(vaultID)
-
-        //showBodyCyan("BORROW")
-        await nextBlockTime(0)
-        await s.VaultController.connect(s.Carol).borrowUsdi(vaultID, AccountBorrowingPower.add(8))
-        await advanceBlockHeight(1)
-
-        solvency = await s.VaultController.checkAccount(vaultID)
-        //assert.equal(solvency, true, "Carol's vault is solvent")
-
-        AccountLiability = await s.VaultController.AccountLiability(vaultID)
-        borrowPower = await s.VaultController.AccountBorrowingPower(vaultID)
-        amountUnderwater = AccountLiability.sub(borrowPower)
-        showBody("raw amount under: ", amountUnderwater)
-
-
-        //liquidate
-        const liquidateResult = await s.VaultController.connect(s.Dave).liquidate_account(vaultID, s.compAddress, BN("1e25"))
-        await advanceBlockHeight(1)
-        const liquidateArgs = await getArgs(liquidateResult)
-        showBody(liquidateArgs)
-
-        //showBody("USDI amount liquidated: ", utils.formatEther(liquidateArgs.tokens_to_liquidate.toString()))
-
-        AccountLiability = await s.VaultController.AccountLiability(vaultID)
-        borrowPower = await s.VaultController.AccountBorrowingPower(vaultID)
-        amountUnderwater = AccountLiability.sub(borrowPower)
-       
-    })
-     */
 
     it("liquidate when liquidator doesn't have any USDi", async () => {
 
@@ -665,8 +567,6 @@ describe("Checking for eronious inputs and scenarios", () => {
 
         assert.equal(AccountLiability.toString(), "0", "AccountLiability is still 0 after calculateInterest() after repayAllUSDi")
 
-        //showBodyCyan("REPAY USDI CHECK ")
-
         await expect(s.VaultController.connect(s.Carol).repayUSDi(vaultID, 10)).to.be.revertedWith("repay > borrow amount")
         await advanceBlockHeight(1)
 
@@ -686,16 +586,9 @@ describe("Checking for eronious inputs and scenarios", () => {
         await expect(s.VaultController.connect(s.Eric).borrowUsdi(vaultID, utils.parseEther("500"))).to.be.revertedWith("sender not minter")
         await advanceBlockHeight(1)
     })
-
 })
 
 describe("Testing remaining vault functions", () => {
-    /**
-     * withdrawErc20
-     *  withdrawErc20 when vault would become insolvent
-     * 
-     */
-
     const vaultID = 2
     let solvency: boolean
     let AccountLiability: BigNumber, borrowPower: BigNumber, amountUnderwater: BigNumber
