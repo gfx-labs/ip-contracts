@@ -345,8 +345,7 @@ contract VaultController is
           _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]])
     );
 
-    uint256 max_tokens_to_liquidate = (uint256(_AccountLiability(id) - get_vault_borrowing_power(vault)) * 1e18) /
-      denominator;
+    uint256 max_tokens_to_liquidate = (_AmountToSolvency(id) * 1e18) / denominator;
 
     //Cannot liquidate more than is necessary to make account over-collateralized
     if (tokens_to_liquidate > max_tokens_to_liquidate) {
@@ -368,6 +367,17 @@ contract VaultController is
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     vault = IVault(vault_address);
+  }
+
+  ///@notice amount of USDI needed to reach even solvency
+  /// @param id id of vault
+  function AmountToSolvency(uint96 id) public view override returns (uint256) {
+    require(!checkAccount(id), "Vault is solvent");
+    return _AmountToSolvency(id);
+  }
+
+  function _AmountToSolvency(uint96 id) internal view returns (uint256) {
+    return _AccountLiability(id) - get_vault_borrowing_power(getVault(id));
   }
 
   /// @notice get account liability of vault
