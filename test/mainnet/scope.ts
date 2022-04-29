@@ -10,6 +10,11 @@ export class TestScope extends MainnetAddresses {
     COMP!: IVOTE;
     WETH!: IERC20;
 
+    ENS!: IVOTE;
+    DYDX!: IVOTE;
+    AAVE!: IVOTE;
+    TRIBE!: IVOTE;
+
     ProxyAdmin!: ProxyAdmin;
     VaultController!: IVaultController;
 
@@ -39,6 +44,10 @@ export class TestScope extends MainnetAddresses {
     Carol_COMP = BN("100e18")
     Dave_USDC = BN("1e10")
 
+    Carol_ENS = BN("100e18")
+    Carol_DYDX = BN("100e18")
+    Carol_AAVE = BN("100e18")
+    Carol_TRIBE = BN("100e18")
 
     constructor() {
         super()
