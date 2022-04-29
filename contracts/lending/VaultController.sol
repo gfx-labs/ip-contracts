@@ -17,8 +17,6 @@ import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
-import "hardhat/console.sol";
-
 /// @title Controller of all vaults in the USDI borrow/lend system
 /// @notice VaultController contains all business logic for borrowing and lending through the protocol.
 /// It is also in charge of accruing interest.
@@ -306,8 +304,6 @@ contract VaultController is
     emit Liquidate(id, asset_address, usdi_to_repurchase, tokens_to_liquidate);
     return tokens_to_liquidate;
   }
-
-  /******* getters things *******/
 
   /// @dev calculate amount of tokens to liquidate for a vault
   /// @param id the vault to get info for
