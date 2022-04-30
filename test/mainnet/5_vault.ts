@@ -3,6 +3,7 @@ import { expect } from "chai";
 import { showBody } from "../../util/format";
 import { mineBlock } from "../../util/block";
 import { IVault__factory } from "../../typechain-types";
+import {BN} from "../../util/number";
 
 describe("Vault setup:", () => {
     it("mint vaults", async () => {
