@@ -25,6 +25,7 @@ test:
     - npx hardhat clean
     - npx hardhat compile
     - npm run test
+    - npm run testgov
 
 pages:
   stage: deploy
