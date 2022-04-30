@@ -56,11 +56,11 @@ const deployProxy = async () => {
     )
     await mineBlock()
     let owner = await s.USDI.owner()
-    showBody("OWNER: ", owner)
-    showBody("Frank: ", s.Frank.address)
+    //showBody("OWNER: ", owner)
+    //showBody("Frank: ", s.Frank.address)
 
     //await expect(s.USDI.owner()).to.equal(s.Frank.address)
-    showBody("vault controller set vault owner")
+    //showBody("vault controller set vault owner")
     await s.USDI.setVaultController(s.VaultController.address)
     //await expect(s.USDI.setVaultController(s.VaultController.address)).to.not.reverted
     await mineBlock()
@@ -124,39 +124,39 @@ describe("Deploy Contracts", () => {
 
     it("Deploy Oracles", async () => {
         s.Oracle = await DeployContract(new OracleMaster__factory(s.Frank), s.Frank);
-        showBody("set vault oraclemaster")
+        //showBody("set vault oraclemaster")
         await expect(s.VaultController.connect(s.Frank).register_oracle_master(
             s.Oracle.address
         )).to.not.reverted;
 
-        showBody("create uniswap comp relay")
+        //showBody("create uniswap comp relay")
         s.UniswapRelayCompUsdc = await DeployContract(new UniswapV3OracleRelay__factory(
             s.Frank
         ), s.Frank, s.usdcCompPool, true, BN("1e12"), BN("1"));
         await mineBlock()
         expect(await s.UniswapRelayCompUsdc.currentValue()).to.not.eq(0)
 
-        showBody("create uniswap eth relay")
+        //showBody("create uniswap eth relay")
         s.UniswapRelayEthUsdc = await DeployContract(new UniswapV3OracleRelay__factory(s.Frank),
             s.Frank,
             s.usdcWethPool, true, BN("1e12"), BN("1"));
         await mineBlock()
 
-        showBody("create chainlink comp relay")
+        //showBody("create chainlink comp relay")
         s.ChainlinkComp = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
             "0xdbd020caef83efd542f4de03e3cf0c28a4428bd5", BN("1e10"), BN("1")
         );
         await mineBlock()
         expect(await s.ChainlinkComp.currentValue()).to.not.eq(0)
 
-        showBody("create chainlink eth relay")
+        //showBody("create chainlink eth relay")
         s.ChainlinkEth = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
             "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419", BN("1e10"), BN("1")
         )
         await mineBlock()
         expect(await s.ChainlinkEth.currentValue()).to.not.eq(0)
 
-        showBody("create COMP anchoredview")
+        //showBody("create COMP anchoredview")
         s.AnchoredViewComp = await DeployContract(new AnchoredViewRelay__factory(s.Frank), s.Frank,
             s.UniswapRelayCompUsdc.address,
             s.ChainlinkComp.address,
@@ -166,7 +166,7 @@ describe("Deploy Contracts", () => {
         await mineBlock()
         expect(await s.AnchoredViewComp.currentValue()).to.not.eq(0)
 
-        showBody("create ETH anchoredview")
+        //showBody("create ETH anchoredview")
         s.AnchoredViewEth = await DeployContract(new AnchoredViewRelay__factory(s.Frank), s.Frank,
             s.UniswapRelayEthUsdc.address,
             s.ChainlinkEth.address,
@@ -179,33 +179,33 @@ describe("Deploy Contracts", () => {
     })
 
     it("Set vault oracles and CFs", async () => {
-        showBody("set vault COMP oracle to anchored view")
+        //showBody("set vault COMP oracle to anchored view")
         await expect(s.Oracle.connect(s.Frank).set_relay(
             s.compAddress,
             s.AnchoredViewComp.address
         )).to.not.reverted;
 
-        showBody("set vault ETH oracle to anchored view")
+        //showBody("set vault ETH oracle to anchored view")
         await s.Oracle.connect(s.Frank).set_relay(
             s.wethAddress,
             s.AnchoredViewEth.address,
         );
-        showBody("register weth")
+        //showBody("register weth")
         await expect(s.VaultController.connect(s.Frank).register_erc20(
             s.wethAddress,
-            BN("5e17"),
+            s.wETH_LTV,
             s.wethAddress,
-            BN("5e16"),
+            s.LiquidationIncentive,
         )).to.not.reverted;
-        showBody("register comp")
+        //showBody("register comp")
         await expect(s.VaultController.connect(s.Frank).register_erc20(
             s.compAddress,
-            BN("4e17"),
+            s.COMP_LTV,
             s.compAddress,
-            BN("5e16"),
+            s.LiquidationIncentive,
         )).to.not.reverted;
 
-        showBody("register vaultcontroller usdi")
+        //showBody("register vaultcontroller usdi")
         await expect(s.VaultController.connect(s.Frank)
             .register_usdi(s.USDI.address)).to.not.reverted
         await mineBlock()

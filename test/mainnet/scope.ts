@@ -1,4 +1,5 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { USDI, IERC20, IVOTE, VaultController, OracleMaster, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
@@ -14,6 +15,9 @@ export class TestScope extends MainnetAddresses {
     DYDX!: IVOTE;
     AAVE!: IVOTE;
     TRIBE!: IVOTE;
+    LiquidationIncentive = BN("5e16")
+    wETH_LTV = BN("5e17")
+    COMP_LTV = BN("4e17")
 
     ProxyAdmin!: ProxyAdmin;
     VaultController!: IVaultController;
