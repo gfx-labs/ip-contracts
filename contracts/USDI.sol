@@ -10,8 +10,6 @@ import "./_external/IERC20.sol";
 import "./_external/compound/ExponentialNoError.sol";
 import "./_external/openzeppelin/PausableUpgradeable.sol";
 
-import "hardhat/console.sol";
-
 /// @title USDI token contract
 /// @notice handles all minting/burning of usdi
 /// @dev extends UFragments
@@ -80,16 +78,6 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     return _reserveAddress;
   }
 
-  /**
-  fallback() external payable {
-    revert("Fallback");
-  }
-
-  receive() external payable {
-    revert("Cannot receive ether");
-  }
-   */
-
   /// @notice deposit USDC to mint USDi
   /// caller should obtain 1e12 USDi for each USDC
   /// @param usdc_amount amount of USDC to deposit
@@ -152,10 +140,8 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice admin function to mint USDi out of thin air
   /// @param usdc_amount the amount of USDi to mint, denominated in USDC
   function mint(uint256 usdc_amount) external override paysInterest onlyOwner {
+    require(usdc_amount != 0, "Cannot mint 0");
     uint256 amount = usdc_amount * 1e12;
-    if (amount <= 0) {
-      return;
-    }
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] + amount * _gonsPerFragment;
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
@@ -165,9 +151,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice admin function to burn USDi
   /// @param usdc_amount the amount of USDi to burn, denominated in USDC
   function burn(uint256 usdc_amount) external override paysInterest onlyOwner {
-    if (usdc_amount <= 0) {
-      return;
-    }
+    require(usdc_amount != 0, "Cannot burn 0");
     uint256 amount = usdc_amount * 1e12;
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
@@ -199,7 +183,6 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @param target whom to burn the USDi from
   /// @param amount the amount of USDi to burn
   function vault_master_burn(address target, uint256 amount) external override onlyVaultController {
-    //console.log("vault_master_burn: ", amount);
     require(_gonBalances[target] > (amount * _gonsPerFragment), "USDI: not enough balance");
     _gonBalances[target] = _gonBalances[target] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;

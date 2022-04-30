@@ -17,15 +17,13 @@ interface IVaultController {
 
   function VaultAddress(uint96 id) external view returns (address);
 
+  function AmountToSolvency(uint96 id) external view returns(uint256);
+
   function AccountLiability(uint96 id) external view returns (uint192);
 
   function AccountBorrowingPower(uint96 id) external view returns (uint192);
 
-  function TokensToLiquidate(
-    uint96 id,
-    address token,
-    uint256 num
-  ) external view returns (uint256);
+  function TokensToLiquidate(uint96 id, address token) external view returns (uint256);
 
   // methods
   function initialize() external;
