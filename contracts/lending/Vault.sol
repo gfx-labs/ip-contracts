@@ -137,6 +137,7 @@ contract Vault is IVault, ExponentialNoError, Context {
       _baseLiability = _baseLiability + base_amount;
       return _baseLiability;
     }
+    // require statement only valid for repayment
     require(_baseLiability >= base_amount, "cannot repay more than is owed");
     _baseLiability = _baseLiability - base_amount;
     return _baseLiability;
