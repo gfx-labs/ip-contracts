@@ -14,7 +14,7 @@ contract CurveMaster is ICurveMaster, Ownable {
   mapping(address => address) public _curves;
   mapping(address => bool) public _paused;
 
-  address public _VaultControllerAddress;
+  address public _vaultControllerAddress;
   IVaultController private _VaultController;
 
   /// @notice gets the return value of curve labled token_address at x_value
@@ -30,14 +30,19 @@ contract CurveMaster is ICurveMaster, Ownable {
     return value;
   }
 
-  /// @notice set the VaultController addr so that vault_master may mint/burn USDi without restriction
+  /// @notice set the VaultController addr in order to pay interest on curve setting
   /// @param vault_master_address address of vault master
   function setVaultController(address vault_master_address) external override onlyOwner {
-    _VaultControllerAddress = vault_master_address;
+    _vaultControllerAddress = vault_master_address;
     _VaultController = IVaultController(vault_master_address);
+  
+  }
+  function vaultControllerAddress() external view returns (address) {
+    return _vaultControllerAddress;
+
   }
 
-  function set_curve(address token_address, address curve_address) external override onlyOwner {
+  function setCurve(address token_address, address curve_address) external override onlyOwner {
     if (address(_VaultController) != address(0)) {
       _VaultController.calculateInterest();
     }

@@ -277,7 +277,7 @@
           "type": "uint256"
         }
       ],
-      "name": "vault_master_burn",
+      "name": "vaultControllerBurn",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -290,7 +290,7 @@
           "type": "uint256"
         }
       ],
-      "name": "vault_master_donate",
+      "name": "vaultControllerDonate",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -308,7 +308,7 @@
           "type": "uint256"
         }
       ],
-      "name": "vault_master_mint",
+      "name": "vaultControllerMint",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
