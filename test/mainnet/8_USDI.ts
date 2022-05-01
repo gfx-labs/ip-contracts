@@ -200,7 +200,7 @@ describe("TESTING USDI CONTRACT", async () => {
 
     })
 
-    it("Withdraw total reserves", async () => {
+    it("withdraw total reserves", async () => {
 
         const usdcBalance = await s.USDC.balanceOf(s.Dave.address)
         let formatUSDC = utils.formatEther(usdcBalance.mul(BN("1e12")).toString())
@@ -210,11 +210,11 @@ describe("TESTING USDI CONTRACT", async () => {
         let formatReserve = utils.formatEther(reserve_e18.toString())
 
         //const withdrawResult = await s.USDI.connect(s.Dave).withdraw(reserve)
-        const withdrawResult = await s.USDI.connect(s.Dave).withdraw_all()
+        const withdrawResult = await s.USDI.connect(s.Dave).withdrawAll()
         await mineBlock()
         const withdrawGas = await getGas(withdrawResult)
         const withdrawArgs = await getArgs(withdrawResult)
-        assert.equal(withdrawArgs._value.toString(), reserve_e18.toString(), "Withdrawl amount correct on event receipt")
+        assert.equal(withdrawArgs._value.toString(), reserve_e18.toString(), "withdrawl amount correct on event receipt")
         showBodyCyan("withdraw all gas: ", withdrawGas)
 
 
@@ -241,7 +241,7 @@ describe("TESTING USDI CONTRACT", async () => {
 
         //cannot withdraw when reserve is empty
         await expect(s.USDI.connect(s.Dave).withdraw(1)).to.be.reverted
-        await expect(s.USDI.connect(s.Dave).withdraw_all()).to.be.revertedWith("Reserve is empty")
+        await expect(s.USDI.connect(s.Dave).withdrawAll()).to.be.revertedWith("Reserve is empty")
 
     })
     it("Anyone can donate USDC to the protocol", async () => {

@@ -228,7 +228,7 @@
           "type": "uint256"
         }
       ],
-      "name": "Withdraw",
+      "name": "withdraw",
       "type": "event"
     },
     {
@@ -298,7 +298,7 @@
     },
     {
       "inputs": [],
-      "name": "_VaultControllerAddress",
+      "name": "_vaultControllerAddress",
       "outputs": [
         {
           "internalType": "address",
@@ -1010,7 +1010,7 @@
           "type": "uint256"
         }
       ],
-      "name": "vault_master_burn",
+      "name": "vaultControllerBurn",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1023,7 +1023,7 @@
           "type": "uint256"
         }
       ],
-      "name": "vault_master_donate",
+      "name": "vaultControllerDonate",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1041,7 +1041,7 @@
           "type": "uint256"
         }
       ],
-      "name": "vault_master_mint",
+      "name": "vaultControllerMint",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
