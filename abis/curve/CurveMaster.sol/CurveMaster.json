@@ -122,7 +122,7 @@
           "type": "address"
         }
       ],
-      "name": "set_curve",
+      "name": "setCurve",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
