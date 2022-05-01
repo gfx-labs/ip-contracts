@@ -124,12 +124,12 @@ describe("Deploy Contracts", () => {
 
     it("Deploy Oracles", async () => {
         s.Oracle = await DeployContract(new OracleMaster__factory(s.Frank), s.Frank);
-        //showBody("set vault oraclemaster")
+        showBody("set vault oraclemaster")
         await expect(s.VaultController.connect(s.Frank).register_oracle_master(
             s.Oracle.address
         )).to.not.reverted;
 
-        //showBody("create uniswap comp relay")
+        showBody("create uniswap comp relay")
         s.UniswapRelayCompUsdc = await DeployContract(new UniswapV3OracleRelay__factory(s.Frank),
             s.Frank,
             60,
@@ -137,28 +137,28 @@ describe("Deploy Contracts", () => {
         await mineBlock()
         expect(await s.UniswapRelayCompUsdc.currentValue()).to.not.eq(0)
 
-        //showBody("create uniswap eth relay")
+        showBody("create uniswap eth relay")
         s.UniswapRelayEthUsdc = await DeployContract(new UniswapV3OracleRelay__factory(s.Frank),
             s.Frank,
             60,
             s.usdcWethPool, true, BN("1e12"), BN("1"));
         await mineBlock()
 
-        //showBody("create chainlink comp relay")
+        showBody("create chainlink comp relay")
         s.ChainlinkComp = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
             "0xdbd020caef83efd542f4de03e3cf0c28a4428bd5", BN("1e10"), BN("1")
         );
         await mineBlock()
         expect(await s.ChainlinkComp.currentValue()).to.not.eq(0)
 
-        //showBody("create chainlink eth relay")
+        showBody("create chainlink eth relay")
         s.ChainlinkEth = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
             "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419", BN("1e10"), BN("1")
         )
         await mineBlock()
         expect(await s.ChainlinkEth.currentValue()).to.not.eq(0)
 
-        //showBody("create COMP anchoredview")
+        showBody("create COMP anchoredview")
         s.AnchoredViewComp = await DeployContract(new AnchoredViewRelay__factory(s.Frank), s.Frank,
             s.UniswapRelayCompUsdc.address,
             s.ChainlinkComp.address,
@@ -168,7 +168,7 @@ describe("Deploy Contracts", () => {
         await mineBlock()
         expect(await s.AnchoredViewComp.currentValue()).to.not.eq(0)
 
-        //showBody("create ETH anchoredview")
+        showBody("create ETH anchoredview")
         s.AnchoredViewEth = await DeployContract(new AnchoredViewRelay__factory(s.Frank), s.Frank,
             s.UniswapRelayEthUsdc.address,
             s.ChainlinkEth.address,
