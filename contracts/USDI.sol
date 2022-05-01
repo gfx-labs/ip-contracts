@@ -14,29 +14,23 @@ import "./_external/openzeppelin/PausableUpgradeable.sol";
 /// @notice handles all minting/burning of usdi
 /// @dev extends UFragments
 contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, ExponentialNoError {
-  address public _reserveAddress;
   IERC20 public _reserve;
 
   address public _lenderAddress;
-  address public _VaultControllerAddress;
+  address public _vaultControllerAddress;
   IVaultController private _VaultController;
 
   /// @notice checks if _msgSender() is VaultController
   modifier onlyVaultController() {
-    require(_msgSender() == _VaultControllerAddress, "only VaultController");
+    require(_msgSender() == _vaultControllerAddress, "only VaultController");
     _;
   }
-  /// @notice any function with this modifier will call the pay_interest() function before
+
+  /// @notice any function with this modifier will call the pay_interest() function before any function logic is called 
   modifier paysInterest() {
     _VaultController.calculateInterest();
     _;
   }
-
-  event Deposit(address indexed _from, uint256 _value);
-  event Withdraw(address indexed _from, uint256 _value);
-  event Mint(address to, uint256 _value);
-  event Burn(address from, uint256 _value);
-  event Donation(address indexed _from, uint256 _value, uint256 _totalSupply);
 
   /// @notice initializer for contract
   /// @param reserveAddr the address of USDC
@@ -44,8 +38,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   function initialize(address reserveAddr) public override initializer {
     __UFragments_init("USDI Token", "USDI");
     __Pausable_init();
-    _reserveAddress = reserveAddr;
-    _reserve = IERC20(_reserveAddress);
+    _reserve = IERC20(reserveAddr);
   }
 
   /// @notice pause contract, owner only
@@ -75,7 +68,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   }
 
   function reserveAddress() public view override returns (address) {
-    return _reserveAddress;
+    return address(_reserve);
   }
 
   /// @notice deposit USDC to mint USDi
@@ -112,8 +105,8 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     emit Withdraw(_msgSender(), amount);
   }
 
-  // todo I think we want withdraw_all()
-  function withdraw_all() external override paysInterest whenNotPaused {
+  // todo I think we want withdrawAll()
+  function withdrawAll() external override paysInterest whenNotPaused {
     uint256 reserve = _reserve.balanceOf(address(this));
     require(reserve != 0, "Reserve is empty");
     uint256 usdc_amount = (this.balanceOf(_msgSender())) / 1e12;
@@ -133,7 +126,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice set the VaultController addr so that vault_master may mint/burn USDi without restriction
   /// @param vault_master_address address of vault master
   function setVaultController(address vault_master_address) external override onlyOwner {
-    _VaultControllerAddress = vault_master_address;
+    _vaultControllerAddress = vault_master_address;
     _VaultController = IVaultController(vault_master_address);
   }
 
@@ -172,7 +165,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice function for the vaultController to mint
   /// @param target whom to mint the USDi to
   /// @param amount the amount of USDi to mint
-  function vault_master_mint(address target, uint256 amount) external override onlyVaultController {
+  function vaultControllerMint(address target, uint256 amount) external override onlyVaultController {
     _gonBalances[target] = _gonBalances[target] + amount * _gonsPerFragment;
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
@@ -182,7 +175,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice function for the vaultController to burn
   /// @param target whom to burn the USDi from
   /// @param amount the amount of USDi to burn
-  function vault_master_burn(address target, uint256 amount) external override onlyVaultController {
+  function vaultControllerBurn(address target, uint256 amount) external override onlyVaultController {
     require(_gonBalances[target] > (amount * _gonsPerFragment), "USDI: not enough balance");
     _gonBalances[target] = _gonBalances[target] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
@@ -192,7 +185,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
 
   /// @notice function for the vaultController to scale all USDi balances
   /// @param amount amount of USDi to donate
-  function vault_master_donate(uint256 amount) external override onlyVaultController {
+  function vaultControllerDonate(uint256 amount) external override onlyVaultController {
     _donation(amount);
   }
 

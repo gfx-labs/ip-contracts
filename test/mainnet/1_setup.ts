@@ -85,19 +85,23 @@ describe("Token Setup", () => {
         await expect(
             stealMoney(comp_minter, s.Carol.address, s.compAddress, s.Carol_COMP)
         ).to.not.be.reverted;
-        //showBody(`stealing ${s.Bob_WETH} to bob from ${s.wethAddress}`);
+        showBody(`stealing ${s.Bob_WETH} weth to bob from ${s.wethAddress}`);
         await expect(
             stealMoney(weth_minter, s.Bob.address, s.wethAddress, s.Bob_WETH)
         ).to.not.be.reverted;
-        showBody(`stealing ${s.Carol_ENS} to carol from ${s.ensAddress}`);
+        showBody(`stealing`,s.Bob_USDC,`usdc to bob from ${s.usdcAddress}`);
+        await expect(
+            stealMoney(usdc_minter, s.Bob.address, s.usdcAddress, s.Bob_USDC)
+        ).to.not.be.reverted
+        showBody(`stealing ${s.Carol_ENS} ens to carol from ${s.ensAddress}`);
         await expect(
             stealMoney(ens_minter, s.Carol.address, s.ensAddress, s.Carol_ENS)
         ).to.not.be.reverted;
-        showBody(`stealing ${s.Carol_DYDX} to carol from ${s.dydxAddress}`);
+        showBody(`stealing ${s.Carol_DYDX} dydx to carol from ${s.dydxAddress}`);
         await expect(
             stealMoney(dydx_minter, s.Carol.address, s.dydxAddress, s.Carol_DYDX)
         ).to.not.be.reverted;
-        showBody(`stealing ${s.Carol_AAVE} to carol from ${s.aaveAddress}`);
+        showBody(`stealing ${s.Carol_AAVE} aave to carol from ${s.aaveAddress}`);
         await expect(
             stealMoney(aave_minter, s.Carol.address, s.aaveAddress, s.Carol_AAVE)
         ).to.not.be.reverted;
