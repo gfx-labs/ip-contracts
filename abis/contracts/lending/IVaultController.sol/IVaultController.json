@@ -243,7 +243,7 @@
           "type": "uint256"
         }
       ],
-      "name": "AccountBorrowingPower",
+      "name": "accountBorrowingPower",
       "outputs": [
         {
           "internalType": "uint256",
@@ -317,7 +317,7 @@
           "type": "uint256"
         }
       ],
-      "name": "TokensToLiquidate",
+      "name": "tokensToLiquidate",
       "outputs": [
         {
           "internalType": "uint256",
@@ -448,7 +448,7 @@
           "type": "uint256"
         }
       ],
-      "name": "liquidate_account",
+      "name": "liquidateAccount",
       "outputs": [
         {
           "internalType": "uint256",

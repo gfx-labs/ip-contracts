@@ -33,14 +33,14 @@ contract OracleMaster is IOracleMaster, Ownable {
   /// @notice admin only, sets relay for a token address to the relay addres
   /// @param token_address address of the token
   /// @param relay_address address of the relay
-  function set_relay(address token_address, address relay_address) public override onlyOwner {
+  function setRelay(address token_address, address relay_address) public override onlyOwner {
     _relays[token_address] = relay_address;
   }
 
   /// @notice admin only, pauses relay for a token address
   /// @param token_address address of the token
   /// @param state boolean true to pause, false to unpause
-  function pause_relay(address token_address, bool state) public override onlyOwner {
+  function pauseRelay(address token_address, bool state) public override onlyOwner {
     _paused[token_address] = state;
   }
 }

@@ -107,7 +107,7 @@ export class MainnetFreshDeploy {
             BN("100")
         );
         //setup comp anchored view on the oracle master
-        await this.Oracle.connect(deployer).set_relay(
+        await this.Oracle.connect(deployer).setRelay(
             this.book.compAddress,
             this.AnchoredViewComp.address
         );

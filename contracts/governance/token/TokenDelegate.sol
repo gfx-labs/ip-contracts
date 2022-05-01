@@ -119,7 +119,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
     }
 
     bytes32 domainSeparator = keccak256(
-      abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainId(), address(this))
+      abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainid(), address(this))
     );
     bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, rawAmount, nonces[owner]++, deadline));
     bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
@@ -225,7 +225,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
     bytes32 s
   ) public override {
     bytes32 domainSeparator = keccak256(
-      abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainId(), address(this))
+      abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainid(), address(this))
     );
     bytes32 structHash = keccak256(abi.encode(DELEGATION_TYPEHASH, delegatee, nonce, expiry));
     bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
@@ -410,7 +410,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
     return a - b;
   }
 
-  function getChainId() internal view returns (uint256) {
+  function getChainid() internal view returns (uint256) {
     uint256 chainId;
     //solhint-disable-next-line no-inline-assembly
     assembly {
