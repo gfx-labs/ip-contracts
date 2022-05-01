@@ -44,6 +44,7 @@ export class TestScope extends MainnetAddresses {
     CarolVault!: IVault
 
     Andy_USDC = BN("1e8")
+    Bob_USDC = BN("1000e6")
     Bob_WETH = BN("10e18")
     Carol_COMP = BN("100e18")
     Dave_USDC = BN("1e10")

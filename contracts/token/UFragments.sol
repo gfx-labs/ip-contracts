@@ -14,6 +14,7 @@ import "../_external/openzeppelin/Initializable.sol";
  *      Implementation is shamelessly borrowed from Ampleforth project
  *      uFragments is a normal ERC20 token, but its supply can be adjusted by splitting and
  *      combining tokens proportionally across all wallets.
+ *        
  *
  *      uFragment balances are internally represented with a hidden denomination, 'gons'.
  *      We support splitting the currency in expansion and combining the currency on contraction by
