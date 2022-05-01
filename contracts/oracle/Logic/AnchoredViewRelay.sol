@@ -57,11 +57,11 @@ contract AnchoredViewRelay is IOracleRelay {
     // calculate buffer
     uint256 buffer = (_widthNumerator * anchorPrice) / _widthDenominator;
 
-    // create upper and lower bounder
+    // create upper and lower bounds
     uint256 upperBounds = anchorPrice + buffer;
     uint256 lowerBounds = anchorPrice - buffer;
 
-    // ensure
+    // ensure the anchor price is within bounds
     require(mainValue < upperBounds, "anchor too high");
     require(mainValue > lowerBounds, "anchor too low");
 
