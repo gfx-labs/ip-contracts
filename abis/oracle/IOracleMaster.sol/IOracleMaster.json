@@ -35,7 +35,7 @@
           "type": "bool"
         }
       ],
-      "name": "pause_relay",
+      "name": "pauseRelay",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -53,7 +53,7 @@
           "type": "address"
         }
       ],
-      "name": "set_relay",
+      "name": "setRelay",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

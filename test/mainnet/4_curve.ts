@@ -7,7 +7,7 @@ import { mineBlock } from "../../util/block";
 
 describe("curve-threelines:", () => {
     it("test setting a new curve", async () => {
-        await expect(s.Curve.connect(s.Frank).set_curve(
+        await expect(s.Curve.connect(s.Frank).setCurve(
             "0x0000000000000000000000000000000000000000",
             s.ThreeLines.address
         )).to.not.reverted;

@@ -10,22 +10,22 @@ describe("Vault setup:", () => {
         //showBody("bob mint vault")
         await expect(s.VaultController.connect(s.Bob).mintVault()).to.not.reverted;
         await mineBlock();
-        let bobVault = await s.VaultController.VaultAddress(1)
+        let bobVault = await s.VaultController.vaultAddress(1)
         s.BobVault = IVault__factory.connect(
             bobVault,
             s.Bob,
         );
-        expect(await s.BobVault.Minter()).to.eq(s.Bob.address)
+        expect(await s.BobVault.minter()).to.eq(s.Bob.address)
 
         //showBody("carol mint vault")
         await expect(s.VaultController.connect(s.Carol).mintVault()).to.not.reverted;
         await mineBlock()
-        let carolVault = await s.VaultController.VaultAddress(2)
+        let carolVault = await s.VaultController.vaultAddress(2)
         s.CarolVault = IVault__factory.connect(
             carolVault,
             s.Carol,
         );
-        expect(await s.CarolVault.Minter()).to.eq(s.Carol.address)
+        expect(await s.CarolVault.minter()).to.eq(s.Carol.address)
     })
     it("vault deposits", async () => {
         await expect(s.WETH.connect(s.Bob).transfer(s.BobVault.address, s.Bob_WETH)).to.not.reverted;
