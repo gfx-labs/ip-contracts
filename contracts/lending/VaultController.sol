@@ -115,7 +115,7 @@ contract VaultController is
     _vaultsMinted = _vaultsMinted + 1;
     // mint the vault itself, deploying the contract
     address vault_address = address(new Vault(_vaultsMinted, _msgSender(), address(this)));
-    // set add the vault to our system
+    // add the vault to our system
     _vaultId_vaultAddress[_vaultsMinted] = vault_address;
     // emit the event
     emit NewVault(vault_address, _vaultsMinted, _msgSender());
@@ -153,7 +153,7 @@ contract VaultController is
     emit RegisterCurveMaster(master_curve_address);
   }
 
-  /// @notice register the CurveMaster address
+  /// @notice update the protocol fee
   /// @param new_protocol_fee protocol fee in terms of 1e18=100%
   function change_protocol_fee(uint192 new_protocol_fee) external override onlyOwner {
     require(new_protocol_fee < 1e18, "fee is too large");
@@ -172,7 +172,7 @@ contract VaultController is
     address oracle_address,
     uint256 liquidationIncentive
   ) external override onlyOwner {
-    // the oracle and token must both exist and be registerd
+    // the oracle must be registered & the token must be unregistered
     require(_oracleMaster._relays(oracle_address) != address(0x0), "oracle does not exist");
     require(_tokenAddress_tokenId[token_address] == 0, "token already registered");
     // increment the amount of registered token
@@ -237,7 +237,7 @@ contract VaultController is
     IVault vault = getVault(id);
     // only the minter of the vault may borrow from their vault
     require(_msgSender() == vault.minter(), "sender not minter");
-    // the base amount is the amount of usdi they with to borrow  divided by the interest factor
+    // the base amount is the amount of usdi they wish to borrow divided by the interest factor
     uint192 base_amount = safeu192(uint256(amount * expScale) / uint256(_interest.factor));
     // base_liability should contain the vaults new liability, in terms of base units
     // true indicated that we are adding to the liability
@@ -448,14 +448,14 @@ contract VaultController is
     for (uint192 i = 1; i <= _tokensRegistered; i++) {
       // get the address of the token through the array of enabled tokens
       address token_address = _enabledTokens[i - 1];
-      // the raw price is simply the oraclemaster price of the token
-      uint192 raw_price = safeu192(_oracleMaster.getLivePrice(token_address));
-      if (raw_price == 0) {
-        continue;
-      }
       // the balance is the vaults token balance of the current collateral token in the loop
       uint256 balance = vault.tokenBalance(token_address);
       if (balance == 0) {
+        continue;
+      }
+      // the raw price is simply the oraclemaster price of the token
+      uint192 raw_price = safeu192(_oracleMaster.getLivePrice(token_address));
+      if (raw_price == 0) {
         continue;
       }
       // the token value is equal to the price * balance * tokenLTV
