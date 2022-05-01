@@ -12,21 +12,25 @@ contract UniswapV3OracleRelay is IOracleRelay {
   address public _poolAddress;
   bool public _quoteTokenIsToken0;
   IUniswapV3PoolDerivedState public _pool;
+  uint32 public _lookback;
 
   uint256 public _mul;
   uint256 public _div;
 
   /// @notice all values set at construction time
+  /// @param lookback how many seconds to twap for
   /// @param  pool_address address of chainlink feed
   /// @param quote_token_is_token0 marker for which token to use as quote/base in calculation
   /// @param mul numerator of scalar
   /// @param div denominator of scalar
   constructor(
+    uint32 lookback,
     address pool_address,
     bool quote_token_is_token0,
     uint256 mul,
     uint256 div
   ) {
+    _lookback = lookback;
     _mul = mul;
     _div = div;
     _poolAddress = pool_address;
@@ -37,18 +41,17 @@ contract UniswapV3OracleRelay is IOracleRelay {
   /// @notice the current reported value of the oracle
   /// @return the current value
   /// @dev implementation in getLastSecond
-  /// TODO: perhaps look at more than just the last tick :)
   function currentValue() external view override returns (uint256) {
-    return getLastSecond();
+    return getLastSeconds(_lookback);
   }
 
-  function getLastSecond() private view returns (uint256 price) {
+  function getLastSeconds(uint32 seconds_) private view returns (uint256 price) {
     int56[] memory tickCumulatives;
     uint32[] memory input = new uint32[](2);
-    input[0] = 1;
+    input[0] = seconds_;
     input[1] = 0;
     (tickCumulatives, ) = _pool.observe(input);
-    uint32 tickTimeDifference = 1;
+    uint32 tickTimeDifference = seconds_;
     int56 tickCumulativeDifference = tickCumulatives[0] - tickCumulatives[1];
     bool tickNegative = tickCumulativeDifference < 0;
     uint56 tickAbs;
