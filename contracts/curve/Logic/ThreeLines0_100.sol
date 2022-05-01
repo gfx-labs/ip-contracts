@@ -39,31 +39,31 @@ contract ThreeLines0_100 is ICurveSlave {
   /// @param x_value x value to evaluate
   /// @return value of f(x)
   function valueAt(int256 x_value) external view override returns (int256) {
-    int256 max = 1e18;
+    // the x value must be between 0 (0%) and 1e18 (100%)
     require(x_value >= 0, "too small");
-    require(x_value <= max, "too large");
+    require(x_value <= 1e18, "too large");
+    // first piece of the piece wise function
     if (x_value < _s1) {
       int256 rise = _r1 - _r0;
       int256 run = _s1;
       return linearInterpolation(rise, run, x_value, _r0);
     }
+    // second piece of the piece wise function
     if (x_value < _s2) {
       int256 rise = _r2 - _r1;
       int256 run = _s2 - _s1;
       return linearInterpolation(rise, run, x_value - _s1, _r1);
     }
-    if (x_value <= max) {
-      return _r2;
-    }
-    revert("bad curve");
+    // the third and final piece of piecewise function, simply a line
+    // since we already know that x_value <= 1e18, this is safe
+    return _r2;
   }
 
-  /// @notice linear interpolation, g(x) = mx+b
-  /// @dev function should be pure. m = rise/run
-  /// @param rise x delta, used to calculate "m"
-  /// @param run y delta, used to calculate "m"
-  /// @param distance distance to interpolate, "x"
-  /// @param b y intercept, "b"
+  /// @notice linear interpolation, calculates g(x) = (rise/run)x+b
+  /// @param rise x delta, used to calculate, "rise" in our equation
+  /// @param run y delta, used to calculate "run" in our equation
+  /// @param distance distance to interpolate. "x" in our equation
+  /// @param b y intercept, "b" in our equation
   /// @return value of g(x)
   function linearInterpolation(
     int256 rise,
@@ -71,7 +71,10 @@ contract ThreeLines0_100 is ICurveSlave {
     int256 distance,
     int256 b
   ) private pure returns (int256) {
+    // 6 digits of precision should be more than enough
     int256 mE6 = (rise * 1e6) / run;
+    // simply multiply the slope by the distance traveled and add the intercept
+    // don't forget to unscale the 1e6 by dividing. b is never scaled, and so it is not unscaled
     int256 result = (mE6 * distance) / 1e6 + b;
     return result;
   }

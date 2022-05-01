@@ -64,7 +64,7 @@
           "type": "uint256"
         }
       ],
-      "name": "Withdraw",
+      "name": "withdraw",
       "type": "event"
     },
     {
@@ -95,7 +95,7 @@
     },
     {
       "inputs": [],
-      "name": "_VaultControllerAddress",
+      "name": "_vaultControllerAddress",
       "outputs": [
         {
           "internalType": "address",

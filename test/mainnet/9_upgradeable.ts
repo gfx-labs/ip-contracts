@@ -98,7 +98,7 @@ describe("Test upgradeable", () => {
     })
     it("Verify deployment of VaultController proxy", async () => {
 
-        const protocolFee = await VaultController.connect(alice).ProtocolFee()
+        const protocolFee = await VaultController.connect(alice).protocolFee()
         await mineBlock()
         const expectedProtocolFee = BN("1e14")
         assert.equal(protocolFee.toString(), expectedProtocolFee.toString(), "VaultController Initialized")

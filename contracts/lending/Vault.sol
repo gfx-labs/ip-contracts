@@ -11,26 +11,31 @@ import "../_external/IERC20.sol";
 import "../_external/Context.sol";
 import "../_external/compound/ExponentialNoError.sol";
 
-/// @title A users vault
+/// @title Vault
 /// @notice our implentation of maker-vault like vault
 /// major differences:
 /// 1. multi-collateral
 /// 2. generate interest in USDI
 /// 3. can delegate voting power of contained tokens
 contract Vault is IVault, ExponentialNoError, Context {
+
+  /// @title VaultInfo struct
+  /// @notice this struct is used to store the vault metadata
+  /// this should reduce the cost of minting by ~15,000
+  /// by limiting us to max 2**96-1 vaults
   struct VaultInfo {
     uint96 id;
     address minter;
   }
-
+  /// @notice Metadata of vault, aka the id & the minter's address
   VaultInfo public _vaultInfo;
-
+  
   IVaultController public _master;
-
+  
+  /// @notice this is the unscaled liability of the vault. 
+  /// the number is meaningless on its own, and must be combined with the factor taken from
+  /// the vaultController in order to find the true liabilitiy
   uint256 public _baseLiability;
-
-  event Deposit(address token_address, uint256 amount);
-  event Withdraw(address token_address, uint256 amount);
 
   /// @notice checks if _msgSender is the controller of the vault
   modifier onlyVaultController() {
@@ -45,33 +50,33 @@ contract Vault is IVault, ExponentialNoError, Context {
   }
 
   /// @notice must be called by VaultController, else it will not be registered as a vault in system
-  /// @param id unique id of the vault, ever increasing and tracked by VaultController
-  /// @param minter address of the person who created this vault
+  /// @param id_ unique id of the vault, ever increasing and tracked by VaultController
+  /// @param minter_ address of the person who created this vault
   /// @param master_address address of the VaultController
   constructor(
-    uint96 id,
-    address minter,
+    uint96 id_,
+    address minter_,
     address master_address
   ) {
-    _vaultInfo = VaultInfo(id, minter);
+    _vaultInfo = VaultInfo(id_, minter_);
     _master = IVaultController(master_address);
   }
 
   /// @notice minter of the vault
   /// @return address of minter
-  function Minter() external view override returns (address) {
+  function minter() external view override returns (address) {
     return _vaultInfo.minter;
   }
 
   /// @notice id of the vault
   /// @return address of minter
-  function Id() external view override returns (uint96) {
+  function id() external view override returns (uint96) {
     return _vaultInfo.id;
   }
 
   /// @notice current vault base liability
   /// @return base liability of vault
-  function BaseLiability() external view override returns (uint256) {
+  function baseLiability() external view override returns (uint256) {
     return _baseLiability;
   }
 
@@ -89,8 +94,9 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// @param token_address address of erc20 token
   /// @param amount amount of erc20 token to withdraw
   function withdrawErc20(address token_address, uint256 amount) external override onlyMinter {
-    IERC20 token = IERC20(token_address);
-    token.transferFrom(address(this), _msgSender(), amount);
+    // transfer the token to the owner
+    IERC20(token_address).transferFrom(address(this), _msgSender(), amount);
+    //  check if the account is solvent
     bool solvency = _master.checkAccount(_vaultInfo.id);
     require(solvency, "over-withdrawal");
 
@@ -121,7 +127,7 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// callable by the VaultController only
   /// @param increase true to increase, false to decerase
   /// @param base_amount amount to reduce base liability by
-  function modify_liability(bool increase, uint256 base_amount)
+  function modifyLiability(bool increase, uint256 base_amount)
     external
     override
     onlyVaultController

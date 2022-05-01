@@ -25,9 +25,9 @@ import { IVault } from "../typechain-types";
      * after confirming they match, use calculated interest factor go calc balance, liability, etc
      */
 
-    //let interestFactor = await s.VaultController.InterestFactor()
+    //let interestFactor = await s.VaultController.interestFactor()
 
-    const latestInterestTime = await s.VaultController.LastInterestTime()//calculate? 
+    const latestInterestTime = await s.VaultController.lastInterestTime()//calculate? 
     const currentBlock = await ethers.provider.getBlockNumber()
     const currentTime = (await ethers.provider.getBlock(currentBlock)).timestamp
     await nextBlockTime(currentTime)
@@ -54,8 +54,8 @@ import { IVault } from "../typechain-types";
  * @returns expected balance after pay_interest()
  */
  export const calculateBalance = async (interestFactor: BigNumber, user: SignerWithAddress) => {
-    const totalBaseLiability = await s.VaultController._totalBaseLiability()
-    const protocolFee = await s.VaultController._protocolFee()
+    const totalBaseLiability = await s.VaultController.totalBaseLiability()
+    const protocolFee = await s.VaultController.protocolFee()
 
     let valueBefore = await truncate(totalBaseLiability.mul(interestFactor))
 
@@ -85,7 +85,7 @@ import { IVault } from "../typechain-types";
 /**
  * @note - need calculatedLiability - the liability at the time of liquidation (after interest is paid and before liquidation is finished)
  */
- export const calculateTokensToLiquidate = async (vault: IVault, asset: string, t2l: BigNumber, calculatedLiability:BigNumber) => {
+ export const calculatetokensToLiquidate = async (vault: IVault, asset: string, t2l: BigNumber, calculatedLiability:BigNumber) => {
     //get price from oracle
     const rawPrice = await s.Oracle.getLivePrice(asset)
 
@@ -98,9 +98,9 @@ import { IVault } from "../typechain-types";
     const denominator = await truncate(rawPrice.mul(
         ((BN("1e18").sub(s.LiquidationIncentive)).sub(LTV!))
     ))
-    const vaultId = await vault.Id()
+    const vaultId = await vault.id()
 
-    const borrowPower = await s.VaultController.AccountBorrowingPower(vaultId)
+    const borrowPower = await s.VaultController.accountBorrowingPower(vaultId)
 
     const max_tokens = ((calculatedLiability.sub(borrowPower)).mul(BN("1e18"))).div(denominator)
 
@@ -127,10 +127,6 @@ export const calculateUSDI2repurchase = async(asset: string, tokens2liquidate:Bi
 }
 
 
-
-
-
-
 /**
  * @note WIP - TODO: FIX: Actual: 100,000,124,079,046,156,741 predicted: 100,000,309,438,951,680,015
  * @note proper procedure: read interest factor from contract -> elapse time -> call this to predict balance -> pay_interest() -> compare 
@@ -139,8 +135,8 @@ export const calculateUSDI2repurchase = async(asset: string, tokens2liquidate:Bi
  * @returns expected amount after interest is paid
  */
 export const changeInBalance = async (interestFactor: BigNumber, amount: BigNumber) => {
-    const totalBaseLiability = await s.VaultController._totalBaseLiability()
-    const protocolFee = await s.VaultController._protocolFee()
+    const totalBaseLiability = await s.VaultController.totalBaseLiability()
+    const protocolFee = await s.VaultController.protocolFee()
 
     let valueBefore = await truncate(totalBaseLiability.mul(interestFactor))
 
