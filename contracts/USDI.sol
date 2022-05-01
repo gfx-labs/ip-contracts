@@ -71,6 +71,13 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     return address(_reserve);
   }
 
+  /// @notice set the VaultController addr so that vault_master may mint/burn USDi without restriction
+  /// @param vault_master_address address of vault master
+  function setVaultController(address vault_master_address) external override onlyOwner {
+    _vaultControllerAddress = vault_master_address;
+    _VaultController = IVaultController(vault_master_address);
+  }
+
   /// @notice deposit USDC to mint USDi
   /// caller should obtain 1e12 USDi for each USDC
   /// @param usdc_amount amount of USDC to deposit
@@ -102,9 +109,8 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     require(amount > 0, "Cannot withdraw 0");
     uint256 balance = _reserve.balanceOf(address(this));
     require(balance >= usdc_amount, "Insufficient Reserve in Bank");
-    // check allowance and ensure transfer success
-    _reserve.approve(address(this), usdc_amount);
-    require(_reserve.transferFrom(address(this), _msgSender(), usdc_amount), "transfer failed");
+    // ensure transfer success
+    require(_reserve.transfer(_msgSender(), usdc_amount), "transfer failed");
     // modify the gonbalances of the sender, burning
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - amount * _gonsPerFragment;
     // modify totalSupply and totalGons
@@ -125,22 +131,14 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
       usdc_amount = reserve;
     }
     uint256 amount = usdc_amount * 1e12;
-    _reserve.approve(address(this), usdc_amount);
-    require(_reserve.transferFrom(address(this), _msgSender(), usdc_amount), "transfer failed");
+    require(_reserve.transfer(_msgSender(), usdc_amount), "transfer failed");
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - (amount * _gonsPerFragment);
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - (amount * _gonsPerFragment);
     emit Withdraw(_msgSender(), amount);
   }
 
-  /// @notice set the VaultController addr so that vault_master may mint/burn USDi without restriction
-  /// @param vault_master_address address of vault master
-  function setVaultController(address vault_master_address) external override onlyOwner {
-    _vaultControllerAddress = vault_master_address;
-    _VaultController = IVaultController(vault_master_address);
-  }
-
-  /// @notice admin function to mint USDi out of thin air
+  /// @notice admin function to mint USDi
   /// @param usdc_amount the amount of USDi to mint, denominated in USDC
   function mint(uint256 usdc_amount) external override paysInterest onlyOwner {
     require(usdc_amount != 0, "Cannot mint 0");
@@ -162,6 +160,8 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     emit Burn(_msgSender(), amount);
   }
 
+  /// @notice donates usdc to the protocol reserve
+  /// @param usdc_amount the amount of USDC to donate
   function donate(uint256 usdc_amount) external override paysInterest whenNotPaused {
     uint256 amount = usdc_amount * 1e12;
     require(amount > 0, "Cannot deposit 0");
@@ -199,6 +199,8 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _donation(amount);
   }
 
+  /// @notice function for distributing the donation to all usdi holders
+  /// @param amount amount of USDi to donate
   function _donation(uint256 amount) internal {
     _totalSupply = _totalSupply + amount;
     if (_totalSupply > MAX_SUPPLY) {
