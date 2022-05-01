@@ -130,15 +130,17 @@ describe("Deploy Contracts", () => {
         )).to.not.reverted;
 
         //showBody("create uniswap comp relay")
-        s.UniswapRelayCompUsdc = await DeployContract(new UniswapV3OracleRelay__factory(
-            s.Frank
-        ), s.Frank, s.usdcCompPool, true, BN("1e12"), BN("1"));
+        s.UniswapRelayCompUsdc = await DeployContract(new UniswapV3OracleRelay__factory(s.Frank),
+            s.Frank,
+            60,
+            s.usdcCompPool, true, BN("1e12"), BN("1"));
         await mineBlock()
         expect(await s.UniswapRelayCompUsdc.currentValue()).to.not.eq(0)
 
         //showBody("create uniswap eth relay")
         s.UniswapRelayEthUsdc = await DeployContract(new UniswapV3OracleRelay__factory(s.Frank),
             s.Frank,
+            60,
             s.usdcWethPool, true, BN("1e12"), BN("1"));
         await mineBlock()
 
