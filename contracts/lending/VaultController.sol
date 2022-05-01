@@ -101,11 +101,14 @@ contract VaultController is
   function vaultAddress(uint96 id) external view override returns (address) {
     return _vaultId_vaultAddress[id];
   }
+  
+  /**
   /// @notice get total base liability of all vaults
   /// @return total base liability
   function totalBaseLiability() external view override returns (uint256) {
     return _totalBaseLiability;
   }
+   */
   
 
   /// @notice create a new vault
@@ -491,7 +494,7 @@ contract VaultController is
     // the vault at address 0
     int256 int_curve_val = _curveMaster.getValueAt(address(0x00), reserve_ratio);
     // if the interest rate is below 0, well, we aren't the fed, so none of that!
-    require(int_curve_val >= 0, "rate too small");
+
     // cast the integer curve value to a u192
     uint192 curve_val = safeu192(uint256(int_curve_val));
     // calculate the amount of total outstanding loans before and after this interest accrual
