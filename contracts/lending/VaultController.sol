@@ -102,13 +102,13 @@ contract VaultController is
     return _vaultId_vaultAddress[id];
   }
   
-  /**
+  
   /// @notice get total base liability of all vaults
   /// @return total base liability
-  function totalBaseLiability() external view override returns (uint256) {
+  function totalBaseLiability() external view override returns (uint192) {
     return _totalBaseLiability;
   }
-   */
+  
   
 
   /// @notice create a new vault
