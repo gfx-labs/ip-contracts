@@ -120,7 +120,8 @@ contract Vault is IVault, ExponentialNoError, Context {
     address _to,
     uint256 _amount
   ) external override onlyVaultController {
-    require(IERC20(_token).transferFrom(address(this), _to, _amount), "masterTransfer: Transfer Failed");
+    //require(IERC20(_token).transferFrom(address(this), _to, _amount), "masterTransfer: Transfer Failed");
+    require(IERC20(_token).transfer(_to, _amount), "masterTransfer: Transfer Failed");
   }
 
   /// @notice function used by the VaultController to reduce a vaults liability
