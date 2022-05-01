@@ -75,37 +75,47 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// caller should obtain 1e12 USDi for each USDC
   /// @param usdc_amount amount of USDC to deposit
   function deposit(uint256 usdc_amount) external override paysInterest whenNotPaused {
+    // scale the usdc_amount to the usdi decimal amount, aka 1e18
     uint256 amount = usdc_amount * 1e12;
     require(amount > 0, "Cannot deposit 0");
+    // check allowance and ensure transfer success
     uint256 allowance = _reserve.allowance(_msgSender(), address(this));
     require(allowance >= usdc_amount, "Insufficient Allowance");
     require(_reserve.transferFrom(_msgSender(), address(this), usdc_amount), "transfer failed");
+    // modify the gonbalances of the sender, minting
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] + amount * _gonsPerFragment;
+    // modify totalSupply and totalGons
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
 
     emit Deposit(_msgSender(), amount);
   }
 
-  /// BUG no check for user's balance?
   /// @notice withdraw USDC by burning USDi
   /// caller should obtain 1 USDC for every 1e12 USDi
   /// @param usdc_amount amount of USDC to withdraw
   function withdraw(uint256 usdc_amount) external override paysInterest whenNotPaused {
+    // scale the usdc_amount to the usdi decimal amount, aka 1e18
     uint256 amount = usdc_amount * 1e12;
+    // check balances all around
     require(amount <= this.balanceOf(_msgSender()), "insufficient funds");
     require(amount > 0, "Cannot withdraw 0");
     uint256 balance = _reserve.balanceOf(address(this));
     require(balance >= usdc_amount, "Insufficient Reserve in Bank");
+    // check allowance and ensure transfer success
     _reserve.approve(address(this), usdc_amount);
     require(_reserve.transferFrom(address(this), _msgSender(), usdc_amount), "transfer failed");
+    // modify the gonbalances of the sender, burning
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - amount * _gonsPerFragment;
+    // modify totalSupply and totalGons
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - amount * _gonsPerFragment;
     emit Withdraw(_msgSender(), amount);
   }
 
-  // todo I think we want withdrawAll()
+  /// @notice withdraw USDC by burning USDi
+  /// caller should obtain 1 USDC for every 1e12 USDi
+  /// this function is effectively just withdraw, but we calculate the amount for the sender
   function withdrawAll() external override paysInterest whenNotPaused {
     uint256 reserve = _reserve.balanceOf(address(this));
     require(reserve != 0, "Reserve is empty");
