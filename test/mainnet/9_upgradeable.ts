@@ -105,7 +105,7 @@ describe("Test upgradeable", () => {
 
     })
     it("Verify deployment of USDi proxy", async () => {
-        const reserveAddress = await USDi._reserveAddress()
+        const reserveAddress = await USDi.reserveAddress()
         await mineBlock()
         const expectedReserveAddress = s.usdcAddress
         assert.equal(reserveAddress, expectedReserveAddress, "USDi Initialized")
