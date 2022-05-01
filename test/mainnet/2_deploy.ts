@@ -75,7 +75,7 @@ describe("Deploy Contracts", () => {
     })
     it("Verify deployment of VaultController proxy", async () => {
 
-        const protocolFee = await s.VaultController.connect(s.Andy).ProtocolFee()
+        const protocolFee = await s.VaultController.connect(s.Andy).protocolFee()
         await mineBlock()
         const expectedProtocolFee = BN("1e14")
         assert.equal(protocolFee.toString(), expectedProtocolFee.toString(), "VaultController Initialized")
@@ -180,13 +180,13 @@ describe("Deploy Contracts", () => {
 
     it("Set vault oracles and CFs", async () => {
         //showBody("set vault COMP oracle to anchored view")
-        await expect(s.Oracle.connect(s.Frank).set_relay(
+        await expect(s.Oracle.connect(s.Frank).setRelay(
             s.compAddress,
             s.AnchoredViewComp.address
         )).to.not.reverted;
 
         //showBody("set vault ETH oracle to anchored view")
-        await s.Oracle.connect(s.Frank).set_relay(
+        await s.Oracle.connect(s.Frank).setRelay(
             s.wethAddress,
             s.AnchoredViewEth.address,
         );
