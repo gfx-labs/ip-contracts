@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "hardhat/console.sol";
+
 /// @title interfact to interact with ERC20 tokens
 /// @author elee
 interface IERC20 {
@@ -52,7 +54,7 @@ contract Wave {
     // in units of point token
     uint256 public _totalClaimed;
     // in units of reward token
-    uint256 public _totalReward;
+    uint256 public _totalReward;//BUG? not initialized - should be init from totalReward in Constructor arg? 
     // epoch seconcds
     uint256 public _enableTime;
     uint256 public _disableTime;
@@ -72,7 +74,9 @@ contract Wave {
 
     /// @notice redeem points for token
     function redeem() external {
-        require(canRedeem() == true, "cant redeem yet");
+                console.log("redeem");
+
+        require(canRedeem() == true, "can't redeem yet");
         require(redeemed[msg.sender] == false,"already redeem");
         redeemed[msg.sender] = true;
         uint256 rewardAmount;
@@ -95,13 +99,14 @@ contract Wave {
 
     /// @notice get points
     /// @param amount amount of usdc
-    /// @param key the total amount the points the user may claim
+    /// @param key the total amount the points the user may claim - ammount allocated
     /// @param merkleProof a proof proving that the caller may redeem up to `key` points 
     function getPoints(
         uint256 amount,
         uint256 key,
         bytes32[] memory merkleProof
     ) public {
+        console.log("getPoints");
         require(isEnabled() == true, "not enabled");
         address thisSender = msg.sender;
         require(
