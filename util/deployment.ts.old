@@ -88,7 +88,7 @@ export class MainnetFreshDeploy {
         //setup oracle master
         this.Oracle = await new OracleMaster__factory(deployer).deploy();
         //set oracle on the vault controller
-        await this.VaultController.connect(deployer).register_oracle_master(
+        await this.VaultController.connect(deployer).registerOracleMaster(
             this.Oracle.address
         );
         //setup uniswap comp oracle
@@ -115,19 +115,19 @@ export class MainnetFreshDeploy {
 
 
         //register tokens
-        await this.VaultController.connect(deployer).register_erc20(
+        await this.VaultController.connect(deployer).registerErc20(
             this.book.wethAddress,
             BN("5e17"),
             this.book.wethAddress,
             BN("5e16"),
         );
-        await this.VaultController!.connect(deployer).register_erc20(
+        await this.VaultController!.connect(deployer).registerErc20(
             this.book.compAddress,
             BN("4e17"),
             this.book.compAddress,
             BN("5e16"),
         );
-        await this.VaultController!.connect(deployer).register_usdi(this.USDI!.address)
+        await this.VaultController!.connect(deployer).registerUSDi(this.USDI!.address)
     }
 }
 
