@@ -399,7 +399,7 @@
           "type": "uint256"
         }
       ],
-      "name": "change_protocol_fee",
+      "name": "changeProtocolFee",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -487,7 +487,7 @@
           "type": "address"
         }
       ],
-      "name": "register_curve_master",
+      "name": "registerCurveMaster",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -515,7 +515,7 @@
           "type": "uint256"
         }
       ],
-      "name": "register_erc20",
+      "name": "registerErc20",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -528,7 +528,7 @@
           "type": "address"
         }
       ],
-      "name": "register_oracle_master",
+      "name": "registerOracleMaster",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -541,7 +541,7 @@
           "type": "address"
         }
       ],
-      "name": "register_usdi",
+      "name": "registerUSDi",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -607,7 +607,7 @@
           "type": "uint256"
         }
       ],
-      "name": "update_registered_erc20",
+      "name": "updateRegisteredErc20",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
