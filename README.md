@@ -19,6 +19,8 @@ whitepaper located in whitepaper/
 ├───contracts
 │   ├───_external - external contracts copied into the repository, e.g. openzeppelin, uniswap, chainlink
 │   │   └── (out of scope)
+│   ├── genesis- genesis related contracts
+│   │   └── wave.sol - for distribution of IPT. permissioned claim
 │   ├── governance - governance related contracts
 │   │   ├── governor - governor is a reimplmentation of Governor Bravo, aptly named Governor Charlie. It uses a custom proxy system
 │   │   │   ├── GovernorDelegate.sol - Delegate for governor contract
