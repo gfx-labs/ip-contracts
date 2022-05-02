@@ -726,11 +726,11 @@ describe("Testing remaining vault functions", () => {
 })
 describe("Checking getters", () => {
     it("checks totalBaseLiability", async () => {
-        let _totalBaseLiability = await s.VaultController._totalBaseLiability()
+        let _totalBaseLiability = await s.VaultController.totalBaseLiability()
         expect(_totalBaseLiability).to.not.eq(0)
     })
     it("checks _tokensRegistered", async () => {
-        let _tokensRegistered = await s.VaultController._tokensRegistered()
+        let _tokensRegistered = await s.VaultController.tokensRegistered()
         expect(_tokensRegistered).to.not.eq(0)
     })
 })

@@ -27,12 +27,12 @@ interface IVaultController is VaultControllerEvents {
   // initializer
   function initialize() external;
 
-  //implicit view functions
-  function _tokensRegistered() external view returns (uint256);
-  function _vaultsMinted() external view returns (uint96);
-
-
   // view functions
+
+  function tokensRegistered() external view returns (uint256);
+
+  function vaultsMinted() external view returns (uint96);
+
   function lastInterestTime() external view returns (uint64);
 
   function totalBaseLiability() external view returns (uint192);
