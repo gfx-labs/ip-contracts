@@ -76,22 +76,22 @@ interface IVaultController is VaultControllerEvents {
 
   function unpause() external;
 
-  function register_oracle_master(address master_oracle_address) external;
+  function registerOracleMaster(address master_oracle_address) external;
 
-  function register_curve_master(address master_curve_address) external;
+  function registerCurveMaster(address master_curve_address) external;
 
-  function change_protocol_fee(uint192 new_protocol_fee) external;
+  function changeProtocolFee(uint192 new_protocol_fee) external;
 
-  function register_erc20(
+  function registerErc20(
     address token_address,
     uint256 LTV,
     address oracle_address,
     uint256 liquidationIncentive
   ) external;
 
-  function register_usdi(address usdi_address) external;
+  function registerUSDi(address usdi_address) external;
 
-  function update_registered_erc20(
+  function updateRegisteredErc20(
     address token_address,
     uint256 LTV,
     address oracle_address,
