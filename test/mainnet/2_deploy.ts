@@ -117,7 +117,7 @@ describe("Deploy Contracts", () => {
         await mineBlock()
         s.Curve = await DeployContract(new CurveMaster__factory(s.Frank), s.Frank)
         await mineBlock()
-        await expect(s.VaultController.register_curve_master(s.Curve.address)).to.not.reverted;
+        await expect(s.VaultController.registerCurveMaster(s.Curve.address)).to.not.reverted;
         await mineBlock()
     })
 
@@ -125,7 +125,7 @@ describe("Deploy Contracts", () => {
     it("Deploy Oracles", async () => {
         s.Oracle = await DeployContract(new OracleMaster__factory(s.Frank), s.Frank);
         showBody("set vault oraclemaster")
-        await expect(s.VaultController.connect(s.Frank).register_oracle_master(
+        await expect(s.VaultController.connect(s.Frank).registerOracleMaster(
             s.Oracle.address
         )).to.not.reverted;
 
@@ -193,14 +193,14 @@ describe("Deploy Contracts", () => {
             s.AnchoredViewEth.address,
         );
         //showBody("register weth")
-        await expect(s.VaultController.connect(s.Frank).register_erc20(
+        await expect(s.VaultController.connect(s.Frank).registerErc20(
             s.wethAddress,
             s.wETH_LTV,
             s.wethAddress,
             s.LiquidationIncentive,
         )).to.not.reverted;
         //showBody("register comp")
-        await expect(s.VaultController.connect(s.Frank).register_erc20(
+        await expect(s.VaultController.connect(s.Frank).registerErc20(
             s.compAddress,
             s.COMP_LTV,
             s.compAddress,
@@ -209,7 +209,7 @@ describe("Deploy Contracts", () => {
 
         //showBody("register vaultcontroller usdi")
         await expect(s.VaultController.connect(s.Frank)
-            .register_usdi(s.USDI.address)).to.not.reverted
+            .registerUSDi(s.USDI.address)).to.not.reverted
         await mineBlock()
     })
 })
