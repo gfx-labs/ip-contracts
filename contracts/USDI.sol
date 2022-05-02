@@ -95,6 +95,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
 
+    emit Transfer(address(0), _msgSender(), amount);
     emit Deposit(_msgSender(), amount);
   }
 
@@ -116,6 +117,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     // modify totalSupply and totalGons
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - amount * _gonsPerFragment;
+    emit Transfer(_msgSender(), address(0), amount);
     emit Withdraw(_msgSender(), amount);
   }
 
@@ -135,6 +137,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - (amount * _gonsPerFragment);
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - (amount * _gonsPerFragment);
+    emit Transfer(_msgSender(), address(0), amount);
     emit Withdraw(_msgSender(), amount);
   }
 
@@ -146,6 +149,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] + amount * _gonsPerFragment;
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
+    emit Transfer(address(0), _msgSender() , amount);
     emit Mint(_msgSender(), amount);
   }
 
@@ -157,6 +161,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - amount * _gonsPerFragment;
+    emit Transfer(_msgSender(), address(0), amount);
     emit Burn(_msgSender(), amount);
   }
 
@@ -168,7 +173,6 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     uint256 allowance = _reserve.allowance(_msgSender(), address(this));
     require(allowance >= usdc_amount, "Insufficient Allowance");
     require(_reserve.transferFrom(_msgSender(), address(this), usdc_amount), "transfer failed");
-
     _donation(usdc_amount);
   }
 
@@ -179,6 +183,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _gonBalances[target] = _gonBalances[target] + amount * _gonsPerFragment;
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
+    emit Transfer(address(0), target, amount);
     emit Mint(target, amount);
   }
 
@@ -190,6 +195,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _gonBalances[target] = _gonBalances[target] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - amount * _gonsPerFragment;
+    emit Transfer(target, address(0), amount);
     emit Burn(target, amount);
   }
 
