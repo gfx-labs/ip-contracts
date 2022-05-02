@@ -151,27 +151,27 @@ contract VaultController is
 
   /// @notice register the USDi contract
   /// @param usdi_address address to register as USDi
-  function register_usdi(address usdi_address) external override onlyOwner {
+  function registerUSDi(address usdi_address) external override onlyOwner {
     _usdi = IUSDI(usdi_address);
   }
 
   /// @notice register the OracleMaster contract
   /// @param master_oracle_address address to register as OracleMaster
-  function register_oracle_master(address master_oracle_address) external override onlyOwner {
+  function registerOracleMaster(address master_oracle_address) external override onlyOwner {
     _oracleMaster = OracleMaster(master_oracle_address);
     emit RegisterOracleMaster(master_oracle_address);
   }
 
   /// @notice register the CurveMaster address
   /// @param master_curve_address address to register as CurveMaster
-  function register_curve_master(address master_curve_address) external override onlyOwner {
+  function registerCurveMaster(address master_curve_address) external override onlyOwner {
     _curveMaster = CurveMaster(master_curve_address);
     emit RegisterCurveMaster(master_curve_address);
   }
 
   /// @notice update the protocol fee
   /// @param new_protocol_fee protocol fee in terms of 1e18=100%
-  function change_protocol_fee(uint192 new_protocol_fee) external override onlyOwner {
+  function changeProtocolFee(uint192 new_protocol_fee) external override onlyOwner {
     require(new_protocol_fee < 1e18, "fee is too large");
     _protocolFee = new_protocol_fee;
     emit NewProtocolFee(_protocolFee);
@@ -182,7 +182,7 @@ contract VaultController is
   /// @param LTV LTV of the token, 1e18=100%
   /// @param oracle_address oracle to attach to the token
   /// @param liquidationIncentive liquidation penalty for the token, 1e18=100%
-  function register_erc20(
+  function registerErc20(
     address token_address,
     uint256 LTV,
     address oracle_address,
@@ -211,7 +211,7 @@ contract VaultController is
   /// @param LTV new loan-to-value of the token, 1e18=100%
   /// @param oracle_address new oracle to attach to the token
   /// @param liquidationIncentive new liquidation penalty for the token, 1e18=100%
-  function update_registered_erc20(
+  function updateRegisteredErc20(
     address token_address,
     uint256 LTV,
     address oracle_address,
