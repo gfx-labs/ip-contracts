@@ -108,6 +108,19 @@ contract VaultController is
   function totalBaseLiability() external view override returns (uint192) {
     return _totalBaseLiability;
   }
+
+  /// @notice get the amount of vaults in the system 
+  /// @return the amount of vaults in the system
+  function vaultsMinted() external view override returns (uint96) {
+    return _vaultsMinted;
+  }
+
+  /// @notice get the amount of tokens regsitered in the system
+  /// @return the amount of tokens registered in the system
+  function tokensRegistered() external view override returns (uint256) {
+    return _tokensRegistered;
+  }
+
   
   
 
@@ -249,10 +262,9 @@ contract VaultController is
     // the same amount we added to the vaults liability
     _totalBaseLiability = _totalBaseLiability + safeu192(base_amount);
     // now take the vaults total base liability and multiply it by the interest factor
-    // we subtract 1 from the interest factor for rounding purposes
-    uint256 usdi_liability = truncate(uint256(_interest.factor - 1) * base_liability);
+    uint256 usdi_liability = truncate(uint256(_interest.factor) * base_liability);
     // we perform the same math in order to calculate how much usdi to credit
-    uint256 usdi_amount =  truncate(uint256(_interest.factor - 1) * base_amount);
+    uint256 usdi_amount =  truncate(uint256(_interest.factor) * base_amount);
     // now get the LTV of the vault, aka their borrowing power, in usdi
     uint256 total_liquidity_value = get_vault_borrowing_power(vault);
     // the LTV must be above the newly calculated usdi_liability, else revert
