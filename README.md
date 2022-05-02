@@ -1,22 +1,28 @@
 # usdi contracts
 
 
+slightly outdated documentation & overview located at
+
+https://ip.pages.gfx.cafe/app/book
+
+
+whitepaper located in whitepaper/
+
 
 ## setup
 
-```
-npm run setup
-npm run compile
-```
 
-to run local node with fork from rpc:
-npx hardhat node --fork <http(s)://rpc_address.xyz>
+`npm run setup`
 
 
+## compile
 
-## tests
 
-test from fresh deployment:
-```
-npm run test
-```
+`npm run compile`
+
+
+## test
+
+`npm run test`
+
+`npm run testgov`
