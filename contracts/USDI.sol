@@ -26,7 +26,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _;
   }
 
-  /// @notice any function with this modifier will call the pay_interest() function before any function logic is called 
+  /// @notice any function with this modifier will call the pay_interest() function before any function logic is called
   modifier paysInterest() {
     _VaultController.calculateInterest();
     _;
@@ -51,22 +51,32 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _unpause();
   }
 
+  /// @notice getter for owner
+  /// @return owner of contracts address
   function owner() public view override(IUSDI, OwnableUpgradeable) returns (address) {
     return super.owner();
   }
 
+  /// @notice getter for name
+  /// @return name of token
   function name() public view override(IERC20Metadata, ERC20Detailed) returns (string memory) {
     return super.name();
   }
 
+  /// @notice getter for symbol
+  /// @return symbol for token
   function symbol() public view override(IERC20Metadata, ERC20Detailed) returns (string memory) {
     return super.symbol();
   }
 
+  /// @notice getter for decimals
+  /// @return decimals for token
   function decimals() public view override(IERC20Metadata, ERC20Detailed) returns (uint8) {
     return super.decimals();
   }
 
+  /// @notice getter for address of the reserve currency, or usdc
+  /// @return decimals for of reserve currency
   function reserveAddress() public view override returns (address) {
     return address(_reserve);
   }
@@ -79,20 +89,26 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   }
 
   /// @notice deposit USDC to mint USDi
-  /// caller should obtain 1e12 USDi for each USDC
+  /// @dev caller should obtain 1e12 USDi for each USDC
+  /// the calculations for deposit mimic the calculations done by mint in the ampleforth contract, simply with the usdc transfer
+  /// "fragments" are the units that we see, so 1000 fragments == 1000 usdi
+  /// "gons" are the internal accounting unit, used to keep scale.
+  /// we use the variable _gonsPerFragment in order to convert between the two
+  /// try dimensional analysis when doing the math in order to verify units are correct
   /// @param usdc_amount amount of USDC to deposit
   function deposit(uint256 usdc_amount) external override paysInterest whenNotPaused {
-    // scale the usdc_amount to the usdi decimal amount, aka 1e18
+    // scale the usdc_amount to the usdi decimal amount, aka 1e18. since usdc is 6 decimals, we multiply by 1e12
     uint256 amount = usdc_amount * 1e12;
     require(amount > 0, "Cannot deposit 0");
     // check allowance and ensure transfer success
     uint256 allowance = _reserve.allowance(_msgSender(), address(this));
     require(allowance >= usdc_amount, "Insufficient Allowance");
     require(_reserve.transferFrom(_msgSender(), address(this), usdc_amount), "transfer failed");
-    // modify the gonbalances of the sender, minting
+    // the gonbalances of the sender is in gons, therefore we must multiply the deposit amount, which is in fragments, by gonsperfragment
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] + amount * _gonsPerFragment;
-    // modify totalSupply and totalGons
+    // total supply is in fragments, and so we add amount
     _totalSupply = _totalSupply + amount;
+    // and totalgons of course is in gons, and so we multiply amount by gonsperfragment to get the amount of gons we must add to totalGons
     _totalGons = _totalGons + amount * _gonsPerFragment;
 
     emit Transfer(address(0), _msgSender(), amount);
@@ -112,11 +128,12 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     require(balance >= usdc_amount, "Insufficient Reserve in Bank");
     // ensure transfer success
     require(_reserve.transfer(_msgSender(), usdc_amount), "transfer failed");
-    // modify the gonbalances of the sender, burning
+    // modify the gonbalances of the sender, subtracting the amount of gons, therefore amount*gonsperfragment
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - amount * _gonsPerFragment;
     // modify totalSupply and totalGons
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - amount * _gonsPerFragment;
+    // emit both a Withdraw and transfer event
     emit Transfer(_msgSender(), address(0), amount);
     emit Withdraw(_msgSender(), amount);
   }
@@ -134,9 +151,11 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     }
     uint256 amount = usdc_amount * 1e12;
     require(_reserve.transfer(_msgSender(), usdc_amount), "transfer failed");
+    // see comments in the withdraw function for an explaination of this math
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - (amount * _gonsPerFragment);
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - (amount * _gonsPerFragment);
+    // emit both a Withdraw and transfer event
     emit Transfer(_msgSender(), address(0), amount);
     emit Withdraw(_msgSender(), amount);
   }
@@ -146,10 +165,12 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   function mint(uint256 usdc_amount) external override paysInterest onlyOwner {
     require(usdc_amount != 0, "Cannot mint 0");
     uint256 amount = usdc_amount * 1e12;
+    // see comments in the deposit function for an explaination of this math
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] + amount * _gonsPerFragment;
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
-    emit Transfer(address(0), _msgSender() , amount);
+    // emit both a mint and transfer event
+    emit Transfer(address(0), _msgSender(), amount);
     emit Mint(_msgSender(), amount);
   }
 
@@ -158,9 +179,11 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   function burn(uint256 usdc_amount) external override paysInterest onlyOwner {
     require(usdc_amount != 0, "Cannot burn 0");
     uint256 amount = usdc_amount * 1e12;
+    // see comments in the deposit function for an explaination of this math
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - amount * _gonsPerFragment;
+    // emit both a mint and transfer event
     emit Transfer(_msgSender(), address(0), amount);
     emit Burn(_msgSender(), amount);
   }
@@ -180,6 +203,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @param target whom to mint the USDi to
   /// @param amount the amount of USDi to mint
   function vaultControllerMint(address target, uint256 amount) external override onlyVaultController {
+    // see comments in the deposit function for an explaination of this math
     _gonBalances[target] = _gonBalances[target] + amount * _gonsPerFragment;
     _totalSupply = _totalSupply + amount;
     _totalGons = _totalGons + amount * _gonsPerFragment;
@@ -192,6 +216,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @param amount the amount of USDi to burn
   function vaultControllerBurn(address target, uint256 amount) external override onlyVaultController {
     require(_gonBalances[target] > (amount * _gonsPerFragment), "USDI: not enough balance");
+    // see comments in the withdraw function for an explaination of this math
     _gonBalances[target] = _gonBalances[target] - amount * _gonsPerFragment;
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - amount * _gonsPerFragment;
