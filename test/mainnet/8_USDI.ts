@@ -2,12 +2,11 @@ import { s } from "./scope";
 import { ethers } from "hardhat";
 import { BigNumber, utils } from "ethers";
 import { expect, assert } from "chai";
-import { getGas, getArgs} from "../../util/math"
+import { getGas, getArgs, changeInBalance} from "../../util/math"
 import { stealMoney } from "../../util/money";
-import { showBodyCyan } from "../../util/format";
+import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
-import { advanceBlockHeight, mineBlock} from "../../util/block";
-import { updateRestTypeNode } from "typescript";
+import { advanceBlockHeight, mineBlock, fastForward, OneWeek} from "../../util/block";
 
 
 
@@ -130,6 +129,33 @@ describe("TESTING USDI CONTRACT", async () => {
         let usdiBalance = await s.USDI.balanceOf(s.Dave.address)
         expect(usdiBalance).to.be.gt(startingUSDIAmount.add(usdcAmount.mul(1e12)))
     });
+
+    it("check interest generation rate", async () => {
+        const startingBalance = await s.USDI.balanceOf(s.Dave.address)
+        showBody("Dave starting balance: ", utils.formatEther(startingBalance.toString()))
+        const startingIF = await s.VaultController.interestFactor()
+
+
+        //elapse time
+        //showBody("advance 1 week and then calculate interest")
+        await fastForward(OneWeek)
+        await s.VaultController.calculateInterest()
+        await advanceBlockHeight(1)
+
+        let expectedBalance = await changeInBalance(startingIF, startingBalance)
+
+
+
+
+        let endBalance = await s.USDI.balanceOf(s.Dave.address)
+        showBody("Dave ending  balance: ", utils.formatEther(endBalance.toString()))
+        showBody("Dave expectedBalance: ", utils.formatEther(expectedBalance.toString()))
+
+
+    })
+
+
+
 
     it("call deposit with amount == 0", async () => {
 

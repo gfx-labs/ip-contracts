@@ -81,6 +81,42 @@ import { IVault } from "../typechain-types";
     const expectedBalance = gonBalance.div(gpf)
     return expectedBalance
 }
+/**
+ * @note WIP - TODO: FIX: Actual: 100,000,124,079,046,156,741 predicted: 100,000,309,438,951,680,015
+ * @note proper procedure: read interest factor from contract -> elapse time -> call this to predict balance -> pay_interest() -> compare 
+ * @param interestFactor CURRENT interest factor read from contract before any time has elapsed
+ * @param user starting amount
+ * @returns expected amount after interest is paid
+ */
+ export const changeInBalance = async (interestFactor: BigNumber, amount: BigNumber) => {
+    const totalBaseLiability = await s.VaultController.totalBaseLiability()
+    const protocolFee = await s.VaultController.protocolFee()
+
+    let valueBefore = await truncate(totalBaseLiability.mul(interestFactor))
+
+    const calcInterestFactor = await payInterestMath(interestFactor)
+
+    let valueAfter = await truncate(totalBaseLiability.mul(calcInterestFactor))
+    const protocolAmount = await truncate((valueAfter.sub(valueBefore)).mul(protocolFee))
+
+    const donationAmount = valueAfter.sub(valueBefore).sub(protocolAmount)//wrong
+    const currentTotalSupply = await s.USDI.totalSupply()
+    let newSupply = currentTotalSupply.add(donationAmount)
+
+    //totalGons
+    const totalGons = await s.USDI._totalGons()
+
+    //gpf
+    const startingGPF = totalGons.div(currentTotalSupply)
+    const gpf = totalGons.div(newSupply)
+
+    //calculate balance 
+    //get gon balance - calculate? 
+    const gonBalance = amount.mul(gpf)           //await s.USDI.scaledBalanceOf(user.address)
+
+    const expectedBalance = gonBalance.div(gpf)
+    return expectedBalance
+}
 
 /**
  * @note - need calculatedLiability - the liability at the time of liquidation (after interest is paid and before liquidation is finished)
@@ -127,42 +163,6 @@ export const calculateUSDI2repurchase = async(asset: string, tokens2liquidate:Bi
 }
 
 
-/**
- * @note WIP - TODO: FIX: Actual: 100,000,124,079,046,156,741 predicted: 100,000,309,438,951,680,015
- * @note proper procedure: read interest factor from contract -> elapse time -> call this to predict balance -> pay_interest() -> compare 
- * @param interestFactor CURRENT interest factor read from contract before any time has elapsed
- * @param user starting amount
- * @returns expected amount after interest is paid
- */
-export const changeInBalance = async (interestFactor: BigNumber, amount: BigNumber) => {
-    const totalBaseLiability = await s.VaultController.totalBaseLiability()
-    const protocolFee = await s.VaultController.protocolFee()
-
-    let valueBefore = await truncate(totalBaseLiability.mul(interestFactor))
-
-    const calcInterestFactor = await payInterestMath(interestFactor)
-
-    let valueAfter = await truncate(totalBaseLiability.mul(calcInterestFactor))
-    const protocolAmount = await truncate((valueAfter.sub(valueBefore)).mul(protocolFee))
-
-    const donationAmount = valueAfter.sub(valueBefore).sub(protocolAmount)//wrong
-    const currentTotalSupply = await s.USDI.totalSupply()
-    let newSupply = currentTotalSupply.add(donationAmount)
-
-    //totalGons
-    const totalGons = await s.USDI._totalGons()
-
-    //gpf
-    const startingGPF = totalGons.div(currentTotalSupply)
-    const gpf = totalGons.div(newSupply)
-
-    //calculate balance 
-    //get gon balance - calculate? 
-    const gonBalance = amount.mul(startingGPF)           //await s.USDI.scaledBalanceOf(user.address)
-
-    const expectedBalance = gonBalance.div(gpf)
-    return expectedBalance
-}
 
 /**
  * 
