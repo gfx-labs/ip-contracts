@@ -49,10 +49,14 @@ contract Wave {
     bytes32 public merkleRoot =
         0x0000000000000000000000000000000000000000000000000000000000000000;
 
+    // in units of point token
     uint256 public _totalClaimed;
+    // in units of reward token
     uint256 public _totalReward;
+    // epoch seconcds
     uint256 public _enableTime;
     uint256 public _disableTime;
+    // floor is in usdc terms
     uint256 public _floor;
     address public _receiver;
     event Points(address indexed from, uint256 amount);
