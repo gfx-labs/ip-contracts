@@ -35,11 +35,11 @@ contract CurveMaster is ICurveMaster, Ownable {
   function setVaultController(address vault_master_address) external override onlyOwner {
     _vaultControllerAddress = vault_master_address;
     _VaultController = IVaultController(vault_master_address);
-  
+
   }
+
   function vaultControllerAddress() external view returns (address) {
     return _vaultControllerAddress;
-
   }
 
   function setCurve(address token_address, address curve_address) external override onlyOwner {
