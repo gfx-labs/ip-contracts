@@ -27,3 +27,8 @@ export const Impersonate = async (address: string): Promise<Impersonator> => {
   const o = new Impersonator(address);
   return o.start();
 };
+
+export const stopImpersonate = async (address: string): Promise<Impersonator> => {
+  const o = new Impersonator(address);
+  return o.stop();
+}
