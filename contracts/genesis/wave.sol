@@ -170,7 +170,7 @@ contract Wave {
 
     /// @notice function which sends the reward token
     function giveTo(address target, uint256 amount) internal {
-        bool check = rewardToken.transferFrom(address(this),target, amount);
+        bool check = rewardToken.transfer(target, amount);
         require(check, "erc20 transfer failed");
     }
 
