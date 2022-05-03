@@ -32,7 +32,7 @@ interface IERC20 {
 contract Wave {
   IERC20 public constant pointsToken = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // usdc
 
-  IERC20 public constant rewardToken = IERC20(address(0)); // ipt
+  IERC20 public rewardToken;
 
   mapping(address => uint256) public claimed;
   mapping(address => bool) public redeemed;
@@ -57,7 +57,8 @@ contract Wave {
     uint256 floor,
     uint256 enableTime,
     uint256 disableTime,
-    address receiver
+    address receiver,
+    address _rewardToken
   ) {
     _enableTime = enableTime;
     _disableTime = disableTime;
@@ -65,44 +66,37 @@ contract Wave {
     _totalReward = totalReward; //_totalClaimed = totalReward;
     _receiver = receiver;
     merkleRoot = root;
+    rewardToken = IERC20(_rewardToken);
 
     _totalClaimed = 0;
   }
 
   /// @notice redeem points for token
   function redeem() external {
-    console.log("redeem");
+    console.log("REDEEM BEGIN");
 
     require(canRedeem() == true, "can't redeem yet");
     require(redeemed[msg.sender] == false, "already redeem");
-
-    console.log("requires done");
 
     redeemed[msg.sender] = true;
     uint256 rewardAmount;
     // totalClaimed is in points, so we multiply it by 1e12
     if (_totalClaimed * 1e12 > _totalReward) {
-      console.log("IF");
-
       // remember that _totalClaimed is in points, so we must multiply by 1e12 to get the correct decimal count
       // ratio is less than 1e18, it is a percentage in 1e18 terms
       uint256 ratio = (_totalReward * 1e18) / (_totalClaimed * 1e12);
-      console.log("ratio: ", ratio);
       // that ratio is how many rewardToken each point entitles the redeemer
       // so multiply the senders points by the ratio and divide by 1e18
       rewardAmount = (claimed[msg.sender] * ratio) / 1e18;
     } else {
-      console.log("ELSE");
       // multiply amount claimed by the floor price, then divide.
       // for instance, if the _floor is 500_000, then the redeemer will obtain 0.5 rewardToken per pointToken
       rewardAmount = (claimed[msg.sender] * _floor) / (1_000_000);
     }
 
-    console.log("about to giveTo");
-
     // scale the decimals and send reward token
     giveTo(msg.sender, rewardAmount * 1e12);
-
+    //event? 
     console.log("REDEEM END");
   }
 
@@ -115,7 +109,6 @@ contract Wave {
     uint256 key,
     bytes32[] memory merkleProof
   ) public {
-    console.log("getPoints BEGIN");
 
     require(isEnabled() == true, "not enabled");
     address thisSender = msg.sender;
@@ -130,7 +123,7 @@ contract Wave {
     takeFrom(thisSender, amount);
     emit Points(thisSender, amount);
 
-    console.log("getPoints END");
+
   }
 
   /// @notice validate the proof of a merkle drop claim
