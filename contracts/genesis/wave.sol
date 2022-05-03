@@ -117,6 +117,8 @@ contract Wave {
     console.log("claimVerified");
 
     require((claimed[thisSender] + amount) <= key, "max alloc claimed");
+    console.log("max alloc not claimed");
+
     claimed[thisSender] = claimed[thisSender] + amount;
     _totalClaimed = _totalClaimed + amount;
     takeFrom(thisSender, amount);
