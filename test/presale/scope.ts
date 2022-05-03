@@ -21,8 +21,13 @@ export class TestScope extends MainnetAddresses {
 
     Frank!: SignerWithAddress  // frank holds all IPT from the mint
     Andy!: SignerWithAddress // frank sends andy some ipt
-    Eric!: SignerWithAddress // frank delegates the ipt to eric
     Bob!: SignerWithAddress // whitelisted
+    Carol!: SignerWithAddress  // carol
+    Dave!: SignerWithAddress // Dave
+    Eric!: SignerWithAddress // frank delegates the ipt to eric
+    Gus!: SignerWithAddress // Gus
+    Hector!: SignerWithAddress // Hector
+
 
     constructor() {
         super()
