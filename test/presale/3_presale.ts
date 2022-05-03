@@ -9,6 +9,7 @@ import { currentBlock } from "../../util/block"
 import MerkleTree from "merkletreejs";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { Wave, IERC20__factory } from "../../typechain-types"
+import { red } from "bn.js";
 
 const hre = require("hardhat")
 const { ethers } = hre;
@@ -48,6 +49,8 @@ let whitelist: string[]
 let root: string
 let merkleTree: MerkleTree
 const totalSupply_ = BN("1e26")
+const totalReward = totalSupply_.div(4)
+
 let Wave: Wave
 
 require('chai')
@@ -62,7 +65,6 @@ describe("Deploy wave", () => {
 
         //init constructor args
 
-        const totalClaimed = totalSupply_.div(4)
         const floor = BN("5e5")//500,000 - .5 USDC
         const block = await currentBlock()
         const enableTime = block.timestamp
@@ -71,18 +73,20 @@ describe("Deploy wave", () => {
         //showBody(s.Frank.address)
 
         const waveFactory = await ethers.getContractFactory("Wave")
-        Wave = await waveFactory.deploy(root, totalClaimed, floor, enableTime, disableTime, receiver)
+        Wave = await waveFactory.deploy(root, totalReward, floor, enableTime, disableTime, receiver, s.IPT.address)
         await mineBlock()
         await Wave.deployed()
+        await mineBlock()
+
+        await s.IPT.transfer(Wave.address, totalReward)
         await mineBlock()
     })
     it("Sanity check state of Wave contract", async () => {
         const merkleRoot = await Wave.merkleRoot()
         assert.equal(merkleRoot.toString(), root, "Merkle root is correct")
 
-        const totalClaimed = await Wave._totalClaimed()
-        //showBody(totalClaimed)
-        //assert.equal(totalClaimed.toString(), totalSupply_.div(4).toString(), "Total reward is correct")
+        const claimedTotal = await Wave._totalClaimed()
+        assert.equal(claimedTotal.toString(), "0", "Total claimed is 0 (correct)")
 
         const floor = await Wave._floor()
         assert.equal(floor.toNumber(), BN("5e5").toNumber(), "Floor is correct")
@@ -90,9 +94,14 @@ describe("Deploy wave", () => {
         const receiver = await Wave._receiver()
         assert.equal(receiver, s.Frank.address, "receiver is correct")
 
-        const totalReward = await Wave._totalReward()
-        //showBody("totalReward: ", totalReward)
+        const rewardTotal = await Wave._totalReward()
+        assert.equal(rewardTotal.toString(), totalReward.toString(), "Total reward is correct")
 
+        const IPTaddr = await Wave.rewardToken()
+        assert.equal(IPTaddr, s.IPT.address, "IPT is initialized correctly")
+
+        const WaveIPTbalance = await s.IPT.balanceOf(Wave.address)
+        assert.equal(WaveIPTbalance.toString(), totalReward.toString(), "Wave has the correct amount of IPT")
 
     })
 })
@@ -216,10 +225,33 @@ describe("Presale", () => {
     })
 
     it("redeem", async () => {
+        let startingBobIPT = await s.IPT.balanceOf(s.Bob.address)
+        assert.equal(startingBobIPT.toString(), "0", "Bob holds no IPT before redeem")
+
         const redeemResult = await Wave.connect(s.Bob).redeem()
         await mineBlock()
-
         
+        //check things
+
+        let waveIPT = await s.IPT.balanceOf(Wave.address)
+        let difference = totalReward.sub(waveIPT)
+        showBody("formatDifference: ", utils.formatEther(difference.toString()))
+
+        showBody("Difference: ", difference)
+
+        showBody(keyAmount)
+        showBody((keyAmount.mul(BN("1e12"))).div(2))
+        showBody(amount.mul(5))
+        
+        
+        
+        
+        
+        //assert.equal(waveIPT.toString(), totalReward.sub(keyAmount.mul(BN("1e12"))).toString(), "Wave sent IPT")
+
+
+
+
     })
 
 
