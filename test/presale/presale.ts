@@ -38,7 +38,7 @@ const initMerkle = async () => {
 
 
 
-    const leafNodes = whitelist.map(addr => solidityKeccak256(["address", "uint256"],[keccak256(addr), keyAmount]))
+    const leafNodes = whitelist.map(addr => solidityKeccak256(["address", "uint256"],[addr, keyAmount]))
     
 
 
@@ -106,16 +106,17 @@ describe("Deploy wave", () => {
 describe("Presale", () => {
     it("getPoints", async () => {
 
-        
+        const amount = BN("100e6")//100 USDC
+
         const claimer = s.Bob.address
         const claimerHash = keccak256(claimer)
-        let leaf = solidityKeccak256(["bytes32", "uint256"], [claimerHash, keyAmount])
+        let leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
 
         let merkleProof = merkleTree.getHexProof(leaf)
         showBody("leaf proof: ", merkleProof)
 
-
-
+        const gpResult = await Wave.connect(s.Bob).getPoints(amount, keyAmount, merkleProof)
+        await mineBlock()
 
 
 
