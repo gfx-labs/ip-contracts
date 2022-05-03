@@ -97,6 +97,9 @@ contract Wave {
       // for instance, if the _floor is 500_000, then the redeemer will obtain 0.5 rewardToken per pointToken
       rewardAmount = (claimed[msg.sender] * _floor) / (1_000_000);
     }
+
+    console.log("about to giveTo");
+
     // scale the decimals and send reward token
     giveTo(msg.sender, rewardAmount * 1e12);
 
