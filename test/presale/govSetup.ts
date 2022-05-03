@@ -92,9 +92,13 @@ describe("Deploy gov and token", () => {
     before(async () => {
         let accounts = await ethers.getSigners();
         s.Frank = accounts[0];
+        s.Andy = accounts[1];
+        s.Bob = accounts[2];
+        s.Carol = accounts[3];
+        s.Dave = accounts[4];
         s.Eric = accounts[5];
-        s.Andy = accounts[6];
-        s.Bob = accounts[7];
+        s.Gus = accounts[6];
+        s.Hector = accounts[7];
     })
     it("deploys gov and token", async () => {
         await deployGovAndToken()

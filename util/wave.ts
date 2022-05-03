@@ -23,6 +23,13 @@ export const createTree = (): MerkleTree => {
 };
 
 
+export const treeFromAccount = (accounts: string[]): MerkleTree => {
+  const elements = accounts.map(x => solidityKeccak256(["address"], [x]))
+  const tree = new MerkleTree(elements, hashFn, { sort: true });
+  return tree;
+}
+
+
 export const treeFromObject = (obj: any): MerkleTree => {
   const elements = Object.entries(obj).map(([account, balance]) =>
     solidityKeccak256(
