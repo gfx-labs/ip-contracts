@@ -9,10 +9,7 @@ import { getArgs } from "../../util/math"
 import { stealMoney } from "../../util/money"
 import { BN } from "../../util/number";
 import { currentBlock, advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
-import { Impersonate, stopImpersonate, Impersonator } from "../../util/impersonator"
-import { start } from "repl";
 import { treeFromObject, getAccountProof, createTree, treeFromAccount } from "../../util/wave"
-import { sha256, sha224 } from 'js-sha256';
 import MerkleTree from "merkletreejs";
 
 import { Wave, IERC20__factory } from "../../typechain-types"
@@ -48,6 +45,9 @@ let root: string
 let merkleTree: MerkleTree
 const totalSupply_ = BN("1e26")
 let Wave: Wave
+
+require('chai')
+    .should()
 describe("Deploy wave", () => {
 
     before(async () => {
@@ -98,14 +98,16 @@ describe("Presale", () => {
     const amount = BN("100e6")//100 USDC
     let leaf: string
     let merkleProof: string[]
+    let claimer:string
+
     it("claim some, but less than maximum", async () => {
+        claimer = s.Bob.address
 
         //starting balance is as expected
-        const startBalance = await s.USDC.balanceOf(s.Bob.address)
+        const startBalance = await s.USDC.balanceOf(claimer)
         assert.equal(startBalance.toString(), s.Bob_USDC.toString(), "Bob's starting balance is correct")
 
         //merkle things
-        const claimer = s.Bob.address
         leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
         merkleProof = merkleTree.getHexProof(leaf)
         //showBody("leaf proof: ", merkleProof)
@@ -118,14 +120,14 @@ describe("Presale", () => {
         await mineBlock()
         const gpArgs = await getArgs(gpResult)
         assert.equal(amount.toString(), gpArgs.amount.toString(), "Amount is correct on event receipt")
-        assert.equal(s.Bob.address, gpArgs.from.toString(), "From is correct on event receipt")
+        assert.equal(claimer, gpArgs.from.toString(), "From is correct on event receipt")
 
         //check balance
-        let balance = await s.USDC.balanceOf(s.Bob.address)
+        let balance = await s.USDC.balanceOf(claimer)
         assert.equal(balance.toString(), s.Bob_USDC.sub(amount).toString(), "Bob's ending balance is correct")
 
         //check claimed on contract state
-        let claimedAmount = await Wave.claimed(s.Bob.address)
+        let claimedAmount = await Wave.claimed(claimer)
         assert.equal(claimedAmount.toString(), amount.toString(), "Claimed amount is correct")
 
         let _totalClaimed = await Wave._totalClaimed()
@@ -133,6 +135,41 @@ describe("Presale", () => {
 
     })
     it("Claim maximum", async () => {
+        const fullClaimAmount = amount.mul(4)//should be able to claim 400 more USDC worth 
+        //starting balance is as expected
+        const startBalance = await s.USDC.balanceOf(claimer)
+        assert.equal(startBalance.toString(), s.Bob_USDC.sub(amount).toString(), "Bob's starting balance is correct")
+
+        //approve
+        await s.USDC.connect(s.Bob).approve(Wave.address, fullClaimAmount)
+        await mineBlock()
+
+        const gpResult = await Wave.connect(s.Bob).getPoints(fullClaimAmount, keyAmount, merkleProof)
+        await mineBlock()
+        const gpArgs = await getArgs(gpResult)
+
+        assert.equal(fullClaimAmount.toString(), gpArgs.amount.toString(), "Amount is correct on event receipt")
+        assert.equal(claimer, gpArgs.from.toString(), "From is correct on event receipt")
+
+        //check balance
+        let balance = await s.USDC.balanceOf(claimer)
+        assert.equal(balance.toString(), s.Bob_USDC.div(2).toString(), "Bob's ending balance is correct")
+
+        //check claimed on contract state
+        let claimedAmount = await Wave.claimed(claimer)
+        assert.equal(claimedAmount.toString(), amount.mul(5).toString(), "Claimed amount is correct")
+
+        let _totalClaimed = await Wave._totalClaimed()
+        assert.equal(_totalClaimed.toString(), amount.mul(5).toString(), "_totalClaimed amount is correct")
+    })
+
+    it("try to getPoints after alread getting maximum", async () => {
+        //approve
+        await s.USDC.connect(s.Bob).approve(Wave.address, 10)
+        await mineBlock()
+
+        await expect(Wave.connect(s.Bob).getPoints(10, keyAmount, merkleProof)).to.be.reverted
+        await mineBlock()
         
     })
 
