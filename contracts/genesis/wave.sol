@@ -62,9 +62,11 @@ contract Wave {
     _enableTime = enableTime;
     _disableTime = disableTime;
     _floor = floor;
-    _totalClaimed = totalReward;
+    _totalReward = totalReward; //_totalClaimed = totalReward;
     _receiver = receiver;
     merkleRoot = root;
+
+    _totalClaimed = 0;
   }
 
   /// @notice redeem points for token
@@ -97,6 +99,8 @@ contract Wave {
     }
     // scale the decimals and send reward token
     giveTo(msg.sender, rewardAmount * 1e12);
+
+    console.log("REDEEM END");
   }
 
   /// @notice get points
@@ -108,23 +112,22 @@ contract Wave {
     uint256 key,
     bytes32[] memory merkleProof
   ) public {
-    console.log("getPoints");
+    console.log("getPoints BEGIN");
 
     require(isEnabled() == true, "not enabled");
     address thisSender = msg.sender;
 
     require(verifyClaim(thisSender, key, merkleProof) == true, "invalid proof");
-    console.log("claimVerified");
 
     require((claimed[thisSender] + amount) <= key, "max alloc claimed");
-    console.log("max alloc not claimed");
 
     claimed[thisSender] = claimed[thisSender] + amount;
     _totalClaimed = _totalClaimed + amount;
+    //decrement totalReward? 
     takeFrom(thisSender, amount);
     emit Points(thisSender, amount);
 
-    console.log("getPoints DONE");
+    console.log("getPoints END");
   }
 
   /// @notice validate the proof of a merkle drop claim
@@ -141,21 +144,17 @@ contract Wave {
     return verifyProof(merkleProof, merkleRoot, leaf);
   }
 
-  //pure
   //merkle logic: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/c9bdb1f0ae168e00a942270f2b85d6a7d3293550/contracts/utils/cryptography/MerkleProof.sol
   //MIT: OpenZeppelin Contracts v4.3.2 (utils/cryptography/MerkleProof.sol)
   function verifyProof(
     bytes32[] memory proof,
     bytes32 root,
     bytes32 leaf
-  ) internal view returns (bool) {
+  ) internal pure returns (bool) {
     return processProof(proof, leaf) == root;
   }
 
-  //pure
-  function processProof(bytes32[] memory proof, bytes32 leaf) internal view returns (bytes32) {
-    console.log("processProof");
-
+  function processProof(bytes32[] memory proof, bytes32 leaf) internal pure returns (bytes32) {
     bytes32 computedHash = leaf;
     for (uint256 i = 0; i < proof.length; i++) {
       bytes32 proofElement = proof[i];

@@ -7,7 +7,14 @@ import { BN } from "../../util/number";
 export class TestScope extends MainnetAddresses {
     USDC!: IERC20;
 
+
+    usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
+
     Frank_USDC = BN("1e11")
+    Bob_USDC = BN("1000e6")
+    Andy_USDC = BN("1000e6")
+    Dave_USDC = BN("1000e6")
+
 
     IPT!: InterestProtocolTokenDelegate;
 

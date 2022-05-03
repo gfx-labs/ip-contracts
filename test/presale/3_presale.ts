@@ -6,6 +6,7 @@ import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import { showBody } from "../../util/format";
 import { getArgs } from "../../util/math"
+import { stealMoney } from "../../util/money"
 import { BN } from "../../util/number";
 import { currentBlock, advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
 import { Impersonate, stopImpersonate, Impersonator } from "../../util/impersonator"
@@ -14,13 +15,13 @@ import { treeFromObject, getAccountProof, createTree, treeFromAccount } from "..
 import { sha256, sha224 } from 'js-sha256';
 import MerkleTree from "merkletreejs";
 
-import { Wave } from "../../typechain-types"
+import { Wave, IERC20__factory } from "../../typechain-types"
 
 //const merkleWallets = require("../data/data.json")
 const data = require("../data/data.json")
 //const merkletree = createTree();
 
-
+//amount of IPT that is to be allocated
 const keyAmount = BN("500e6")//500 USDC
 
 const initMerkle = async () => {
@@ -35,20 +36,10 @@ const initMerkle = async () => {
         s.Gus.address,
         s.Hector.address
     ]
-
-
-
-    const leafNodes = whitelist.map(addr => solidityKeccak256(["address", "uint256"],[addr, keyAmount]))
-    
-
-
-
+    const leafNodes = whitelist.map(addr => solidityKeccak256(["address", "uint256"], [addr, keyAmount]))
     merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true })
     root = merkleTree.getHexRoot()
 
-    //merkletree = treeFromAccount(whitelist)
-
-    //showBody(merkleTree.toString())
 }
 
 
@@ -87,7 +78,7 @@ describe("Deploy wave", () => {
 
         const totalClaimed = await Wave._totalClaimed()
         //showBody(totalClaimed)
-        assert.equal(totalClaimed.toString(), totalSupply_.div(4).toString(), "Total reward is correct")
+        //assert.equal(totalClaimed.toString(), totalSupply_.div(4).toString(), "Total reward is correct")
 
         const floor = await Wave._floor()
         assert.equal(floor.toNumber(), BN("5e5").toNumber(), "Floor is correct")
@@ -104,22 +95,45 @@ describe("Deploy wave", () => {
 
 
 describe("Presale", () => {
-    it("getPoints", async () => {
+    const amount = BN("100e6")//100 USDC
+    let leaf: string
+    let merkleProof: string[]
+    it("claim some, but less than maximum", async () => {
 
-        const amount = BN("100e6")//100 USDC
+        //starting balance is as expected
+        const startBalance = await s.USDC.balanceOf(s.Bob.address)
+        assert.equal(startBalance.toString(), s.Bob_USDC.toString(), "Bob's starting balance is correct")
 
+        //merkle things
         const claimer = s.Bob.address
-        const claimerHash = keccak256(claimer)
-        let leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
+        leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
+        merkleProof = merkleTree.getHexProof(leaf)
+        //showBody("leaf proof: ", merkleProof)
 
-        let merkleProof = merkleTree.getHexProof(leaf)
-        showBody("leaf proof: ", merkleProof)
+        //approve
+        await s.USDC.connect(s.Bob).approve(Wave.address, amount)
+        await mineBlock()
 
         const gpResult = await Wave.connect(s.Bob).getPoints(amount, keyAmount, merkleProof)
         await mineBlock()
+        const gpArgs = await getArgs(gpResult)
+        assert.equal(amount.toString(), gpArgs.amount.toString(), "Amount is correct on event receipt")
+        assert.equal(s.Bob.address, gpArgs.from.toString(), "From is correct on event receipt")
 
+        //check balance
+        let balance = await s.USDC.balanceOf(s.Bob.address)
+        assert.equal(balance.toString(), s.Bob_USDC.sub(amount).toString(), "Bob's ending balance is correct")
 
+        //check claimed on contract state
+        let claimedAmount = await Wave.claimed(s.Bob.address)
+        assert.equal(claimedAmount.toString(), amount.toString(), "Claimed amount is correct")
 
+        let _totalClaimed = await Wave._totalClaimed()
+        assert.equal(_totalClaimed.toString(), amount.toString(), "_totalClaimed amount is correct")
+
+    })
+    it("Claim maximum", async () => {
+        
     })
 
     it("redeem before time has elapsed", async () => {
