@@ -1,18 +1,22 @@
 import { s } from "./scope";
-import { ethers } from "hardhat";
-import { BigNumber, utils } from "ethers";
-import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
-
-import { expect, assert } from "chai";
-import { showBody } from "../../util/format";
-import { getArgs } from "../../util/math"
-import { stealMoney } from "../../util/money"
+//import { expect, assert } from "chai";
+import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
-import { currentBlock, advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
-import { treeFromObject, getAccountProof, createTree, treeFromAccount } from "../../util/wave"
+import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
+import { utils, BigNumber } from "ethers";
+import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculatetokensToLiquidate, calculateUSDI2repurchase, changeInBalance } from "../../util/math";
+import { currentBlock } from "../../util/block"
 import MerkleTree from "merkletreejs";
-
+import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { Wave, IERC20__factory } from "../../typechain-types"
+
+const hre = require("hardhat")
+const { ethers } = hre;
+const chai = require("chai");
+
+const { solidity } = require("ethereum-waffle");
+chai.use(solidity);
+const { expect, assert } = chai;
 
 //const merkleWallets = require("../data/data.json")
 const data = require("../data/data.json")
@@ -39,7 +43,7 @@ const initMerkle = async () => {
 
 }
 
-
+let disableTime:number
 let whitelist: string[]
 let root: string
 let merkleTree: MerkleTree
@@ -62,7 +66,7 @@ describe("Deploy wave", () => {
         const floor = BN("5e5")//500,000 - .5 USDC
         const block = await currentBlock()
         const enableTime = block.timestamp
-        const disableTime = enableTime + OneWeek
+        disableTime = enableTime + OneWeek
         const receiver = s.Frank.address
         //showBody(s.Frank.address)
 
@@ -165,15 +169,61 @@ describe("Presale", () => {
 
     it("try to getPoints after alread getting maximum", async () => {
         //approve
-        await s.USDC.connect(s.Bob).approve(Wave.address, 10)
+        const tinyAmount = 1 //1e-18 IPT
+        await s.USDC.connect(s.Bob).approve(Wave.address, tinyAmount)
         await mineBlock()
 
-        await expect(Wave.connect(s.Bob).getPoints(10, keyAmount, merkleProof)).to.be.reverted
+        //await expect(Wave.connect(s.Bob).getPoints(10, keyAmount, merkleProof)).to.be.reverted
+
+        const pointsResult = await Wave.connect(s.Bob).getPoints(tinyAmount, keyAmount, merkleProof)
         await mineBlock()
-        
+        await expect(pointsResult.wait()).to.be.reverted
+
+        //todo check state before revert
     })
 
     it("redeem before time has elapsed", async () => {
+        let canRedeem = await Wave.canRedeem()
+        assert.equal(canRedeem, false, "canRedeem is false")
+
+        let redeemed = await Wave.redeemed(s.Bob.address)
+        assert.equal(redeemed, false, "Bob has not redeemed yet")
+
+
+        const redeemResult = await Wave.connect(s.Bob).redeem()
+        await mineBlock()
+        await expect(redeemResult.wait()).to.be.reverted
+
+
+    })
+
+    it("elapse time", async () => {
+        await fastForward(OneWeek)
+        await mineBlock()
+
+        //check things
+        const block = await currentBlock()
+        const currentTime = block.timestamp
+
+        //time is now past disable time
+        expect(currentTime).to.be.gt(disableTime)
+
+        let canRedeem = await Wave.canRedeem()
+        assert.equal(canRedeem, true, "canRedeem is now true")
+
+        let redeemed = await Wave.redeemed(s.Bob.address)
+        assert.equal(redeemed, false, "Bob has not redeemed yet")
+    })
+
+    it("redeem", async () => {
+        const redeemResult = await Wave.connect(s.Bob).redeem()
+        await mineBlock()
+
+        
+    })
+
+
+    it("screatch", async () => {
         /**
          * 
          * 
