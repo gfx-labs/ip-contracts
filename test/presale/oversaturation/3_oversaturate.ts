@@ -95,7 +95,7 @@ describe("Deploy wave", () => {
         assert.equal(floor.toNumber(), BN("5e5").toNumber(), "Floor is correct")
 
         const receiver = await Wave._receiver()
-        assert.equal(receiver, s.Frank.address, "receiver is correct")
+        assert.equal(receiver, s.Carol.address, "receiver is correct")
 
         const rewardTotal = await Wave._totalReward()
         assert.equal(rewardTotal.toString(), totalReward.toString(), "Total reward is correct")
@@ -110,7 +110,7 @@ describe("Deploy wave", () => {
 })
 
 
-describe("Presale", () => {
+describe("Presale - OVERSATURATION", () => {
     let leaf: string
     let merkleProof: string[]
     let claimer:string
@@ -262,14 +262,25 @@ describe("Presale", () => {
         assert.equal(redeemed, false, "Bob has not redeemed yet")
     })
 
+    it("Admin should not be able to claim any IPT due to claim saturation", async () => {
+        const startingCarolIPT = await s.IPT.balanceOf(s.Carol.address)
+        assert.equal(startingCarolIPT.toString(), "0", "Carol holds 0 IPT")
+
+        //withdraw
+        const withdrawResult = await Wave.connect(s.Carol).withdraw()
+        await mineBlock()
+        await expect(withdrawResult.wait()).to.be.reverted
+
+        const EndingCarolIPT = await s.IPT.balanceOf(s.Carol.address)
+        assert.equal(EndingCarolIPT.toString(), "0", "Carol did not receive any IPT")
+    })
+
     it("Bob redeems and receives pro-rata share, Carol has not redeemed yet", async () => {
         let startingBobIPT = await s.IPT.balanceOf(s.Bob.address)
         assert.equal(startingBobIPT.toString(), "0", "Bob holds no IPT before redeem")
 
-
         const redeemResult = await Wave.connect(s.Bob).redeem()
         await mineBlock()
-
         
         //check things
         let waveIPT = await s.IPT.balanceOf(Wave.address)
@@ -303,4 +314,8 @@ describe("Presale", () => {
 
         //todo calc floor price
     })
+
+
+    
+
 })

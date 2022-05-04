@@ -110,7 +110,7 @@ describe("Deploy wave", () => {
 })
 
 
-describe("Presale", () => {
+describe("Presale - UNDERSATURATION", () => {
     let leaf: string
     let merkleProof: string[]
     let claimer: string
@@ -222,6 +222,7 @@ describe("Presale", () => {
     })
 
     /**
+     * ADMIN SHOULD ONLY BE ABLE TO WITHDRAW UNCLAIMED IPT
      * starting IPT is 300e18
      * bob claims with amount: 100e6 USDC
      * _totalClaimed becomes 100e6 (represents points)
@@ -246,7 +247,6 @@ describe("Presale", () => {
 
         let waveIPT = await s.IPT.balanceOf(Wave.address)
         assert.equal(waveIPT.toString(), "0", "Wave contract no longer holds any IPT")
-
     })
 
 
