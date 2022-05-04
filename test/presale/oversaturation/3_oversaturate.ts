@@ -72,7 +72,7 @@ describe("Deploy wave", () => {
         const block = await currentBlock()
         const enableTime = block.timestamp
         disableTime = enableTime + OneWeek
-        const receiver = s.Frank.address
+        const receiver = s.Carol.address
         //showBody(s.Frank.address)
 
         const waveFactory = await ethers.getContractFactory("Wave")

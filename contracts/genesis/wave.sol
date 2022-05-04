@@ -42,6 +42,7 @@ contract Wave {
   // in units of point token
   uint256 public _totalClaimed;
   // in units of reward token
+  //NOTE this must match exactly the amount of reward tokens sent to the contract at the start, otherwise reward tokens will be stuck here
   uint256 public _totalReward;
   // epoch seconcds
   uint256 public _enableTime;
@@ -49,6 +50,7 @@ contract Wave {
   // floor is in usdc terms
   uint256 public _floor;
   address public _receiver;
+
   event Points(address indexed from, uint256 amount);
 
   constructor(
@@ -154,6 +156,16 @@ contract Wave {
       }
     }
     return computedHash;
+  }
+
+  ///@notice sends all unclaimed reward tokens to the receiver
+  function withdraw() external {
+    require(msg.sender == _receiver, "Only Receiver");
+    require(block.timestamp > _disableTime, "wait for disable time");
+    require(_totalClaimed * 1e12 < _totalReward, "Saturation reached");
+
+    uint256 amount = _totalReward - (((_totalClaimed * _floor) / 1e6) * 1e12);
+    giveTo(_receiver, amount);
   }
 
   /// @notice function which transfer the point token

@@ -43,7 +43,7 @@ const initMerkle = async () => {
 
 }
 
-let disableTime:number
+let disableTime: number
 let whitelist: string[]
 let root: string
 let merkleTree: MerkleTree
@@ -68,11 +68,11 @@ describe("Deploy wave", () => {
 
         //init constructor args
 
-        
+
         const block = await currentBlock()
         const enableTime = block.timestamp
         disableTime = enableTime + OneWeek
-        const receiver = s.Frank.address
+        const receiver = s.Carol.address
         //showBody(s.Frank.address)
 
         const waveFactory = await ethers.getContractFactory("Wave")
@@ -95,7 +95,7 @@ describe("Deploy wave", () => {
         assert.equal(floor.toNumber(), BN("5e5").toNumber(), "Floor is correct")
 
         const receiver = await Wave._receiver()
-        assert.equal(receiver, s.Frank.address, "receiver is correct")
+        assert.equal(receiver, s.Carol.address, "receiver is correct")
 
         const rewardTotal = await Wave._totalReward()
         assert.equal(rewardTotal.toString(), totalReward.toString(), "Total reward is correct")
@@ -113,8 +113,8 @@ describe("Deploy wave", () => {
 describe("Presale", () => {
     let leaf: string
     let merkleProof: string[]
-    let claimer:string
-    after(async() => {
+    let claimer: string
+    after(async () => {
         await reset(0)
     })
     it("Bob claims some, but less than maximum", async () => {
@@ -140,6 +140,10 @@ describe("Presale", () => {
         assert.equal(claimer, gpArgs.from.toString(), "From is correct on event receipt")
 
         //check balance
+
+        let receiverUSDC = await s.USDC.balanceOf(s.Carol.address)
+        assert.equal(receiverUSDC.toString(), amount.toString(), "Receiver received the USDC proceeds from the claim")
+
         let balance = await s.USDC.balanceOf(claimer)
         assert.equal(balance.toString(), s.Bob_USDC.sub(amount).toString(), "Bob's ending balance is correct")
 
@@ -150,7 +154,7 @@ describe("Presale", () => {
         let _totalClaimed = await Wave._totalClaimed()
         assert.equal(_totalClaimed.toString(), amount.toString(), "_totalClaimed amount is correct")
 
-    })    
+    })
 
     it("redeem before time has elapsed", async () => {
         let canRedeem = await Wave.canRedeem()
@@ -214,9 +218,64 @@ describe("Presale", () => {
 
         assert.equal(startingBobIPT.toString(), balance.toString(), "Balances have not changed")
 
-        
+
+    })
+
+    /**
+     * starting IPT is 300e18
+     * bob claims with amount: 100e6 USDC
+     * _totalClaimed becomes 100e6 (represents points)
+     * claimed[bob] becomes 100e6 (no other claims have happened here)
+     * this entitles him to 50e18 IPT with floor == 5e5 (.5 USDC)
+     * 250e18 remain unclaimed at the end of the claim period
+     * carol should withdraw and end with 250e18 IPT
+     * Wave should end with 0 IPT
+     * 
+     * 
+     * 
+     * totalReward is 300e18 IPT tokens
+     * need to do totalReward - (totalClaimed * floor) -> (scaled to e18) 
+     * resulting in 300e18 - ((100e6 * 5e5) * 1e12)
+     * result should be 250e18 and sent to carols
+     * 
+     */
+    it("Checks admin withdraw at the end of claim period", async () => {
+
+        let bobIPT = await s.IPT.balanceOf(s.Bob.address)
+        showBody("Bob IPT: ", utils.formatEther(bobIPT.toString()))
+
+
+        let carolIPTinit = await s.IPT.balanceOf(s.Carol.address)
+        //const expectedAmount = amount.mul(BN("1e12"))
+        let waveIPT = await s.IPT.balanceOf(Wave.address)
+        showBody("Begin wave IPT: ", waveIPT.toString())
+
+
+        let totalClaimed = await Wave._totalClaimed()
+        let scaledTC = totalClaimed.mul(BN("1e12"))
+        showBody("totalClaimed: ", totalClaimed)
+        showBody("scaled TC   : ", scaledTC)
+
+
+
+        //withdraw
+        showBodyCyan("WITHDRAW")
+        const withdrawResult = await Wave.connect(s.Carol).withdraw()
+        await mineBlock()
+
+
+
+
+
+        let carolEndIPT = await s.IPT.balanceOf(s.Carol.address)
+
+        showBody("carolEndIPT: ", carolEndIPT)
+
+        waveIPT = await s.IPT.balanceOf(Wave.address)
+        showBody("End wave IPT: ", waveIPT.toString())
+
     })
 
 
-   
+
 })
