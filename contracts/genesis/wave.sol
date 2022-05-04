@@ -42,7 +42,7 @@ contract Wave {
   // in units of point token
   uint256 public _totalClaimed;
   // in units of reward token
-  uint256 public _totalReward; //BUG? not initialized - should be init from totalReward in Constructor arg?
+  uint256 public _totalReward;
   // epoch seconcds
   uint256 public _enableTime;
   uint256 public _disableTime;
@@ -82,6 +82,7 @@ contract Wave {
     uint256 rewardAmount;
     // totalClaimed is in points, so we multiply it by 1e12
     if (_totalClaimed * 1e12 > _totalReward) {
+      console.log("IF");
       // remember that _totalClaimed is in points, so we must multiply by 1e12 to get the correct decimal count
       // ratio is less than 1e18, it is a percentage in 1e18 terms
       uint256 ratio = (_totalReward * 1e18) / (_totalClaimed * 1e12);
@@ -89,13 +90,14 @@ contract Wave {
       // so multiply the senders points by the ratio and divide by 1e18
       rewardAmount = (claimed[msg.sender] * ratio) / 1e18;
     } else {
+      console.log("ELSE");
       // multiply amount claimed by the floor price, then divide.
       // for instance, if the _floor is 500_000, then the redeemer will obtain 0.5 rewardToken per pointToken
       rewardAmount = (claimed[msg.sender] * _floor) / (1_000_000);
     }
     // scale the decimals and send reward token
     giveTo(msg.sender, rewardAmount * 1e12);
-    //event? 
+    //event?
     console.log("REDEEM END");
   }
 
@@ -108,7 +110,6 @@ contract Wave {
     uint256 key,
     bytes32[] memory merkleProof
   ) public {
-
     require(isEnabled() == true, "not enabled");
     address thisSender = msg.sender;
 
@@ -118,11 +119,9 @@ contract Wave {
 
     claimed[thisSender] = claimed[thisSender] + amount;
     _totalClaimed = _totalClaimed + amount;
-    //decrement totalReward? 
+    //decrement totalReward?
     takeFrom(thisSender, amount);
     emit Points(thisSender, amount);
-
-
   }
 
   /// @notice validate the proof of a merkle drop claim
