@@ -24,7 +24,6 @@ const data = require("../data/data.json")
 //const merkletree = createTree();
 
 //amount of IPT that is to be allocated
-const keyAmount = BN("500e6")//500 USDC
 
 const initMerkle = async () => {
     //8 accunts to make a simple merkle tree
@@ -48,8 +47,11 @@ let disableTime:number
 let whitelist: string[]
 let root: string
 let merkleTree: MerkleTree
+const keyAmount = BN("500e6")//500 USDC
+const floor = BN("5e5")//500,000 - .5 USDC
+const amount = BN("100e6")//100 USDC
 const totalSupply_ = BN("1e26")
-const totalReward = totalSupply_.div(4)
+const totalReward = BN("250e18")//250 IPT tokens //totalSupply_.div(4)
 
 let Wave: Wave
 
@@ -65,7 +67,7 @@ describe("Deploy wave", () => {
 
         //init constructor args
 
-        const floor = BN("5e5")//500,000 - .5 USDC
+        
         const block = await currentBlock()
         const enableTime = block.timestamp
         disableTime = enableTime + OneWeek
@@ -108,7 +110,6 @@ describe("Deploy wave", () => {
 
 
 describe("Presale", () => {
-    const amount = BN("100e6")//100 USDC
     let leaf: string
     let merkleProof: string[]
     let claimer:string
@@ -194,16 +195,13 @@ describe("Presale", () => {
     it("redeem before time has elapsed", async () => {
         let canRedeem = await Wave.canRedeem()
         assert.equal(canRedeem, false, "canRedeem is false")
-
+        
         let redeemed = await Wave.redeemed(s.Bob.address)
         assert.equal(redeemed, false, "Bob has not redeemed yet")
-
 
         const redeemResult = await Wave.connect(s.Bob).redeem()
         await mineBlock()
         await expect(redeemResult.wait()).to.be.reverted
-
-
     })
 
     it("elapse time", async () => {
@@ -224,38 +222,36 @@ describe("Presale", () => {
         assert.equal(redeemed, false, "Bob has not redeemed yet")
     })
 
-    it("redeem", async () => {
+    it("redeem all of the IPT available", async () => {
         let startingBobIPT = await s.IPT.balanceOf(s.Bob.address)
         assert.equal(startingBobIPT.toString(), "0", "Bob holds no IPT before redeem")
 
+        let WaveIPTbalance = await s.IPT.balanceOf(Wave.address)
+        showBody("WaveIPTbalance before: ", WaveIPTbalance)
+
         const redeemResult = await Wave.connect(s.Bob).redeem()
         await mineBlock()
+
+        WaveIPTbalance = await s.IPT.balanceOf(Wave.address)
+        showBody("WaveIPTbalance after : ", WaveIPTbalance)
         
         //check things
-
         let waveIPT = await s.IPT.balanceOf(Wave.address)
         let difference = totalReward.sub(waveIPT)
-        showBody("formatDifference: ", utils.formatEther(difference.toString()))
+        const expectedPoints = (keyAmount.mul(floor)).div(BN("1e6"))        
+        let balance = await s.IPT.balanceOf(s.Bob.address)
+        showBody("Bob end IPT: ", balance)
+        assert.equal(difference.toString(), balance.toString(), "Bob received IPT in the correct amount")    
 
-        showBody("Difference: ", difference)
+        //showBody(difference)
+        //showBody(expectedPoints)
 
-        showBody(keyAmount)
-        showBody((keyAmount.mul(BN("1e12"))).div(2))
-        showBody(amount.mul(5))
-        
-        
-        
-        
-        
-        //assert.equal(waveIPT.toString(), totalReward.sub(keyAmount.mul(BN("1e12"))).toString(), "Wave sent IPT")
-
-
-
-
+        assert.equal(waveIPT.toString(), "0", "Wave spent all of it's IPT")
+        //assert.equal(difference.toString(), expectedPoints.mul(BN("1e12")).toString(), "Wave sent IPT in the correct amount")
     })
 
 
-    it("screatch", async () => {
+    it("redeem when over subscribed", async () => {
         /**
          * 
          * 
