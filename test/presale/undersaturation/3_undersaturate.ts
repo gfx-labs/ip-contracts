@@ -227,52 +227,25 @@ describe("Presale", () => {
      * _totalClaimed becomes 100e6 (represents points)
      * claimed[bob] becomes 100e6 (no other claims have happened here)
      * this entitles him to 50e18 IPT with floor == 5e5 (.5 USDC)
-     * 250e18 remain unclaimed at the end of the claim period
-     * carol should withdraw and end with 250e18 IPT
+     * 250e18 IPT remain unclaimed at the end of the claim period
+     * carol should withdraw and end with all 250e18 IPT
      * Wave should end with 0 IPT
-     * 
-     * 
-     * 
-     * totalReward is 300e18 IPT tokens
-     * need to do totalReward - (totalClaimed * floor) -> (scaled to e18) 
-     * resulting in 300e18 - ((100e6 * 5e5) * 1e12)
-     * result should be 250e18 and sent to carols
-     * 
      */
     it("Checks admin withdraw at the end of claim period", async () => {
 
-        let bobIPT = await s.IPT.balanceOf(s.Bob.address)
-        showBody("Bob IPT: ", utils.formatEther(bobIPT.toString()))
-
-
-        let carolIPTinit = await s.IPT.balanceOf(s.Carol.address)
-        //const expectedAmount = amount.mul(BN("1e12"))
-        let waveIPT = await s.IPT.balanceOf(Wave.address)
-        showBody("Begin wave IPT: ", waveIPT.toString())
-
-
-        let totalClaimed = await Wave._totalClaimed()
-        let scaledTC = totalClaimed.mul(BN("1e12"))
-        showBody("totalClaimed: ", totalClaimed)
-        showBody("scaled TC   : ", scaledTC)
-
-
-
         //withdraw
-        showBodyCyan("WITHDRAW")
         const withdrawResult = await Wave.connect(s.Carol).withdraw()
         await mineBlock()
 
-
-
-
+        //check things
+        const totalClaimed = await Wave._totalClaimed()
+        const expectedAmount = totalReward.sub(((totalClaimed.mul(floor).div(BN("1e6")))).mul(BN("1e12")))
 
         let carolEndIPT = await s.IPT.balanceOf(s.Carol.address)
+        assert.equal(carolEndIPT.toString(), expectedAmount.toString(), "Carol now holds all of the unclaimed IPT")
 
-        showBody("carolEndIPT: ", carolEndIPT)
-
-        waveIPT = await s.IPT.balanceOf(Wave.address)
-        showBody("End wave IPT: ", waveIPT.toString())
+        let waveIPT = await s.IPT.balanceOf(Wave.address)
+        assert.equal(waveIPT.toString(), "0", "Wave contract no longer holds any IPT")
 
     })
 
