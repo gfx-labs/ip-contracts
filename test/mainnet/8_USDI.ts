@@ -2,7 +2,7 @@ import { s } from "./scope";
 import { ethers } from "hardhat";
 import { BigNumber, utils } from "ethers";
 import { expect, assert } from "chai";
-import { getGas, getArgs, changeInBalance} from "../../util/math"
+import { getGas, getArgs, changeInBalance, payInterestMath, calculateBalance} from "../../util/math"
 import { stealMoney } from "../../util/money";
 import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
@@ -131,25 +131,32 @@ describe("TESTING USDI CONTRACT", async () => {
     });
 
     it("check interest generation rate", async () => {
+        await mineBlock()
+        await s.VaultController.calculateInterest()
+        await advanceBlockHeight(1)
         const startingBalance = await s.USDI.balanceOf(s.Dave.address)
-        showBody("Dave starting balance: ", utils.formatEther(startingBalance.toString()))
         const startingIF = await s.VaultController.interestFactor()
+        const calcIF = await payInterestMath(startingIF)
 
 
         //elapse time
-        //showBody("advance 1 week and then calculate interest")
-        await fastForward(OneWeek)
+        //showBody("advance 5 weeks and then calculate interest")
+        await fastForward(OneWeek * 5)
         await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
 
         let expectedBalance = await changeInBalance(startingIF, startingBalance)
+        let calcedBalance = await calculateBalance(startingIF, s.Dave)
 
 
-
+        let actualIF = await s.VaultController.interestFactor()
+        //showBody("Actual IF: ", actualIF)
 
         let endBalance = await s.USDI.balanceOf(s.Dave.address)
-        showBody("Dave ending  balance: ", utils.formatEther(endBalance.toString()))
-        showBody("Dave expectedBalance: ", utils.formatEther(expectedBalance.toString()))
+        //showBody("Dave starting balance      : ", utils.formatEther(startingBalance.toString()))
+        //showBody("Dave Calced ending  balance: ", utils.formatEther(calcedBalance.toString()))
+        //showBody("Dave expectedBalance       : ", utils.formatEther(expectedBalance.toString()))
+        //showBody("Dave ACTUAL ending  balance: ", utils.formatEther(endBalance.toString()))
 
 
     })
