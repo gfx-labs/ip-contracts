@@ -23,7 +23,7 @@ const config: HardhatUserConfig = {
                 blockNumber: 14546835
             },
             mining: {
-                auto: true,
+                auto: false,
             },
         },
         ropsten: {

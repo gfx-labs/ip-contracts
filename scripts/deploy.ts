@@ -1,7 +1,8 @@
 import { getContractFactory } from "@nomiclabs/hardhat-ethers/types";
 import { BN } from "../util/number";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-const { ethers, upgrades } = require("hardhat");
+const { ethers, network, upgrades } = require("hardhat");
 
 
 
@@ -212,14 +213,113 @@ const deployProtocol = async () => {
     console.log("USDI protocol contracts deployed!")
 }
 
-async function main() {
-
-    await deployProtocol()
-
-
+const deployCharlie = async (deployer:SignerWithAddress) => {
     console.log("Deploying governance...")
 
 
+    let txCount = await deployer.getTransactionCount()
+    //console.log("tx count: "+txCount)
+    const futureAddressOne = ethers.utils.getContractAddress({from:deployer.address ,nonce: txCount})
+    //address one is the token delegate
+    //console.log("futureAddressOne: "+futureAddressOne)
+    const futureAddressTwo = ethers.utils.getContractAddress({from:deployer.address,nonce: txCount+1})
+    //address two is the token delegator
+    //console.log("futureAddressTwo: "+futureAddressTwo)
+    const futureAddressThree = ethers.utils.getContractAddress({from:deployer.address,nonce: txCount+2})
+    //address three is the gov delegate
+    //console.log("futureAddressThree: "+futureAddressThree)
+    const futureAddressFour = ethers.utils.getContractAddress({from:deployer.address,nonce: txCount+3})
+
+    const ipt_ = futureAddressTwo;
+    const Govimplementation_ = futureAddressThree;
+    const owner_ = futureAddressFour
+
+    let proxyAdminFactory = await ethers.getContractFactory("ProxyAdmin")
+    const transparentFactory = await ethers.getContractFactory("TransparentUpgradeableProxy")
+
+    //Proxy admin
+    let proxyAdmin = await proxyAdminFactory.deploy()
+    await proxyAdmin.deployed()
+    console.log("proxyAdmin address: ", proxyAdmin.address)
+
+    //VaultController implementation
+    const InterestProtocolTokenDelegateFactory = await ethers.getContractFactory("InterestProtocolTokenDelegate")
+    const uIPTd = await InterestProtocolTokenDelegateFactory.deploy()
+    await uIPTd.deployed()
+    console.log("InterestProtocolTokenDelegate implementation address: ", uIPTd.address)
+
+    //InterestProtocolTokenDelegate proxy
+    const InterestProtocolTokenDelegate = await transparentFactory.deploy(uIPTd.address, proxyAdmin.address, "0x")
+    await InterestProtocolTokenDelegate.deployed()
+    console.log("InterestProtocolTokenDelegate proxy address: ", InterestProtocolTokenDelegate.address)
+
+    //attach
+    const IPTdelegate = InterestProtocolTokenDelegateFactory.attach(InterestProtocolTokenDelegate.address)
+    //await IPTdelegate.initialize()
+    //console.log("IPT token delegate initialized: ", IPTdelegate.address)
+
+    await sleep(3000)
+
+    console.log("Deploying IPT...")
+
+    const totalSupplyReceiver_ = deployer.address
+    const TokenImplementation_ = IPTdelegate.address
+    const totalSupply_ = BN("1e26")
+
+    const IPTfactory = await ethers.getContractFactory("InterestProtocolToken")
+    const IPT = await IPTfactory.deploy(
+        totalSupplyReceiver_,
+        owner_,
+        TokenImplementation_,
+        totalSupply_
+    )
+    await IPT.deployed()
+    console.log("IPT deployed: ", IPT.address)
+    let owner = await IPT.owner()
+    console.log("IPT owner: ", owner)
+
+    console.log("Deploying GovernorCharlieDelegator...")
+
+    const votingPeriod_ = BN("19710")
+    const votingDelay_ = BN("13140")
+    const proposalThreshold_ = BN("250000000000000000000000")
+    const proposalTimelockDelay_ = BN("172800")
+    const quorumVotes_ = BN("50000000000000000000000000")
+    const emergencyQuorumVotes_ = BN("50000000000000000000000000")
+    const emergencyVotingPeriod_ = BN("6570")
+    const emergencyTimelockDelay_ = BN("86400")
+
+    const charlieFactory = await ethers.getContractFactory("GovernorCharlieDelegator")
+    const charlie = await charlieFactory.deploy(
+        ipt_,
+        Govimplementation_,
+        votingPeriod_,
+        votingDelay_,
+        proposalThreshold_,
+        proposalTimelockDelay_,
+        quorumVotes_,
+        emergencyQuorumVotes_,
+        emergencyVotingPeriod_,
+        emergencyTimelockDelay_
+    )
+    await charlie.deployed()
+    console.log("Charlie Deployed: ", charlie.address)
+}
+
+async function main() {
+
+    //enable this for testing on hardhat network, disable for testnet/mainnet deploy
+    await network.provider.send("evm_setAutomine", [true])
+    
+    const accounts = await ethers.getSigners()
+    const deployer = accounts[0]
+
+    console.log("Deployer: ", deployer.address)
+
+    await deployProtocol()
+    await deployCharlie(deployer)
+
+    console.log("Contracts deployed")
 }
 
 main()
