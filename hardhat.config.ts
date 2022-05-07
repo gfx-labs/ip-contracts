@@ -9,6 +9,10 @@ import "@typechain/hardhat";
 import "hardhat-docgen"
 
 import { HardhatUserConfig } from "hardhat/types";
+import * as dotenv from "dotenv";
+
+dotenv.config();
+
 
 const config: HardhatUserConfig = {
     defaultNetwork: "hardhat",
@@ -23,8 +27,12 @@ const config: HardhatUserConfig = {
             },
         },
         ropsten: {
-            url: "http://ropsten.rpc.gfx.xyz",
-            gasPrice: 2000000000,
+            url: process.env.ROPSTEN_URL,
+            accounts:[process.env.ROPSTEN_PRIVATE_KEY!],
+            chainId: 3,       // Ropsten's id
+            gas: 8000000,        // Ropsten has a lower block limit than mainnet
+            gasPrice: 53000000000
+            //gasPrice: 2000000000,
         },
         localhost: {
             url: "http://localhost:8545",
@@ -44,8 +52,8 @@ const config: HardhatUserConfig = {
             tasks: ["compile"],
         },
         test: {//npx hardhat watch test -- run test when a file is saved
-            tasks: [{ command: 'test', params: { testFiles: ['./test/presale/index.ts'] } }], //test this file
-            files: ['./test/presale/*'] //test when this file is saved
+            tasks: [{ command: 'test', params: { testFiles: ['./test/mainnet/index.ts'] } }], //test this file
+            files: ['./test/mainnet/*'] //test when this file is saved
         }
     },
     paths: {

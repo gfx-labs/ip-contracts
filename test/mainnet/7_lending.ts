@@ -808,6 +808,47 @@ describe("Testing remaining vault functions", () => {
         await expect(s.CarolVault.connect(s.Carol).withdrawErc20(s.compAddress, withdrawAmount)).to.be.revertedWith("over-withdrawal")
         await mineBlock()
     })
+
+    it("make and borrow from a second vault", async () => {
+        balance = await s.COMP.balanceOf(s.Carol.address)
+        assert.equal(balance.toString(), utils.parseEther("1").toString(), "Carol has 1 comp")
+
+        //mint second vault
+        await expect(s.VaultController.connect(s.Carol).mintVault()).to.not.reverted;
+        await mineBlock();
+        const newVaultID = await s.VaultController.vaultsMinted()
+        let newV = await s.VaultController.vaultAddress(newVaultID)
+        const newVault = IVault__factory.connect(
+            newV,
+            s.Carol,
+        );
+        expect(await newVault.minter()).to.eq(s.Carol.address)
+
+        //transfer 1 comp to vault
+        await expect(s.COMP.connect(s.Carol).transfer(newVault.address, balance)).to.not.reverted;
+        await mineBlock()
+        AccountLiability = await s.VaultController.accountLiability(newVaultID)
+        borrowPower = await s.VaultController.accountBorrowingPower(newVaultID)
+        
+        assert.equal(AccountLiability.toString(), "0", "New vault has 0 liability")
+
+        let anchorPrice = (await s.UniswapRelayCompUsdc.currentValue())//.div(1e14).toNumber() / 1e4
+
+        showBody(anchorPrice)
+        balance = await s.COMP.balanceOf(newVault.address)
+        let tokenAmount = await truncate((anchorPrice.mul(balance)).mul(s.COMP_LTV))
+        
+        showBody(tokenAmount)
+        tokenAmount = await truncate(tokenAmount)
+        showBody(tokenAmount)
+        showBody(utils.formatEther(tokenAmount.toString()))
+        
+
+        //this vault is able to be borrowed from
+        expect(borrowPower).to.be.gt(0)
+        showBody("Borrow Power: ", utils.formatEther(borrowPower.toString()))
+
+    })
 })
 describe("Checking getters", () => {
     it("checks totalBaseLiability", async () => {
