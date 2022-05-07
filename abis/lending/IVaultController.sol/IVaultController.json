@@ -33,18 +33,24 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "uint256",
+          "internalType": "uint64",
           "name": "epoch",
-          "type": "uint256"
+          "type": "uint64"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint192",
+          "name": "amount",
+          "type": "uint192"
         },
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "amount",
+          "name": "curve_val",
           "type": "uint256"
         }
       ],
-      "name": "Interest",
+      "name": "InterestEvent",
       "type": "event"
     },
     {
@@ -232,17 +238,17 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint96",
           "name": "id",
-          "type": "uint256"
+          "type": "uint96"
         }
       ],
       "name": "accountBorrowingPower",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint192",
           "name": "",
-          "type": "uint256"
+          "type": "uint192"
         }
       ],
       "stateMutability": "view",
@@ -251,38 +257,31 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint96",
           "name": "id",
-          "type": "uint256"
+          "type": "uint96"
         }
       ],
-      "name": "AccountLiability",
+      "name": "accountLiability",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint192",
           "name": "",
-          "type": "uint256"
+          "type": "uint192"
         }
       ],
       "stateMutability": "view",
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "InterestFactor",
-      "outputs": [
+      "inputs": [
         {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
+          "internalType": "uint96",
+          "name": "id",
+          "type": "uint96"
         }
       ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "ProtocolFee",
+      "name": "amountToSolvency",
       "outputs": [
         {
           "internalType": "uint256",
@@ -296,62 +295,14 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint96",
           "name": "id",
-          "type": "uint256"
+          "type": "uint96"
         },
         {
-          "internalType": "address",
-          "name": "token",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "num",
-          "type": "uint256"
-        }
-      ],
-      "name": "tokensToLiquidate",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
-        }
-      ],
-      "name": "VaultAddress",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
+          "internalType": "uint192",
           "name": "amount",
-          "type": "uint256"
+          "type": "uint192"
         }
       ],
       "name": "borrowUsdi",
@@ -375,9 +326,22 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint192",
+          "name": "new_protocol_fee",
+          "type": "uint192"
+        }
+      ],
+      "name": "changeProtocolFee",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint96",
           "name": "id",
-          "type": "uint256"
+          "type": "uint96"
         }
       ],
       "name": "checkAccount",
@@ -399,11 +363,37 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "interestFactor",
+      "outputs": [
+        {
+          "internalType": "uint192",
+          "name": "",
+          "type": "uint192"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lastInterestTime",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint96",
           "name": "id",
-          "type": "uint256"
+          "type": "uint96"
         },
         {
           "internalType": "address",
@@ -445,6 +435,19 @@
       "name": "pause",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "protocolFee",
+      "outputs": [
+        {
+          "internalType": "uint192",
+          "name": "",
+          "type": "uint192"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -517,9 +520,9 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint96",
           "name": "id",
-          "type": "uint256"
+          "type": "uint96"
         }
       ],
       "name": "repayAllUSDi",
@@ -530,19 +533,69 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint96",
           "name": "id",
-          "type": "uint256"
+          "type": "uint96"
         },
         {
-          "internalType": "uint256",
+          "internalType": "uint192",
           "name": "amount",
-          "type": "uint256"
+          "type": "uint192"
         }
       ],
       "name": "repayUSDi",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "tokensRegistered",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint96",
+          "name": "id",
+          "type": "uint96"
+        },
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "tokensToLiquidate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalBaseLiability",
+      "outputs": [
+        {
+          "internalType": "uint192",
+          "name": "",
+          "type": "uint192"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -578,6 +631,38 @@
       "name": "updateRegisteredErc20",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint96",
+          "name": "id",
+          "type": "uint96"
+        }
+      ],
+      "name": "vaultAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultsMinted",
+      "outputs": [
+        {
+          "internalType": "uint96",
+          "name": "",
+          "type": "uint96"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     }
   ],

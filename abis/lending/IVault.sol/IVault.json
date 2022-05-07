@@ -4,40 +4,46 @@
   "sourceName": "contracts/lending/IVault.sol",
   "abi": [
     {
-      "inputs": [],
-      "name": "BaseLiability",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "Minter",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
+      "anonymous": false,
       "inputs": [
         {
+          "indexed": false,
+          "internalType": "address",
+          "name": "token_address",
+          "type": "address"
+        },
+        {
+          "indexed": false,
           "internalType": "uint256",
-          "name": "base_amount",
+          "name": "amount",
           "type": "uint256"
         }
       ],
-      "name": "decrease_liability",
+      "name": "Deposit",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "token_address",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "Withdraw",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "baseLiability",
       "outputs": [
         {
           "internalType": "uint256",
@@ -45,7 +51,7 @@
           "type": "uint256"
         }
       ],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -57,7 +63,7 @@
         },
         {
           "internalType": "address",
-          "name": "CompLikeToken",
+          "name": "compLikeToken",
           "type": "address"
         }
       ],
@@ -67,22 +73,16 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "base_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "increase_liability",
+      "inputs": [],
+      "name": "id",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint96",
           "name": "",
-          "type": "uint256"
+          "type": "uint96"
         }
       ],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -105,6 +105,43 @@
       ],
       "name": "masterTransfer",
       "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "minter",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "increase",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "base_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "modifyLiability",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
