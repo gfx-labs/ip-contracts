@@ -33,6 +33,7 @@ interface IUSDI is IERC20Metadata, USDIEvents {
   function withdraw(uint256 usdc_amount) external;
   function withdrawAll() external;
   function donate(uint256 usdc_amount) external;
+  function donateReserve() external;
 
   // admin functions
   function pause() external;
