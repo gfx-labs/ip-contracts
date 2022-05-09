@@ -10,6 +10,8 @@ import "./_external/IERC20.sol";
 import "./_external/compound/ExponentialNoError.sol";
 import "./_external/openzeppelin/PausableUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 /// @title USDI token contract
 /// @notice handles all minting/burning of usdi
 /// @dev extends UFragments
@@ -26,7 +28,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _;
   }
 
-  /// @notice any function with this modifier will call the pay_interest() function before any function logic is called 
+  /// @notice any function with this modifier will call the pay_interest() function before any function logic is called
   modifier paysInterest() {
     _VaultController.calculateInterest();
     _;
@@ -194,7 +196,18 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     uint256 allowance = _reserve.allowance(_msgSender(), address(this));
     require(allowance >= usdc_amount, "Insufficient Allowance");
     require(_reserve.transferFrom(_msgSender(), address(this), usdc_amount), "transfer failed");
-    _donation(usdc_amount);
+    _donation(amount);
+  }
+
+  /// @notice donates any USDC held by this contract to the USDI holders
+  /// @notice accounts for any USDC that may have been sent here accidently 
+  /// @notice without this, any USDC sent to the contract could mess up the reserve ratio
+  function donateReserve() external override whenNotPaused {
+
+    uint256 totalUSDC = (_reserve.balanceOf(address(this))) * 1e12;
+    require (totalUSDC > _totalSupply, "No extra reserve");
+    
+    _donation(totalUSDC - _totalSupply);
   }
 
   /// @notice function for the vaultController to mint
@@ -223,7 +236,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   }
 
   /// @notice function for the vaultController to scale all USDi balances
-  /// @param amount amount of USDi to donate
+  /// @param amount amount of USDi (e18) to donate
   function vaultControllerDonate(uint256 amount) external override onlyVaultController {
     _donation(amount);
   }

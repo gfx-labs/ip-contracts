@@ -2,6 +2,7 @@ import { expect, assert } from "chai";
 import { ethers, network, tenderly } from "hardhat";
 import { stealMoney } from "../../../util/money";
 import { showBody, showBodyCyan } from "../../../util/format";
+import { getGas, truncate } from "../../../util/math";
 import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { advanceBlockHeight, reset, mineBlock, fastForward, OneYear } from "../../../util/block";
@@ -13,6 +14,8 @@ import { utils } from "ethers";
 describe("What happens when there are no loans?", () => {
     //9500 USDC
     const depositAmount = s.Dave_USDC.sub(BN("500e6"))
+    const depositAmount_e18 = depositAmount.mul(BN("1e12"))
+
     it("Confirms contract holds no value", async () => {
         const totalLiability = await s.VaultController.totalBaseLiability()
         expect(totalLiability).to.eq(BN("0"))
@@ -81,8 +84,7 @@ describe("What happens when there are no loans?", () => {
         balance = await s.USDI.balanceOf(s.Dave.address)
         assert.equal(balance.toString(), depositAmount.mul(BN("1e12")).toString(), "Dave has the correct amount of USDI")
 
-        const reserveRatio = await s.USDI.reserveRatio()
-        showBody("reserveRatio: ", reserveRatio)
+       
 
     })
     it("Check for interest generation", async () => {
@@ -102,7 +104,7 @@ describe("What happens when there are no loans?", () => {
         assert.equal(balance.toString(), depositAmount.mul(BN("1e12")).toString(), "Dave still has received no interest after 1 year, as there are no loans")
 
     })
-
+    //todo - check total reserve before / after donate
     it("what happens when someone donates in this scenario?", async () => {
         let balance = await s.USDC.balanceOf(s.Dave.address)
         let reserve = await s.USDC.balanceOf(s.USDI.address)
@@ -113,7 +115,7 @@ describe("What happens when there are no loans?", () => {
 
         //Dave approves and donates half of his remaining USDC
         const donateAmount = balance.div(2)
-
+        
         await s.USDC.connect(s.Dave).approve(s.USDI.address, donateAmount)
         const donateResult = await s.USDI.connect(s.Dave).donate(donateAmount)
         await advanceBlockHeight(1)
@@ -129,8 +131,9 @@ describe("What happens when there are no loans?", () => {
         expect(balance).to.be.gt(s.Dave_USDC.sub(depositAmount).toNumber())
         //showBody("Dave USDI: ", utils.formatEther(balance.toString()))
 
-        //andy sends 100 USDC to the USDI contract like a dingus
-        showBodyCyan("ANDY SENDS USDC")
+        //andy sends 100 USDC to the USDI contract
+        //showBodyCyan("ANDY SENDS USDC")
+        showBody("Andy sends usdc: 100.0")
         await s.USDC.connect(s.Andy).transfer(s.USDI.address, BN("100e6"))
         await mineBlock()
         reserveRatio = await s.USDI.reserveRatio()
@@ -141,19 +144,33 @@ describe("What happens when there are no loans?", () => {
 
     })
 
+    it("Test donateReserve", async () => {
+
+        let reserveRatio = await s.USDI.reserveRatio()
+        expect(reserveRatio.sub(BN("1e18"))).to.be.gt(0)
+
+        let donateReserveResult = await s.USDI.donateReserve()
+        await mineBlock()
+        let gas = await getGas(donateReserveResult)
+        showBodyCyan("Gas cost to donate reserve: ", gas)
+
+        reserveRatio = await s.USDI.reserveRatio()
+        assert.equal(reserveRatio.toString(), BN("1e18").toString(), "Reserve ratio is exactly 1e18 after rebase")
+    })
+
     it("Repay when reserve ratio is > 1e18", async () => {
 
         let reserveRatio = await s.USDI.reserveRatio()
-        showBody("reserveRatio: ", utils.formatEther(reserveRatio.toString()))
+        //showBody("reserveRatio: ", utils.formatEther(reserveRatio.toString()))
 
-        showBodyCyan("REPAY")
+        //showBodyCyan("REPAY")
         const repayResult = await s.USDI.connect(s.Dave).withdrawAll()
         await advanceBlockHeight(1)
         let balance = await s.USDI.balanceOf(s.Dave.address)
         expect(balance.toNumber()).to.be.closeTo(0, BN("1e12").toNumber())
 
         reserveRatio = await s.USDI.reserveRatio()
-        showBody("reserveRatio: ", utils.formatEther(reserveRatio.toString()))
+        //showBody("reserveRatio: ", utils.formatEther(reserveRatio.toString()))
 
     })
 
@@ -180,17 +197,17 @@ describe("What happens when there are no loans?", () => {
         await mineBlock()
 
         let borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
-        showBody("borrowPower: ", utils.formatEther(borrowPower.toString()))
+        //showBody("borrowPower: ", utils.formatEther(borrowPower.toString()))
 
         //borrow full amount
         await s.VaultController.connect(s.Bob).borrowUsdi(vaultID, borrowPower)
         await mineBlock()
         let AccountLiability = await s.VaultController.accountLiability(vaultID)
-        showBody("AccountLiability: ", utils.formatEther(AccountLiability.toString()))
+        //showBody("AccountLiability: ", utils.formatEther(AccountLiability.toString()))
 
 
         let reserveRatio = await s.USDI.reserveRatio()
-        showBody("reserveRatio: ", utils.formatEther(reserveRatio.toString()))
+        //showBody("reserveRatio: ", utils.formatEther(reserveRatio.toString()))
 
 
 
@@ -203,7 +220,7 @@ describe("What happens when there are no loans?", () => {
         assert.equal(balance.toString(), AccountLiability.toString(), "Bob's USDI == account liability before interest is calculated")
 
         balance = await s.USDC.balanceOf(s.Bob.address)
-        showBody("Bob USDC", balance)
+        //showBody("Bob USDC", balance)
 
         //deposit 5 USDC
         await s.USDC.connect(s.Bob).approve(s.USDI.address, BN("5e6"))
@@ -216,8 +233,10 @@ describe("What happens when there are no loans?", () => {
         await mineBlock()
 
         reserveRatio = await s.USDI.reserveRatio()
-        showBody("reserveRatio: ", utils.formatEther(reserveRatio.toString()))
+        //showBody("reserveRatio: ", utils.formatEther(reserveRatio.toString()))
 
     })
+
+    
 
 })
