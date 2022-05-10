@@ -247,19 +247,13 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     if (_totalSupply > MAX_SUPPLY) {
       _totalSupply = MAX_SUPPLY;
     }
-    if (_totalSupply != 0) {
-      _gonsPerFragment = _totalGons / _totalSupply;
-    }
+    _gonsPerFragment = _totalGons / _totalSupply;
     emit Donation(_msgSender(), amount, _totalSupply);
   }
 
   /// @notice get reserve ratio
   /// @return e18_reserve_ratio USDi reserve ratio
   function reserveRatio() external view override returns (uint192 e18_reserve_ratio) {
-    if (_totalSupply == 0) {
-      e18_reserve_ratio = 0;
-    } else {
-      e18_reserve_ratio = safeu192(((_reserve.balanceOf(address(this)) * expScale) / _totalSupply) * 1e12);
-    }
+    e18_reserve_ratio = safeu192(((_reserve.balanceOf(address(this)) * expScale) / _totalSupply) * 1e12);
   }
 }
