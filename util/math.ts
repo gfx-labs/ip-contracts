@@ -212,3 +212,8 @@ export const getArgs = async (result: any) => {
 
     return args
 }
+
+
+export const toNumber = async (bigboi:BigNumber) => {
+    return Number(utils.formatEther(bigboi.toString()))
+}
