@@ -1,2 +1,4 @@
-import "./mainnet/index.ts"
-import "./presale/index.ts"
+import "./governance/index"
+import "./mainnet/index"
+import "./presale/index"
+import "./isolated/index"

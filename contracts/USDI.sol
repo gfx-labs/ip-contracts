@@ -200,13 +200,12 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   }
 
   /// @notice donates any USDC held by this contract to the USDI holders
-  /// @notice accounts for any USDC that may have been sent here accidently 
+  /// @notice accounts for any USDC that may have been sent here accidently
   /// @notice without this, any USDC sent to the contract could mess up the reserve ratio
   function donateReserve() external override whenNotPaused {
-
     uint256 totalUSDC = (_reserve.balanceOf(address(this))) * 1e12;
-    require (totalUSDC > _totalSupply, "No extra reserve");
-    
+    require(totalUSDC > _totalSupply, "No extra reserve");
+
     _donation(totalUSDC - _totalSupply);
   }
 
@@ -248,13 +247,19 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     if (_totalSupply > MAX_SUPPLY) {
       _totalSupply = MAX_SUPPLY;
     }
-    _gonsPerFragment = _totalGons / _totalSupply;
+    if (_totalSupply != 0) {
+      _gonsPerFragment = _totalGons / _totalSupply;
+    }
     emit Donation(_msgSender(), amount, _totalSupply);
   }
 
   /// @notice get reserve ratio
   /// @return e18_reserve_ratio USDi reserve ratio
   function reserveRatio() external view override returns (uint192 e18_reserve_ratio) {
-    e18_reserve_ratio = safeu192(((_reserve.balanceOf(address(this)) * expScale) / _totalSupply) * 1e12);
+    if (_totalSupply == 0) {
+      e18_reserve_ratio = 0;
+    } else {
+      e18_reserve_ratio = safeu192(((_reserve.balanceOf(address(this)) * expScale) / _totalSupply) * 1e12);
+    }
   }
 }
