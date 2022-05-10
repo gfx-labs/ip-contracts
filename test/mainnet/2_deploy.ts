@@ -94,8 +94,8 @@ describe("Deploy Contracts", () => {
             expect(await s.USDI.decimals()).to.equal(18);
             expect(await s.USDI.owner()).to.equal(s.Frank.address)
         });
-        it(`The contract creator should have ${BN("1e18").toLocaleString()} fragment`, async () => {
-            expect(await s.USDI.balanceOf(await s.Frank.getAddress())).to.eq(BN("1e18"));
+        it(`The burner address should have ${BN("1e18").toLocaleString()} fragment`, async () => {
+            expect(await s.USDI.balanceOf("0x0000000000000000000000000000000000000000")).to.eq(BN("1e18"));
         });
         it(`the totalSupply should be ${BN("1e18").toLocaleString()}`, async () => {
             expect(await s.USDI.totalSupply()).to.eq(BN("1e18"));

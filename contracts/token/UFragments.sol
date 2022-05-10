@@ -101,10 +101,10 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
     tokenPausedDeprecated = false;
 
     _totalSupply = INITIAL_FRAGMENTS_SUPPLY;
-    _gonBalances[msg.sender] = _totalGons;
+    _gonBalances[address(0x0)] = _totalGons; //send starting supply to a burner address so _totalSupply is never 0
     _gonsPerFragment = _totalGons / _totalSupply;
 
-    emit Transfer(address(0x0), msg.sender, _totalSupply);
+    emit Transfer(address(this), address(0x0), _totalSupply);
   }
 
   /**
