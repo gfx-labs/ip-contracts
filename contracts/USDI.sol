@@ -18,13 +18,11 @@ import "hardhat/console.sol";
 contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, ExponentialNoError {
   IERC20 public _reserve;
 
-  address public _lenderAddress;
-  address public _vaultControllerAddress;
-  IVaultController private _VaultController;
+  IVaultController public _VaultController;
 
   /// @notice checks if _msgSender() is VaultController
   modifier onlyVaultController() {
-    require(_msgSender() == _vaultControllerAddress, "only VaultController");
+    require(_msgSender() == address(_VaultController), "only VaultController");
     _;
   }
 
@@ -81,10 +79,15 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     return address(_reserve);
   }
 
+  /// @notice get the VaultController addr
+  /// @return vaultcontroller addr
+  function getVaultController() public view override returns (address) {
+    return address(_VaultController);
+  }
+
   /// @notice set the VaultController addr so that vault_master may mint/burn USDi without restriction
   /// @param vault_master_address address of vault master
   function setVaultController(address vault_master_address) external override onlyOwner {
-    _vaultControllerAddress = vault_master_address;
     _VaultController = IVaultController(vault_master_address);
   }
 
