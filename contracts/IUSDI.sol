@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import "./_external/IERC20Metadata.sol";
 
-
-
 /// @title USDI Events
 /// @notice interface which contains any events which the USDI contract emits
 interface USDIEvents {
@@ -23,6 +21,7 @@ interface IUSDI is IERC20Metadata, USDIEvents {
 
   // getters
   function reserveRatio() external view returns (uint192);
+
   function reserveAddress() external view returns (address);
 
   // owner
@@ -30,21 +29,32 @@ interface IUSDI is IERC20Metadata, USDIEvents {
 
   // business
   function deposit(uint256 usdc_amount) external;
+
   function withdraw(uint256 usdc_amount) external;
+
   function withdrawAll() external;
+
   function donate(uint256 usdc_amount) external;
+
   function donateReserve() external;
 
   // admin functions
   function pause() external;
+
   function unpause() external;
 
   function mint(uint256 usdc_amount) external;
+
   function burn(uint256 usdc_amount) external;
 
-  // functions for the vault controller to call
   function setVaultController(address vault_master_address) external;
+
+  function getVaultController() external view returns (address);
+
+  // functions for the vault controller to call
   function vaultControllerBurn(address target, uint256 amount) external;
+
   function vaultControllerMint(address target, uint256 amount) external;
+
   function vaultControllerDonate(uint256 amount) external;
 }

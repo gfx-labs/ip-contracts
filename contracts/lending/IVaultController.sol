@@ -76,7 +76,11 @@ interface IVaultController is VaultControllerEvents {
 
   function unpause() external;
 
+  function getOracleMaster() external view returns (address);
+
   function registerOracleMaster(address master_oracle_address) external;
+
+  function getCurveMaster() external view returns (address);
 
   function registerCurveMaster(address master_curve_address) external;
 
