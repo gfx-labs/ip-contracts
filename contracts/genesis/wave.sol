@@ -72,7 +72,7 @@ contract Wave {
     merkleRoot = root;
     rewardToken = IERC20(_rewardToken);
 
-    _cap = _floor * 6; //((_totalReward / 1e12) / _floor) * 1e6;
+    _cap = (_totalReward / (1e12 * floor)) * 6
 
     _totalClaimed = 0;
   }
