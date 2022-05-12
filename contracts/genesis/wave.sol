@@ -90,10 +90,10 @@ contract Wave {
       // remember that _totalClaimed is in points, so we must multiply by 1e12 to get the correct decimal count
       uint256 ratio = (_totalReward * 1e18) / (_totalClaimed);
 
-      console.log("ratio: ", ratio);
+      //console.log("ratio: ", ratio);
       // that ratio is how many rewardToken each point entitles the redeemer
       rewardAmount = (claimed[msg.sender] * ratio) / 1e18;
-      console.log("rewardAmount: ", rewardAmount);
+      //console.log("rewardAmount: ", rewardAmount);
     } else {
       // multiply amount claimed by the floor price, then divide.
       // for instance, if the _floor is 500_000, then the redeemer will obtain 0.5 rewardToken per pointToken
@@ -118,7 +118,6 @@ contract Wave {
     address thisSender = msg.sender;
 
     require(verifyClaim(thisSender, key, merkleProof) == true, "invalid proof");
-
     require((claimed[thisSender] + amount) <= key, "max alloc claimed");
 
     claimed[thisSender] = claimed[thisSender] + amount;
