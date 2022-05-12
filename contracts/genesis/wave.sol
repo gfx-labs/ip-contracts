@@ -72,7 +72,8 @@ contract Wave {
     merkleRoot = root;
     rewardToken = IERC20(_rewardToken);
 
-    _cap = (_totalReward / (1e12 * _floor)) * 6;
+    // this is the total amount of points that may be obtained
+    _cap = ((_totalReward * _floor) / (1e18)) * 6;
 
     _totalClaimed = 0;
   }
@@ -85,10 +86,12 @@ contract Wave {
     redeemed[msg.sender] = true;
     uint256 rewardAmount;
     // totalClaimed is in points, so we multiply it by 1e12
-    if (_totalClaimed * 1e12 > _totalReward * (_floor * 1e12)) {
+    // _totalReward is the amount of tokens we have to reward
+    if ((_totalClaimed * 1e12) > ((_totalReward * _floor) / 1e6)) {
       // remember that _totalClaimed is in points, so we must multiply by 1e12 to get the correct decimal count
       // ratio is less than 1e18, it is a percentage in 1e18 terms
       uint256 ratio = (_totalReward * 1e18) / (_totalClaimed * 1e12);
+
       console.log("ratio: ", ratio);
       // that ratio is how many rewardToken each point entitles the redeemer
       // so multiply the senders points by the ratio and divide by 1e18
@@ -97,7 +100,7 @@ contract Wave {
     } else {
       // multiply amount claimed by the floor price, then divide.
       // for instance, if the _floor is 500_000, then the redeemer will obtain 0.5 rewardToken per pointToken
-      rewardAmount = (claimed[msg.sender] * _floor) / (1_000_000);
+      rewardAmount = (claimed[msg.sender] * _floor) / (1e6);
     }
     // scale the decimals and send reward token
     giveTo(msg.sender, rewardAmount * 1e12);
@@ -126,7 +129,6 @@ contract Wave {
 
     require(canClaim() == true, "Cap reached");
 
-    //decrement totalReward?
     takeFrom(thisSender, amount);
     emit Points(thisSender, amount);
   }
