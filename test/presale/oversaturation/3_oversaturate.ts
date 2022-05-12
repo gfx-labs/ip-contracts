@@ -2,16 +2,34 @@ import { s } from "../scope";
 //import { expect, assert } from "chai";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../../util/block";
+import {
+  advanceBlockHeight,
+  nextBlockTime,
+  fastForward,
+  mineBlock,
+  OneWeek,
+  OneYear,
+} from "../../../util/block";
 import { utils, BigNumber } from "ethers";
-import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculatetokensToLiquidate, calculateUSDI2repurchase, changeInBalance } from "../../../util/math";
-import { currentBlock, reset } from "../../../util/block"
+import {
+  calculateAccountLiability,
+  payInterestMath,
+  calculateBalance,
+  getGas,
+  getArgs,
+  truncate,
+  getEvent,
+  calculatetokensToLiquidate,
+  calculateUSDI2repurchase,
+  changeInBalance,
+} from "../../../util/math";
+import { currentBlock, reset } from "../../../util/block";
 import MerkleTree from "merkletreejs";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
-import { Wave, IERC20__factory } from "../../../typechain-types"
+import { Wave, IERC20__factory } from "../../../typechain-types";
 import { red } from "bn.js";
 
-const hre = require("hardhat")
+const hre = require("hardhat");
 const { ethers } = hre;
 const chai = require("chai");
 
@@ -26,309 +44,370 @@ const { expect, assert } = chai;
 //amount of IPT that is to be allocated
 
 const initMerkle = async () => {
-    //8 accunts to make a simple merkle tree
-    whitelist = [
-        s.Frank.address,
-        s.Andy.address,
-        s.Bob.address,
-        s.Carol.address,
-        s.Dave.address,
-        s.Eric.address,
-        s.Gus.address,
-        s.Hector.address
-    ]
-    const leafNodes = whitelist.map(addr => solidityKeccak256(["address", "uint256"], [addr, keyAmount]))
-    merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true })
-    root = merkleTree.getHexRoot()
+  //8 accunts to make a simple merkle tree
+  whitelist = [
+    s.Frank.address,
+    s.Andy.address,
+    s.Bob.address,
+    s.Carol.address,
+    s.Dave.address,
+    s.Eric.address,
+    s.Gus.address,
+    s.Hector.address,
+  ];
+  const leafNodes = whitelist.map((addr) =>
+    solidityKeccak256(["address", "uint256"], [addr, keyAmount])
+  );
+  merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true });
+  root = merkleTree.getHexRoot();
+};
 
-}
+let disableTime: number;
+let whitelist: string[];
+let root: string;
+let merkleTree: MerkleTree;
+const keyAmount = BN("500e6"); //500 USDC
+const floor = BN("5e5"); //500,000 - .5 USDC
+const amount = BN("100e6"); //100 USDC
+const totalReward = BN("200e18");
 
-let disableTime:number
-let whitelist: string[]
-let root: string
-let merkleTree: MerkleTree
-const keyAmount = BN("500e6")//500 USDC
-const floor = BN("5e5")//500,000 - .5 USDC
-const amount = BN("100e6")//100 USDC
-const totalSupply_ = BN("1e26")
-const totalReward = BN("300e18")//300 IPT tokens //totalSupply_.div(4)
+let Wave: Wave;
 
-let Wave: Wave
-
-//todo - what happens if not all is redeemed, IPT stuck on Wave? Redeem deadline? 
-require('chai')
-    .should()
+//todo - what happens if not all is redeemed, IPT stuck on Wave? Redeem deadline?
+require("chai").should();
 describe("Deploy wave", () => {
+  before(async () => {
+    await initMerkle();
+  });
 
-    before(async () => {
-        await initMerkle()
-    })
+  it("deploys wave", async () => {
+    //init constructor args
 
-    it("deploys wave", async () => {
+    const block = await currentBlock();
+    const enableTime = block.timestamp;
+    disableTime = enableTime + OneWeek;
+    const receiver = s.Carol.address;
+    //showBody(s.Frank.address)
 
-        //init constructor args
+    const waveFactory = await ethers.getContractFactory("Wave");
+    Wave = await waveFactory.deploy(
+      root,
+      totalReward,
+      floor,
+      enableTime,
+      disableTime,
+      receiver,
+      s.IPT.address
+    );
+    await mineBlock();
+    await Wave.deployed();
+    await mineBlock();
 
-        
-        const block = await currentBlock()
-        const enableTime = block.timestamp
-        disableTime = enableTime + OneWeek
-        const receiver = s.Carol.address
-        //showBody(s.Frank.address)
+    await s.IPT.transfer(Wave.address, totalReward);
+    await mineBlock();
+  });
+  it("Sanity check state of Wave contract", async () => {
+    const merkleRoot = await Wave.merkleRoot();
+    assert.equal(merkleRoot.toString(), root, "Merkle root is correct");
 
-        const waveFactory = await ethers.getContractFactory("Wave")
-        Wave = await waveFactory.deploy(root, totalReward, floor, enableTime, disableTime, receiver, s.IPT.address)
-        await mineBlock()
-        await Wave.deployed()
-        await mineBlock()
+    const claimedTotal = await Wave._totalClaimed();
+    assert.equal(claimedTotal.toString(), "0", "Total claimed is 0 (correct)");
 
-        await s.IPT.transfer(Wave.address, totalReward)
-        await mineBlock()
-    })
-    it("Sanity check state of Wave contract", async () => {
-        const merkleRoot = await Wave.merkleRoot()
-        assert.equal(merkleRoot.toString(), root, "Merkle root is correct")
+    const floor = await Wave._floor();
+    assert.equal(floor.toNumber(), BN("5e5").toNumber(), "Floor is correct");
 
-        const claimedTotal = await Wave._totalClaimed()
-        assert.equal(claimedTotal.toString(), "0", "Total claimed is 0 (correct)")
+    const receiver = await Wave._receiver();
+    assert.equal(receiver, s.Carol.address, "receiver is correct");
 
-        const floor = await Wave._floor()
-        assert.equal(floor.toNumber(), BN("5e5").toNumber(), "Floor is correct")
+    const rewardTotal = await Wave._totalReward();
+    assert.equal(
+      rewardTotal.toString(),
+      totalReward.toString(),
+      "Total reward is correct"
+    );
 
-        const receiver = await Wave._receiver()
-        assert.equal(receiver, s.Carol.address, "receiver is correct")
+    const IPTaddr = await Wave.rewardToken();
+    assert.equal(IPTaddr, s.IPT.address, "IPT is initialized correctly");
 
-        const rewardTotal = await Wave._totalReward()
-        assert.equal(rewardTotal.toString(), totalReward.toString(), "Total reward is correct")
-
-        const IPTaddr = await Wave.rewardToken()
-        assert.equal(IPTaddr, s.IPT.address, "IPT is initialized correctly")
-
-        const WaveIPTbalance = await s.IPT.balanceOf(Wave.address)
-        assert.equal(WaveIPTbalance.toString(), totalReward.toString(), "Wave has the correct amount of IPT")
-
-    })
-})
-
+    const WaveIPTbalance = await s.IPT.balanceOf(Wave.address);
+    assert.equal(
+      WaveIPTbalance.toString(),
+      totalReward.toString(),
+      "Wave has the correct amount of IPT"
+    );
+  });
+});
 
 describe("Presale - OVERSATURATION", () => {
-    let leaf: string
-    let merkleProof: string[]
-    let claimer:string
-    after(async() => {
-        await reset(0)
-    })
-    it("Bob claims some, but less than maximum", async () => {
-        claimer = s.Bob.address
+  let leaf: string;
+  let merkleProof: string[];
+  let claimer: string;
+  after(async () => {
+    await reset(0);
+  });
+  it("Dave claims all possible tokens", async () => {
+    claimer = s.Dave.address;
 
-        //starting balance is as expected
-        const startBalance = await s.USDC.balanceOf(claimer)
-        assert.equal(startBalance.toString(), s.Bob_USDC.toString(), "Bob's starting balance is correct")
+    //merkle things
+    leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount]);
+    merkleProof = merkleTree.getHexProof(leaf);
 
-        //merkle things
-        leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
-        merkleProof = merkleTree.getHexProof(leaf)
-        //showBody("leaf proof: ", merkleProof)
+    const fullClaimAmount = amount.mul(5);
+    //starting balance is as expected
+    const startBalance = await s.USDC.balanceOf(claimer);
+    //assert.equal(startBalance.toString(), s.Dave_USDC.sub(amount).toString(), "Dave's starting balance is correct")
 
-        //approve
-        await s.USDC.connect(s.Bob).approve(Wave.address, amount)
-        await mineBlock()
+    //approve
+    await s.USDC.connect(s.Dave).approve(Wave.address, fullClaimAmount);
+    await mineBlock();
 
-        const gpResult = await Wave.connect(s.Bob).getPoints(amount, keyAmount, merkleProof)
-        await mineBlock()
-        const gpArgs = await getArgs(gpResult)
-        assert.equal(amount.toString(), gpArgs.amount.toString(), "Amount is correct on event receipt")
-        assert.equal(claimer, gpArgs.from.toString(), "From is correct on event receipt")
+    const gpResult = await Wave.connect(s.Dave)
+      .getPoints(fullClaimAmount, keyAmount, merkleProof)
+      .catch(console.log);
+    await mineBlock();
+    const gpArgs = await getArgs(gpResult);
 
-        //check balance
-        let balance = await s.USDC.balanceOf(claimer)
-        assert.equal(balance.toString(), s.Bob_USDC.sub(amount).toString(), "Bob's ending balance is correct")
+    assert.equal(
+      fullClaimAmount.toString(),
+      gpArgs.amount.toString(),
+      "Amount is correct on event receipt"
+    );
+    assert.equal(
+      claimer,
+      gpArgs.from.toString(),
+      "From is correct on event receipt"
+    );
 
-        //check claimed on contract state
-        let claimedAmount = await Wave.claimed(claimer)
-        assert.equal(claimedAmount.toString(), amount.toString(), "Claimed amount is correct")
+    //check balance
+    let balance = await s.USDC.balanceOf(claimer);
+    assert.equal(
+      balance.toString(),
+      s.Dave_USDC.div(2).toString(),
+      "Dave's ending balance is correct"
+    );
 
-        let _totalClaimed = await Wave._totalClaimed()
-        assert.equal(_totalClaimed.toString(), amount.toString(), "_totalClaimed amount is correct")
+    //check claimed on contract state
+    let claimedAmount = await Wave.claimed(claimer);
+    assert.equal(
+      claimedAmount.toString(),
+      amount.mul(5).toString(),
+      "Claimed amount is correct"
+    );
 
-    })
-    it("Bob claims the rest of his rightful tokens", async () => {
-        const fullClaimAmount = amount.mul(4)//should be able to claim 400 more USDC worth 
-        //starting balance is as expected
-        const startBalance = await s.USDC.balanceOf(claimer)
-        assert.equal(startBalance.toString(), s.Bob_USDC.sub(amount).toString(), "Bob's starting balance is correct")
+    let _totalClaimed = await Wave._totalClaimed();
+    assert.equal(
+      _totalClaimed.toString(),
+      keyAmount.mul(1).toString(),
+      "_totalClaimed amount is correct"
+    );
+  });
+  it("Bob claims some, but less than maximum", async () => {
+    claimer = s.Bob.address;
 
-        //approve
-        await s.USDC.connect(s.Bob).approve(Wave.address, fullClaimAmount)
-        await mineBlock()
+    //starting balance is as expected
+    const startBalance = await s.USDC.balanceOf(claimer);
+    assert.equal(
+      startBalance.toString(),
+      s.Bob_USDC.toString(),
+      "Bob's starting balance is correct"
+    );
 
-        const gpResult = await Wave.connect(s.Bob).getPoints(fullClaimAmount, keyAmount, merkleProof)
-        await mineBlock()
-        const gpArgs = await getArgs(gpResult)
+    //merkle things
+    leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount]);
+    merkleProof = merkleTree.getHexProof(leaf);
+    //   showBody("leaf proof: ", merkleProof);
 
-        assert.equal(fullClaimAmount.toString(), gpArgs.amount.toString(), "Amount is correct on event receipt")
-        assert.equal(claimer, gpArgs.from.toString(), "From is correct on event receipt")
+    //approve
+    await s.USDC.connect(s.Bob).approve(Wave.address, amount);
+    await mineBlock();
 
-        //check balance
-        let balance = await s.USDC.balanceOf(claimer)
-        assert.equal(balance.toString(), s.Bob_USDC.div(2).toString(), "Bob's ending balance is correct")
+    const gpResult = await Wave.connect(s.Bob).getPoints(
+      amount,
+      keyAmount,
+      merkleProof
+    );
+    await mineBlock();
+    const gpArgs = await getArgs(gpResult);
+    assert.equal(
+      amount.toString(),
+      gpArgs.amount.toString(),
+      "Amount is correct on event receipt"
+    );
+    assert.equal(
+      claimer,
+      gpArgs.from.toString(),
+      "From is correct on event receipt"
+    );
 
-        //check claimed on contract state
-        let claimedAmount = await Wave.claimed(claimer)
-        assert.equal(claimedAmount.toString(), amount.mul(5).toString(), "Claimed amount is correct")
+    //check balance
+    let balance = await s.USDC.balanceOf(claimer);
+    assert.equal(
+      balance.toString(),
+      s.Bob_USDC.sub(amount).toString(),
+      "Bob's ending balance is correct"
+    );
 
-        let _totalClaimed = await Wave._totalClaimed()
-        assert.equal(_totalClaimed.toString(), keyAmount.toString(), "_totalClaimed amount is correct")
-    })
-    it("Dave claims all possible tokens", async () => {
+    //check claimed on contract state
+    let claimedAmount = await Wave.claimed(claimer);
+    assert.equal(
+      claimedAmount.toString(),
+      amount.toString(),
+      "Claimed amount is correct"
+    );
 
-        claimer = s.Dave.address
+    let _totalClaimed = await Wave._totalClaimed();
+    assert.equal(
+      _totalClaimed.toString(),
+      amount.mul(6).toString(),
+      "_totalClaimed amount is correct"
+    );
+  });
+  it("Bob cannot claim any more tokens", async () => {
+    const fullClaimAmount = amount.mul(2);
+    //starting balance is as expected
+    const startBalance = await s.USDC.balanceOf(claimer);
+    assert.equal(
+      startBalance.toString(),
+      s.Bob_USDC.sub(amount).toString(),
+      "Bob's starting balance is correct"
+    );
 
-        //merkle things
-        leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
-        merkleProof = merkleTree.getHexProof(leaf)
+    //approve
+    await s.USDC.connect(s.Bob).approve(Wave.address, fullClaimAmount);
+    await mineBlock();
 
-        const fullClaimAmount = amount.mul(5)
-        //starting balance is as expected
-        const startBalance = await s.USDC.balanceOf(claimer)
-        //assert.equal(startBalance.toString(), s.Dave_USDC.sub(amount).toString(), "Dave's starting balance is correct")
+    const gpResult = await Wave.connect(s.Bob).getPoints(
+      fullClaimAmount,
+      keyAmount,
+      merkleProof
+    );
+    await mineBlock();
+    await expect(gpResult.wait()).to.reverted;
+  });
 
-        //approve
-        await s.USDC.connect(s.Dave).approve(Wave.address, fullClaimAmount)
-        await mineBlock()
+  //test for over saturation
 
-        const gpResult = await Wave.connect(s.Dave).getPoints(fullClaimAmount, keyAmount, merkleProof)
-        await mineBlock()
-        const gpArgs = await getArgs(gpResult)
+  it("try to claim after cap has been reached", async () => {
+    const cap = await Wave._cap();
+    showBody("CAP: ", cap);
+    const _totalClaimed = await Wave._totalClaimed();
+    showBody("_totalClaimed:", _totalClaimed);
+  });
 
-        assert.equal(fullClaimAmount.toString(), gpArgs.amount.toString(), "Amount is correct on event receipt")
-        assert.equal(claimer, gpArgs.from.toString(), "From is correct on event receipt")
+  it("try to getPoints after you already claimed maximum", async () => {
+    //approve
+    const tinyAmount = 1; //1e-18 IPT
+    await s.USDC.connect(s.Bob).approve(Wave.address, tinyAmount);
+    await mineBlock();
 
-        //check balance
-        let balance = await s.USDC.balanceOf(claimer)
-        assert.equal(balance.toString(), s.Dave_USDC.div(2).toString(), "Dave's ending balance is correct")
+    const pointsResult = await Wave.connect(s.Bob).getPoints(
+      tinyAmount,
+      keyAmount,
+      merkleProof
+    );
+    await mineBlock();
+    await expect(pointsResult.wait()).to.be.reverted;
 
-        //check claimed on contract state
-        let claimedAmount = await Wave.claimed(claimer)
-        assert.equal(claimedAmount.toString(), amount.mul(5).toString(), "Claimed amount is correct")
+    //todo check state before revert
+  });
 
-        let _totalClaimed = await Wave._totalClaimed()
-        assert.equal(_totalClaimed.toString(), keyAmount.mul(2).toString(), "_totalClaimed amount is correct")
-    })
+  it("redeem before time has elapsed", async () => {
+    let canRedeem = await Wave.canRedeem();
+    assert.equal(canRedeem, false, "canRedeem is false");
 
-    //test for over saturation
+    let redeemed = await Wave.redeemed(s.Bob.address);
+    assert.equal(redeemed, false, "Bob has not redeemed yet");
 
-    it("try to claim after cap has been reached", async () => {
-        const cap = await Wave._cap()
-        showBody("CAP: ", cap)
-        const _totalClaimed = await Wave._totalClaimed()
-        showBody("_totalClaimed:", _totalClaimed)
-    })
+    const redeemResult = await Wave.connect(s.Bob).redeem();
+    await mineBlock();
+    await expect(redeemResult.wait()).to.be.reverted;
+  });
 
+  it("elapse time", async () => {
+    await fastForward(OneWeek);
+    await mineBlock();
 
+    //check things
+    const block = await currentBlock();
+    const currentTime = block.timestamp;
 
+    //time is now past disable time
+    expect(currentTime).to.be.gt(disableTime);
 
+    let canRedeem = await Wave.canRedeem();
+    assert.equal(canRedeem, true, "canRedeem is now true");
 
-    it("try to getPoints after you already claimed maximum", async () => {
-        //approve
-        const tinyAmount = 1 //1e-18 IPT
-        await s.USDC.connect(s.Bob).approve(Wave.address, tinyAmount)
-        await mineBlock()
+    let redeemed = await Wave.redeemed(s.Bob.address);
+    assert.equal(redeemed, false, "Bob has not redeemed yet");
+  });
 
-        //await expect(Wave.connect(s.Bob).getPoints(10, keyAmount, merkleProof)).to.be.reverted
+  it("Admin should not be able to claim any IPT due to claim saturation", async () => {
+    const startingCarolIPT = await s.IPT.balanceOf(s.Carol.address);
+    assert.equal(startingCarolIPT.toString(), "0", "Carol holds 0 IPT");
 
-        const pointsResult = await Wave.connect(s.Bob).getPoints(tinyAmount, keyAmount, merkleProof)
-        await mineBlock()
-        await expect(pointsResult.wait()).to.be.reverted
+    //withdraw
+    const withdrawResult = await Wave.connect(s.Carol).withdraw();
+    await mineBlock();
+    await expect(withdrawResult.wait()).to.be.reverted;
 
-        //todo check state before revert
-    })
+    const EndingCarolIPT = await s.IPT.balanceOf(s.Carol.address);
+    assert.equal(
+      EndingCarolIPT.toString(),
+      "0",
+      "Carol did not receive any IPT"
+    );
+  });
 
-    it("redeem before time has elapsed", async () => {
-        let canRedeem = await Wave.canRedeem()
-        assert.equal(canRedeem, false, "canRedeem is false")
+  it("Bob redeems and receives pro-rata share, Carol has not redeemed yet", async () => {
+    let startingBobIPT = await s.IPT.balanceOf(s.Bob.address);
+    assert.equal(
+      startingBobIPT.toString(),
+      "0",
+      "Bob holds no IPT before redeem"
+    );
 
-        let redeemed = await Wave.redeemed(s.Bob.address)
-        assert.equal(redeemed, false, "Bob has not redeemed yet")
+    const redeemResult = await Wave.connect(s.Bob).redeem();
+    await mineBlock();
+    const args = await getArgs(redeemResult);
+    showBody(args);
 
-        const redeemResult = await Wave.connect(s.Bob).redeem()
-        await mineBlock()
-        await expect(redeemResult.wait()).to.be.reverted
-    })
+    //check things
+    let waveIPT = await s.IPT.balanceOf(Wave.address);
+    let difference = totalReward.sub(waveIPT);
+    let balance = await s.IPT.balanceOf(s.Bob.address);
 
-    it("elapse time", async () => {
-        await fastForward(OneWeek)
-        await mineBlock()
+    showBody("bob balance:", balance);
+    assert.equal(
+      difference.toString(),
+      balance.toString(),
+      "Bob received IPT in the correct amount"
+    );
+  });
 
-        //check things
-        const block = await currentBlock()
-        const currentTime = block.timestamp
+  it("Dave redeems last", async () => {
+    let startingDaveIPT = await s.IPT.balanceOf(s.Dave.address);
+    assert.equal(
+      startingDaveIPT.toString(),
+      "0",
+      "Dave holds no IPT before redeem"
+    );
 
-        //time is now past disable time
-        expect(currentTime).to.be.gt(disableTime)
+    const startingWaveIPT = await s.IPT.balanceOf(Wave.address);
 
-        let canRedeem = await Wave.canRedeem()
-        assert.equal(canRedeem, true, "canRedeem is now true")
+    const redeemResult = await Wave.connect(s.Dave).redeem();
+    await mineBlock();
+    await expect(redeemResult.wait()).to.not.reverted;
 
-        let redeemed = await Wave.redeemed(s.Bob.address)
-        assert.equal(redeemed, false, "Bob has not redeemed yet")
-    })
+    //check things
+    let waveIPT = await s.IPT.balanceOf(Wave.address);
+    let difference = totalReward.sub(waveIPT);
+    let balance = await s.IPT.balanceOf(s.Dave.address);
+    showBody("dave balance:", balance);
 
-    it("Admin should not be able to claim any IPT due to claim saturation", async () => {
-        const startingCarolIPT = await s.IPT.balanceOf(s.Carol.address)
-        assert.equal(startingCarolIPT.toString(), "0", "Carol holds 0 IPT")
+    expect(difference, "dave balanace match").to.be.closeTo(totalReward, 2);
+    expect(balance, "received correct amt").to.be.closeTo(startingWaveIPT, 2);
+    expect(waveIPT, "wave no longer has ipt").to.be.closeTo(BN(0), 2);
 
-        //withdraw
-        const withdrawResult = await Wave.connect(s.Carol).withdraw()
-        await mineBlock()
-        await expect(withdrawResult.wait()).to.be.reverted
-
-        const EndingCarolIPT = await s.IPT.balanceOf(s.Carol.address)
-        assert.equal(EndingCarolIPT.toString(), "0", "Carol did not receive any IPT")
-    })
-
-    it("Bob redeems and receives pro-rata share, Carol has not redeemed yet", async () => {
-        let startingBobIPT = await s.IPT.balanceOf(s.Bob.address)
-        assert.equal(startingBobIPT.toString(), "0", "Bob holds no IPT before redeem")
-
-        const redeemResult = await Wave.connect(s.Bob).redeem()
-        await mineBlock()
-        const args = await getArgs(redeemResult)
-        showBody(args)
-        
-        //check things
-        let waveIPT = await s.IPT.balanceOf(Wave.address)
-        let difference = totalReward.sub(waveIPT)
-        let balance = await s.IPT.balanceOf(s.Bob.address)
-
-        assert.equal(difference.toString(), balance.toString(), "Bob received IPT in the correct amount")    
-        assert.equal(balance.toString(), waveIPT.toString(), "Bob received half of the IPT")
-
-        //todo calc floor price
-    })
-
-
-    it("Dave redeems last", async () => {
-        let startingDaveIPT = await s.IPT.balanceOf(s.Dave.address)
-        assert.equal(startingDaveIPT.toString(), "0", "Dave holds no IPT before redeem")
-
-        const startingWaveIPT = await s.IPT.balanceOf(Wave.address)
-
-        const redeemResult = await Wave.connect(s.Dave).redeem()
-        await mineBlock()
-
-        //check things
-        let waveIPT = await s.IPT.balanceOf(Wave.address)
-        let difference = totalReward.sub(waveIPT)
-        let balance = await s.IPT.balanceOf(s.Dave.address)
-
-        assert.equal(waveIPT.toString(), "0", "Wave no longer holds any IPT")
-        assert.equal(difference.toString(), totalReward.toString(), "Dave received IPT in the correct amount")    
-        assert.equal(balance.toString(), startingWaveIPT.toString(), "Dave received the remaining half of the IPT")
-
-        //todo calc floor price
-    })
-
-
-    
-
-})
+    //todo calc floor price
+  });
+});

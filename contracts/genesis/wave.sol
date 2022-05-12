@@ -73,7 +73,7 @@ contract Wave {
     rewardToken = IERC20(_rewardToken);
 
     // this is the total amount of points that may be obtained
-    _cap = ((_totalReward * _floor) / (1e18)) * 6;
+    _cap = ((6 * (_totalReward * _floor)) / (1e18));
 
     _totalClaimed = 0;
   }
@@ -85,25 +85,22 @@ contract Wave {
 
     redeemed[msg.sender] = true;
     uint256 rewardAmount;
-    // totalClaimed is in points, so we multiply it by 1e12
     // _totalReward is the amount of tokens we have to reward
-    if ((_totalClaimed * 1e12) > ((_totalReward * _floor) / 1e6)) {
+    if ((1e12 * _totalClaimed) > ((_totalReward * _floor) / 1e6)) {
       // remember that _totalClaimed is in points, so we must multiply by 1e12 to get the correct decimal count
-      // ratio is less than 1e18, it is a percentage in 1e18 terms
-      uint256 ratio = (_totalReward * 1e18) / (_totalClaimed * 1e12);
+      uint256 ratio = (_totalReward * 1e18) / (_totalClaimed);
 
       console.log("ratio: ", ratio);
       // that ratio is how many rewardToken each point entitles the redeemer
-      // so multiply the senders points by the ratio and divide by 1e18
       rewardAmount = (claimed[msg.sender] * ratio) / 1e18;
       console.log("rewardAmount: ", rewardAmount);
     } else {
       // multiply amount claimed by the floor price, then divide.
       // for instance, if the _floor is 500_000, then the redeemer will obtain 0.5 rewardToken per pointToken
-      rewardAmount = (claimed[msg.sender] * _floor) / (1e6);
+      rewardAmount = (claimed[msg.sender] * _floor) * 1e6;
     }
     // scale the decimals and send reward token
-    giveTo(msg.sender, rewardAmount * 1e12);
+    giveTo(msg.sender, rewardAmount);
     //event?
   }
 
@@ -200,7 +197,7 @@ contract Wave {
 
   /// @notice not claimable after USDC cap has been reached
   function canClaim() public view returns (bool) {
-    return _totalClaimed < _cap;
+    return _totalClaimed <= _cap;
   }
 
   /// @notice whether or not the wave has completed

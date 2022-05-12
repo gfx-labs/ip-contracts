@@ -7,14 +7,13 @@ import "../_external/ERC20Detailed.sol";
 import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 
-
 /**
  * @title uFragments ERC20 token
  * @dev USDI uses the uFragments concept from the Ideal Money project to play interest
  *      Implementation is shamelessly borrowed from Ampleforth project
  *      uFragments is a normal ERC20 token, but its supply can be adjusted by splitting and
  *      combining tokens proportionally across all wallets.
- *        
+ *
  *
  *      uFragment balances are internally represented with a hidden denomination, 'gons'.
  *      We support splitting the currency in expansion and combining the currency on contraction by

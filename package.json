@@ -13,7 +13,8 @@
         "pretest": "npx hardhat compile",
         "test": "npx hardhat test test/mainnet/index.ts",
         "testgov": "npx hardhat test test/governance/index.ts",
-        "fasttest": "npx hardhat test --no-compile test/mainnet/index.ts",
+        "testsale": "npx hardhat test test/presale/oversaturation/index.ts; npx hardhat test test/presale/oversaturation/index.ts;",
+        "testall": "npm run test; npm run testgov; npm run testsale",
         "lint": "bash -c \"shopt -s globstar && shopt -s extglob && npx solhint 'contracts/!(_external)/**/*.sol'\"",
         "fmt": "bash -c \"shopt -s globstar && npx prettier --write 'contracts/**/*.sol'\"",
         "save-abis": "rm -rf artifacts/contracts/_external && mv artifacts/contracts abis"
