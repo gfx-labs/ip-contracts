@@ -18,7 +18,6 @@ import "../_external/compound/ExponentialNoError.sol";
 /// 2. generate interest in USDI
 /// 3. can delegate voting power of contained tokens
 contract Vault is IVault, ExponentialNoError, Context {
-
   /// @title VaultInfo struct
   /// @notice this struct is used to store the vault metadata
   /// this should reduce the cost of minting by ~15,000
@@ -29,10 +28,10 @@ contract Vault is IVault, ExponentialNoError, Context {
   }
   /// @notice Metadata of vault, aka the id & the minter's address
   VaultInfo public _vaultInfo;
-  
+
   IVaultController public _master;
-  
-  /// @notice this is the unscaled liability of the vault. 
+
+  /// @notice this is the unscaled liability of the vault.
   /// the number is meaningless on its own, and must be combined with the factor taken from
   /// the vaultController in order to find the true liabilitiy
   uint256 public _baseLiability;
@@ -128,12 +127,7 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// callable by the VaultController only
   /// @param increase true to increase, false to decerase
   /// @param base_amount amount to reduce base liability by
-  function modifyLiability(bool increase, uint256 base_amount)
-    external
-    override
-    onlyVaultController
-    returns (uint256)
-  {
+  function modifyLiability(bool increase, uint256 base_amount) external override onlyVaultController returns (uint256) {
     if (increase) {
       _baseLiability = _baseLiability + base_amount;
       return _baseLiability;

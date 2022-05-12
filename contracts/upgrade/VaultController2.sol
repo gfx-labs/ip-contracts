@@ -13,9 +13,7 @@ contract VaultController2 is VaultController, IVaultController2 {
 
   //CHANGED new function
   function changeTheThing(uint256 _newThing) public override {
-      newThing = _newThing;
-      emit ThingChanged(_newThing);
+    newThing = _newThing;
+    emit ThingChanged(_newThing);
   }
-
-
 }

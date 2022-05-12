@@ -14,10 +14,7 @@ contract InterestProtocolToken is TokenDelegatorStorage, TokenEvents, ITokenDele
   ) {
     require(implementation_ != address(0), "TokenDelegator: invalid address");
     owner = owner_;
-    delegateTo(
-      implementation_,
-      abi.encodeWithSignature("initialize(address,uint256)", account_, initialSupply_)
-    );
+    delegateTo(implementation_, abi.encodeWithSignature("initialize(address,uint256)", account_, initialSupply_));
 
     implementation = implementation_;
 
