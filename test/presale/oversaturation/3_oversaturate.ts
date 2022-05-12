@@ -51,7 +51,7 @@ const keyAmount = BN("500e6")//500 USDC
 const floor = BN("5e5")//500,000 - .5 USDC
 const amount = BN("100e6")//100 USDC
 const totalSupply_ = BN("1e26")
-const totalReward = BN("300e18")//250 IPT tokens //totalSupply_.div(4)
+const totalReward = BN("300e18")//300 IPT tokens //totalSupply_.div(4)
 
 let Wave: Wave
 
@@ -217,7 +217,18 @@ describe("Presale - OVERSATURATION", () => {
 
     //test for over saturation
 
-    it("try to getPoints after alread getting maximum", async () => {
+    it("try to claim after cap has been reached", async () => {
+        const cap = await Wave._cap()
+        showBody("CAP: ", cap)
+        const _totalClaimed = await Wave._totalClaimed()
+        showBody("_totalClaimed:", _totalClaimed)
+    })
+
+
+
+
+
+    it("try to getPoints after you already claimed maximum", async () => {
         //approve
         const tinyAmount = 1 //1e-18 IPT
         await s.USDC.connect(s.Bob).approve(Wave.address, tinyAmount)
@@ -281,6 +292,8 @@ describe("Presale - OVERSATURATION", () => {
 
         const redeemResult = await Wave.connect(s.Bob).redeem()
         await mineBlock()
+        const args = await getArgs(redeemResult)
+        showBody(args)
         
         //check things
         let waveIPT = await s.IPT.balanceOf(Wave.address)
