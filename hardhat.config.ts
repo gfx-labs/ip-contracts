@@ -52,8 +52,8 @@ const config: HardhatUserConfig = {
             tasks: ["compile"],
         },
         test: {//npx hardhat watch test -- run test when a file is saved
-            tasks: [{ command: 'test', params: { testFiles: ['./test/presale/oversaturation/index.ts'] } }], //test this file
-            files: ['./test/presale/oversaturation/*'] //test when this file is saved
+            tasks: [{ command: 'test', params: { testFiles: ['./test/isolated/uniPool/index.ts'] } }], //test this file
+            files: ['./test/isolated/uniPool/*'] //test when this file is saved
         }
     },
     paths: {
