@@ -5,7 +5,7 @@ import { showBody, showBodyCyan } from "../../../util/format";
 import { getArgs, getGas, truncate, toNumber } from "../../../util/math";
 import { BN } from "../../../util/number";
 import { s } from "../scope";
-import { advanceBlockHeight, reset, mineBlock, fastForward, OneYear, OneWeek } from "../../../util/block";
+import { advanceBlockHeight, reset, mineBlock, currentBlock, fastForward, OneYear, OneWeek } from "../../../util/block";
 import { IVault__factory } from "../../../typechain-types";
 //import { assert } from "console";
 import { BigNumber, utils } from "ethers";
@@ -19,9 +19,12 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
     const router02ABI = new IUniswapV2Router02()
     let ro2 = router02ABI.Router02()
     const router02 = ro2[0].abi
+    const Router02Address = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+
+    const routerV2 = new ethers.Contract(Router02Address, router02 , ethers.provider)
+
     //showBody(router02[0].abi)
 
-    const Router02Address = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
 
     const depositAmount = s.Dave_USDC.sub(BN("500e6"))
     const depositAmount_e18 = depositAmount.mul(BN("1e12"))
@@ -120,12 +123,29 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
 
 
     it("Use borrowed USDi to make a uni v2 pool", async () => {
-        const startingUSDI = await s.USDI.balanceOf(s.Bob.address)
-        showBody("StartingUSDI: ", await toNumber(startingUSDI))
+        const wETHamount = await s.WETH.balanceOf(s.Bob.address)
+        const USDIamount = await s.USDI.balanceOf(s.Bob.address)
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
 
-        const routerV2 = new ethers.Contract(Router02Address, router02 , ethers.provider)
+    
+        //approvals
+        await s.USDI.connect(s.Bob).approve(routerV2.address, USDIamount)
+        await s.WETH.connect(s.Bob).approve(routerV2.address, wETHamount)
+        await mineBlock()
 
-        //await router.addLiquidity()
+        await routerV2.connect(s.Bob).addLiquidity(
+            s.USDI.address,
+            s.WETH.address,
+            USDIamount,
+            wETHamount,
+            USDIamount.div(2),
+            wETHamount.div(2),
+            s.Bob.address,
+            deadline
+        )
+        await mineBlock()
+
 
         
 
