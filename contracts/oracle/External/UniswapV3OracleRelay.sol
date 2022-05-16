@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
 import "../../_external/uniswap/IUniswapV3PoolDerivedState.sol";
@@ -9,7 +9,6 @@ import "../../_external/uniswap/TickMath.sol";
 /// @notice The oracle returns (univ3) * mul / div
 /// if quote_token_is_token0 == true, then the reciprocal is returned
 contract UniswapV3OracleRelay is IOracleRelay {
-  address public immutable _poolAddress;
   bool public immutable _quoteTokenIsToken0;
   IUniswapV3PoolDerivedState public immutable _pool;
   uint32 public immutable _lookback;
@@ -33,9 +32,8 @@ contract UniswapV3OracleRelay is IOracleRelay {
     _lookback = lookback;
     _mul = mul;
     _div = div;
-    _poolAddress = pool_address;
     _quoteTokenIsToken0 = quote_token_is_token0;
-    _pool = IUniswapV3PoolDerivedState(_poolAddress);
+    _pool = IUniswapV3PoolDerivedState(pool_address);
   }
 
   /// @notice the current reported value of the oracle
