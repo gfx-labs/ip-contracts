@@ -26,7 +26,7 @@ const wETH_LTV = BN("5e17")
 const COMP_LTV = BN("4e17")
 
 
-const deployProtocol = async () => {
+const deployProtocol = async (deployer:SignerWithAddress) => {
     console.log("DEPLOYING CONTRACTS")
 
 
@@ -69,9 +69,12 @@ const deployProtocol = async () => {
 
     //attach
     const USDIcontract = USDIfactory.attach(USDI.address)
-    await USDIcontract.setVaultController(VCcontract.address)
+    
     await USDIcontract.initialize(USDC_address)
     console.log("USDI initialized: ", USDIcontract.address)
+
+    await USDIcontract.connect(deployer).setVaultController(VCcontract.address)
+    console.log("Set VaultController on USDI to: ", VCcontract.address)
 
     await sleep(3000)
 
@@ -310,14 +313,14 @@ const deployCharlie = async (deployer:SignerWithAddress) => {
 async function main() {
 
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await network.provider.send("evm_setAutomine", [true])
+    //await network.provider.send("evm_setAutomine", [true])
     
     const accounts = await ethers.getSigners()
     const deployer = accounts[0]
 
     console.log("Deployer: ", deployer.address)
 
-    await deployProtocol()
+    await deployProtocol(deployer)
     await deployCharlie(deployer)
 
     console.log("Contracts deployed")
