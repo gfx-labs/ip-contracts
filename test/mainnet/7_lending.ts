@@ -466,7 +466,7 @@ describe("Checking for eronious inputs and scenarios", () => {
     it("checks for liquidate with an invalid vault address", async () => {
         //invalid address
         await nextBlockTime(0)
-        await expect(s.VaultController.connect(s.Dave).liquidateAccount(vaultID, s.Frank.address, BN("1e25"))).to.be.revertedWith("token not enabled")
+        await expect(s.VaultController.connect(s.Dave).liquidateAccount(vaultID, s.Frank.address, BN("1e25"))).to.be.revertedWith("Token not registered")
         await advanceBlockHeight(1)
     })
 

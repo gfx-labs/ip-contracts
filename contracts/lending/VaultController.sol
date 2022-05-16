@@ -351,6 +351,11 @@ contract VaultController is
   ) external override paysInterest whenNotPaused returns (uint256) {
     require(!checkAccount(id), "Vault is solvent");
     require(tokens_to_liquidate > 0, "must liquidate>0");
+
+    //check for registered asset - audit L3
+    require(_tokenAddress_tokenId[asset_address] != 0, "Token not registered");
+
+
     // calculate the amount to liquidate and the 'bad fill price' using liquidationMath
     // see _liquidationMath for more detailed explaination of the math
     (uint256 tokenAmount, uint256 badFillPrice) = _liquidationMath(id, asset_address, tokens_to_liquidate);
