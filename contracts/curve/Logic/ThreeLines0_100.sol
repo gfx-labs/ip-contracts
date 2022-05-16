@@ -28,6 +28,10 @@ contract ThreeLines0_100 is ICurveSlave {
     int256 s1,
     int256 s2
   ) {
+
+    require((0 < r2) && (r2 < r1) && ( r1 < r0), "Invalid curve");
+    require((0 < s1) && (s1 < s2) && (s2 < 1e18), "Invalid breakpoint values");
+
     _r0 = r0;
     _r1 = r1;
     _r2 = r2;

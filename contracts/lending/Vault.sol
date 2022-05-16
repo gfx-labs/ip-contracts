@@ -26,10 +26,11 @@ contract Vault is IVault, ExponentialNoError, Context {
     uint96 id;
     address minter;
   }
+  
   /// @notice Metadata of vault, aka the id & the minter's address
   VaultInfo public _vaultInfo;
 
-  IVaultController public _master;
+  IVaultController public immutable _master;
 
   /// @notice this is the unscaled liability of the vault.
   /// the number is meaningless on its own, and must be combined with the factor taken from
@@ -94,7 +95,7 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// @param amount amount of erc20 token to withdraw
   function withdrawErc20(address token_address, uint256 amount) external override onlyMinter {
     // transfer the token to the owner
-    IERC20(token_address).transferFrom(address(this), _msgSender(), amount);
+    IERC20(token_address).transfer(_msgSender(), amount);
     //  check if the account is solvent
     bool solvency = _master.checkAccount(_vaultInfo.id);
     require(solvency, "over-withdrawal");

@@ -7,11 +7,11 @@ import "../../_external/chainlink/IAggregator.sol";
 /// @title Oracle that wraps a chainlink oracle
 /// @notice The oracle returns (chainlinkPrice) * mul / div
 contract ChainlinkOracleRelay is IOracleRelay {
-  address public _feedAddress;
-  IAggregator private _aggregator;
+  address public immutable _feedAddress;
+  IAggregator private immutable _aggregator;
 
-  uint256 public _multiply;
-  uint256 public _divide;
+  uint256 public immutable _multiply;
+  uint256 public immutable _divide;
 
   /// @notice all values set at construction time
   /// @param  feed_address address of chainlink feed

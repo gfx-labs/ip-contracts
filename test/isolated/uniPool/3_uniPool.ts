@@ -134,7 +134,7 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
         await s.WETH.connect(s.Bob).approve(routerV2.address, wETHamount)
         await mineBlock()
 
-        await routerV2.connect(s.Bob).addLiquidity(
+        const poolResult = await routerV2.connect(s.Bob).addLiquidity(
             s.USDI.address,
             s.WETH.address,
             USDIamount,
@@ -145,6 +145,8 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
             deadline
         )
         await mineBlock()
+
+        showBody(poolResult)
 
 
         

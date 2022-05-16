@@ -9,13 +9,13 @@ import "../../_external/uniswap/TickMath.sol";
 /// @notice The oracle returns (univ3) * mul / div
 /// if quote_token_is_token0 == true, then the reciprocal is returned
 contract UniswapV3OracleRelay is IOracleRelay {
-  address public _poolAddress;
-  bool public _quoteTokenIsToken0;
-  IUniswapV3PoolDerivedState public _pool;
-  uint32 public _lookback;
+  address public immutable _poolAddress;
+  bool public immutable _quoteTokenIsToken0;
+  IUniswapV3PoolDerivedState public immutable _pool;
+  uint32 public immutable _lookback;
 
-  uint256 public _mul;
-  uint256 public _div;
+  uint256 public immutable _mul;
+  uint256 public immutable _div;
 
   /// @notice all values set at construction time
   /// @param lookback how many seconds to twap for
