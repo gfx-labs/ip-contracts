@@ -10,6 +10,9 @@ import "../_external/CompLike.sol";
 import "../_external/IERC20.sol";
 import "../_external/Context.sol";
 import "../_external/compound/ExponentialNoError.sol";
+import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
+import "../_external/openzeppelin/IERC20Upgradeable.sol";
+
 
 /// @title Vault
 /// @notice our implentation of maker-vault like vault
@@ -18,6 +21,8 @@ import "../_external/compound/ExponentialNoError.sol";
 /// 2. generate interest in USDI
 /// 3. can delegate voting power of contained tokens
 contract Vault is IVault, ExponentialNoError, Context {
+  using SafeERC20Upgradeable for IERC20;
+
   /// @title VaultInfo struct
   /// @notice this struct is used to store the vault metadata
   /// this should reduce the cost of minting by ~15,000
@@ -26,7 +31,7 @@ contract Vault is IVault, ExponentialNoError, Context {
     uint96 id;
     address minter;
   }
-  
+
   /// @notice Metadata of vault, aka the id & the minter's address
   VaultInfo public _vaultInfo;
 
@@ -95,7 +100,8 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// @param amount amount of erc20 token to withdraw
   function withdrawErc20(address token_address, uint256 amount) external override onlyMinter {
     // transfer the token to the owner
-    IERC20(token_address).transfer(_msgSender(), amount);
+    //IERC20(token_address).transfer(_msgSender(), amount);
+    SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token_address), _msgSender(), amount);
     //  check if the account is solvent
     bool solvency = _master.checkAccount(_vaultInfo.id);
     require(solvency, "over-withdrawal");
@@ -120,8 +126,8 @@ contract Vault is IVault, ExponentialNoError, Context {
     address _to,
     uint256 _amount
   ) external override onlyVaultController {
-    //require(IERC20(_token).transferFrom(address(this), _to, _amount), "masterTransfer: Transfer Failed");
-    require(IERC20(_token).transfer(_to, _amount), "masterTransfer: Transfer Failed");
+    SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
+    //require(IERC20(_token).transfer(_to, _amount), "masterTransfer: Transfer Failed");
   }
 
   /// @notice function used by the VaultController to reduce a vaults liability
