@@ -49,9 +49,6 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
     _;
   }
 
-  bool private rebasePausedDeprecated;
-  bool private tokenPausedDeprecated;
-
   modifier validRecipient(address to) {
     require(to != address(0x0));
     require(to != address(this));
@@ -95,9 +92,6 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
     //set og initial values
     _totalGons = INITIAL_FRAGMENTS_SUPPLY * 10**48;
     MAX_SUPPLY = 2**128 - 1;
-
-    rebasePausedDeprecated = false;
-    tokenPausedDeprecated = false;
 
     _totalSupply = INITIAL_FRAGMENTS_SUPPLY;
     _gonBalances[address(0x0)] = _totalGons; //send starting supply to a burner address so _totalSupply is never 0

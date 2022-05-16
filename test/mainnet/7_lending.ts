@@ -36,6 +36,9 @@ describe("BORROW USDi", async () => {
 
         const borrowResult = await s.VaultController.connect(s.Bob).borrowUsdi(1, borrowAmount)
         await advanceBlockHeight(1)
+        const gas = await getGas(borrowResult)
+        showBodyCyan("Gas cost to borrowUSDI: ", gas)
+
         const args = await getArgs(borrowResult)
         actualBorrowAmount = args!.borrowAmount
 

@@ -69,6 +69,7 @@ const deployProtocol = async () => {
 
     //attach
     const USDIcontract = USDIfactory.attach(USDI.address)
+    await USDIcontract.setVaultController(VCcontract.address)
     await USDIcontract.initialize(USDC_address)
     console.log("USDI initialized: ", USDIcontract.address)
 
