@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 // @title VaultController Events
 /// @notice interface which contains any events which the VaultController contract emits

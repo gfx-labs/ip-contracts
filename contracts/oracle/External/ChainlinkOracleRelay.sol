@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
 import "../../_external/chainlink/IAggregator.sol";
@@ -7,7 +7,6 @@ import "../../_external/chainlink/IAggregator.sol";
 /// @title Oracle that wraps a chainlink oracle
 /// @notice The oracle returns (chainlinkPrice) * mul / div
 contract ChainlinkOracleRelay is IOracleRelay {
-  address public immutable _feedAddress;
   IAggregator private immutable _aggregator;
 
   uint256 public immutable _multiply;
@@ -22,7 +21,6 @@ contract ChainlinkOracleRelay is IOracleRelay {
     uint256 mul,
     uint256 div
   ) {
-    _feedAddress = feed_address;
     _aggregator = IAggregator(feed_address);
     _multiply = mul;
     _divide = div;
