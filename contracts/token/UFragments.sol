@@ -357,6 +357,7 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
     bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), permitDataDigest));
 
     require(owner == ecrecover(digest, v, r, s));
+    require(owner != address(0x0));
 
     _nonces[owner] = ownerNonce + 1;
 
