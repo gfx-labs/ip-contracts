@@ -240,7 +240,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     }
 
     // solhint-disable-next-line avoid-low-level-calls
-    (bool success, bytes memory returnData) = target.call{value: value}(callData);
+    (bool success, /*bytes memory returnData*/) = target.call{value: value}(callData);
     require(success, "tx execution reverted.");
 
     emit ExecuteTransaction(txHash, target, value, signature, data, eta);

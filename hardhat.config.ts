@@ -27,7 +27,7 @@ const config: HardhatUserConfig = {
             },
         },
         ropsten: {
-            url: "https://ropsten.rpc.gfx.xyz",
+            url: process.env.ROPSTEN_URL,//"https://ropsten.rpc.gfx.xyz",
             accounts:[process.env.ROPSTEN_PRIVATE_KEY!],
             chainId: 3,       // Ropsten's id
             gas: 8000000,        // Ropsten has a lower block limit than mainnet
