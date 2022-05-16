@@ -45,7 +45,7 @@ interface IGovernorCharlieDelegate {
     string memory signature,
     bytes memory data,
     uint256 eta
-  ) external payable returns (bytes memory);
+  ) external payable;
 
   function cancel(uint256 proposalId) external;
 
