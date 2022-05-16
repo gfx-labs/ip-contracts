@@ -223,7 +223,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     string memory signature,
     bytes memory data,
     uint256 eta
-  ) external payable override returns (bytes memory) {
+  ) external payable override {
     bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
     require(queuedTransactions[txHash], "tx hasn't been queued.");
     require(getBlockTimestamp() >= eta, "tx hasn't surpassed timelock.");
@@ -245,7 +245,6 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
 
     emit ExecuteTransaction(txHash, target, value, signature, data, eta);
 
-    return returnData;
   }
 
   /**
