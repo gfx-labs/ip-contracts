@@ -328,7 +328,8 @@ contract VaultController is
     // grab the vault by id if part of our system. revert if not
     IVault vault = getVault(id);
     // get the total usdi liability, equal to the interest factor * vault's base liabilty
-    uint256 usdi_liability = truncate(safeu192(_interest.factor * vault.baseLiability()));
+    //uint256 usdi_liability = truncate(safeu192(_interest.factor * vault.baseLiability()));
+    uint256 usdi_liability = uint256(safeu192(truncate(_interest.factor * vault.baseLiability())));
     // decrease the vaults liability by the vauls base liability
     vault.modifyLiability(false, vault.baseLiability());
     // burn the amount of usdi paid back from the vault
