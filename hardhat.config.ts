@@ -19,7 +19,7 @@ const config: HardhatUserConfig = {
     networks: {
         hardhat: {
             forking: {
-                url: "https://mainnet.rpc.gfx.xyz",
+                url: process.env.MAINNET_URL!, //"https://mainnet.rpc.gfx.xyz",
                 blockNumber: 14546835
             },
             mining: {

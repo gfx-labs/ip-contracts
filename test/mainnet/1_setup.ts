@@ -43,6 +43,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("reset hardhat network each run", async () => {
+        showBody("TEST")
         expect(await reset(0)).to.not.throw;
     });
     it("set automine OFF", async () => {
