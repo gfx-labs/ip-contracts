@@ -26,7 +26,6 @@ contract OracleMaster is IOracleMaster, Ownable {
     require(_relays[token_address] != address(0x0), "token not enabled");
     IOracleRelay relay = IOracleRelay(_relays[token_address]);
     uint256 value = relay.currentValue();
-    require(value != 0, "value is 0");
     return value;
   }
 

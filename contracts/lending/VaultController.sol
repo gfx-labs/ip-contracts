@@ -355,7 +355,6 @@ contract VaultController is
     //check for registered asset - audit L3
     require(_tokenAddress_tokenId[asset_address] != 0, "Token not registered");
 
-
     // calculate the amount to liquidate and the 'bad fill price' using liquidationMath
     // see _liquidationMath for more detailed explaination of the math
     (uint256 tokenAmount, uint256 badFillPrice) = _liquidationMath(id, asset_address, tokens_to_liquidate);
@@ -491,6 +490,10 @@ contract VaultController is
     uint192 total_liquidity_value = 0;
     // loop over each registed token, adding the indivuduals LTV to the total LTV of the vault
     for (uint192 i = 1; i <= _tokensRegistered; i++) {
+      // if the ltv is 0, continue
+      if (_tokenId_tokenLTV[i] == 0) {
+        continue;
+      }
       // get the address of the token through the array of enabled tokens
       address token_address = _enabledTokens[i - 1];
       // the balance is the vaults token balance of the current collateral token in the loop
