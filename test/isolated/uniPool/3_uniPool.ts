@@ -34,7 +34,7 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
 
     const factoryV2 = new ethers.Contract(Factory02Address, factory02, ethers.provider)
 
-    let pairV2:any
+    let pairV2: any
 
 
 
@@ -44,7 +44,7 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
     //1 quarter of Dave's USDC
     const usdcDepositAmount = s.Dave_USDC.div(4)
 
-    let usdiAmount:BigNumber
+    let usdiAmount: BigNumber
 
     //1 half of Bob's wETH
     const collateralAmount = s.Bob_WETH.div(2)
@@ -216,21 +216,59 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
         await mineBlock()
 
         getReserves = await pairV2.getReserves()
-        
-        assert.equal(startingUSDIreserve.toString(), getReserves.reserve0.toString(), "Reserve on pair has not changed" )
-        let balance = await s.USDI.balanceOf(pairV2.address) 
+
+        assert.equal(startingUSDIreserve.toString(), getReserves.reserve0.toString(), "Reserve on pair has not changed")
+        let balance = await s.USDI.balanceOf(pairV2.address)
 
         //actual USDI on pair contract is higher due to interest
         expect(await toNumber(balance)).to.be.gt(await toNumber(startingUSDIreserve))
-        
+
         //no new lp tokens
         let currentLPTs = await pairV2.balanceOf(s.Bob.address)
         expect(await toNumber(currentLPTs)).to.eq(await toNumber(lptokens))
 
     })
 
+    it("do a small swap", async () => {
+        const startBalance = await s.USDI.balanceOf(s.Dave.address)
+        const amount = utils.parseEther("500")
+        expect(await toNumber(startBalance)).to.be.gt(await toNumber(amount))
+
+        const startWETH = await s.WETH.balanceOf(s.Dave.address)
+
+
+        //approve
+        await s.USDI.connect(s.Dave).approve(routerV2.address, amount)
+        await mineBlock()
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+        //swap exact tokens for tokens
+        await routerV2.connect(s.Dave).swapExactTokensForTokens(
+            amount,
+            500,
+            [s.USDI.address, s.WETH.address],
+            s.Dave.address,
+            deadline
+        )
+        await mineBlock()
+
+        //Dave spent exactly 500 USDi
+        let balance = await s.USDI.balanceOf(s.Dave.address)
+        const difference = startBalance.sub(balance)
+        expect(await toNumber(difference)).to.eq(await toNumber(amount))
+
+        //Dave received wETH
+        balance = await s.WETH.balanceOf(s.Dave.address)
+        expect(await toNumber(balance)).to.be.gt(0)
+
+    })
+
     it("remove all liquidity from pool and receive USDi + interest ", async () => {
         const lptokens = await pairV2.balanceOf(s.Bob.address)
+
+        const pairWETH = await s.WETH.balanceOf(pairV2.address)
 
         //aprove
         await pairV2.connect(s.Bob).approve(routerV2.address, lptokens)
@@ -266,20 +304,8 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
 
         //bob received virtually all wETH back
         balance = await s.WETH.balanceOf(s.Bob.address)
-        expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.Bob_WETH.div(2)), 0.0000000000001)
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(pairWETH), 0.0000000000001)//todo
 
     })
-
-
-
-    
-
-    it("check more things", async () => {
-
-    })
-
-
-
-
 
 })
