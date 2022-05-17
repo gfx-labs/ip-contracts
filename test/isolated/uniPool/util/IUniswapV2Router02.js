@@ -1,4 +1,4 @@
-class IUniswapV2Router02{
+class IUniswapV2Router02 {
     Router02() {
         return [
             {

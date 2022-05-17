@@ -41,7 +41,7 @@ if (process.env.TENDERLY_KEY) {
 }
 
 
-describe("hardhat settings", () => {
+describe("Testing for where there is no reserve", () => {
     it("reset hardhat network each run", async () => {
         expect(await reset(0)).to.not.throw;
     });
