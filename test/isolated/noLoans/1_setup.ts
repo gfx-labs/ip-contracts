@@ -41,10 +41,8 @@ if (process.env.TENDERLY_KEY) {
 }
 
 
-describe("hardhat settings", () => {
-    showBody("Before IT")
+describe("Testing for when there are no loans", () => {
     it("reset hardhat network each run", async () => {
-
         expect(await reset(0)).to.not.throw;
     });
     it("set automine OFF", async () => {
