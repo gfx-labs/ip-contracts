@@ -10,7 +10,6 @@ import { IVault__factory } from "../../../typechain-types";
 //import { assert } from "console";
 import { BigNumber, utils } from "ethers";
 import { token } from "../../../typechain-types";
-//simport { truncate } from "fs";
 
 
 
@@ -269,6 +268,7 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
         const lptokens = await pairV2.balanceOf(s.Bob.address)
 
         const pairWETH = await s.WETH.balanceOf(pairV2.address)
+        const pairUSDi = await s.USDI.balanceOf(pairV2.address)
 
         //aprove
         await pairV2.connect(s.Bob).approve(routerV2.address, lptokens)
@@ -297,6 +297,8 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
         //bob received USDi + interest
         balance = await s.USDI.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.be.gt(await toNumber(usdiAmount))
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(pairUSDi), 100000)
+
 
         //pair wETH is very close to 0
         balance = await s.WETH.balanceOf(pairV2.address)
