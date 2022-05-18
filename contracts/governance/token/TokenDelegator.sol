@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 pragma experimental ABIEncoderV2;
 
 import "./IToken.sol";
@@ -14,10 +14,7 @@ contract InterestProtocolToken is TokenDelegatorStorage, TokenEvents, ITokenDele
   ) {
     require(implementation_ != address(0), "TokenDelegator: invalid address");
     owner = owner_;
-    delegateTo(
-      implementation_,
-      abi.encodeWithSignature("initialize(address,uint256)", account_, initialSupply_)
-    );
+    delegateTo(implementation_, abi.encodeWithSignature("initialize(address,uint256)", account_, initialSupply_));
 
     implementation = implementation_;
 

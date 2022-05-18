@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 import "./IUSDI.sol";
 
@@ -16,17 +16,15 @@ import "./_external/openzeppelin/PausableUpgradeable.sol";
 contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, ExponentialNoError {
   IERC20 public _reserve;
 
-  address public _lenderAddress;
-  address public _vaultControllerAddress;
-  IVaultController private _VaultController;
+  IVaultController public _VaultController;
 
   /// @notice checks if _msgSender() is VaultController
   modifier onlyVaultController() {
-    require(_msgSender() == _vaultControllerAddress, "only VaultController");
+    require(_msgSender() == address(_VaultController), "only VaultController");
     _;
   }
 
-  /// @notice any function with this modifier will call the pay_interest() function before any function logic is called 
+  /// @notice any function with this modifier will call the pay_interest() function before any function logic is called
   modifier paysInterest() {
     _VaultController.calculateInterest();
     _;
@@ -79,10 +77,15 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     return address(_reserve);
   }
 
+  /// @notice get the VaultController addr
+  /// @return vaultcontroller addr
+  function getVaultController() public view override returns (address) {
+    return address(_VaultController);
+  }
+
   /// @notice set the VaultController addr so that vault_master may mint/burn USDi without restriction
   /// @param vault_master_address address of vault master
   function setVaultController(address vault_master_address) external override onlyOwner {
-    _vaultControllerAddress = vault_master_address;
     _VaultController = IVaultController(vault_master_address);
   }
 
@@ -194,7 +197,17 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     uint256 allowance = _reserve.allowance(_msgSender(), address(this));
     require(allowance >= usdc_amount, "Insufficient Allowance");
     require(_reserve.transferFrom(_msgSender(), address(this), usdc_amount), "transfer failed");
-    _donation(usdc_amount);
+    _donation(amount);
+  }
+
+  /// @notice donates any USDC held by this contract to the USDI holders
+  /// @notice accounts for any USDC that may have been sent here accidently
+  /// @notice without this, any USDC sent to the contract could mess up the reserve ratio
+  function donateReserve() external override whenNotPaused {
+    uint256 totalUSDC = (_reserve.balanceOf(address(this))) * 1e12;
+    require(totalUSDC > _totalSupply, "No extra reserve");
+
+    _donation(totalUSDC - _totalSupply);
   }
 
   /// @notice function for the vaultController to mint
@@ -223,7 +236,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   }
 
   /// @notice function for the vaultController to scale all USDi balances
-  /// @param amount amount of USDi to donate
+  /// @param amount amount of USDi (e18) to donate
   function vaultControllerDonate(uint256 amount) external override onlyVaultController {
     _donation(amount);
   }

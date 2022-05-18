@@ -19,7 +19,7 @@ const config: HardhatUserConfig = {
     networks: {
         hardhat: {
             forking: {
-                url: "https://mainnet.rpc.gfx.xyz",
+                url: process.env.MAINNET_URL!, //"https://mainnet.rpc.gfx.xyz",
                 blockNumber: 14546835
             },
             mining: {
@@ -27,7 +27,7 @@ const config: HardhatUserConfig = {
             },
         },
         ropsten: {
-            url: process.env.ROPSTEN_URL,
+            url: process.env.ROPSTEN_URL,//"https://ropsten.rpc.gfx.xyz",
             accounts:[process.env.ROPSTEN_PRIVATE_KEY!],
             chainId: 3,       // Ropsten's id
             gas: 8000000,        // Ropsten has a lower block limit than mainnet
@@ -52,8 +52,8 @@ const config: HardhatUserConfig = {
             tasks: ["compile"],
         },
         test: {//npx hardhat watch test -- run test when a file is saved
-            tasks: [{ command: 'test', params: { testFiles: ['./test/mainnet/index.ts'] } }], //test this file
-            files: ['./test/mainnet/*'] //test when this file is saved
+            tasks: [{ command: 'test', params: { testFiles: ['./test/isolated/uniPool/index.ts'] } }], //test this file
+            files: ['./test/isolated/uniPool/*'] //test when this file is saved
         }
     },
     paths: {

@@ -36,6 +36,9 @@ describe("BORROW USDi", async () => {
 
         const borrowResult = await s.VaultController.connect(s.Bob).borrowUsdi(1, borrowAmount)
         await advanceBlockHeight(1)
+        const gas = await getGas(borrowResult)
+        showBodyCyan("Gas cost to borrowUSDI: ", gas)
+
         const args = await getArgs(borrowResult)
         actualBorrowAmount = args!.borrowAmount
 
@@ -463,7 +466,7 @@ describe("Checking for eronious inputs and scenarios", () => {
     it("checks for liquidate with an invalid vault address", async () => {
         //invalid address
         await nextBlockTime(0)
-        await expect(s.VaultController.connect(s.Dave).liquidateAccount(vaultID, s.Frank.address, BN("1e25"))).to.be.revertedWith("token not enabled")
+        await expect(s.VaultController.connect(s.Dave).liquidateAccount(vaultID, s.Frank.address, BN("1e25"))).to.be.revertedWith("Token not registered")
         await advanceBlockHeight(1)
     })
 

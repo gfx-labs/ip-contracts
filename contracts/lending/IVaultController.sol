@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 // @title VaultController Events
 /// @notice interface which contains any events which the VaultController contract emits
@@ -43,6 +43,8 @@ interface IVaultController is VaultControllerEvents {
 
   function vaultAddress(uint96 id) external view returns (address);
 
+  function vaultIDs(address wallet) external view returns (uint96[] memory);
+
   function amountToSolvency(uint96 id) external view returns (uint256);
 
   function accountLiability(uint96 id) external view returns (uint192);
@@ -76,7 +78,11 @@ interface IVaultController is VaultControllerEvents {
 
   function unpause() external;
 
+  function getOracleMaster() external view returns (address);
+
   function registerOracleMaster(address master_oracle_address) external;
+
+  function getCurveMaster() external view returns (address);
 
   function registerCurveMaster(address master_curve_address) external;
 

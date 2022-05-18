@@ -1,4 +1,5 @@
 import { network, ethers } from "hardhat";
+import * as dotenv from "dotenv";
 
 export const advanceBlockHeight = async (blocks: number) => {
     for (let i = 0; i < blocks; i++) {
@@ -37,6 +38,8 @@ export const nextBlockTime = async (blockTime:number) => {
 }
 
 export const reset = async (block: number) => {
+    dotenv.config();
+
     //pass 0 to return to starting block
     if (block == 0) {
         block = 14546835
@@ -46,7 +49,7 @@ export const reset = async (block: number) => {
         params: [
             {
                 forking: {
-                    jsonRpcUrl: "https://mainnet.rpc.gfx.xyz",
+                    jsonRpcUrl: process.env.MAINNET_URL!,
                     blockNumber: block
                 },
             },

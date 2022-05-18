@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 /* solhint-disable */
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 import "../_external/ERC20Detailed.sol";
 
 import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
-
 
 /**
  * @title uFragments ERC20 token
@@ -14,7 +13,7 @@ import "../_external/openzeppelin/Initializable.sol";
  *      Implementation is shamelessly borrowed from Ampleforth project
  *      uFragments is a normal ERC20 token, but its supply can be adjusted by splitting and
  *      combining tokens proportionally across all wallets.
- *        
+ *
  *
  *      uFragment balances are internally represented with a hidden denomination, 'gons'.
  *      We support splitting the currency in expansion and combining the currency on contraction by
@@ -49,9 +48,6 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
     require(msg.sender == monetaryPolicy);
     _;
   }
-
-  bool private rebasePausedDeprecated;
-  bool private tokenPausedDeprecated;
 
   modifier validRecipient(address to) {
     require(to != address(0x0));
@@ -97,14 +93,11 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
     _totalGons = INITIAL_FRAGMENTS_SUPPLY * 10**48;
     MAX_SUPPLY = 2**128 - 1;
 
-    rebasePausedDeprecated = false;
-    tokenPausedDeprecated = false;
-
     _totalSupply = INITIAL_FRAGMENTS_SUPPLY;
-    _gonBalances[msg.sender] = _totalGons;
+    _gonBalances[address(0x0)] = _totalGons; //send starting supply to a burner address so _totalSupply is never 0
     _gonsPerFragment = _totalGons / _totalSupply;
 
-    emit Transfer(address(0x0), msg.sender, _totalSupply);
+    emit Transfer(address(this), address(0x0), _totalSupply);
   }
 
   /**
@@ -364,6 +357,7 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
     bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), permitDataDigest));
 
     require(owner == ecrecover(digest, v, r, s));
+    require(owner != address(0x0));
 
     _nonces[owner] = ownerNonce + 1;
 

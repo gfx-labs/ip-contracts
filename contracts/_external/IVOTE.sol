@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 import "./IERC20.sol";
 
@@ -7,7 +7,10 @@ import "./IERC20.sol";
  * @dev Interface of the ERC20 standard as defined in the EIP.
  */
 interface IVOTE is IERC20 {
-  enum DelegationType {VOTING_POWER, PROPOSITION_POWER}
+  enum DelegationType {
+    VOTING_POWER,
+    PROPOSITION_POWER
+  }
 
   /**
    * @notice Gets the current votes balance for `account`

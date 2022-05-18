@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 pragma experimental ABIEncoderV2;
 import "hardhat/console.sol";
 
@@ -30,6 +30,10 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @param votingDelay_ The initial voting delay
    * @param proposalThreshold_ The initial proposal threshold
    * @param proposalTimelockDelay_ The initial proposal holding period
+   * @param quorumVotes_ The number of votes needed for consent 
+   * @param emergencyQuorumVotes_ The number of votes needed for consent in an emergency 
+   * @param emergencyVotingPeriod_ The voting period in an emergency 
+   * @param emergencyTimelockDelay_ The holding period in an emergency 
    */
   function initialize(
     address ipt_,
@@ -44,17 +48,23 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
   ) external override {
     require(!initialized, "already been initialized");
     ipt = IIpt(ipt_);
-    votingPeriod = votingPeriod_; //yes
-    votingDelay = votingDelay_; //yes
-    proposalThreshold = proposalThreshold_; //yes
-    proposalTimelockDelay = proposalTimelockDelay_; //yes
+    votingPeriod = votingPeriod_; 
+    votingDelay = votingDelay_; 
+    proposalThreshold = proposalThreshold_; 
+    proposalTimelockDelay = proposalTimelockDelay_; 
     proposalCount = 0;
-    quorumVotes = quorumVotes_; //yes
-    emergencyQuorumVotes = emergencyQuorumVotes_; //yes
-    emergencyVotingPeriod = emergencyVotingPeriod_; //yes
+    quorumVotes = quorumVotes_; 
+    emergencyQuorumVotes = emergencyQuorumVotes_; 
+    emergencyVotingPeriod = emergencyVotingPeriod_; 
     emergencyTimelockDelay = emergencyTimelockDelay_;
 
     initialized = true;
+  }
+
+  /// @notice any function with this modifier will call the pay_interest() function before
+  modifier onlyGov() {
+    require(_msgSender() == address(this), "must come from the gov.");
+    _;
   }
 
   /**
@@ -78,7 +88,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     require(quorumVotes != 0, "Charlie not active");
     // Allow addresses above proposal threshold and whitelisted addresses to propose
     require(
-      ipt.getPriorVotes(_msgSender(), sub256(block.number, 1)) >= proposalThreshold || isWhitelisted(_msgSender()),
+      ipt.getPriorVotes(_msgSender(), (block.number - 1)) >= proposalThreshold || isWhitelisted(_msgSender()),
       "votes below proposal threshold"
     );
     require(
@@ -213,7 +223,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     string memory signature,
     bytes memory data,
     uint256 eta
-  ) external payable override returns (bytes memory) {
+  ) external payable override {
     bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
     require(queuedTransactions[txHash], "tx hasn't been queued.");
     require(getBlockTimestamp() >= eta, "tx hasn't surpassed timelock.");
@@ -230,12 +240,11 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     }
 
     // solhint-disable-next-line avoid-low-level-calls
-    (bool success, bytes memory returnData) = target.call{value: value}(callData);
+    (bool success, /*bytes memory returnData*/) = target.call{value: value}(callData);
     require(success, "tx execution reverted.");
 
     emit ExecuteTransaction(txHash, target, value, signature, data, eta);
 
-    return returnData;
   }
 
   /**
@@ -252,13 +261,13 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
       // Whitelisted proposers can't be canceled for falling below proposal threshold
       if (isWhitelisted(proposal.proposer)) {
         require(
-          (ipt.getPriorVotes(proposal.proposer, sub256(block.number, 1)) < proposalThreshold) &&
+          (ipt.getPriorVotes(proposal.proposer, (block.number - 1)) < proposalThreshold) &&
             _msgSender() == whitelistGuardian,
           "cancel: whitelisted proposer"
         );
       } else {
         require(
-          (ipt.getPriorVotes(proposal.proposer, sub256(block.number, 1)) < proposalThreshold),
+          (ipt.getPriorVotes(proposal.proposer, (block.number - 1)) < proposalThreshold),
           "cancel: proposer above threshold"
         );
       }
@@ -442,8 +451,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Used to update the timelock period
    * @param proposalTimelockDelay_ The proposal holding period
    */
-  function _setDelay(uint256 proposalTimelockDelay_) public override {
-    require(_msgSender() == address(this), "must come from the gov.");
+  function _setDelay(uint256 proposalTimelockDelay_) public override onlyGov {
     uint256 oldTimelockDelay = proposalTimelockDelay;
     proposalTimelockDelay = proposalTimelockDelay_;
 
@@ -454,8 +462,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Used to update the emergency timelock period
    * @param emergencyTimelockDelay_ The proposal holding period
    */
-  function _setEmergencyDelay(uint256 emergencyTimelockDelay_) public override {
-    require(_msgSender() == address(this), "must come from the gov.");
+  function _setEmergencyDelay(uint256 emergencyTimelockDelay_) public override onlyGov{
     uint256 oldEmergencyTimelockDelay = emergencyTimelockDelay;
     emergencyTimelockDelay = emergencyTimelockDelay_;
 
@@ -466,8 +473,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the voting delay
    * @param newVotingDelay new voting delay, in blocks
    */
-  function _setVotingDelay(uint256 newVotingDelay) external override {
-    require(_msgSender() == address(this), "governance only");
+  function _setVotingDelay(uint256 newVotingDelay) external override onlyGov{
     uint256 oldVotingDelay = votingDelay;
     votingDelay = newVotingDelay;
 
@@ -478,8 +484,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the voting period
    * @param newVotingPeriod new voting period, in blocks
    */
-  function _setVotingPeriod(uint256 newVotingPeriod) external override {
-    require(_msgSender() == address(this), "governance only");
+  function _setVotingPeriod(uint256 newVotingPeriod) external override onlyGov{
     uint256 oldVotingPeriod = votingPeriod;
     votingPeriod = newVotingPeriod;
 
@@ -490,8 +495,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the emergency voting period
    * @param newEmergencyVotingPeriod new voting period, in blocks
    */
-  function _setEmergencyVotingPeriod(uint256 newEmergencyVotingPeriod) external override {
-    require(_msgSender() == address(this), "governance only");
+  function _setEmergencyVotingPeriod(uint256 newEmergencyVotingPeriod) external override onlyGov{
     uint256 oldEmergencyVotingPeriod = emergencyVotingPeriod;
     emergencyVotingPeriod = newEmergencyVotingPeriod;
 
@@ -502,8 +506,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the proposal threshold
    * @param newProposalThreshold new proposal threshold
    */
-  function _setProposalThreshold(uint256 newProposalThreshold) external override {
-    require(_msgSender() == address(this), "governance only");
+  function _setProposalThreshold(uint256 newProposalThreshold) external override onlyGov{
     uint256 oldProposalThreshold = proposalThreshold;
     proposalThreshold = newProposalThreshold;
 
@@ -514,8 +517,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the quorum
    * @param newQuorumVotes new proposal quorum
    */
-  function _setQuorumVotes(uint256 newQuorumVotes) external override {
-    require(_msgSender() == address(this), "governance only");
+  function _setQuorumVotes(uint256 newQuorumVotes) external override onlyGov{
     uint256 oldQuorumVotes = quorumVotes;
     quorumVotes = newQuorumVotes;
 
@@ -526,8 +528,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the emergency quorum
    * @param newEmergencyQuorumVotes new proposal quorum
    */
-  function _setEmergencyQuorumVotes(uint256 newEmergencyQuorumVotes) external override {
-    require(_msgSender() == address(this), "governance only");
+  function _setEmergencyQuorumVotes(uint256 newEmergencyQuorumVotes) external override onlyGov{
     uint256 oldEmergencyQuorumVotes = emergencyQuorumVotes;
     emergencyQuorumVotes = newEmergencyQuorumVotes;
 
@@ -540,8 +541,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @param account Account address to set whitelist expiration for
    * @param expiration Expiration for account whitelist status as timestamp (if now < expiration, whitelisted)
    */
-  function _setWhitelistAccountExpiration(address account, uint256 expiration) external override {
-    require(_msgSender() == address(this) || _msgSender() == whitelistGuardian, "governance only");
+  function _setWhitelistAccountExpiration(address account, uint256 expiration) external override onlyGov{
     whitelistAccountExpirations[account] = expiration;
 
     emit WhitelistAccountExpirationSet(account, expiration);
@@ -551,23 +551,11 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the whitelistGuardian. WhitelistGuardian can cancel proposals from whitelisted addresses
    * @param account Account to set whitelistGuardian to (0x0 to remove whitelistGuardian)
    */
-  function _setWhitelistGuardian(address account) external override {
-    require(_msgSender() == address(this), "governance only");
+  function _setWhitelistGuardian(address account) external override onlyGov{
     address oldGuardian = whitelistGuardian;
     whitelistGuardian = account;
 
     emit WhitelistGuardianSet(oldGuardian, whitelistGuardian);
-  }
-
-  function add256(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    require(c >= a, "addition overflow");
-    return c;
-  }
-
-  function sub256(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b <= a, "subtraction underflow");
-    return a - b;
   }
 
   function getChainIdInternal() internal view returns (uint256) {

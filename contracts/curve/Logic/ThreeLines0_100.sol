@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 import "../ICurveSlave.sol";
 
@@ -28,6 +28,10 @@ contract ThreeLines0_100 is ICurveSlave {
     int256 s1,
     int256 s2
   ) {
+
+    require((0 < r2) && (r2 < r1) && ( r1 < r0), "Invalid curve");
+    require((0 < s1) && (s1 < s2) && (s2 < 1e18), "Invalid breakpoint values");
+
     _r0 = r0;
     _r1 = r1;
     _r2 = r2;
@@ -41,7 +45,10 @@ contract ThreeLines0_100 is ICurveSlave {
   function valueAt(int256 x_value) external view override returns (int256) {
     // the x value must be between 0 (0%) and 1e18 (100%)
     require(x_value >= 0, "too small");
-    require(x_value <= 1e18, "too large");
+    if (x_value > 1e18) {
+      x_value = 1e18;
+    }
+    //require(x_value <= 1e18, "too large");
     // first piece of the piece wise function
     if (x_value < _s1) {
       int256 rise = _r1 - _r0;

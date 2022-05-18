@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 import "./Structs.sol";
 
@@ -45,7 +45,7 @@ interface IGovernorCharlieDelegate {
     string memory signature,
     bytes memory data,
     uint256 eta
-  ) external payable returns (bytes memory);
+  ) external payable;
 
   function cancel(uint256 proposalId) external;
 

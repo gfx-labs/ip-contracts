@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
-//import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 /// @title interfact to interact with ERC20 tokens
 /// @author elee
@@ -42,13 +42,15 @@ contract Wave {
   // in units of point token
   uint256 public _totalClaimed;
   // in units of reward token
-  //NOTE this must match exactly the amount of reward tokens sent to the contract at the start, otherwise reward tokens will be stuck here
+  //NOTE this must match exactly the amount of reward tokens sent to the contract at the start, otherwise reward tokens may be stuck here
   uint256 public _totalReward;
   // epoch seconcds
   uint256 public _enableTime;
   uint256 public _disableTime;
   // floor is in usdc terms
   uint256 public _floor;
+  //cap is the maximum USDC that can claim the reward - if cap is reached, then floor is the price
+  uint256 public _cap;
   address public _receiver;
 
   event Points(address indexed from, uint256 amount);
@@ -70,6 +72,9 @@ contract Wave {
     merkleRoot = root;
     rewardToken = IERC20(_rewardToken);
 
+    // this is the total amount of points that may be obtained
+    _cap = ((6 * (_totalReward * _floor)) / (1e18));
+
     _totalClaimed = 0;
   }
 
@@ -80,21 +85,22 @@ contract Wave {
 
     redeemed[msg.sender] = true;
     uint256 rewardAmount;
-    // totalClaimed is in points, so we multiply it by 1e12
-    if (_totalClaimed * 1e12 > _totalReward) {
+    // _totalReward is the amount of tokens we have to reward
+    if ((1e12 * _totalClaimed) > ((_totalReward * _floor) / 1e6)) {
       // remember that _totalClaimed is in points, so we must multiply by 1e12 to get the correct decimal count
-      // ratio is less than 1e18, it is a percentage in 1e18 terms
-      uint256 ratio = (_totalReward * 1e18) / (_totalClaimed * 1e12);
+      uint256 ratio = (_totalReward * 1e18) / (_totalClaimed);
+
+      //console.log("ratio: ", ratio);
       // that ratio is how many rewardToken each point entitles the redeemer
-      // so multiply the senders points by the ratio and divide by 1e18
       rewardAmount = (claimed[msg.sender] * ratio) / 1e18;
+      //console.log("rewardAmount: ", rewardAmount);
     } else {
       // multiply amount claimed by the floor price, then divide.
       // for instance, if the _floor is 500_000, then the redeemer will obtain 0.5 rewardToken per pointToken
-      rewardAmount = (claimed[msg.sender] * _floor) / (1_000_000);
+      rewardAmount = (claimed[msg.sender] * _floor) * 1e6;
     }
     // scale the decimals and send reward token
-    giveTo(msg.sender, rewardAmount * 1e12);
+    giveTo(msg.sender, rewardAmount);
     //event?
   }
 
@@ -108,15 +114,17 @@ contract Wave {
     bytes32[] memory merkleProof
   ) public {
     require(isEnabled() == true, "not enabled");
+
     address thisSender = msg.sender;
 
     require(verifyClaim(thisSender, key, merkleProof) == true, "invalid proof");
-
     require((claimed[thisSender] + amount) <= key, "max alloc claimed");
 
     claimed[thisSender] = claimed[thisSender] + amount;
     _totalClaimed = _totalClaimed + amount;
-    //decrement totalReward?
+
+    require(canClaim() == true, "Cap reached");
+
     takeFrom(thisSender, amount);
     emit Points(thisSender, amount);
   }
@@ -184,6 +192,11 @@ contract Wave {
   /// @return boolean true if both parties have accepted, else false
   function isEnabled() public view returns (bool) {
     return block.timestamp > _enableTime && block.timestamp < _disableTime;
+  }
+
+  /// @notice not claimable after USDC cap has been reached
+  function canClaim() public view returns (bool) {
+    return _totalClaimed <= _cap;
   }
 
   /// @notice whether or not the wave has completed

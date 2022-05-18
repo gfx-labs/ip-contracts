@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 import "../IUSDI.sol";
 
@@ -30,6 +30,9 @@ contract VaultController is
   // mapping of vault id to vault address
   mapping(uint96 => address) public _vaultId_vaultAddress;
 
+  //mapping of wallet address to vault IDs []
+  mapping(address => uint96[]) public _wallet_vaultIDs;
+
   // mapping of token address to token id
   mapping(address => uint256) public _tokenAddress_tokenId;
 
@@ -49,10 +52,9 @@ contract VaultController is
   IUSDI public _usdi;
   uint96 public _vaultsMinted;
 
-  uint256 public _tokensRegistered;
-  uint192 public _totalBaseLiability;
-
-  uint192 public _protocolFee;
+  uint256 private _tokensRegistered;
+  uint192 private _totalBaseLiability;
+  uint192 private _protocolFee;
 
   struct Interest {
     uint64 lastTime;
@@ -101,15 +103,18 @@ contract VaultController is
   function vaultAddress(uint96 id) external view override returns (address) {
     return _vaultId_vaultAddress[id];
   }
-  
-  
+
+  function vaultIDs(address wallet) external view override returns (uint96[] memory) {
+    return _wallet_vaultIDs[wallet];
+  }
+
   /// @notice get total base liability of all vaults
   /// @return total base liability
   function totalBaseLiability() external view override returns (uint192) {
     return _totalBaseLiability;
   }
 
-  /// @notice get the amount of vaults in the system 
+  /// @notice get the amount of vaults in the system
   /// @return the amount of vaults in the system
   function vaultsMinted() external view override returns (uint96) {
     return _vaultsMinted;
@@ -121,9 +126,6 @@ contract VaultController is
     return _tokensRegistered;
   }
 
-  
-  
-
   /// @notice create a new vault
   /// @return address of the new vault
   function mintVault() public override returns (address) {
@@ -133,6 +135,10 @@ contract VaultController is
     address vault_address = address(new Vault(_vaultsMinted, _msgSender(), address(this)));
     // add the vault to our system
     _vaultId_vaultAddress[_vaultsMinted] = vault_address;
+
+    //push new vault ID onto mapping
+    _wallet_vaultIDs[_msgSender()].push(_vaultsMinted);
+
     // emit the event
     emit NewVault(vault_address, _vaultsMinted, _msgSender());
     // return the vault address, allowing the caller to automatically find their vault
@@ -155,11 +161,23 @@ contract VaultController is
     _usdi = IUSDI(usdi_address);
   }
 
+  ///  @notice get oraclemaster address
+  /// @return the address
+  function getOracleMaster() external view override returns (address) {
+    return address(_oracleMaster);
+  }
+
   /// @notice register the OracleMaster contract
   /// @param master_oracle_address address to register as OracleMaster
   function registerOracleMaster(address master_oracle_address) external override onlyOwner {
     _oracleMaster = OracleMaster(master_oracle_address);
     emit RegisterOracleMaster(master_oracle_address);
+  }
+
+  ///  @notice get curvemaster address
+  /// @return the address
+  function getCurveMaster() external view override returns (address) {
+    return address(_curveMaster);
   }
 
   /// @notice register the CurveMaster address
@@ -174,7 +192,7 @@ contract VaultController is
   function changeProtocolFee(uint192 new_protocol_fee) external override onlyOwner {
     require(new_protocol_fee < 1e18, "fee is too large");
     _protocolFee = new_protocol_fee;
-    emit NewProtocolFee(_protocolFee);
+    emit NewProtocolFee(new_protocol_fee);
   }
 
   /// @notice register a new token to be used as collateral
@@ -191,9 +209,13 @@ contract VaultController is
     // the oracle must be registered & the token must be unregistered
     require(_oracleMaster._relays(oracle_address) != address(0x0), "oracle does not exist");
     require(_tokenAddress_tokenId[token_address] == 0, "token already registered");
+
+    //LTV must be compatible with liquidation incentive
+    require(LTV < (expScale - liquidationIncentive), "LTV:liquidationIncentive incompatible");
+
     // increment the amount of registered token
     _tokensRegistered = _tokensRegistered + 1;
-    // set & give the token an id 
+    // set & give the token an id
     _tokenAddress_tokenId[token_address] = _tokensRegistered;
     // set the tokens oracle
     _tokenId_oracleAddress[_tokensRegistered] = oracle_address;
@@ -220,6 +242,10 @@ contract VaultController is
     // the oracle and token must both exist and be registerd
     require(_oracleMaster._relays(oracle_address) != address(0x0), "oracle does not exist");
     require(_tokenAddress_tokenId[token_address] != 0, "token is not registered");
+
+    //LTV must be compatible with liquidation incentive
+    require(LTV < (expScale - liquidationIncentive), "LTV:liquidationIncentive incompatible");
+
     // set the oracle of the token
     _tokenId_oracleAddress[_tokensRegistered] = oracle_address;
     // set the ltv of the token
@@ -240,7 +266,7 @@ contract VaultController is
     uint256 total_liquidity_value = get_vault_borrowing_power(vault);
     // calculate the total liability of the vault
     uint256 usdi_liability = truncate((vault.baseLiability() * _interest.factor));
-    // if the TLV >= liability, the vault is solvent
+    // if the LTV >= liability, the vault is solvent
     return (total_liquidity_value >= usdi_liability);
   }
 
@@ -263,16 +289,14 @@ contract VaultController is
     _totalBaseLiability = _totalBaseLiability + safeu192(base_amount);
     // now take the vaults total base liability and multiply it by the interest factor
     uint256 usdi_liability = truncate(uint256(_interest.factor) * base_liability);
-    // we perform the same math in order to calculate how much usdi to credit
-    uint256 usdi_amount =  truncate(uint256(_interest.factor) * base_amount);
     // now get the LTV of the vault, aka their borrowing power, in usdi
     uint256 total_liquidity_value = get_vault_borrowing_power(vault);
     // the LTV must be above the newly calculated usdi_liability, else revert
     require(total_liquidity_value >= usdi_liability, "account insolvent");
     // now send usdi to the minter, equal to the amount they are owed
-    _usdi.vaultControllerMint(_msgSender(), usdi_amount);
+    _usdi.vaultControllerMint(_msgSender(), amount);
     // emit the event
-    emit BorrowUSDi(id, address(vault), usdi_amount);
+    emit BorrowUSDi(id, address(vault), amount);
   }
 
   /// @notice repay a vault's usdi loan. anyone may repay
@@ -283,7 +307,7 @@ contract VaultController is
     // grab the vault by id if part of our system. revert if not
     IVault vault = getVault(id);
     // the base amount is the amount of usdi entered divided by the interest factor
-    uint192 base_amount = safeu192((amount * 1e18) / _interest.factor);
+    uint192 base_amount = safeu192((amount * expScale) / _interest.factor);
     // decrease the total base liability by the calculated base amount
     _totalBaseLiability = _totalBaseLiability - base_amount;
     // ensure that base_amount is lower than the vaults base liability.
@@ -304,7 +328,8 @@ contract VaultController is
     // grab the vault by id if part of our system. revert if not
     IVault vault = getVault(id);
     // get the total usdi liability, equal to the interest factor * vault's base liabilty
-    uint256 usdi_liability = truncate(safeu192(_interest.factor * vault.baseLiability()));
+    //uint256 usdi_liability = truncate(safeu192(_interest.factor * vault.baseLiability()));
+    uint256 usdi_liability = uint256(safeu192(truncate(_interest.factor * vault.baseLiability())));
     // decrease the vaults liability by the vauls base liability
     vault.modifyLiability(false, vault.baseLiability());
     // burn the amount of usdi paid back from the vault
@@ -326,16 +351,20 @@ contract VaultController is
   ) external override paysInterest whenNotPaused returns (uint256) {
     require(!checkAccount(id), "Vault is solvent");
     require(tokens_to_liquidate > 0, "must liquidate>0");
+
+    //check for registered asset - audit L3
+    require(_tokenAddress_tokenId[asset_address] != 0, "Token not registered");
+
     // calculate the amount to liquidate and the 'bad fill price' using liquidationMath
     // see _liquidationMath for more detailed explaination of the math
     (uint256 tokenAmount, uint256 badFillPrice) = _liquidationMath(id, asset_address, tokens_to_liquidate);
     // set tokens_to_liquidate to this calculated amount if the function does not fail
-    if(tokenAmount != 0) {
+    if (tokenAmount != 0) {
       tokens_to_liquidate = tokenAmount;
     }
     // the usdi to repurchase is equal to the bad fill price multiplied by the amount of tokens to liquidate
     uint256 usdi_to_repurchase = truncate(badFillPrice * tokens_to_liquidate);
-    // get the vault that the liquidator wishes to liquidate  
+    // get the vault that the liquidator wishes to liquidate
     IVault vault = getVault(id);
 
     //decrease the vault's liability
@@ -349,7 +378,7 @@ contract VaultController is
 
     // this might not be needed. Will always be true because it is already implied by _liquidationMath.
     require(get_vault_borrowing_power(vault) <= _accountLiability(id), "overliquidation");
-    
+
     // emit the event
     emit Liquidate(id, asset_address, usdi_to_repurchase, tokens_to_liquidate);
     // return the amount of tokens liquidated
@@ -364,9 +393,9 @@ contract VaultController is
   /// all this function does is call _liquidationMath with 2**256-1 as the amount
   function tokensToLiquidate(uint96 id, address asset_address) external view override returns (uint256) {
     (
-      uint256 tokenAmount, 
-     // bad fill price
-    ) = _liquidationMath(id, asset_address, 2**256-1);
+      uint256 tokenAmount, // bad fill price
+
+    ) = _liquidationMath(id, asset_address, 2**256 - 1);
     return tokenAmount;
   }
 
@@ -389,10 +418,10 @@ contract VaultController is
     // get price discounted by liquidation penalty
     // price * (100% - liquidationIncentive)
     uint256 badFillPrice = truncate(price * (1e18 - _tokenAddress_liquidationIncentive[asset_address]));
-    
+
     // the ltv discount is the amount of collateral value that one token provides
     uint256 ltvDiscount = truncate(price * _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]]);
-    // this number is the denominator when calculating the max_tokens_to_liquidate 
+    // this number is the denominator when calculating the max_tokens_to_liquidate
     // it is simply the badFillPrice - ltvDiscount
     uint256 denominator = badFillPrice - ltvDiscount;
 
@@ -461,6 +490,10 @@ contract VaultController is
     uint192 total_liquidity_value = 0;
     // loop over each registed token, adding the indivuduals LTV to the total LTV of the vault
     for (uint192 i = 1; i <= _tokensRegistered; i++) {
+      // if the ltv is 0, continue
+      if (_tokenId_tokenLTV[i] == 0) {
+        continue;
+      }
       // get the address of the token through the array of enabled tokens
       address token_address = _enabledTokens[i - 1];
       // the balance is the vaults token balance of the current collateral token in the loop
@@ -475,7 +508,7 @@ contract VaultController is
       }
       // the token value is equal to the price * balance * tokenLTV
       uint192 token_value = safeu192(truncate(truncate(raw_price * balance * _tokenId_tokenLTV[i])));
-      // increase the TLV of the vault by the token value
+      // increase the LTV of the vault by the token value
       total_liquidity_value = total_liquidity_value + token_value;
     }
     return total_liquidity_value;
@@ -501,7 +534,7 @@ contract VaultController is
     uint256 ui18 = uint256(_usdi.reserveRatio());
     // cast the reserve ratio now to an int in order to get a curve value
     int256 reserve_ratio = int256(ui18);
-    
+
     // calculate the value at the curve. this vault controller is a USDI vault and will refernce
     // the vault at address 0
     int256 int_curve_val = _curveMaster.getValueAt(address(0x00), reserve_ratio);
@@ -510,7 +543,7 @@ contract VaultController is
     // cast the integer curve value to a u192
     uint192 curve_val = safeu192(uint256(int_curve_val));
     // calculate the amount of total outstanding loans before and after this interest accrual
-    
+
     // first calculate how much the interest factor should increase by
     // this is equal to (timedifference * (curve value) / (seconds in a year)) * (interest factor)
     uint192 e18_factor_increase = safeu192(
@@ -525,9 +558,9 @@ contract VaultController is
     // set the value of this struct to a struct containing {(current block timestamp), (interest factor + increase)}
     // this should save ~5000 gas/call
     _interest = Interest(uint64(block.timestamp), _interest.factor + e18_factor_increase);
-    // using that new value, calculate the new total outstanding value 
+    // using that new value, calculate the new total outstanding value
     uint192 valueAfter = safeu192(truncate(uint256(_totalBaseLiability) * uint256(_interest.factor)));
-    
+
     // valueAfter - valueBefore is now equal to the true amount of interest accured
     // this mitigates rounding errors
     // the protocol's fee amount is equal to this value multiplied by the protocol fee percentage, 1e18=100%

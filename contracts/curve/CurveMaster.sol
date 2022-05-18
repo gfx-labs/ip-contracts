@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 import "../_external/Ownable.sol";
 import "./ICurveMaster.sol";
@@ -35,7 +35,6 @@ contract CurveMaster is ICurveMaster, Ownable {
   function setVaultController(address vault_master_address) external override onlyOwner {
     _vaultControllerAddress = vault_master_address;
     _VaultController = IVaultController(vault_master_address);
-
   }
 
   function vaultControllerAddress() external view returns (address) {

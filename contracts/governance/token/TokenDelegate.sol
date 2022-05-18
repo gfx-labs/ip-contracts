@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 pragma experimental ABIEncoderV2;
 
 import "./IToken.sol";
@@ -55,7 +55,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
   function changeSymbol(string calldata symbol_) external override onlyOwner {
     require(bytes(symbol_).length > 0, "changeSymbol: length invaild");
 
-    emit ChangedName(symbol, symbol_);
+    emit ChangedSymbol(symbol, symbol_);
 
     symbol = symbol_;
   }

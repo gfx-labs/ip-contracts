@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.9;
 
 import "../IUSDI.sol";
 
@@ -10,6 +10,9 @@ import "../_external/CompLike.sol";
 import "../_external/IERC20.sol";
 import "../_external/Context.sol";
 import "../_external/compound/ExponentialNoError.sol";
+import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
+import "../_external/openzeppelin/IERC20Upgradeable.sol";
+
 
 /// @title Vault
 /// @notice our implentation of maker-vault like vault
@@ -18,6 +21,7 @@ import "../_external/compound/ExponentialNoError.sol";
 /// 2. generate interest in USDI
 /// 3. can delegate voting power of contained tokens
 contract Vault is IVault, ExponentialNoError, Context {
+  using SafeERC20Upgradeable for IERC20;
 
   /// @title VaultInfo struct
   /// @notice this struct is used to store the vault metadata
@@ -27,12 +31,13 @@ contract Vault is IVault, ExponentialNoError, Context {
     uint96 id;
     address minter;
   }
+
   /// @notice Metadata of vault, aka the id & the minter's address
   VaultInfo public _vaultInfo;
-  
-  IVaultController public _master;
-  
-  /// @notice this is the unscaled liability of the vault. 
+
+  IVaultController public immutable _master;
+
+  /// @notice this is the unscaled liability of the vault.
   /// the number is meaningless on its own, and must be combined with the factor taken from
   /// the vaultController in order to find the true liabilitiy
   uint256 public _baseLiability;
@@ -95,7 +100,8 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// @param amount amount of erc20 token to withdraw
   function withdrawErc20(address token_address, uint256 amount) external override onlyMinter {
     // transfer the token to the owner
-    IERC20(token_address).transferFrom(address(this), _msgSender(), amount);
+    //IERC20(token_address).transfer(_msgSender(), amount);
+    SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token_address), _msgSender(), amount);
     //  check if the account is solvent
     bool solvency = _master.checkAccount(_vaultInfo.id);
     require(solvency, "over-withdrawal");
@@ -120,20 +126,15 @@ contract Vault is IVault, ExponentialNoError, Context {
     address _to,
     uint256 _amount
   ) external override onlyVaultController {
-    //require(IERC20(_token).transferFrom(address(this), _to, _amount), "masterTransfer: Transfer Failed");
-    require(IERC20(_token).transfer(_to, _amount), "masterTransfer: Transfer Failed");
+    SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
+    //require(IERC20(_token).transfer(_to, _amount), "masterTransfer: Transfer Failed");
   }
 
   /// @notice function used by the VaultController to reduce a vaults liability
   /// callable by the VaultController only
   /// @param increase true to increase, false to decerase
   /// @param base_amount amount to reduce base liability by
-  function modifyLiability(bool increase, uint256 base_amount)
-    external
-    override
-    onlyVaultController
-    returns (uint256)
-  {
+  function modifyLiability(bool increase, uint256 base_amount) external override onlyVaultController returns (uint256) {
     if (increase) {
       _baseLiability = _baseLiability + base_amount;
       return _baseLiability;
