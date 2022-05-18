@@ -2,28 +2,39 @@ import { expect, assert } from "chai";
 import { ethers, network, tenderly } from "hardhat";
 import { stealMoney } from "../../../util/money";
 import { showBody, showBodyCyan } from "../../../util/format";
-import { getArgs, getGas, truncate, toNumber } from "../../../util/math";
+import { getArgs, getGas, truncate, toNumber, getEvent } from "../../../util/math";
 import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { advanceBlockHeight, reset, mineBlock, currentBlock, fastForward, OneYear, OneWeek } from "../../../util/block";
 import { IVault__factory } from "../../../typechain-types";
 //import { assert } from "console";
 import { BigNumber, utils } from "ethers";
-//simport { truncate } from "fs";
+import { token } from "../../../typechain-types";
 
 
 
 
 describe("Test Uniswap pool with rebasing USDi token", () => {
+    //get router for uniV2
     const IUniswapV2Router02 = require("./util/IUniswapV2Router02")
     const router02ABI = new IUniswapV2Router02()
     let ro2 = router02ABI.Router02()
     const router02 = ro2[0].abi
     const Router02Address = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
 
-    const routerV2 = new ethers.Contract(Router02Address, router02 , ethers.provider)
+    const routerV2 = new ethers.Contract(Router02Address, router02, ethers.provider)
 
-    //showBody(router02[0].abi)
+    //get factory for uniV2
+    const IUniswapV2Factory = require("./util/IUniswapV2Factory")
+    const factory02ABI = new IUniswapV2Factory()
+    let fa2 = factory02ABI.Factory02()
+    const factory02 = fa2[0].abi
+    const Factory02Address = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"
+
+    const factoryV2 = new ethers.Contract(Factory02Address, factory02, ethers.provider)
+
+    let pairV2: any
+
 
 
     const depositAmount = s.Dave_USDC.sub(BN("500e6"))
@@ -32,10 +43,12 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
     //1 quarter of Dave's USDC
     const usdcDepositAmount = s.Dave_USDC.div(4)
 
+    let usdiAmount: BigNumber
+
     //1 half of Bob's wETH
     const collateralAmount = s.Bob_WETH.div(2)
 
-    let borrowAmount:BigNumber
+    let borrowAmount: BigNumber
 
     it("Confirms contract holds no value", async () => {
         const totalLiability = await s.VaultController.totalBaseLiability()
@@ -79,7 +92,7 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
 
         //USDC in reserve is correct
         const reserve = await s.USDC.balanceOf(s.USDI.address)
-        expect(await toNumber(reserve)).to.eq(await toNumber(usdcDepositAmount))       
+        expect(await toNumber(reserve)).to.eq(await toNumber(usdcDepositAmount))
 
     })
 
@@ -124,50 +137,177 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
 
     it("Use borrowed USDi to make a uni v2 pool", async () => {
         const wETHamount = await s.WETH.balanceOf(s.Bob.address)
-        const USDIamount = await s.USDI.balanceOf(s.Bob.address)
+        expect(await toNumber(wETHamount)).to.eq(await toNumber(s.Bob_WETH.div(2)))
+
+        usdiAmount = await s.USDI.balanceOf(s.Bob.address)
         const block = await currentBlock()
         const deadline = block.timestamp + 500
 
-    
+
         //approvals
-        await s.USDI.connect(s.Bob).approve(routerV2.address, USDIamount)
+        await s.USDI.connect(s.Bob).approve(routerV2.address, usdiAmount)
         await s.WETH.connect(s.Bob).approve(routerV2.address, wETHamount)
         await mineBlock()
 
         const poolResult = await routerV2.connect(s.Bob).addLiquidity(
             s.USDI.address,
             s.WETH.address,
-            USDIamount,
+            usdiAmount,
             wETHamount,
-            USDIamount.div(2),
+            usdiAmount.div(2),
             wETHamount.div(2),
             s.Bob.address,
             deadline
         )
         await mineBlock()
 
-        showBody(poolResult)
+        //pair has been created
+        const pair = await factoryV2.getPair(s.USDI.address, s.WETH.address)
+        expect(pair).to.not.eq(undefined)
 
+        let balance = await s.USDI.balanceOf(s.Bob.address)
+        assert.equal(balance.toString(), "0", "Bob no longer has any USDI as it has been sent to the pool")
 
-        
-
-
-
-
-    })
-
-    it("check things", async () => {
+        balance = await s.WETH.balanceOf(s.Bob.address)
+        assert.equal(balance.toString(), "0", "Bob no longer has any WETH as it has been sent to the pool")
 
     })
 
+    it("check that the pair has been created correctly", async () => {
+        const pairAddr = await factoryV2.getPair(s.USDI.address, s.WETH.address)
+        //get factory for uniV2
+        const IUniswapV2Pair = require("./util/IUniswapV2Pair")
+        const pair02ABI = new IUniswapV2Pair()
+        let pa2 = pair02ABI.Pair02()
+        const pair02 = pa2[0].abi
+
+        pairV2 = new ethers.Contract(pairAddr, pair02, ethers.provider)
+
+        const getReserves = await pairV2.getReserves()
+        expect(await toNumber(getReserves.reserve1)).to.equal(await toNumber(s.Bob_WETH.div(2)))
+        expect(await toNumber(getReserves.reserve0)).to.equal(await toNumber(usdiAmount))
 
 
-    it("check more things", async () => {
+        //USDI token0 is correct
+        const token0 = await pairV2.token0()
+        expect(token0.toString().toUpperCase()).to.equal(s.USDI.address.toString().toUpperCase())
+
+        //wETH token1 is correct
+        const token1 = await pairV2.token1()
+        expect(token1.toString().toUpperCase()).to.equal(s.WETH.address.toString().toUpperCase())
 
     })
 
 
+    it("check what happens when USDi rebases while in the pool", async () => {
+        const liab = await s.VaultController.totalBaseLiability()
+        expect(await toNumber(liab)).to.be.gt(0)//there is liability on the protocol, so interest will accrue 
+
+        let getReserves = await pairV2.getReserves()
+        const startingUSDIreserve = getReserves.reserve0
+        const expectedWETH = getReserves.reserve1
+        expect(await toNumber(expectedWETH)).to.equal(await toNumber(s.Bob_WETH.div(2)))
+        const lptokens = await pairV2.balanceOf(s.Bob.address)
+        //pass time
+        await fastForward(OneYear)
+        await mineBlock()
+        await s.VaultController.calculateInterest()
+        await mineBlock()
+
+        getReserves = await pairV2.getReserves()
+
+        assert.equal(startingUSDIreserve.toString(), getReserves.reserve0.toString(), "Reserve on pair has not changed")
+        let balance = await s.USDI.balanceOf(pairV2.address)
+
+        //actual USDI on pair contract is higher due to interest
+        expect(await toNumber(balance)).to.be.gt(await toNumber(startingUSDIreserve))
+
+        //no new lp tokens
+        let currentLPTs = await pairV2.balanceOf(s.Bob.address)
+        expect(await toNumber(currentLPTs)).to.eq(await toNumber(lptokens))
+
+    })
+
+    it("do a small swap", async () => {
+        const startBalance = await s.USDI.balanceOf(s.Dave.address)
+        const amount = utils.parseEther("500")
+        expect(await toNumber(startBalance)).to.be.gt(await toNumber(amount))
+
+        const startWETH = await s.WETH.balanceOf(s.Dave.address)
 
 
+        //approve
+        await s.USDI.connect(s.Dave).approve(routerV2.address, amount)
+        await mineBlock()
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+        //swap exact tokens for tokens
+        await routerV2.connect(s.Dave).swapExactTokensForTokens(
+            amount,
+            500,
+            [s.USDI.address, s.WETH.address],
+            s.Dave.address,
+            deadline
+        )
+        await mineBlock()
+
+        //Dave spent exactly 500 USDi
+        let balance = await s.USDI.balanceOf(s.Dave.address)
+        const difference = startBalance.sub(balance)
+        expect(await toNumber(difference)).to.eq(await toNumber(amount))
+
+        //Dave received wETH
+        balance = await s.WETH.balanceOf(s.Dave.address)
+        expect(await toNumber(balance)).to.be.gt(0)
+
+    })
+
+    it("remove all liquidity from pool and receive USDi + interest ", async () => {
+        const lptokens = await pairV2.balanceOf(s.Bob.address)
+
+        const pairWETH = await s.WETH.balanceOf(pairV2.address)
+        const pairUSDi = await s.USDI.balanceOf(pairV2.address)
+
+        //aprove
+        await pairV2.connect(s.Bob).approve(routerV2.address, lptokens)
+        await mineBlock()
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+        //removeLiquidity
+        const removeResult = await routerV2.connect(s.Bob).removeLiquidity(
+            s.USDI.address,
+            s.WETH.address,
+            lptokens,
+            5000,
+            5000,
+            s.Bob.address,
+            deadline
+        )
+
+        await mineBlock()
+
+        //pair USDi is very close to 0
+        let balance = await s.USDI.balanceOf(pairV2.address)
+        expect(await toNumber(balance)).to.be.closeTo(0, 100000)
+
+        //bob received USDi + interest
+        balance = await s.USDI.balanceOf(s.Bob.address)
+        expect(await toNumber(balance)).to.be.gt(await toNumber(usdiAmount))
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(pairUSDi), 100000)
+
+
+        //pair wETH is very close to 0
+        balance = await s.WETH.balanceOf(pairV2.address)
+        expect(await toNumber(balance)).to.be.closeTo(0, 100000)
+
+        //bob received virtually all wETH back
+        balance = await s.WETH.balanceOf(s.Bob.address)
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(pairWETH), 0.0000000000001)//todo
+
+    })
 
 })

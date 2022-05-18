@@ -11,7 +11,7 @@
         "clean": "npx hardhat clean",
         "compile": "npx hardhat compile",
         "pretest": "npx hardhat compile",
-        "test": "npx hardhat test test/mainnet/index.ts",
+        "test": "npx hardhat test test/mainnet/index.ts; npx hardhat test test/isolated/index.ts",
         "testgov": "npx hardhat test test/governance/index.ts",
         "testsale": "npx hardhat test test/presale/oversaturation/index.ts; npx hardhat test test/presale/oversaturation/index.ts;",
         "testall": "npm run test; npm run testgov; npm run testsale",

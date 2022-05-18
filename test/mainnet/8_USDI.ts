@@ -2,7 +2,7 @@ import { s } from "./scope";
 import { ethers } from "hardhat";
 import { BigNumber, utils } from "ethers";
 import { expect, assert } from "chai";
-import { getGas, getArgs, changeInBalance, payInterestMath, calculateBalance} from "../../util/math"
+import { getGas, getArgs, changeInBalance, payInterestMath, calculateBalance, toNumber} from "../../util/math"
 import { stealMoney } from "../../util/money";
 import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
@@ -219,6 +219,11 @@ describe("TESTING USDI CONTRACT", async () => {
         const smallAmount = utils.parseEther("1")
         const smallAmount_e6 = smallAmount.div(BN("1e12"))
         const tryAmount = smallAmount_e6.mul(5)
+
+        let bal = await s.USDI.balanceOf(s.Dave.address)
+        showBody(await toNumber(bal))
+        showBody(bal)
+
 
         await mineBlock()
         const transferResult = await s.USDI.connect(s.Dave).transfer(s.Eric.address, smallAmount)
