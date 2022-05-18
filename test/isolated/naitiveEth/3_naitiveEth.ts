@@ -12,7 +12,7 @@ import { utils } from "ethers";
 //simport { truncate } from "fs";
 
 
-describe("What happens when there is no reserve?", () => {
+describe("Deposit, borrow against, and withdraw using naitive ether", () => {
     //9500 USDC
     const depositAmount = s.Dave_USDC.sub(BN("500e6"))
     const depositAmount_e18 = depositAmount.mul(BN("1e12"))

@@ -70,7 +70,7 @@ contract Vault is IVault, ExponentialNoError, Context {
   }
 
   receive() external payable {
-    assert(msg.sender == wETH); // only accept ETH via fallback from the WETH contract
+    assert(_msgSender() == wETH); // only accept ETH via fallback from the WETH contract
   }
 
   /// @notice minter of the vault
@@ -108,7 +108,7 @@ contract Vault is IVault, ExponentialNoError, Context {
     //require(IWETH(wETH).balanceOf(address(this)) > amount, "Insufficient balance");
 
     IWETH(wETH).withdraw(amount);
-    address payable sender = payable(msg.sender);
+    address payable sender = payable(_msgSender());
 
     (bool success, bytes memory data) = sender.call{value: amount}("");
 

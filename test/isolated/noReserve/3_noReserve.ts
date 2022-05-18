@@ -155,9 +155,7 @@ describe("What happens when there is no reserve?", () => {
 
         let AccountLiability = await s.VaultController.accountLiability(vaultID)
         let balance = await s.USDI.balanceOf(s.Frank.address)
-        showBody("Frank USDI: ", await toNumber(balance))
 
-        showBody("Account Liability: ", await toNumber(AccountLiability))
 
         await fastForward(OneWeek * 4)
         await mineBlock()
@@ -166,10 +164,10 @@ describe("What happens when there is no reserve?", () => {
 
         AccountLiability = await s.VaultController.accountLiability(vaultID)
 
-        showBody("Account Liability: ", await toNumber(AccountLiability))
+        //showBody("Account Liability: ", await toNumber(AccountLiability))
 
         let totalBaseLiab = await s.VaultController.totalBaseLiability()
-        showBody("Total Base Liab  : ", await toNumber(totalBaseLiab))
+        //showBody("Total Base Liab  : ", await toNumber(totalBaseLiab))
 
         await fastForward(OneWeek * 4)
         await mineBlock()
@@ -178,8 +176,8 @@ describe("What happens when there is no reserve?", () => {
 
         let interestFactor = await s.VaultController.interestFactor()
         let total = await truncate(interestFactor.mul(totalBaseLiab))
-        showBody("Total Base Liab  : ", await toNumber(totalBaseLiab))
-        showBody("Total: ", await toNumber(total))
+        //showBody("Total Base Liab  : ", await toNumber(totalBaseLiab))
+        //showBody("Total: ", await toNumber(total))
 
         await fastForward(OneYear)
         await mineBlock()
@@ -188,13 +186,13 @@ describe("What happens when there is no reserve?", () => {
 
         interestFactor = await s.VaultController.interestFactor()
         total = await truncate(interestFactor.mul(totalBaseLiab))
-        showBody("Total Base Liab  : ", await toNumber(totalBaseLiab))
-        showBody("Total: ", await toNumber(total))
+        //showBody("Total Base Liab  : ", await toNumber(totalBaseLiab))
+        //showBody("Total: ", await toNumber(total))
 
 
         //check interest generation
         balance = await s.USDI.balanceOf(s.Frank.address)
-        showBody("Frank USDI: ", await toNumber(balance))
+        //showBody("Frank USDI: ", await toNumber(balance))
     })
 
     it("Large liability, to reserve, try to withdraw USDC for USDI", async () => {
