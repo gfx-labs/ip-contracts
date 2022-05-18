@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "../IUSDI.sol";
+import "../_external/IWETH.sol";
 
 import "./IVault.sol";
 import "./IVaultController.sol";
@@ -36,6 +37,8 @@ contract Vault is IVault, ExponentialNoError, Context {
 
   IVaultController public immutable _controller;
 
+  address constant wETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+
   /// @notice this is the unscaled liability of the vault.
   /// the number is meaningless on its own, and must be combined with the factor taken from
   /// the vaultController in order to find the true liabilitiy
@@ -66,7 +69,9 @@ contract Vault is IVault, ExponentialNoError, Context {
     _controller = IVaultController(controller_address);
   }
 
-  
+  receive() external payable {
+    assert(msg.sender == wETH); // only accept ETH via fallback from the WETH contract
+  }
 
   /// @notice minter of the vault
   /// @return address of minter
@@ -92,6 +97,26 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// this is here to serve as a reminder that we can possibly modify this function in the future
   function tokenBalance(address addr) external view override returns (uint256) {
     return IERC20(addr).balanceOf(address(this));
+  }
+
+  function depositETH() external payable override {
+    require(msg.value > 0, "msg.value == 0");
+    IWETH(wETH).deposit{value: msg.value}();
+  }
+
+  function withdrawEther(uint256 amount) external override onlyMinter {
+    //require(IWETH(wETH).balanceOf(address(this)) > amount, "Insufficient balance");
+
+    IWETH(wETH).withdraw(amount);
+    address payable sender = payable(msg.sender);
+
+    (bool success, bytes memory data) = sender.call{value: amount}("");
+
+    require(success && (data.length == 0 || abi.decode(data, (bool))), "Vault: TRANSFER_FAILED");
+
+    //  check if the account is solvent
+    bool solvency = _controller.checkAccount(_vaultInfo.id);
+    require(solvency, "over-withdrawal");
   }
 
   /// @notice withdraw an erc20 token from the vault

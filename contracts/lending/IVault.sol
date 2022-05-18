@@ -24,6 +24,10 @@ interface IVault is VaultEvents {
   function tokenBalance(address) external view returns (uint256);
 
   // business logic
+
+  function depositETH() external payable;
+  function withdrawEther(uint256 amount) external;
+
   function withdrawErc20(address token_address, uint256 amount) external;
 
   function delegateCompLikeTo(address compLikeDelegatee, address compLikeToken) external;
