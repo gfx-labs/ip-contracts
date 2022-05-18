@@ -220,13 +220,8 @@ describe("TESTING USDI CONTRACT", async () => {
         const smallAmount_e6 = smallAmount.div(BN("1e12"))
         const tryAmount = smallAmount_e6.mul(5)
 
-        let bal = await s.USDI.balanceOf(s.Dave.address)
-        showBody(await toNumber(bal))
-        showBody(bal)
-
-
         await mineBlock()
-        const transferResult = await s.USDI.connect(s.Dave).transfer(s.Eric.address, smallAmount)
+        const transferResult = await s.USDI.connect(s.Frank).transfer(s.Eric.address, smallAmount)
         await mineBlock()
         const transferGas = await getGas(transferResult)
         showBodyCyan("Gas cost to transfer USDi: ", transferGas)
@@ -241,12 +236,23 @@ describe("TESTING USDI CONTRACT", async () => {
 
     it("withdraw total reserves", async () => {
 
-        const usdcBalance = await s.USDC.balanceOf(s.Dave.address)
-        let formatUSDC = utils.formatEther(usdcBalance.mul(BN("1e12")).toString())
+
+
+
         const usdiBalance = await s.USDI.balanceOf(s.Dave.address)
         const reserve = await s.USDC.balanceOf(s.USDI.address)
         const reserve_e18 = reserve.mul(BN("1e12"))
         let formatReserve = utils.formatEther(reserve_e18.toString())
+
+        //Frank mints enough USDC to cover the withdrawl
+        await s.USDI.connect(s.Frank).mint(reserve)
+        await mineBlock()
+
+        await s.USDI.connect(s.Frank).transfer(s.Dave.address, reserve_e18)
+        await mineBlock()
+
+
+        const usdcBalance = await s.USDC.balanceOf(s.Dave.address)
 
         //const withdrawResult = await s.USDI.connect(s.Dave).withdraw(reserve)
         const withdrawResult = await s.USDI.connect(s.Dave).withdrawAll()
@@ -258,7 +264,7 @@ describe("TESTING USDI CONTRACT", async () => {
 
 
         let ending_usdcBalance = await s.USDC.balanceOf(s.Dave.address)
-        formatUSDC = utils.formatEther(ending_usdcBalance.mul(BN("1e12")).toString())
+        let formatUSDC = utils.formatEther(ending_usdcBalance.mul(BN("1e12")).toString())
         let ending_usdiBalance = await s.USDI.balanceOf(s.Dave.address)
         const end_reserve = await s.USDC.balanceOf(s.USDI.address)
         const end_reserve_e18 = reserve.mul(BN("1e12"))

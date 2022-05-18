@@ -74,6 +74,7 @@ contract Wave {
 
     // this is the total amount of points that may be obtained
     _cap = ((6 * (_totalReward * _floor)) / (1e18));
+    console.log(_cap);
 
     _totalClaimed = 0;
   }
