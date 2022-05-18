@@ -29,7 +29,7 @@ interface IVault is VaultEvents {
   function delegateCompLikeTo(address compLikeDelegatee, address compLikeToken) external;
 
   // administrative functions
-  function masterTransfer(
+  function controllerTransfer(
     address _token,
     address _to,
     uint256 _amount
