@@ -47,7 +47,7 @@ contract Wave {
   // epoch seconcds
   uint256 public _enableTime;
   uint256 public _disableTime;
-  // floor is in usdc terms
+  // min number of reward tokens per USDC (in usdc terms)
   uint256 public _floor;
   //cap is the maximum USDC that can claim the reward - if cap is reached, then floor is the price
   uint256 public _cap;
@@ -72,9 +72,28 @@ contract Wave {
     merkleRoot = root;
     rewardToken = IERC20(_rewardToken);
 
-    // this is the total amount of points that may be obtained
-    _cap = ((6 * (_totalReward * _floor)) / (1e18));
-    console.log(_cap);
+
+    
+    /**
+      total reward is in IPT terms
+      cap and floor are both USDC terms
+
+      for the cap calculation, the difference in term size must be accounted for
+
+      cap is the maximum number of USDC that can be received
+      if cap is reached, then floor is the price
+
+
+
+      if floor is .5, and total reward is 200, then max usdc received should be 400
+
+      if floor is 1 and total reward is 400, then max usdc received should be 400
+
+      if floor is 2 and total reward is 400, then max usdc received should be 200
+    
+     */
+    _cap = ((_totalReward / 1e12) / _floor) * 1e6;
+    //_cap = ((6 * (_totalReward * _floor)) / (1e18));
 
     _totalClaimed = 0;
   }
