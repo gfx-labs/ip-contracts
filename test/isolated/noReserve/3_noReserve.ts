@@ -153,9 +153,15 @@ describe("What happens when there is no reserve?", () => {
     it("check things", async () => {
         const vaultID = await s.VaultController.vaultsMinted()
 
+        const initLiability = await s.VaultController.accountLiability(vaultID)
         const startBalance = await s.USDI.balanceOf(s.Frank.address)
         const initBaseLiab = await s.VaultController.totalBaseLiability()
         const initInterestFactor = await s.VaultController.interestFactor()
+
+        await fastForward(OneYear)
+        await mineBlock()
+        await s.VaultController.calculateInterest()
+        await mineBlock()
 
         let AccountLiability = await s.VaultController.accountLiability(vaultID)
 
