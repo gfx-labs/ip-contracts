@@ -15,11 +15,16 @@ async function sleep(milliseconds: number) {
     }
 }
 
-const USDC_address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
-const compAddress = "0xc00e94cb662c3520282e6f5717214004a7f26888"
-const wethAddress = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
-const usdcCompPool = "0x4786bb29a1589854204a4e62dcbe26a571224c0f"
-const usdcWETHpool = "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8"
+//ropsten addresses 
+const USDC_address = "0x07865c6E87B9F70255377e024ace6630C1Eaa37F"
+const compAddress = "0xf76D4a441E4ba86A923ce32B89AFF89dBccAA075"
+const wethAddress = "0xc778417E063141139Fce010982780140Aa0cD5Ab"
+
+const usdcCompPoolV2 = "0xeE4B08695F650780E71231688501bAa692100AE8" 
+const usdcWETHpoolV2 = "0x681A4164703351d6AceBA9D7038b573b444d3353" 
+
+const usdcCompPool = "0x1bcb372A9E3c1B67c09BadD9c02ba0BfBBDa8a90"
+const usdcWETHpool = "0xee815CDC6322031952a095C6cc6FEd036Cb1F70d"
 
 const LiquidationIncentive = BN("5e16")
 const wETH_LTV = BN("5e17")
@@ -321,7 +326,6 @@ async function main() {
     console.log("Deployer: ", deployer.address)
 
     await deployProtocol(deployer)
-    await sleep(15000)
     await deployCharlie(deployer)
 
     console.log("Contracts deployed")
