@@ -153,48 +153,30 @@ describe("What happens when there is no reserve?", () => {
     it("check things", async () => {
         const vaultID = await s.VaultController.vaultsMinted()
 
-        let AccountLiability = await s.VaultController.accountLiability(vaultID)
-        let balance = await s.USDI.balanceOf(s.Frank.address)
-        showBody("Frank USDI: ", await toNumber(balance))
-
-        showBody("Account Liability: ", await toNumber(AccountLiability))
-
-        await fastForward(OneWeek * 4)
-        await mineBlock()
-        await s.VaultController.calculateInterest()
-        await mineBlock()
-
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
-
-        showBody("Account Liability: ", await toNumber(AccountLiability))
-
-        let totalBaseLiab = await s.VaultController.totalBaseLiability()
-        showBody("Total Base Liab  : ", await toNumber(totalBaseLiab))
-
-        await fastForward(OneWeek * 4)
-        await mineBlock()
-        await s.VaultController.calculateInterest()
-        await mineBlock()
-
-        let interestFactor = await s.VaultController.interestFactor()
-        let total = await truncate(interestFactor.mul(totalBaseLiab))
-        showBody("Total Base Liab  : ", await toNumber(totalBaseLiab))
-        showBody("Total: ", await toNumber(total))
+        const initLiability = await s.VaultController.accountLiability(vaultID)
+        const startBalance = await s.USDI.balanceOf(s.Frank.address)
+        const initBaseLiab = await s.VaultController.totalBaseLiability()
+        const initInterestFactor = await s.VaultController.interestFactor()
 
         await fastForward(OneYear)
         await mineBlock()
         await s.VaultController.calculateInterest()
         await mineBlock()
 
-        interestFactor = await s.VaultController.interestFactor()
-        total = await truncate(interestFactor.mul(totalBaseLiab))
-        showBody("Total Base Liab  : ", await toNumber(totalBaseLiab))
-        showBody("Total: ", await toNumber(total))
+        let AccountLiability = await s.VaultController.accountLiability(vaultID)
 
+        expect(await toNumber(AccountLiability)).to.be.gt(await toNumber(initLiability))
+
+        let totalBaseLiab = await s.VaultController.totalBaseLiability()
+        assert.equal(totalBaseLiab.toString(), initBaseLiab.toString(), "base liability has not changed")
+
+        let interestFactor = await s.VaultController.interestFactor()
+
+        expect(await toNumber(interestFactor)).to.be.gt(await toNumber(initInterestFactor))
 
         //check interest generation
-        balance = await s.USDI.balanceOf(s.Frank.address)
-        showBody("Frank USDI: ", await toNumber(balance))
+        let balance = await s.USDI.balanceOf(s.Frank.address)
+        expect(await toNumber(balance)).to.be.gt(await toNumber(startBalance))
     })
 
     it("Large liability, to reserve, try to withdraw USDC for USDI", async () => {
@@ -204,7 +186,7 @@ describe("What happens when there is no reserve?", () => {
         let reserve = await s.USDC.balanceOf(s.USDI.address)
         expect(reserve).to.eq(0)
 
-        
+
         //try to withdraw from empty reserve
         await s.USDI.connect(s.Frank).approve(s.USDI.address, balance)
         await mineBlock()
@@ -212,11 +194,4 @@ describe("What happens when there is no reserve?", () => {
         await mineBlock()
 
     })
-
-
-
-
-
-
-
 })
