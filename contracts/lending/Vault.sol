@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "../IUSDI.sol";
+import "../_external/IWETH.sol";
 
 import "./IVault.sol";
 import "./IVaultController.sol";
@@ -12,7 +13,6 @@ import "../_external/Context.sol";
 import "../_external/compound/ExponentialNoError.sol";
 import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 import "../_external/openzeppelin/IERC20Upgradeable.sol";
-
 
 /// @title Vault
 /// @notice our implentation of maker-vault like vault
@@ -35,7 +35,9 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// @notice Metadata of vault, aka the id & the minter's address
   VaultInfo public _vaultInfo;
 
-  IVaultController public immutable _master;
+  IVaultController public immutable _controller;
+
+  address constant wETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
   /// @notice this is the unscaled liability of the vault.
   /// the number is meaningless on its own, and must be combined with the factor taken from
@@ -44,7 +46,7 @@ contract Vault is IVault, ExponentialNoError, Context {
 
   /// @notice checks if _msgSender is the controller of the vault
   modifier onlyVaultController() {
-    require(_msgSender() == address(_master), "sender not VaultController");
+    require(_msgSender() == address(_controller), "sender not VaultController");
     _;
   }
 
@@ -57,14 +59,18 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// @notice must be called by VaultController, else it will not be registered as a vault in system
   /// @param id_ unique id of the vault, ever increasing and tracked by VaultController
   /// @param minter_ address of the person who created this vault
-  /// @param master_address address of the VaultController
+  /// @param controller_address address of the VaultController
   constructor(
     uint96 id_,
     address minter_,
-    address master_address
+    address controller_address
   ) {
     _vaultInfo = VaultInfo(id_, minter_);
-    _master = IVaultController(master_address);
+    _controller = IVaultController(controller_address);
+  }
+
+  receive() external payable {
+    assert(_msgSender() == wETH); // only accept ETH via fallback from the WETH contract
   }
 
   /// @notice minter of the vault
@@ -93,6 +99,26 @@ contract Vault is IVault, ExponentialNoError, Context {
     return IERC20(addr).balanceOf(address(this));
   }
 
+  function depositETH() external payable override {
+    require(msg.value > 0, "msg.value == 0");
+    IWETH(wETH).deposit{value: msg.value}();
+  }
+
+  function withdrawEther(uint256 amount) external override onlyMinter {
+    //require(IWETH(wETH).balanceOf(address(this)) > amount, "Insufficient balance");
+
+    IWETH(wETH).withdraw(amount);
+    address payable sender = payable(_msgSender());
+
+    (bool success, bytes memory data) = sender.call{value: amount}("");
+
+    require(success && (data.length == 0 || abi.decode(data, (bool))), "Vault: TRANSFER_FAILED");
+
+    //  check if the account is solvent
+    bool solvency = _controller.checkAccount(_vaultInfo.id);
+    require(solvency, "over-withdrawal");
+  }
+
   /// @notice withdraw an erc20 token from the vault
   /// this can only be called by the minter
   /// the withdraw will be denied if ones vault would become insolvent
@@ -103,7 +129,7 @@ contract Vault is IVault, ExponentialNoError, Context {
     //IERC20(token_address).transfer(_msgSender(), amount);
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token_address), _msgSender(), amount);
     //  check if the account is solvent
-    bool solvency = _master.checkAccount(_vaultInfo.id);
+    bool solvency = _controller.checkAccount(_vaultInfo.id);
     require(solvency, "over-withdrawal");
 
     emit Withdraw(token_address, amount);
@@ -121,13 +147,13 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// @param _token token to transfer
   /// @param _to person to send the coins to
   /// @param _amount amount of coins to move
-  function masterTransfer(
+  function controllerTransfer(
     address _token,
     address _to,
     uint256 _amount
   ) external override onlyVaultController {
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
-    //require(IERC20(_token).transfer(_to, _amount), "masterTransfer: Transfer Failed");
+    //require(IERC20(_token).transfer(_to, _amount), "controllerTransfer: Transfer Failed");
   }
 
   /// @notice function used by the VaultController to reduce a vaults liability

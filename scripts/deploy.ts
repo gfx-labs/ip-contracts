@@ -321,6 +321,7 @@ async function main() {
     console.log("Deployer: ", deployer.address)
 
     await deployProtocol(deployer)
+    await sleep(15000)
     await deployCharlie(deployer)
 
     console.log("Contracts deployed")

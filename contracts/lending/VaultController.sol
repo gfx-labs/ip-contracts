@@ -374,7 +374,7 @@ contract VaultController is
     _usdi.vaultControllerBurn(_msgSender(), usdi_to_repurchase);
 
     // finally, deliver tokens to liquidator
-    vault.masterTransfer(asset_address, _msgSender(), tokens_to_liquidate);
+    vault.controllerTransfer(asset_address, _msgSender(), tokens_to_liquidate);
 
     // this might not be needed. Will always be true because it is already implied by _liquidationMath.
     require(get_vault_borrowing_power(vault) <= _accountLiability(id), "overliquidation");
