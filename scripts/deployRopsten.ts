@@ -142,7 +142,9 @@ const deployProtocol = async (deployer:SignerWithAddress) => {
     await ETH_UniRelay.deployed()
     console.log("ETH_UniRelay deployed: ", ETH_UniRelay.address)
 
-    console.log("Creating chainlink comp relay")
+    /**
+     * //no chainlink oracle on testnet, just use uni
+     console.log("Creating chainlink comp relay")
     const chainlinkCompFactory = await ethers.getContractFactory("ChainlinkOracleRelay")
     const chainlinkComp = await chainlinkCompFactory.deploy(
         "0xdbd020caef83efd542f4de03e3cf0c28a4428bd5", BN("1e10"), BN("1")
@@ -160,11 +162,12 @@ const deployProtocol = async (deployer:SignerWithAddress) => {
     console.log("chainlinkEth relay deployed: ", chainlinkEth.address)
 
 
+     */
     console.log("Creating COMP anchoredview")
     const AnchorviewCompFactory = await ethers.getContractFactory("AnchoredViewRelay")
     const AnchorviewComp = await AnchorviewCompFactory.deploy(
         COMP_UniRelay.address,
-        chainlinkComp.address,
+        COMP_UniRelay.address, //chainlinkComp.address,
         BN("30"),
         BN("100")
     )
@@ -176,7 +179,7 @@ const deployProtocol = async (deployer:SignerWithAddress) => {
     const AnchorviewETHFactory = await ethers.getContractFactory("AnchoredViewRelay")
     const AnchorviewETH = await AnchorviewETHFactory.deploy(
         ETH_UniRelay.address,
-        chainlinkEth.address,
+        ETH_UniRelay.address, //chainlinkEth.address,
         BN("10"),
         BN("100")
     )
@@ -318,7 +321,7 @@ const deployCharlie = async (deployer:SignerWithAddress) => {
 async function main() {
 
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    //await network.provider.send("evm_setAutomine", [true])
+    await network.provider.send("evm_setAutomine", [true])
     
     const accounts = await ethers.getSigners()
     const deployer = accounts[0]

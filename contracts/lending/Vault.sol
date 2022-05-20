@@ -105,8 +105,6 @@ contract Vault is IVault, ExponentialNoError, Context {
   }
 
   function withdrawEther(uint256 amount) external override onlyMinter {
-    //require(IWETH(wETH).balanceOf(address(this)) > amount, "Insufficient balance");
-
     IWETH(wETH).withdraw(amount);
     address payable sender = payable(_msgSender());
 
