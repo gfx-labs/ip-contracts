@@ -321,7 +321,7 @@ const deployCharlie = async (deployer:SignerWithAddress) => {
 async function main() {
 
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await network.provider.send("evm_setAutomine", [true])
+    //await network.provider.send("evm_setAutomine", [true])
     
     const accounts = await ethers.getSigners()
     const deployer = accounts[0]
@@ -329,6 +329,7 @@ async function main() {
     console.log("Deployer: ", deployer.address)
 
     await deployProtocol(deployer)
+    await sleep(15000)
     await deployCharlie(deployer)
 
     console.log("Contracts deployed")
