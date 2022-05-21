@@ -1,30 +1,27 @@
 No need to generate any newer typings.
 Deployer:  0xA8F5d96E2DDfb5ec3F24B960A5a44EbC620064A3
 DEPLOYING CONTRACTS
-proxyAdmin address:  0x724D4607976a644286bE070fEbe7dcD5Cd63F689
-VaultController implementation address:  0x33c748509b79069A171eF59419bAeF48BF59A375
-VaultController proxy address:  0x37666e42cFfb24dc0B623d6E26B6b5F4Ca445DAb
-VaultController initialized:  0x37666e42cFfb24dc0B623d6E26B6b5F4Ca445DAb
-USDI implementation address:  0x9Fe21A046B7BFbf700313BA79c8470d799D4158C
-USDI proxy address:  0xb27E2484Eead6Cbdf7DFb18a22ae2F358e41F1BE
-USDI initialized:  0xb27E2484Eead6Cbdf7DFb18a22ae2F358e41F1BE
-ThreeLines deployed:  0xE26eb891Db9320bC2c8377aC3ec27caFDF1A11f4
-curve deployed:  0x4Ac5E0edc45A38E1Eb69a291998f101497EdEBa6
-oracleMaster deployed:  0xe3f5A74CE406de95ef94ab99e574BD4F8e1D4b69
+proxyAdmin address:  0xeB90EF59bc50D09ED3471E34e09Da938cD75B714
+VaultController implementation address:  0xAb911fE409aD218d3242358A740CE0c5a290c2a8
+VaultController proxy address:  0x0485bc6233E9A21EC874d116d19a802B78637Cea
+VaultController initialized:  0x0485bc6233E9A21EC874d116d19a802B78637Cea
+USDI implementation address:  0x38c4b0caa8043b899A3c9080f02CA8913323152a
+USDI proxy address:  0xA21003F6b264f6D1b8a8CF293C78D6b468492039
+USDI initialized:  0xA21003F6b264f6D1b8a8CF293C78D6b468492039
+Set VaultController on USDI to:  0x0485bc6233E9A21EC874d116d19a802B78637Cea
+ThreeLines deployed:  0xF1Fad736E61F86DEc1A620a6aC36Ae7f1a518483
+curve deployed:  0x0815956D3898109Db1e9569D94d473F356dF64b0
+oracleMaster deployed:  0x2d2CBe9216131C16421A8614d7B4f904D7b070c6
 Registering oracle master
 Registered oracle master
 Creating uniswap comp relay
-COMP_UniRelay deployed:  0xA489c2D649867860443e96caa09bB896729E1084
+COMP_UniRelay deployed:  0xa3710B45dF98Ed69959ed8d1C0FD598F04c426BF
 Creating uniswap ETH relay
-ETH_UniRelay deployed:  0x56A218E87180E560A55a7f220273646370115A49
-Creating chainlink comp relay
-chainlinkComp relay deployed:  0x3c0537eDDE74f898DBef2677eBe41230472aede2
-Creating chainlink eth relay
-chainlinkEth relay deployed:  0x5BFFA181A90A94e45Ece081396Be118717de8fCa
+ETH_UniRelay deployed:  0x5D09125C69eDF30D5A016690F23DEcED9Dccdb72
 Creating COMP anchoredview
-AnchorviewComp relay deployed:  0x916a65519FEf1904CEA6fADD12AEf8186d9fC030
+AnchorviewComp relay deployed:  0xb6E160d769a91e24f79a131257EFfd373D910B74
 Creating ETH anchoredview
-AnchorviewETH relay deployed:  0x7c09fcd445677276239BE95C302431d57D3404DB
+AnchorviewETH relay deployed:  0x1B598694598E789C6A578515649Ac9c4AA8cA9a6
 Setting vault oracles and CFs...
 set comp relay
 set eth relay
@@ -32,12 +29,12 @@ Registering tokens...
 Tokens registered!
 USDI protocol contracts deployed!
 Deploying governance...
-proxyAdmin address:  0x5ee8A7ECf88df602Ab3C38374867bf7138275a75
-InterestProtocolTokenDelegate implementation address:  0x4D2398c3D1D40C219634D851C5E0f830b59B95a5
-InterestProtocolTokenDelegate proxy address:  0x4160186a98b65F7944Da9f415a79bad620E46872
+proxyAdmin address:  0xa29bBd4bEB538B3ee071740fadd700b90230A3d4
+InterestProtocolTokenDelegate implementation address:  0xCC1680FA6a8C8b785c5Fb6EF9fa4576C7eFf301d
+InterestProtocolTokenDelegate proxy address:  0x29882B09264bc2E00f71685c4029eF961F039c44
 Deploying IPT...
-IPT deployed:  0x6748eDE046579d84264c3af73a0e6Ba73fE1bCfB
-IPT owner:  0x2f117a378A733ff128f2dD55A031DBc389dfcdc4
+IPT deployed:  0x295EA81a0c06BFE32c6966e55A1b59407b53c9fb
+IPT owner:  0xa29bBd4bEB538B3ee071740fadd700b90230A3d4
 Deploying GovernorCharlieDelegator...
-Charlie Deployed:  0xf638351CB11DCaae97644aA1e48988d1719e942c
+Charlie Deployed:  0xd8a99c6A6EB7c50EB127773A28Abaea8E77A901b
 Contracts deployed
