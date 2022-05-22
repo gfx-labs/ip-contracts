@@ -377,7 +377,7 @@ contract VaultController is
     vault.controllerTransfer(asset_address, _msgSender(), tokens_to_liquidate);
 
     // this might not be needed. Will always be true because it is already implied by _liquidationMath.
-    require(get_vault_borrowing_power(vault) <= _accountLiability(id), "overliquidation");
+    require(get_vault_borrowing_power(vault) <= _vaultLiability(id), "overliquidation");
 
     // emit the event
     emit Liquidate(id, asset_address, usdi_to_repurchase, tokens_to_liquidate);
@@ -463,18 +463,18 @@ contract VaultController is
   }
 
   function _amountToSolvency(uint96 id) internal view returns (uint256) {
-    return _accountLiability(id) - get_vault_borrowing_power(getVault(id));
+    return _vaultLiability(id) - get_vault_borrowing_power(getVault(id));
   }
 
   /// @notice get account liability of vault
   /// @param id id of vault
   /// @return amount of USDI the vault owes
-  /// @dev implementation _AccountLiability
-  function accountLiability(uint96 id) external view override returns (uint192) {
-    return _accountLiability(id);
+  /// @dev implementation _vaultLiability
+  function vaultLiability(uint96 id) external view override returns (uint192) {
+    return _vaultLiability(id);
   }
 
-  function _accountLiability(uint96 id) internal view returns (uint192) {
+  function _vaultLiability(uint96 id) internal view returns (uint192) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);

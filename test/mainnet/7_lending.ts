@@ -48,7 +48,7 @@ describe("BORROW USDi", async () => {
         assert.equal(newInterestFactor.toString(), expectedInterestFactor.toString(), "New Interest Factor is correct")
 
         await s.VaultController.calculateInterest()
-        const liability = await s.VaultController.connect(s.Bob).accountLiability(1)
+        const liability = await s.VaultController.connect(s.Bob).vaultLiability(1)
         assert.equal(liability.toString(), calculatedBaseLiability.toString(), "Calculated base liability is correct")
 
         const resultingUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
@@ -76,7 +76,7 @@ describe("BORROW USDi", async () => {
 
         const readLiability = await s
             .VaultController.connect(s.Bob)
-            .accountLiability(1);
+            .vaultLiability(1);
 
         expect(readLiability).to.be.gt(BN("5000e18"));
 
@@ -312,7 +312,7 @@ describe("Testing liquidations", () => {
         assert.equal(usdi_to_repurchase.toString(), expectedUSDI2Repurchase.toString(), "USDI to repurchase is correct")
 
         //check ending liability 
-        let liabiltiy = await s.VaultController.accountLiability(vaultID)
+        let liabiltiy = await s.VaultController.vaultLiability(vaultID)
 
         //TODO - result is off by 0-8, and is inconsistant -- oracle price? Rounding error? 
         if (liabiltiy == expectedLiability.sub(usdi_to_repurchase)) {
@@ -395,7 +395,7 @@ describe("Testing liquidations", () => {
         let expectedLiability = await calculateAccountLiability(carolBorrowPower, IF, initIF)
 
         //check ending liability 
-        let liabiltiy = await s.VaultController.accountLiability(vaultID)
+        let liabiltiy = await s.VaultController.vaultLiability(vaultID)
         //TODO - result is off by 0-8, and is inconsistant -- oracle price? Rounding error? 
         if (liabiltiy == expectedLiability.sub(usdi_to_repurchase)) {
             showBodyCyan("LIABILITY MATCH")
@@ -480,7 +480,7 @@ describe("Checking for eronious inputs and scenarios", () => {
     it("checks for liquidate with a vault that is solvent", async () => {
         //solvent vault
         //carol repays some to become solvent
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
+        AccountLiability = await s.VaultController.vaultLiability(vaultID)
         borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
@@ -490,7 +490,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         const repayResult = await s.VaultController.connect(s.Carol).repayUSDi(vaultID, amountUnderwater.add(utils.parseEther("1")))
         await advanceBlockHeight(1)
 
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
+        AccountLiability = await s.VaultController.vaultLiability(vaultID)
         borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
@@ -557,7 +557,7 @@ describe("Checking for eronious inputs and scenarios", () => {
     it("repay more than what is owed", async () => {
         balance = await s.USDI.balanceOf(s.Carol.address)
         const startingBalance = balance
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
+        AccountLiability = await s.VaultController.vaultLiability(vaultID)
 
         await expect(s.VaultController.connect(s.Carol).repayUSDi(vaultID, AccountLiability.add(utils.parseEther("50")))).to.be.revertedWith("repay > borrow amount")
         await advanceBlockHeight(1)
@@ -585,20 +585,20 @@ describe("Checking for eronious inputs and scenarios", () => {
 
     it("repay when there is no liability", async () => {
         //Dave transfers enough USDi back to Carol to repay all
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
+        AccountLiability = await s.VaultController.vaultLiability(vaultID)
 
         await s.USDI.connect(s.Dave).transfer(s.Carol.address, AccountLiability.add(utils.parseEther("100")))
         await advanceBlockHeight(1)
 
         await s.VaultController.connect(s.Carol).repayAllUSDi(vaultID)
         await advanceBlockHeight(1)
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
+        AccountLiability = await s.VaultController.vaultLiability(vaultID)
         assert.equal(AccountLiability.toString(), "0", "There is no liability on Carol's vault anymore")
 
         await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
 
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
+        AccountLiability = await s.VaultController.vaultLiability(vaultID)
         let VaultBaseLiab = await s.CarolVault.baseLiability()
         assert.equal(VaultBaseLiab.toString(), "0", "Vault base liability is 0")
 
@@ -616,7 +616,7 @@ describe("Checking for eronious inputs and scenarios", () => {
 
     it("borrow against a vault that is not yours", async () => {
         //carol's vault has no debt
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
+        AccountLiability = await s.VaultController.vaultLiability(vaultID)
         assert.equal(AccountLiability.toString(), "0", "Carol's vault has no debt")
 
         //Eric tries to borrow against Carol's vault
@@ -640,7 +640,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
+        AccountLiability = await s.VaultController.vaultLiability(vaultID)
         borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
@@ -685,7 +685,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         await s.VaultController.connect(s.Dave).repayAllUSDi(vaultID)
         await mineBlock()
 
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
+        AccountLiability = await s.VaultController.vaultLiability(vaultID)
 
         assert.equal(AccountLiability.toString(), "0", "Account liability is now 0")
     })
@@ -708,7 +708,7 @@ describe("Testing remaining vault functions", () => {
 
         startingCarolComp = await s.COMP.balanceOf(s.Carol.address)
 
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
+        AccountLiability = await s.VaultController.vaultLiability(vaultID)
         borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
@@ -744,7 +744,7 @@ describe("Testing remaining vault functions", () => {
             s.Eric,
         );
         expect(await ericVault.minter()).to.eq(s.Eric.address)
-        AccountLiability = await s.VaultController.accountLiability(ericVaultID)
+        AccountLiability = await s.VaultController.vaultLiability(ericVaultID)
         assert.equal(AccountLiability.toString(), "0", "Eric's vault has 0 liability")
         borrowPower = await s.VaultController.accountBorrowingPower(ericVaultID)
         assert.equal(borrowPower.toString(), "0", "Eric's vault has 0 borrow power, so it is empty")
@@ -799,7 +799,7 @@ describe("Testing remaining vault functions", () => {
         solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
-        AccountLiability = await s.VaultController.accountLiability(vaultID)
+        AccountLiability = await s.VaultController.vaultLiability(vaultID)
         borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
@@ -836,7 +836,7 @@ describe("Testing remaining vault functions", () => {
         //transfer 1 comp to vault
         await expect(s.COMP.connect(s.Carol).transfer(newVault.address, balance)).to.not.reverted;
         await mineBlock()
-        AccountLiability = await s.VaultController.accountLiability(newVaultID)
+        AccountLiability = await s.VaultController.vaultLiability(newVaultID)
         borrowPower = await s.VaultController.accountBorrowingPower(newVaultID)
 
         assert.equal(AccountLiability.toString(), "0", "New vault has 0 liability")

@@ -47,7 +47,7 @@ interface IVaultController is VaultControllerEvents {
 
   function amountToSolvency(uint96 id) external view returns (uint256);
 
-  function accountLiability(uint96 id) external view returns (uint192);
+  function vaultLiability(uint96 id) external view returns (uint192);
 
   function accountBorrowingPower(uint96 id) external view returns (uint192);
 

@@ -147,7 +147,7 @@ describe("Testing explicit upgradeability ", () => {
         const daveUSDI = await s.USDI.balanceOf(s.Dave.address)
         expect(await toNumber(daveUSDI)).to.be.gt(0)//dave has USDI to liquidate with 
 
-        const AccountLiability = await VaultController2.accountLiability(vaultID)
+        const AccountLiability = await VaultController2.vaultLiability(vaultID)
         expect(await toNumber(AccountLiability)).to.be.gt(await toNumber(bobUSDI))//bob does not have enough USDI to completely repay the loan
         //showBody("Account Liability: ", await toNumber(AccountLiability))
 

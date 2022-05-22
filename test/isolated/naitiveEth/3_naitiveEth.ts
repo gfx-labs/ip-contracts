@@ -143,7 +143,7 @@ describe("Deposit, borrow against, and withdraw using naitive ether", () => {
         await mineBlock()
 
 
-        const liability = await s.VaultController.accountLiability(vaultID)
+        const liability = await s.VaultController.vaultLiability(vaultID)
         expect(await toNumber(liability)).to.be.gt(0)
     })
 
@@ -166,7 +166,7 @@ describe("Deposit, borrow against, and withdraw using naitive ether", () => {
         await s.VaultController.connect(s.Bob).repayAllUSDi(vaultID)
         await mineBlock()
 
-        const liability = await s.VaultController.accountLiability(vaultID)
+        const liability = await s.VaultController.vaultLiability(vaultID)
         expect(liability).to.eq(0)
 
     })
