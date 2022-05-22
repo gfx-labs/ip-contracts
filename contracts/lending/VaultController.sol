@@ -349,7 +349,6 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) external override paysInterest whenNotPaused returns (uint256) {
-    require(!checkAccount(id), "Vault is solvent");
     require(tokens_to_liquidate > 0, "must liquidate>0");
 
     //check for registered asset - audit L3
@@ -410,6 +409,10 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) internal view returns (uint256, uint256) {
+
+    require(!checkAccount(id), "Vault is solvent");
+
+
     IVault vault = getVault(id);
 
     //get price of asset scaled to decimal 18

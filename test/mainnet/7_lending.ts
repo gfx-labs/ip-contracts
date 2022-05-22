@@ -199,7 +199,7 @@ describe("Testing repay", () => {
 
         //in order to pay the interest, bob needs to mint some USDI
         //get his expected usdi liability subtracted by his balance of usdi
-        showBody("bob deposits", BN(neededUSDI).div(BN("1e12")),"usdc, and receives ", neededUSDI, " usdi")
+        showBody("bob deposits", BN(neededUSDI).div(BN("1e12")), "usdc, and receives ", neededUSDI, " usdi")
         const deposit = s.USDI.connect(s.Bob).deposit(neededUSDI.div(BN("1e12")).add(1))
         await expect(deposit.catch(console.log)).to.not.reverted;
         const repayResult = await s.VaultController.connect(s.Bob).repayAllUSDi(1)
@@ -282,12 +282,12 @@ describe("Testing liquidations", () => {
         const expectedT2L = await calculatetokensToLiquidate(s.BobVault, s.WETH.address, bobVaultInit, calcLiab)
 
         const expectedUSDI2Repurchase = await calculateUSDI2repurchase(s.WETH.address, expectedT2L)
-     
+
         const result = await s.VaultController.connect(s.Dave).liquidateAccount(vaultID, s.wethAddress, bobVaultInit)
         await advanceBlockHeight(1)
         const receipt = await result.wait()
         const liquidateGas = await getGas(result)
-        showBodyCyan("Gas cost to do a big liquidation: ", liquidateGas) 
+        showBodyCyan("Gas cost to do a big liquidation: ", liquidateGas)
 
 
         daveWETH = await s.WETH.balanceOf(s.Dave.address)
@@ -309,7 +309,7 @@ describe("Testing liquidations", () => {
         const tokens_to_liquidate = args!.tokens_to_liquidate
 
         assert.equal(tokens_to_liquidate.toString(), expectedT2L.toString(), "Tokens to liquidate is correct")
-        assert.equal(usdi_to_repurchase.toString(), expectedUSDI2Repurchase.toString(), "USDI to repurchase is correct")     
+        assert.equal(usdi_to_repurchase.toString(), expectedUSDI2Repurchase.toString(), "USDI to repurchase is correct")
 
         //check ending liability 
         let liabiltiy = await s.VaultController.accountLiability(vaultID)
@@ -484,7 +484,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
-        
+
 
         //repay amount owed + 1 USDI to account for interest
         const repayResult = await s.VaultController.connect(s.Carol).repayUSDi(vaultID, amountUnderwater.add(utils.parseEther("1")))
@@ -499,6 +499,12 @@ describe("Checking for eronious inputs and scenarios", () => {
 
         await expect(s.VaultController.connect(s.Dave).liquidateAccount(vaultID, s.compAddress, BN("1e25"))).to.be.revertedWith("Vault is solvent")
         await advanceBlockHeight(1)
+    })
+
+    it("tokens to liquidate on solvent vault", async () => {
+        solvency = await s.VaultController.checkAccount(vaultID)
+        assert.equal(solvency, true, "Carol's vault is solvent")
+        await expect(s.VaultController.tokensToLiquidate(vaultID, s.compAddress)).to.be.revertedWith("Vault is solvent")
     })
 
     it("liquidate when liquidator doesn't have any USDi", async () => {
@@ -832,7 +838,7 @@ describe("Testing remaining vault functions", () => {
         await mineBlock()
         AccountLiability = await s.VaultController.accountLiability(newVaultID)
         borrowPower = await s.VaultController.accountBorrowingPower(newVaultID)
-        
+
         assert.equal(AccountLiability.toString(), "0", "New vault has 0 liability")
 
         let anchorPrice = (await s.UniswapRelayCompUsdc.currentValue())//.div(1e14).toNumber() / 1e4
@@ -840,12 +846,12 @@ describe("Testing remaining vault functions", () => {
         showBody(anchorPrice)
         balance = await s.COMP.balanceOf(newVault.address)
         let tokenAmount = await truncate((anchorPrice.mul(balance)).mul(s.COMP_LTV))
-        
+
         showBody(tokenAmount)
         tokenAmount = await truncate(tokenAmount)
         showBody(tokenAmount)
         showBody(utils.formatEther(tokenAmount.toString()))
-        
+
 
         //this vault is able to be borrowed from
         expect(borrowPower).to.be.gt(0)
