@@ -357,7 +357,7 @@ describe("Testing liquidations", () => {
         //carol did not have any USDi before borrowing some
         expect(await s.USDI.balanceOf(s.Carol.address)).to.eq(actualBorrowAmount)
 
-        let solvency = await s.VaultController.checkAccount(vaultID)
+        let solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, true, "Carol's vault is solvent")
 
         //showBody("advance 1 week and then calculate interest")
@@ -365,7 +365,7 @@ describe("Testing liquidations", () => {
         await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
 
-        solvency = await s.VaultController.checkAccount(vaultID)
+        solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
         let liquidatableTokens = await s.VaultController.tokensToLiquidate(vaultID, s.compAddress)
@@ -435,7 +435,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
 
-        solvency = await s.VaultController.checkAccount(vaultID)
+        solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, false, "Carol's vault is not solvent")
     })
 
@@ -494,7 +494,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
-        solvency = await s.VaultController.checkAccount(vaultID)
+        solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, true, "Carol's vault is solvent")
 
         await expect(s.VaultController.connect(s.Dave).liquidateAccount(vaultID, s.compAddress, BN("1e25"))).to.be.revertedWith("Vault is solvent")
@@ -502,7 +502,7 @@ describe("Checking for eronious inputs and scenarios", () => {
     })
 
     it("tokens to liquidate on solvent vault", async () => {
-        solvency = await s.VaultController.checkAccount(vaultID)
+        solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, true, "Carol's vault is solvent")
         await expect(s.VaultController.tokensToLiquidate(vaultID, s.compAddress)).to.be.revertedWith("Vault is solvent")
     })
@@ -637,7 +637,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
 
-        solvency = await s.VaultController.checkAccount(vaultID)
+        solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
         AccountLiability = await s.VaultController.accountLiability(vaultID)
@@ -713,7 +713,7 @@ describe("Testing remaining vault functions", () => {
         amountUnderwater = AccountLiability.sub(borrowPower)
 
 
-        solvency = await s.VaultController.checkAccount(vaultID)
+        solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, true, "Carol's vault is solvent")
 
         //withdraw comp from vault
@@ -725,7 +725,7 @@ describe("Testing remaining vault functions", () => {
     })
 
     it("withdraw from someone else's vault", async () => {
-        solvency = await s.VaultController.checkAccount(vaultID)
+        solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, true, "Carol's vault is solvent")
 
         //withdraw comp from vault
@@ -757,7 +757,7 @@ describe("Testing remaining vault functions", () => {
     })
 
     it("withdraw with bad address", async () => {
-        solvency = await s.VaultController.checkAccount(vaultID)
+        solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, true, "Carol's vault is solvent")
 
         //withdraw comp from vault
@@ -766,7 +766,7 @@ describe("Testing remaining vault functions", () => {
     })
 
     it("withdraw makes vault insolvent", async () => {
-        solvency = await s.VaultController.checkAccount(vaultID)
+        solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, true, "Carol's vault is solvent")
 
         //borrow a small amount
@@ -796,7 +796,7 @@ describe("Testing remaining vault functions", () => {
         await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
 
-        solvency = await s.VaultController.checkAccount(vaultID)
+        solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
         AccountLiability = await s.VaultController.accountLiability(vaultID)
@@ -810,7 +810,7 @@ describe("Testing remaining vault functions", () => {
     })
 
     it("withdraw from a vault that is insolvent", async () => {
-        solvency = await s.VaultController.checkAccount(vaultID)
+        solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
         //withdraw comp from vault

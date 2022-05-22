@@ -53,7 +53,7 @@ interface IVaultController is VaultControllerEvents {
 
   function tokensToLiquidate(uint96 id, address token) external view returns (uint256);
 
-  function checkAccount(uint96 id) external view returns (bool);
+  function checkVault(uint96 id) external view returns (bool);
 
   // interest calculations
   function calculateInterest() external returns (uint256);

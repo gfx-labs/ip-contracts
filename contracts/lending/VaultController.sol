@@ -260,7 +260,7 @@ contract VaultController is
   /// @notice check an account for over-collateralization. returns false if amount borrowed is greater than borrowing power.
   /// @param id the vault to check
   /// @return true = vault over-collateralized; false = vault under-collaterlized
-  function checkAccount(uint96 id) public view override returns (bool) {
+  function checkVault(uint96 id) public view override returns (bool) {
     // grab the vault by id if part of our system. revert if not
     IVault vault = getVault(id);
     // calculate the total value of the vaults liquidity
@@ -411,7 +411,7 @@ contract VaultController is
     uint256 tokens_to_liquidate
   ) internal view returns (uint256, uint256) {
 
-    require(!checkAccount(id), "Vault is solvent");
+    require(!checkVault(id), "Vault is solvent");
 
 
     IVault vault = getVault(id);
@@ -458,7 +458,7 @@ contract VaultController is
   ///@notice amount of USDI needed to reach even solvency
   /// @param id id of vault
   function amountToSolvency(uint96 id) public view override returns (uint256) {
-    require(!checkAccount(id), "Vault is solvent");
+    require(!checkVault(id), "Vault is solvent");
     return _amountToSolvency(id);
   }
 

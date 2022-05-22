@@ -113,7 +113,7 @@ contract Vault is IVault, ExponentialNoError, Context {
     require(success && (data.length == 0 || abi.decode(data, (bool))), "Vault: TRANSFER_FAILED");
 
     //  check if the account is solvent
-    bool solvency = _controller.checkAccount(_vaultInfo.id);
+    bool solvency = _controller.checkVault(_vaultInfo.id);
     require(solvency, "over-withdrawal");
   }
 
@@ -127,7 +127,7 @@ contract Vault is IVault, ExponentialNoError, Context {
     //IERC20(token_address).transfer(_msgSender(), amount);
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token_address), _msgSender(), amount);
     //  check if the account is solvent
-    bool solvency = _controller.checkAccount(_vaultInfo.id);
+    bool solvency = _controller.checkVault(_vaultInfo.id);
     require(solvency, "over-withdrawal");
 
     emit Withdraw(token_address, amount);
