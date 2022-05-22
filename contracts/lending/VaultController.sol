@@ -257,7 +257,7 @@ contract VaultController is
     emit UpdateRegisteredErc20(token_address, LTV, oracle_address, liquidationIncentive);
   }
 
-  /// @notice check an account for over-collateralization. returns false if amount borrowed is greater than borrowing power.
+  /// @notice check an vault for over-collateralization. returns false if amount borrowed is greater than borrowing power.
   /// @param id the vault to check
   /// @return true = vault over-collateralized; false = vault under-collaterlized
   function checkVault(uint96 id) public view override returns (bool) {
@@ -293,7 +293,7 @@ contract VaultController is
     // now get the LTV of the vault, aka their borrowing power, in usdi
     uint256 total_liquidity_value = get_vault_borrowing_power(vault);
     // the LTV must be above the newly calculated usdi_liability, else revert
-    require(total_liquidity_value >= usdi_liability, "account insolvent");
+    require(total_liquidity_value >= usdi_liability, "vault insolvent");
     // now send usdi to the minter, equal to the amount they are owed
     _usdi.vaultControllerMint(_msgSender(), amount);
     // emit the event
@@ -316,7 +316,7 @@ contract VaultController is
     require(base_amount <= vault.baseLiability(), "repay > borrow amount"); //repay all here if true?
     // decrease the vaults liability by the calculated base amount
     vault.modifyLiability(false, base_amount);
-    // burn the amount of usdi submitted from the senders account
+    // burn the amount of usdi submitted from the senders vault
     _usdi.vaultControllerBurn(_msgSender(), amount);
     // emit the event
     emit RepayUSDi(id, address(vault), amount);
@@ -432,7 +432,7 @@ contract VaultController is
     // the maximum amount of tokens to liquidate is the amount that will bring the vault to solvency
     // divided by the denominator
     uint256 max_tokens_to_liquidate = (_amountToSolvency(id) * 1e18) / denominator;
-    //Cannot liquidate more than is necessary to make account over-collateralized
+    //Cannot liquidate more than is necessary to make vault over-collateralized
     if (tokens_to_liquidate > max_tokens_to_liquidate) {
       tokens_to_liquidate = max_tokens_to_liquidate;
     }
@@ -466,7 +466,7 @@ contract VaultController is
     return _vaultLiability(id) - get_vault_borrowing_power(getVault(id));
   }
 
-  /// @notice get account liability of vault
+  /// @notice get vault liability of vault
   /// @param id id of vault
   /// @return amount of USDI the vault owes
   /// @dev implementation _vaultLiability
@@ -481,7 +481,7 @@ contract VaultController is
     return safeu192(truncate(vault.baseLiability() * _interest.factor));
   }
 
-  /// @notice get account borrowing power for vault
+  /// @notice get vault borrowing power for vault
   /// @param id id of vault
   /// @return amount of USDI the vault owes
   /// @dev implementation in get_vault_borrowing_power

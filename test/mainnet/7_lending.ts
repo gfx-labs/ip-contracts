@@ -18,7 +18,7 @@ describe("BORROW USDi", async () => {
     it(`bob should not be able to borrow 1e6 * 1e18 * ${s.Bob_WETH} usdi`, async () => {
         await expect(s.VaultController.connect(s.Bob).borrowUsdi(1,
             s.Bob_WETH.mul(BN("1e18")).mul(1e6),
-        )).to.be.revertedWith("account insolvent");
+        )).to.be.revertedWith("vault insolvent");
     });
 
     it(`bob should be able to borrow ${"5000e18"} usdi`, async () => {
