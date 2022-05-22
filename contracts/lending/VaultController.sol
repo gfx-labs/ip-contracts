@@ -345,7 +345,7 @@ contract VaultController is
   /// @param asset_address the token the liquidator wishes to liquidate
   /// @param tokens_to_liquidate - number of tokens to liquidate
   /// @dev pays interest
-  function liquidateAccount(
+  function liquidateVault(
     uint96 id,
     address asset_address,
     uint256 tokens_to_liquidate

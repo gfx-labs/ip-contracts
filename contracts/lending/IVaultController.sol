@@ -61,7 +61,7 @@ interface IVaultController is VaultControllerEvents {
   // vault management business
   function mintVault() external returns (address);
 
-  function liquidateAccount(
+  function liquidateVault(
     uint96 id,
     address asset_address,
     uint256 tokenAmount
