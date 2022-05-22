@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.9;
 
 import "../IUSDI.sol";
@@ -538,7 +539,6 @@ contract VaultController is
     // calculate the value at the curve. this vault controller is a USDI vault and will refernce
     // the vault at address 0
     int256 int_curve_val = _curveMaster.getValueAt(address(0x00), reserve_ratio);
-    // if the interest rate is below 0, well, we aren't the fed, so none of that!
 
     // cast the integer curve value to a u192
     uint192 curve_val = safeu192(uint256(int_curve_val));
