@@ -235,7 +235,7 @@ describe("Testing liquidations", () => {
         //borrow maximum -> borrow amount == collateral value 
         const borrowInterestFactor = await s.VaultController.interestFactor()
         let calcIF = await payInterestMath(borrowInterestFactor)
-        const accountBorrowingPower = await s.VaultController.accountBorrowingPower(vaultID)
+        const accountBorrowingPower = await s.VaultController.vaultBorrowingPower(vaultID)
         await nextBlockTime(0)
         await s.VaultController.connect(s.Bob).borrowUsdi(vaultID, accountBorrowingPower)
         await advanceBlockHeight(1)
@@ -345,7 +345,7 @@ describe("Testing liquidations", () => {
         const initCOMPBalanceDave = await s.COMP.balanceOf(s.Dave.address)
 
         //borrow maximum usdi
-        const carolBorrowPower = await s.VaultController.accountBorrowingPower(2)
+        const carolBorrowPower = await s.VaultController.vaultBorrowingPower(2)
         await advanceBlockHeight(1)
         const borrowResult = await s.VaultController.connect(s.Carol).borrowUsdi(vaultID, carolBorrowPower)
         await advanceBlockHeight(1)
@@ -481,7 +481,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         //solvent vault
         //carol repays some to become solvent
         AccountLiability = await s.VaultController.vaultLiability(vaultID)
-        borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
 
@@ -491,7 +491,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         await advanceBlockHeight(1)
 
         AccountLiability = await s.VaultController.vaultLiability(vaultID)
-        borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
         solvency = await s.VaultController.checkVault(vaultID)
@@ -626,7 +626,7 @@ describe("Checking for eronious inputs and scenarios", () => {
 
 
     it("makes vault insolvent", async () => {
-        const accountBorrowingPower = await s.VaultController.accountBorrowingPower(vaultID)
+        const accountBorrowingPower = await s.VaultController.vaultBorrowingPower(vaultID)
 
         //showBodyCyan("BORROW")
         await nextBlockTime(0)
@@ -641,7 +641,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
         AccountLiability = await s.VaultController.vaultLiability(vaultID)
-        borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
         let amountToSolvency = await s.VaultController.amountToSolvency(vaultID)
@@ -709,7 +709,7 @@ describe("Testing remaining vault functions", () => {
         startingCarolComp = await s.COMP.balanceOf(s.Carol.address)
 
         AccountLiability = await s.VaultController.vaultLiability(vaultID)
-        borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
 
@@ -746,7 +746,7 @@ describe("Testing remaining vault functions", () => {
         expect(await ericVault.minter()).to.eq(s.Eric.address)
         AccountLiability = await s.VaultController.vaultLiability(ericVaultID)
         assert.equal(AccountLiability.toString(), "0", "Eric's vault has 0 liability")
-        borrowPower = await s.VaultController.accountBorrowingPower(ericVaultID)
+        borrowPower = await s.VaultController.vaultBorrowingPower(ericVaultID)
         assert.equal(borrowPower.toString(), "0", "Eric's vault has 0 borrow power, so it is empty")
 
         //withdraw tiny amount
@@ -785,7 +785,7 @@ describe("Testing remaining vault functions", () => {
     })
 
     it("makes vault insolvent", async () => {
-        const accountBorrowingPower = await s.VaultController.accountBorrowingPower(vaultID)
+        const accountBorrowingPower = await s.VaultController.vaultBorrowingPower(vaultID)
 
         //showBodyCyan("BORROW")
         await nextBlockTime(0)
@@ -800,7 +800,7 @@ describe("Testing remaining vault functions", () => {
         assert.equal(solvency, false, "Carol's vault is not solvent")
 
         AccountLiability = await s.VaultController.vaultLiability(vaultID)
-        borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
 
         let amountToSolvency = await s.VaultController.amountToSolvency(vaultID)
@@ -837,7 +837,7 @@ describe("Testing remaining vault functions", () => {
         await expect(s.COMP.connect(s.Carol).transfer(newVault.address, balance)).to.not.reverted;
         await mineBlock()
         AccountLiability = await s.VaultController.vaultLiability(newVaultID)
-        borrowPower = await s.VaultController.accountBorrowingPower(newVaultID)
+        borrowPower = await s.VaultController.vaultBorrowingPower(newVaultID)
 
         assert.equal(AccountLiability.toString(), "0", "New vault has 0 liability")
 

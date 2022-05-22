@@ -485,7 +485,7 @@ contract VaultController is
   /// @param id id of vault
   /// @return amount of USDI the vault owes
   /// @dev implementation in get_vault_borrowing_power
-  function accountBorrowingPower(uint96 id) external view override returns (uint192) {
+  function vaultBorrowingPower(uint96 id) external view override returns (uint192) {
     return get_vault_borrowing_power(getVault(id));
   }
 

@@ -136,7 +136,7 @@ describe("Deposit, borrow against, and withdraw using naitive ether", () => {
 
     it("borrow against naitive eth", async () => {
 
-        const borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        const borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
 
 
         await s.VaultController.connect(s.Bob).borrowUsdi(vaultID, borrowPower)

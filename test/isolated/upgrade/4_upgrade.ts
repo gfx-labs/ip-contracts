@@ -67,7 +67,7 @@ describe("Testing explicit upgradeability ", () => {
         await s.WETH.connect(s.Bob).transfer(s.BobVault.address, utils.parseEther("1"))
         await mineBlock()
 
-        let borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        let borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         //showBody("borrowPower: ", utils.formatEther(borrowPower.toString()))
 
         //borrow full amount
@@ -157,7 +157,7 @@ describe("Testing explicit upgradeability ", () => {
         const daveWETH = await s.WETH.balanceOf(s.Dave.address)
 
         //liquidate
-        await VaultController2.connect(s.Dave).liquidateAccount(vaultID, s.wethAddress, utils.parseEther("1"))
+        await VaultController2.connect(s.Dave).liquidateVault(vaultID, s.wethAddress, utils.parseEther("1"))
         await mineBlock()
         
         //dave received wETH for liquidation

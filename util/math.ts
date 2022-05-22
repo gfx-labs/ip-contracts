@@ -136,7 +136,7 @@ import { IVault } from "../typechain-types";
     ))
     const vaultId = await vault.id()
 
-    const borrowPower = await s.VaultController.accountBorrowingPower(vaultId)
+    const borrowPower = await s.VaultController.vaultBorrowingPower(vaultId)
 
     const max_tokens = ((calculatedLiability.sub(borrowPower)).mul(BN("1e18"))).div(denominator)
 

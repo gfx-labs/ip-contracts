@@ -98,7 +98,7 @@ describe("What happens when there is no reserve?", () => {
         await s.WETH.connect(s.Bob).transfer(s.BobVault.address, utils.parseEther("1"))
         await mineBlock()
 
-        let borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        let borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         //showBody("borrowPower: ", utils.formatEther(borrowPower.toString()))
 
         //borrow full amount
@@ -138,7 +138,7 @@ describe("What happens when there is no reserve?", () => {
         await s.COMP.connect(s.Carol).transfer(s.CarolVault.address, balance)
         await mineBlock()
 
-        let borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        let borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         //showBody("borrowPower: ", utils.formatEther(borrowPower.toString()))
 
         //borrow full amount
