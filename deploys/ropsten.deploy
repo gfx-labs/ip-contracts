@@ -1,36 +1,15 @@
-proxyAdmin address:  0xC434Db48059BB84018BCa5f61011ab090b600d89
-VaultController implementation address:  0x398c0c825C4B8b7Bb0aade4814dB0FABE277EAFd
-VaultController proxy address:  0x1010f165A5b8f7d7547FfB4E62f9447908A7f13a
-VaultController initialized:  0x1010f165A5b8f7d7547FfB4E62f9447908A7f13a
-USDI implementation address:  0x92289360523f89468e8132A3C5D6b342CAd17dD7
-USDI proxy address:  0x1a4ba38075275C33315D10976A95242C7531d080
-USDI initialized:  0x1a4ba38075275C33315D10976A95242C7531d080
-Set VaultController on USDI to:  0x1010f165A5b8f7d7547FfB4E62f9447908A7f13a
-ThreeLines deployed:  0xDF3497A728F5224629b4DAc0a0846B07E40de0E1
-curve deployed:  0xE96a8AA777192e5da4C0887b71D0FDD0c1E8D873
-oracleMaster deployed:  0xabd25Da6fEB942762794b8FdC54a64B9CB82EbaC
-Registering oracle master
-Registered oracle master
-Creating uniswap comp relay
-COMP_UniRelay deployed:  0x731919Dfa79106abb18aCB770f93D2B1a95E58B5
-Creating uniswap ETH relay
-ETH_UniRelay deployed:  0xFa2095A05Dc830CEA1ea09e2E836f0400b1B2392
-Creating COMP anchoredview
-AnchorviewComp relay deployed:  0x30AaFBD5b29154a1901Dad093AfdFC62da1388c0
-Creating ETH anchoredview
-AnchorviewETH relay deployed:  0x025F47fcbc9284DC713E69819c9B3Da8058c635e
-Setting vault oracles and CFs...
-set comp relay
-set eth relay
-Registering tokens...
-Tokens registered!
-USDI protocol contracts deployed!
-Deploying governance...
-proxyAdmin address:  0x599E7e98a801B42E3d0d352d102e57C89D584948
-InterestProtocolTokenDelegate implementation address:  0x2e788a47cDE47b83f697031BA76Fde8F003714eb
-InterestProtocolTokenDelegate proxy address:  0x2D87b5a612a57D0fe27Ec4Ec46cc9cc508819e97
-Deploying IPT...
-IPT deployed:  0x168313Df9028A3C3a5fcd1aD7B71Ce2DB436F45c
-IPT owner:  0xE750c88985d0C497119490299A84B173f2C61309
-Deploying GovernorCharlieDelegator...
-Charlie Deployed:  0x2e415baC426A8874217caAC42106f8Ee1D586546
+{
+  USDC: '0x07865c6E87B9F70255377e024ace6630C1Eaa37F',
+  COMP: '0xf76D4a441E4ba86A923ce32B89AFF89dBccAA075',
+  WETH: '0xc778417E063141139Fce010982780140Aa0cD5Ab',
+  USDC_COMP_POOL: '0x1bcb372A9E3c1B67c09BadD9c02ba0BfBBDa8a90',
+  USDC_ETH_POOL: '0xee815CDC6322031952a095C6cc6FEd036Cb1F70d',
+  ProxyAdmin: '0xF00a28c82735DB37a133E16ed2859549868983Ec',
+  VaultController: '0x9ebd1DB32790b8D7a9dd3ccd5ebe191A7EA8Ec8D',
+  USDI: '0x12F4E7C4E7993d724eaC73eF99f2Fca36F1FA921',
+  CompOracle: '0x1Af528bAB1A470cCaD77c8A2500fD62de0bed0fc',
+  EthOracle: '0xCB7B3EA1F8aDe7e1281f66701B10cA792f8c70a9',
+  Curve: '0x15B7D3D7795442CcC923D709201ac826521EB38b',
+  Oracle: '0xEef7c040FA40B2d03Ba17E5cE2277b324969b78b',
+  ThreeLines: '0x1bCFe05d326d1BbC9D5e7CB2385a9cC1A02E051e'
+}
