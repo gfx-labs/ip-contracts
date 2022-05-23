@@ -99,7 +99,7 @@ contract Vault is IVault, Context {
     // transfer the token to the owner
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token_address), _msgSender(), amount);
     //  check if the account is solvent
-    require(_controller.checkAccount(_vaultInfo.id), "over-withdrawal");
+    require(_controller.checkVault(_vaultInfo.id), "over-withdrawal");
     emit Withdraw(token_address, amount);
   }
 

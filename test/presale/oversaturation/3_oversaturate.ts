@@ -27,7 +27,12 @@ import {
 import { currentBlock, reset } from "../../../util/block";
 import MerkleTree from "merkletreejs";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
-import { Wave, IERC20__factory } from "../../../typechain-types";
+import {
+  Wave,
+  IERC20__factory,
+  WavePool__factory,
+  WavePool,
+} from "../../../typechain-types";
 import { red } from "bn.js";
 
 const hre = require("hardhat");
@@ -70,9 +75,9 @@ let merkleTree: MerkleTree;
 const keyAmount = BN("200e6"); //500 USDC
 const floor = BN("5e5"); //500,000 - .5 USDC
 const amount = BN("100e6"); //100 USDC
-const totalReward = BN("200e18"); //200 IPT
+const totalReward = BN("200"); //200 IPT
 
-let Wave: Wave;
+let Wave: WavePool;
 
 //todo - what happens if not all is redeemed, IPT stuck on Wave? Redeem deadline?
 require("chai").should();
@@ -90,15 +95,18 @@ describe("Deploy wave", () => {
     const receiver = s.Carol.address;
     //showBody(s.Frank.address)
 
-    const waveFactory = await ethers.getContractFactory("Wave");
+    const waveFactory = new WavePool__factory(s.Frank);
     Wave = await waveFactory.deploy(
-      root,
-      totalReward,
-      floor,
-      enableTime,
-      disableTime,
       receiver,
-      s.IPT.address
+      totalReward,
+      s.IPT.address,
+      disableTime,
+      root,
+      enableTime,
+      root,
+      enableTime,
+      "0x00",
+      enableTime
     );
     await mineBlock();
     await Wave.deployed();
@@ -108,7 +116,7 @@ describe("Deploy wave", () => {
     await mineBlock();
   });
   it("Sanity check state of Wave contract", async () => {
-    const merkleRoot = await Wave.merkleRoot();
+    const merkleRoot = await (await Wave._metadata(1)).merkleRoot;
     assert.equal(merkleRoot.toString(), root, "Merkle root is correct");
 
     const claimedTotal = await Wave._totalClaimed();
@@ -127,7 +135,7 @@ describe("Deploy wave", () => {
       "Total reward is correct"
     );
 
-    const IPTaddr = await Wave.rewardToken();
+    const IPTaddr = await Wave._rewardToken();
     assert.equal(IPTaddr, s.IPT.address, "IPT is initialized correctly");
 
     const WaveIPTbalance = await s.IPT.balanceOf(Wave.address);
@@ -182,7 +190,7 @@ describe("Presale - OVERSATURATION", () => {
     let balance = await s.USDC.balanceOf(claimer);
     assert.equal(
       balance.toString(),
-      (s.Dave_USDC.sub(keyAmount)).toString(),
+      s.Dave_USDC.sub(keyAmount).toString(),
       "Dave's ending balance is correct"
     );
 
@@ -207,7 +215,7 @@ describe("Presale - OVERSATURATION", () => {
     const tinyAmount = 1; //1e-18 IPT
     await s.USDC.connect(s.Dave).approve(Wave.address, tinyAmount);
     await mineBlock();
- 
+
     const pointsResult = await Wave.connect(s.Dave).getPoints(
       tinyAmount,
       keyAmount,
@@ -215,7 +223,7 @@ describe("Presale - OVERSATURATION", () => {
     );
     await mineBlock();
     await expect(pointsResult.wait()).to.be.reverted;
- 
+
     //todo check state before revert
   });
 
@@ -225,8 +233,7 @@ describe("Presale - OVERSATURATION", () => {
     let cap = await Wave._cap();
     let total = await Wave._totalClaimed();
 
-    expect(total).to.be.lt(cap)//cap has not been reached
-
+    expect(total).to.be.lt(cap); //cap has not been reached
 
     //starting balance is as expected
     const startBalance = await s.USDC.balanceOf(claimer);
@@ -280,24 +287,21 @@ describe("Presale - OVERSATURATION", () => {
     );
 
     let _totalClaimed = await Wave._totalClaimed();
-    //todo? 
-
+    //todo?
   });
 
   it("try to make a claim that would exceed cap", async () => {
-    claimer = s.Bob.address
+    claimer = s.Bob.address;
 
     //confirm starting values
     let cap = await Wave._cap();
     let total = await Wave._totalClaimed();
-    expect(total).to.be.lt(cap)//cap has not been reached
-    const claimableAmount = cap.sub(total)
-
+    expect(total).to.be.lt(cap); //cap has not been reached
+    const claimableAmount = cap.sub(total);
 
     /**
     assert.equal(await toNumber(difference), await toNumber(amount.div(2)), "Amount availalble to be claimed is correct")
      */
-
 
     //approve
     await s.USDC.connect(s.Dave).approve(Wave.address, amount);
@@ -314,17 +318,16 @@ describe("Presale - OVERSATURATION", () => {
     await mineBlock();
 
     //tx reverted
-    await expect(gpResult!.wait()).to.be.reverted
-
-  })
+    await expect(gpResult!.wait()).to.be.reverted;
+  });
 
   it("Claim exactly up to maximum", async () => {
-    claimer = s.Bob.address
+    claimer = s.Bob.address;
 
     let cap = await Wave._cap();
     let total = await Wave._totalClaimed();
-    expect(total).to.be.lt(cap)//cap has not been reached
-    let claimableAmount = cap.sub(total)
+    expect(total).to.be.lt(cap); //cap has not been reached
+    let claimableAmount = cap.sub(total);
 
     //approve
     await s.USDC.connect(s.Bob).approve(Wave.address, claimableAmount);
@@ -350,16 +353,19 @@ describe("Presale - OVERSATURATION", () => {
       gpArgs.from.toString(),
       "From is correct on event receipt"
     );
-  })
+  });
 
   //test for over saturation
   it("Confirm cap has been reached", async () => {
     const cap = await Wave._cap();
     const _totalClaimed = await Wave._totalClaimed();
 
-    assert.equal(cap.toString(), _totalClaimed.toString(), "Cap has been reached")
-
-  })
+    assert.equal(
+      cap.toString(),
+      _totalClaimed.toString(),
+      "Cap has been reached"
+    );
+  });
 
   it("try to claim after cap has been reached", async () => {
     const fullClaimAmount = amount.mul(2);
@@ -383,48 +389,46 @@ describe("Presale - OVERSATURATION", () => {
     await mineBlock();
     await expect(gpResult.wait()).to.reverted;
   });
-  
-  
- 
+
   it("redeem before time has elapsed", async () => {
     let canRedeem = await Wave.canRedeem();
     assert.equal(canRedeem, false, "canRedeem is false");
- 
+
     let redeemed = await Wave.redeemed(s.Bob.address);
     assert.equal(redeemed, false, "Bob has not redeemed yet");
- 
+
     const redeemResult = await Wave.connect(s.Bob).redeem();
     await mineBlock();
     await expect(redeemResult.wait()).to.be.reverted;
   });
- 
+
   it("elapse time", async () => {
     await fastForward(OneWeek);
     await mineBlock();
- 
+
     //check things
     const block = await currentBlock();
     const currentTime = block.timestamp;
- 
+
     //time is now past disable time
     expect(currentTime).to.be.gt(disableTime);
- 
+
     let canRedeem = await Wave.canRedeem();
     assert.equal(canRedeem, true, "canRedeem is now true");
- 
+
     let redeemed = await Wave.redeemed(s.Bob.address);
     assert.equal(redeemed, false, "Bob has not redeemed yet");
   });
- 
+
   it("Admin should not be able to claim any IPT due to claim saturation", async () => {
     const startingCarolIPT = await s.IPT.balanceOf(s.Carol.address);
     assert.equal(startingCarolIPT.toString(), "0", "Carol holds 0 IPT");
- 
+
     //withdraw
     const withdrawResult = await Wave.connect(s.Carol).withdraw();
     await mineBlock();
     await expect(withdrawResult.wait()).to.be.reverted;
- 
+
     const EndingCarolIPT = await s.IPT.balanceOf(s.Carol.address);
     assert.equal(
       EndingCarolIPT.toString(),
@@ -440,95 +444,93 @@ describe("Presale - OVERSATURATION", () => {
       "0",
       "Bob holds no IPT before redeem"
     );
- 
-    const totalPoints = await Wave._totalClaimed()
-    const BobPoints = await Wave.claimed(s.Bob.address)
-    const DavePoints = await Wave.claimed(s.Dave.address)
 
-    expect(await toNumber(BobPoints.add(DavePoints))).to.eq(await toNumber(totalPoints))
- 
-    const WaveIPT = await s.IPT.balanceOf(Wave.address)
-    const totalReward = await Wave._totalReward()
- 
-    expect(await toNumber(WaveIPT)).to.eq(await toNumber(totalReward))
- 
- 
+    const totalPoints = await Wave._totalClaimed();
+    const BobPoints = await Wave.claimed(s.Bob.address);
+    const DavePoints = await Wave.claimed(s.Dave.address);
+
+    expect(await toNumber(BobPoints.add(DavePoints))).to.eq(
+      await toNumber(totalPoints)
+    );
+
+    const WaveIPT = await s.IPT.balanceOf(Wave.address);
+    const totalReward = await Wave._totalReward();
+
+    expect(await toNumber(WaveIPT)).to.eq(await toNumber(totalReward));
+
     const redeemResult = await Wave.connect(s.Bob).redeem();
     await mineBlock();
     //check things
     let waveIPT = await s.IPT.balanceOf(Wave.address);
     let difference = totalReward.sub(waveIPT);
     let balance = await s.IPT.balanceOf(s.Bob.address);
- 
+
     assert.equal(
       difference.toString(),
       balance.toString(),
       "Bob received IPT in the correct amount"
     );
- 
+
     /**
      * bob has 200/400 total points
      * dave has 200/400 total points
      * 200 IPT exist in this wave
-     * 
+     *
      * bob's simple ratio is 2/4 == 0.5 == _floor
-     * 
+     *
      * bob should end up with 1/6 of the IPT == ~33.333 IPTs
      * dave should end up with 5/6 of the IPT == 166.666 IPTs
      */
-  
-  const simpleRatio = await toNumber(BobPoints) / await toNumber(totalPoints)
 
-  const expectedIPT = simpleRatio * await toNumber(totalReward)  
-  //confirm Bob has the expected ratio of IPT
-  expect(await toNumber(balance)).to.be.closeTo(expectedIPT, 0.004)
+    const simpleRatio =
+      (await toNumber(BobPoints)) / (await toNumber(totalPoints));
 
-  
+    const expectedIPT = simpleRatio * (await toNumber(totalReward));
+    //confirm Bob has the expected ratio of IPT
+    expect(await toNumber(balance)).to.be.closeTo(expectedIPT, 0.004);
 
-  //confirm floor price was reached, and nobody paid less than floor per IPT 
-  const e6IPT = balance.div(BN("1e12"))
-  
-  const price = e6IPT.toNumber() / BobPoints.toNumber()
-  const scaledPrice = price * 1e6
+    //confirm floor price was reached, and nobody paid less than floor per IPT
+    const e6IPT = balance.div(BN("1e12"));
 
-  expect(scaledPrice).to.eq(floor.toNumber())
+    const price = e6IPT.toNumber() / BobPoints.toNumber();
+    const scaledPrice = price * 1e6;
 
-});
+    expect(scaledPrice).to.eq(floor.toNumber());
+  });
 
-it("Dave redeems last", async () => {
-  let startingDaveIPT = await s.IPT.balanceOf(s.Dave.address);
-  assert.equal(
-    startingDaveIPT.toString(),
-    "0",
-    "Dave holds no IPT before redeem"
-  );
+  it("Dave redeems last", async () => {
+    let startingDaveIPT = await s.IPT.balanceOf(s.Dave.address);
+    assert.equal(
+      startingDaveIPT.toString(),
+      "0",
+      "Dave holds no IPT before redeem"
+    );
 
-  const startingWaveIPT = await s.IPT.balanceOf(Wave.address);
+    const startingWaveIPT = await s.IPT.balanceOf(Wave.address);
 
-  const totalPoints = await Wave._totalClaimed()
-  const DavePoints = await Wave.claimed(s.Dave.address)
+    const totalPoints = await Wave._totalClaimed();
+    const DavePoints = await Wave.claimed(s.Dave.address);
 
-  const simpleRatio = await toNumber(DavePoints) / await toNumber(totalPoints)
-  const expectedIPT = simpleRatio * await toNumber(totalReward)  
+    const simpleRatio =
+      (await toNumber(DavePoints)) / (await toNumber(totalPoints));
+    const expectedIPT = simpleRatio * (await toNumber(totalReward));
 
-  const redeemResult = await Wave.connect(s.Dave).redeem();
-  await mineBlock();
-  await expect(redeemResult.wait()).to.not.reverted;
+    const redeemResult = await Wave.connect(s.Dave).redeem();
+    await mineBlock();
+    await expect(redeemResult.wait()).to.not.reverted;
 
-  //check things
-  let waveIPT = await s.IPT.balanceOf(Wave.address);
-  let difference = totalReward.sub(waveIPT);
-  let balance = await s.IPT.balanceOf(s.Dave.address);
-  //showBody("dave balance:", balance);
+    //check things
+    let waveIPT = await s.IPT.balanceOf(Wave.address);
+    let difference = totalReward.sub(waveIPT);
+    let balance = await s.IPT.balanceOf(s.Dave.address);
+    //showBody("dave balance:", balance);
 
-  expect(difference, "dave balanace match").to.be.closeTo(totalReward, 2);
-  expect(balance, "received correct amt").to.be.closeTo(startingWaveIPT, 2);
-  expect(waveIPT, "wave no longer has ipt").to.be.closeTo(BN(0), 2);
+    expect(difference, "dave balanace match").to.be.closeTo(totalReward, 2);
+    expect(balance, "received correct amt").to.be.closeTo(startingWaveIPT, 2);
+    expect(waveIPT, "wave no longer has ipt").to.be.closeTo(BN(0), 2);
 
-  expect(await toNumber(balance)).to.be.closeTo(expectedIPT, 0.004)
+    expect(await toNumber(balance)).to.be.closeTo(expectedIPT, 0.004);
 
-  //todo calc exact ratio of IPT received 
-});
-
-
+    //todo calc exact ratio of IPT received
+  });
 });

@@ -37,10 +37,10 @@ contract WavePool {
     bool enabled;
     bytes32 merkleRoot;
     uint256 enableTime;
-    mapping(address => RedemptionData) data;
   }
 
   mapping(uint256 => WaveMetadata) public _metadata;
+  mapping(uint256 => mapping(address => RedemptionData)) _data;
 
   // time at which people can claim
   uint256 public _claimTime;
@@ -126,24 +126,22 @@ contract WavePool {
 
   /// @notice redeem points for token
   function redeem(uint256 wave) external {
-    RedemptionData memory user = _metadata[wave].data[msg.sender];
-
     require(canRedeem() == true, "can't redeem yet");
-    require(user.redeemed == false, "already redeem");
-    user.redeemed = true;
-    _metadata[wave].data[msg.sender] = user;
+    require(_data[wave][msg.sender].redeemed == false, "already redeem");
+    _data[wave][msg.sender].redeemed = true;
     uint256 rewardAmount;
+    RedemptionData memory user = _data[wave][msg.sender];
     // implied price is assuming pro rata, how many points you need for one reward
     // for instance, if the totalReward was 1, and _totalClaimed was below 500_000, then the impliedPrice would be below 500_000
-    uint256 impliedPrice = _totalClaimed / _totalReward
+    uint256 impliedPrice = _totalClaimed / _totalReward;
     if (impliedPrice < _floor) {
       // if the implied price is smaller than the floor price, that means that
       // not enough points have been claimed to get to the floor price
       // in that case, charge the floor price
-      rewardAmount = (1e18 * user.claimed / _floor);
-    }else {
+      rewardAmount = ((1e18 * user.claimed) / _floor);
+    } else {
       // if the implied price is above the floor price, the price is the implied price
-      rewardAmount = (1e18 * user.claimed / impliedPrice);
+      rewardAmount = ((1e18 * user.claimed) / impliedPrice);
     }
     giveTo(msg.sender, rewardAmount);
   }
@@ -158,16 +156,13 @@ contract WavePool {
     uint256 key,
     bytes32[] memory merkleProof
   ) public {
-    RedemptionData memory user = _metadata[wave].data[msg.sender];
     require(isEnabled(wave) == true, "not enabled");
     if (_metadata[wave].merkleRoot != 0x00) {
       require(verifyClaim(wave, msg.sender, key, merkleProof) == true, "invalid proof");
-      require((user.claimed + amount) <= key, "max alloc claimed");
+      require((_data[wave][msg.sender].claimed + amount) <= key, "max alloc claimed");
     }
-
-    user.claimed = user.claimed + amount;
+    _data[wave][msg.sender].claimed = _data[wave][msg.sender].claimed + amount;
     _totalClaimed = _totalClaimed + amount;
-    _metadata[wave].data[msg.sender] = user;
 
     require(canClaim() == true, "Cap reached");
 
