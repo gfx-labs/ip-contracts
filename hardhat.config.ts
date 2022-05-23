@@ -88,7 +88,7 @@ const config: HardhatUserConfig = {
     runOnCompile: false,
   },
   gasReporter: {
-    enabled: true,
+    enabled: false,
   },
 };
 

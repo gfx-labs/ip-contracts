@@ -162,10 +162,12 @@ contract WavePool {
   ) public {
     require(isEnabled(wave) == true, "not enabled");
     uint256 target = _data[wave][msg.sender].claimed + amount;
+
     if (_metadata[wave].merkleRoot != 0x00) {
       require(verifyClaim(wave, msg.sender, key, merkleProof) == true, "invalid proof");
       require(target <= key, "max alloc claimed");
     }
+    
     _data[wave][msg.sender].claimed = target;
     _totalClaimed = _totalClaimed + amount;
 
