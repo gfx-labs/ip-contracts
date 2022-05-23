@@ -41,7 +41,11 @@ contract WavePool {
     uint256 enableTime;
   }
 
+  // mapping from wave -> wave information
+  // wave informoation includes the merkleRoot and enableTime
   mapping(uint256 => WaveMetadata) public _metadata;
+  // mapping from wave -> address -> claim information
+  // claim information includes the amount and whether or not it has been redeemed
   mapping(uint256 => mapping(address => RedemptionData)) public _data;
 
   // time at which people can claim
@@ -65,7 +69,6 @@ contract WavePool {
 
   // the amount of points token that have been sent to the contract
   uint256 public _totalClaimed = 0;
-  // this is the total amount of 'points' that can be given
 
   event Points(address indexed from, uint256 wave, uint256 amount);
 
