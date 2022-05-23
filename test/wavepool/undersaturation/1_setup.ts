@@ -54,38 +54,81 @@ describe("hardhat settings", () => {
 
 describe("Token Setup", () => {
     it("connect to signers", async () => {
-        let accounts = await ethers.getSigners();
-        s.Frank = accounts[0];
-        s.Andy = accounts[1];
-        s.Bob = accounts[2];
-        s.Carol = accounts[3];
-        s.Dave = accounts[4];
-        s.Eric = accounts[5];
-        s.Gus = accounts[6];
-        s.Hector = accounts[7];
+        s.accounts = await ethers.getSigners();
+        s.Frank =  s.accounts[0];
+        s.Andy =  s.accounts[1];
+        s.Bob =  s.accounts[2];
+        s.Carol =  s.accounts[3];
+        s.Dave =  s.accounts[4];
+        s.Eric =  s.accounts[5];
+        s.Gus =  s.accounts[6];
+        s.Hector =  s.accounts[7];
+        s.Igor =  s.accounts[8];
+        s.Bank = s.accounts[9];
     });
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
-        
+
     });
     it("Should succesfully transfer money", async () => {
-        showBody(`stealing ${s.Andy_USDC} to andy from ${s.usdcAddress}`);
+        showBody(`stealing ${s.Andy_USDC} to Andy from ${s.usdcAddress}`);
         await expect(
             stealMoney(usdc_minter, s.Andy.address, s.usdcAddress, s.Andy_USDC)
         ).to.not.be.reverted;
-        showBody(`stealing ${s.Dave_USDC} to dave from ${s.usdcAddress}`);
-        await expect(
-            stealMoney(usdc_minter, s.Dave.address, s.usdcAddress, s.Dave_USDC)
-        ).to.not.be.reverted;        
-        showBody(`stealing ${s.Bob_USDC} usdc to bob from ${s.usdcAddress}`);
+
+        showBody(`stealing ${s.Bob_USDC} usdc to Bob from ${s.usdcAddress}`);
         await expect(
             stealMoney(usdc_minter, s.Bob.address, s.usdcAddress, s.Bob_USDC)
         ).to.not.be.reverted
+
+        showBody(`stealing ${s.Carol_USDC} usdc to Carol from ${s.usdcAddress}`);
+        await expect(
+            stealMoney(usdc_minter, s.Carol.address, s.usdcAddress, s.Carol_USDC)
+        ).to.not.be.reverted
+
+        showBody(`stealing ${s.Dave_USDC} to Dave from ${s.usdcAddress}`);
+        await expect(
+            stealMoney(usdc_minter, s.Dave.address, s.usdcAddress, s.Dave_USDC)
+        ).to.not.be.reverted;
+
+        showBody(`stealing ${s.Eric_USDC} usdc to Eric from ${s.usdcAddress}`);
+        await expect(
+            stealMoney(usdc_minter, s.Eric.address, s.usdcAddress, s.Eric_USDC)
+        ).to.not.be.reverted
+
+        showBody(`stealing ${s.Frank_USDC} usdc to Frank from ${s.usdcAddress}`);
+        await expect(
+            stealMoney(usdc_minter, s.Frank.address, s.usdcAddress, s.Frank_USDC)
+        ).to.not.be.reverted
+
+        showBody(`stealing ${s.Gus_USDC} usdc to Gus from ${s.usdcAddress}`);
+        await expect(
+            stealMoney(usdc_minter, s.Gus.address, s.usdcAddress, s.Gus_USDC)
+        ).to.not.be.reverted
+
+        showBody(`stealing ${s.Hector_USDC} usdc to Hector from ${s.usdcAddress}`);
+        await expect(
+            stealMoney(usdc_minter, s.Hector.address, s.usdcAddress, s.Hector_USDC)
+        ).to.not.be.reverted
+
+        showBody(`stealing ${s.baseUSDC} usdc to Igor from ${s.usdcAddress}`);
+        await expect(
+            stealMoney(usdc_minter, s.Igor.address, s.usdcAddress, s.baseUSDC)
+        ).to.not.be.reverted
+
+        showBody(`stealing ${s.Bank_USDC} usdc to Bank from ${s.usdcAddress}`);
+        await expect(
+            stealMoney(usdc_minter, s.Bank.address, s.usdcAddress, s.Bank_USDC)
+        ).to.not.be.reverted
+
+
+
+
         await mineBlock();
 
         let balance = await s.USDC.balanceOf(s.Bob.address)
         expect(balance).to.eq(s.Bob_USDC)
-        showBody("BOB balance: ", balance)
+
 
     });
 });
