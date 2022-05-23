@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "hardhat/console.sol";
+
 /// @title interfact to interact with ERC20 tokens
 /// @author elee
 interface IERC20 {
@@ -40,7 +42,7 @@ contract WavePool {
   }
 
   mapping(uint256 => WaveMetadata) public _metadata;
-  mapping(uint256 => mapping(address => RedemptionData)) _data;
+  mapping(uint256 => mapping(address => RedemptionData)) public _data;
 
   // time at which people can claim
   uint256 public _claimTime;
@@ -53,8 +55,7 @@ contract WavePool {
   // the token to be rewarded, IPT
   IERC20 public _rewardToken;
 
-  // the amount of reward tokens allocated to the contract, NOT SCALED BY DECIMALS!!!
-  // the amount to be sent to the contract should equal this number * 1e18
+  // the amount of reward tokens allocated to the contract
   uint256 public _totalReward;
 
   // this is the minimum amount of 'points' that can be redeemed for one IPT
@@ -133,7 +134,7 @@ contract WavePool {
     RedemptionData memory user = _data[wave][msg.sender];
     // implied price is assuming pro rata, how many points you need for one reward
     // for instance, if the totalReward was 1, and _totalClaimed was below 500_000, then the impliedPrice would be below 500_000
-    uint256 impliedPrice = _totalClaimed / _totalReward;
+    uint256 impliedPrice = _totalClaimed / (_totalReward / 1e18);
     if (impliedPrice < _floor) {
       // if the implied price is smaller than the floor price, that means that
       // not enough points have been claimed to get to the floor price
@@ -157,11 +158,12 @@ contract WavePool {
     bytes32[] memory merkleProof
   ) public {
     require(isEnabled(wave) == true, "not enabled");
+    uint256 target = _data[wave][msg.sender].claimed + amount;
     if (_metadata[wave].merkleRoot != 0x00) {
       require(verifyClaim(wave, msg.sender, key, merkleProof) == true, "invalid proof");
-      require((_data[wave][msg.sender].claimed + amount) <= key, "max alloc claimed");
+      require(target <= key, "max alloc claimed");
     }
-    _data[wave][msg.sender].claimed = _data[wave][msg.sender].claimed + amount;
+    _data[wave][msg.sender].claimed = target;
     _totalClaimed = _totalClaimed + amount;
 
     require(canClaim() == true, "Cap reached");
@@ -226,7 +228,6 @@ contract WavePool {
   function withdraw() external {
     require(msg.sender == _receiver, "Only Receiver");
     require(block.timestamp > (_claimTime + (7 days)), "wait for claim time");
-    require(_totalClaimed * 1e12 < _totalReward, "Saturation reached");
     uint256 amount = _totalReward - (((_totalClaimed * _floor) / 1e6) * 1e12);
     giveTo(_receiver, amount);
   }
