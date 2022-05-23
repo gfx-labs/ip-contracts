@@ -5,7 +5,6 @@ import "@openzeppelin/hardhat-upgrades";
 import "hardhat-gas-reporter";
 import "@tenderly/hardhat-tenderly";
 
-
 import "@typechain/hardhat";
 import "hardhat-docgen";
 
@@ -39,13 +38,23 @@ const config: HardhatUserConfig = {
     },
   },
   solidity: {
-    version: "0.8.9",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.8.9",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+            details: {
+              orderLiterals: true,
+              deduplicate: true,
+              cse: true,
+              yul: true,
+            },
+          },
+        },
       },
-    },
+    ],
   },
   watcher: {
     compilation: {
@@ -76,10 +85,10 @@ const config: HardhatUserConfig = {
   docgen: {
     path: "./docs",
     clear: true,
-    runOnCompile: true,
+    runOnCompile: false,
   },
   gasReporter: {
-    enabled: false,
+    enabled: true,
   },
 };
 

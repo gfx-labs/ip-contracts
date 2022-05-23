@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "../IUSDI.sol";
-import "../_external/IWETH.sol";
+//import "../_external/IWETH.sol";
 
+import "../IUSDI.sol";
 import "./IVault.sol";
 import "./IVaultController.sol";
 
 import "../_external/CompLike.sol";
 import "../_external/IERC20.sol";
 import "../_external/Context.sol";
-import "../_external/compound/ExponentialNoError.sol";
 import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
-import "../_external/openzeppelin/IERC20Upgradeable.sol";
 
 /// @title Vault
 /// @notice our implentation of maker-vault like vault
@@ -20,7 +18,7 @@ import "../_external/openzeppelin/IERC20Upgradeable.sol";
 /// 1. multi-collateral
 /// 2. generate interest in USDI
 /// 3. can delegate voting power of contained tokens
-contract Vault is IVault, ExponentialNoError, Context {
+contract Vault is IVault, Context {
   using SafeERC20Upgradeable for IERC20;
 
   /// @title VaultInfo struct
@@ -34,10 +32,7 @@ contract Vault is IVault, ExponentialNoError, Context {
 
   /// @notice Metadata of vault, aka the id & the minter's address
   VaultInfo public _vaultInfo;
-
   IVaultController public immutable _controller;
-
-  address constant wETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
   /// @notice this is the unscaled liability of the vault.
   /// the number is meaningless on its own, and must be combined with the factor taken from
@@ -69,10 +64,6 @@ contract Vault is IVault, ExponentialNoError, Context {
     _controller = IVaultController(controller_address);
   }
 
-  receive() external payable {
-    assert(_msgSender() == wETH); // only accept ETH via fallback from the WETH contract
-  }
-
   /// @notice minter of the vault
   /// @return address of minter
   function minter() external view override returns (address) {
@@ -99,24 +90,6 @@ contract Vault is IVault, ExponentialNoError, Context {
     return IERC20(addr).balanceOf(address(this));
   }
 
-  function depositETH() external payable override {
-    require(msg.value > 0, "msg.value == 0");
-    IWETH(wETH).deposit{value: msg.value}();
-  }
-
-  function withdrawEther(uint256 amount) external override onlyMinter {
-    IWETH(wETH).withdraw(amount);
-    address payable sender = payable(_msgSender());
-
-    (bool success, bytes memory data) = sender.call{value: amount}("");
-
-    require(success && (data.length == 0 || abi.decode(data, (bool))), "Vault: TRANSFER_FAILED");
-
-    //  check if the account is solvent
-    bool solvency = _controller.checkAccount(_vaultInfo.id);
-    require(solvency, "over-withdrawal");
-  }
-
   /// @notice withdraw an erc20 token from the vault
   /// this can only be called by the minter
   /// the withdraw will be denied if ones vault would become insolvent
@@ -124,12 +97,9 @@ contract Vault is IVault, ExponentialNoError, Context {
   /// @param amount amount of erc20 token to withdraw
   function withdrawErc20(address token_address, uint256 amount) external override onlyMinter {
     // transfer the token to the owner
-    //IERC20(token_address).transfer(_msgSender(), amount);
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(token_address), _msgSender(), amount);
     //  check if the account is solvent
-    bool solvency = _controller.checkAccount(_vaultInfo.id);
-    require(solvency, "over-withdrawal");
-
+    require(_controller.checkAccount(_vaultInfo.id), "over-withdrawal");
     emit Withdraw(token_address, amount);
   }
 
@@ -151,7 +121,6 @@ contract Vault is IVault, ExponentialNoError, Context {
     uint256 _amount
   ) external override onlyVaultController {
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
-    //require(IERC20(_token).transfer(_to, _amount), "controllerTransfer: Transfer Failed");
   }
 
   /// @notice function used by the VaultController to reduce a vaults liability
@@ -161,11 +130,34 @@ contract Vault is IVault, ExponentialNoError, Context {
   function modifyLiability(bool increase, uint256 base_amount) external override onlyVaultController returns (uint256) {
     if (increase) {
       _baseLiability = _baseLiability + base_amount;
-      return _baseLiability;
+    } else {
+      // require statement only valid for repayment
+      require(_baseLiability >= base_amount, "repay too much");
+      _baseLiability = _baseLiability - base_amount;
     }
-    // require statement only valid for repayment
-    require(_baseLiability >= base_amount, "cannot repay more than is owed");
-    _baseLiability = _baseLiability - base_amount;
     return _baseLiability;
   }
+
+  // address constant wETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+  //function depositETH() external payable override {
+  //  require(msg.value > 0, "msg.value == 0");
+  //  IWETH(wETH).deposit{value: msg.value}();
+  //}
+
+  //function withdrawEther(uint256 amount) external override onlyMinter {
+  //  IWETH(wETH).withdraw(amount);
+  //  address payable sender = payable(_msgSender());
+
+  //  (bool success, bytes memory data) = sender.call{value: amount}("");
+
+  //  require(success && (data.length == 0 || abi.decode(data, (bool))), "Vault: TRANSFER_FAILED");
+
+  //  //  check if the account is solvent
+  //  bool solvency = _controller.checkAccount(_vaultInfo.id);
+  //  require(solvency, "over-withdrawal");
+  //}
+
+  // receive() external payable {
+  //  assert(_msgSender() == wETH); // only accept ETH via fallback from the WETH contract
+  // }
 }
