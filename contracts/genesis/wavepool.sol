@@ -53,11 +53,13 @@ contract WavePool {
   // the token to be rewarded, IPT
   IERC20 public _rewardToken;
 
-  // the amount of reward token allocated to the contract. the amount to be sent to the contract should equal this number
+  // the amount of reward tokens allocated to the contract, NOT SCALED BY DECIMALS!!!
+  // the amount to be sent to the contract should equal this number * 1e18
   uint256 public _totalReward;
 
   // this is the minimum amount of 'points' that can be redeemed for one IPT
   uint256 public _floor;
+  // this is the maximum amount of points that can be added to the contract
   uint256 public _cap;
 
   // the amount of points token that have been sent to the contract
@@ -80,7 +82,7 @@ contract WavePool {
   ) {
     // price information
     _floor = 500_000; // 50 cents
-    _cap = 500_000 * 30_000_000; // 50 cents * 30,000,000 tokens
+    _cap = 500_000 * 30_000_000 * 4; // 4 * 50 cents * 30,000,000 tokens, or $60,000,000 of USDC
     _claimTime = claimTime;
     // reward information
     _rewardToken = IERC20(rewardToken);
@@ -128,20 +130,21 @@ contract WavePool {
 
     require(canRedeem() == true, "can't redeem yet");
     require(user.redeemed == false, "already redeem");
-
     user.redeemed = true;
     _metadata[wave].data[msg.sender] = user;
     uint256 rewardAmount;
-    // _totalReward is the amount of tokens we have to reward
-    if (((1e18 * _totalClaimed) / _floor) > (_totalReward)) {
-      uint256 ratio = (_totalReward * 1e18) / (_totalClaimed);
-      rewardAmount = (user.claimed * ratio) / 1e18;
-    } else {
-      // multiply amount claimed by the floor price, then divide.
-      // for instance, if the _floor is 500_000, then the redeemer will obtain 0.5 rewardToken per pointToken
-      rewardAmount = (user.claimed * _floor) * 1e6;
+    // implied price is assuming pro rata, how many points you need for one reward
+    // for instance, if the totalReward was 1, and _totalClaimed was below 500_000, then the impliedPrice would be below 500_000
+    uint256 impliedPrice = _totalClaimed / _totalReward
+    if (impliedPrice < _floor) {
+      // if the implied price is smaller than the floor price, that means that
+      // not enough points have been claimed to get to the floor price
+      // in that case, charge the floor price
+      rewardAmount = (1e18 * user.claimed / _floor);
+    }else {
+      // if the implied price is above the floor price, the price is the implied price
+      rewardAmount = (1e18 * user.claimed / impliedPrice);
     }
-    // scale the decimals and send reward token
     giveTo(msg.sender, rewardAmount);
   }
 
