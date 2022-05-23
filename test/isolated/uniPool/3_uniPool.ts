@@ -121,7 +121,7 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
         await s.WETH.connect(s.Bob).transfer(s.BobVault.address, collateralAmount)
         await mineBlock()
 
-        let borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        let borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         //borrow 80% of LTV maximum
         borrowAmount = borrowPower.sub(borrowPower.div(5))
 

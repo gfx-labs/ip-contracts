@@ -136,14 +136,14 @@ describe("Deposit, borrow against, and withdraw using naitive ether", () => {
 
     it("borrow against naitive eth", async () => {
 
-        const borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        const borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
 
 
         await s.VaultController.connect(s.Bob).borrowUsdi(vaultID, borrowPower)
         await mineBlock()
 
 
-        const liability = await s.VaultController.accountLiability(vaultID)
+        const liability = await s.VaultController.vaultLiability(vaultID)
         expect(await toNumber(liability)).to.be.gt(0)
     })
 
@@ -166,7 +166,7 @@ describe("Deposit, borrow against, and withdraw using naitive ether", () => {
         await s.VaultController.connect(s.Bob).repayAllUSDi(vaultID)
         await mineBlock()
 
-        const liability = await s.VaultController.accountLiability(vaultID)
+        const liability = await s.VaultController.vaultLiability(vaultID)
         expect(liability).to.eq(0)
 
     })

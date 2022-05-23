@@ -257,10 +257,10 @@ contract VaultController is
     emit UpdateRegisteredErc20(token_address, LTV, oracle_address, liquidationIncentive);
   }
 
-  /// @notice check an account for over-collateralization. returns false if amount borrowed is greater than borrowing power.
+  /// @notice check an vault for over-collateralization. returns false if amount borrowed is greater than borrowing power.
   /// @param id the vault to check
   /// @return true = vault over-collateralized; false = vault under-collaterlized
-  function checkAccount(uint96 id) public view override returns (bool) {
+  function checkVault(uint96 id) public view override returns (bool) {
     // grab the vault by id if part of our system. revert if not
     IVault vault = getVault(id);
     // calculate the total value of the vaults liquidity
@@ -293,7 +293,7 @@ contract VaultController is
     // now get the LTV of the vault, aka their borrowing power, in usdi
     uint256 total_liquidity_value = get_vault_borrowing_power(vault);
     // the LTV must be above the newly calculated usdi_liability, else revert
-    require(total_liquidity_value >= usdi_liability, "account insolvent");
+    require(total_liquidity_value >= usdi_liability, "vault insolvent");
     // now send usdi to the minter, equal to the amount they are owed
     _usdi.vaultControllerMint(_msgSender(), amount);
     // emit the event
@@ -316,7 +316,7 @@ contract VaultController is
     require(base_amount <= vault.baseLiability(), "repay > borrow amount"); //repay all here if true?
     // decrease the vaults liability by the calculated base amount
     vault.modifyLiability(false, base_amount);
-    // burn the amount of usdi submitted from the senders account
+    // burn the amount of usdi submitted from the senders vault
     _usdi.vaultControllerBurn(_msgSender(), amount);
     // emit the event
     emit RepayUSDi(id, address(vault), amount);
@@ -345,12 +345,11 @@ contract VaultController is
   /// @param asset_address the token the liquidator wishes to liquidate
   /// @param tokens_to_liquidate - number of tokens to liquidate
   /// @dev pays interest
-  function liquidateAccount(
+  function liquidateVault(
     uint96 id,
     address asset_address,
     uint256 tokens_to_liquidate
   ) external override paysInterest whenNotPaused returns (uint256) {
-    require(!checkAccount(id), "Vault is solvent");
     require(tokens_to_liquidate > 0, "must liquidate>0");
 
     //check for registered asset - audit L3
@@ -378,7 +377,7 @@ contract VaultController is
     vault.controllerTransfer(asset_address, _msgSender(), tokens_to_liquidate);
 
     // this might not be needed. Will always be true because it is already implied by _liquidationMath.
-    require(get_vault_borrowing_power(vault) <= _accountLiability(id), "overliquidation");
+    require(get_vault_borrowing_power(vault) <= _vaultLiability(id), "overliquidation");
 
     // emit the event
     emit Liquidate(id, asset_address, usdi_to_repurchase, tokens_to_liquidate);
@@ -411,6 +410,10 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) internal view returns (uint256, uint256) {
+
+    require(!checkVault(id), "Vault is solvent");
+
+
     IVault vault = getVault(id);
 
     //get price of asset scaled to decimal 18
@@ -429,7 +432,7 @@ contract VaultController is
     // the maximum amount of tokens to liquidate is the amount that will bring the vault to solvency
     // divided by the denominator
     uint256 max_tokens_to_liquidate = (_amountToSolvency(id) * 1e18) / denominator;
-    //Cannot liquidate more than is necessary to make account over-collateralized
+    //Cannot liquidate more than is necessary to make vault over-collateralized
     if (tokens_to_liquidate > max_tokens_to_liquidate) {
       tokens_to_liquidate = max_tokens_to_liquidate;
     }
@@ -455,34 +458,34 @@ contract VaultController is
   ///@notice amount of USDI needed to reach even solvency
   /// @param id id of vault
   function amountToSolvency(uint96 id) public view override returns (uint256) {
-    require(!checkAccount(id), "Vault is solvent");
+    require(!checkVault(id), "Vault is solvent");
     return _amountToSolvency(id);
   }
 
   function _amountToSolvency(uint96 id) internal view returns (uint256) {
-    return _accountLiability(id) - get_vault_borrowing_power(getVault(id));
+    return _vaultLiability(id) - get_vault_borrowing_power(getVault(id));
   }
 
-  /// @notice get account liability of vault
+  /// @notice get vault liability of vault
   /// @param id id of vault
   /// @return amount of USDI the vault owes
-  /// @dev implementation _AccountLiability
-  function accountLiability(uint96 id) external view override returns (uint192) {
-    return _accountLiability(id);
+  /// @dev implementation _vaultLiability
+  function vaultLiability(uint96 id) external view override returns (uint192) {
+    return _vaultLiability(id);
   }
 
-  function _accountLiability(uint96 id) internal view returns (uint192) {
+  function _vaultLiability(uint96 id) internal view returns (uint192) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");
     IVault vault = IVault(vault_address);
     return safeu192(truncate(vault.baseLiability() * _interest.factor));
   }
 
-  /// @notice get account borrowing power for vault
+  /// @notice get vault borrowing power for vault
   /// @param id id of vault
   /// @return amount of USDI the vault owes
   /// @dev implementation in get_vault_borrowing_power
-  function accountBorrowingPower(uint96 id) external view override returns (uint192) {
+  function vaultBorrowingPower(uint96 id) external view override returns (uint192) {
     return get_vault_borrowing_power(getVault(id));
   }
 

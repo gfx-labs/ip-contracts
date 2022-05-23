@@ -98,7 +98,7 @@ describe("What happens when there is no reserve?", () => {
         await s.WETH.connect(s.Bob).transfer(s.BobVault.address, utils.parseEther("1"))
         await mineBlock()
 
-        let borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        let borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         //showBody("borrowPower: ", utils.formatEther(borrowPower.toString()))
 
         //borrow full amount
@@ -138,7 +138,7 @@ describe("What happens when there is no reserve?", () => {
         await s.COMP.connect(s.Carol).transfer(s.CarolVault.address, balance)
         await mineBlock()
 
-        let borrowPower = await s.VaultController.accountBorrowingPower(vaultID)
+        let borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         //showBody("borrowPower: ", utils.formatEther(borrowPower.toString()))
 
         //borrow full amount
@@ -153,7 +153,7 @@ describe("What happens when there is no reserve?", () => {
     it("check things", async () => {
         const vaultID = await s.VaultController.vaultsMinted()
 
-        const initLiability = await s.VaultController.accountLiability(vaultID)
+        const initLiability = await s.VaultController.vaultLiability(vaultID)
         const startBalance = await s.USDI.balanceOf(s.Frank.address)
         const initBaseLiab = await s.VaultController.totalBaseLiability()
         const initInterestFactor = await s.VaultController.interestFactor()
@@ -163,7 +163,7 @@ describe("What happens when there is no reserve?", () => {
         await s.VaultController.calculateInterest()
         await mineBlock()
 
-        let AccountLiability = await s.VaultController.accountLiability(vaultID)
+        let AccountLiability = await s.VaultController.vaultLiability(vaultID)
 
         expect(await toNumber(AccountLiability)).to.be.gt(await toNumber(initLiability))
 

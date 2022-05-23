@@ -47,13 +47,13 @@ interface IVaultController is VaultControllerEvents {
 
   function amountToSolvency(uint96 id) external view returns (uint256);
 
-  function accountLiability(uint96 id) external view returns (uint192);
+  function vaultLiability(uint96 id) external view returns (uint192);
 
-  function accountBorrowingPower(uint96 id) external view returns (uint192);
+  function vaultBorrowingPower(uint96 id) external view returns (uint192);
 
   function tokensToLiquidate(uint96 id, address token) external view returns (uint256);
 
-  function checkAccount(uint96 id) external view returns (bool);
+  function checkVault(uint96 id) external view returns (bool);
 
   // interest calculations
   function calculateInterest() external returns (uint256);
@@ -61,7 +61,7 @@ interface IVaultController is VaultControllerEvents {
   // vault management business
   function mintVault() external returns (address);
 
-  function liquidateAccount(
+  function liquidateVault(
     uint96 id,
     address asset_address,
     uint256 tokenAmount
