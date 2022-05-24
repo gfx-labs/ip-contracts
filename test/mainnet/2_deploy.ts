@@ -146,14 +146,14 @@ describe("Deploy Contracts", () => {
 
         showBody("create chainlink comp relay")
         s.ChainlinkComp = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
-            "0xdbd020caef83efd542f4de03e3cf0c28a4428bd5", BN("1e10"), BN("1")
+            s.chainlinkCompFeed, BN("1e10"), BN("1")
         );
         await mineBlock()
         expect(await s.ChainlinkComp.currentValue()).to.not.eq(0)
 
         showBody("create chainlink eth relay")
         s.ChainlinkEth = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
-            "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419", BN("1e10"), BN("1")
+            s.chainlinkEthFeed, BN("1e10"), BN("1")
         )
         await mineBlock()
         expect(await s.ChainlinkEth.currentValue()).to.not.eq(0)

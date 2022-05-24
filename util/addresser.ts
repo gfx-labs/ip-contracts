@@ -25,8 +25,11 @@ export class MainnetAddresses {
     readonly aaveAddress: string = "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9";
     readonly tribeAddress: string = "0xc7283b66eb1eb5fb86327f08e1b5816b0720212b";
     readonly usdcCompPool: string = "0x4786bb29a1589854204a4e62dcbe26a571224c0f";
-    readonly chainlinkEth: string = "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419";
-    readonly compVotingAddress: string = "0x1F2AB8Ac759Fb0E3185630277A554Ae3110bF530"
+    readonly chainlinkEthFeed: string = "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419";
+    readonly chainlinkCompFeed: string = "0xdbd020caef83efd542f4de03e3cf0c28a4428bd5";
+    readonly chainlinkUniFeed: string = "0x553303d460EE0afB37EdFf9bE42922D8FF63220e";
+    readonly chainlinkBtcFeed: string = "0xf4030086522a5beea4988f8ca5b36dbc97bee88c";
+    readonly compVotingAddress: string = "0x1F2AB8Ac759Fb0E3185630277A554Ae3110bF530";
     constructor() { }
 }
 
