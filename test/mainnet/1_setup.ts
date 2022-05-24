@@ -25,6 +25,8 @@ require("chai").should();
 
 let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 let comp_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
+let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
+let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
 let dydx_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let ens_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let aave_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
@@ -66,6 +68,8 @@ describe("Token Setup", () => {
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
         s.WETH = IERC20__factory.connect(s.wethAddress, s.Frank);
+        s.UNI = IERC20__factory.connect(s.uniAddress, s.Frank);
+        s.WBTC = IERC20__factory.connect(s.wbtcAddress, s.Frank);
         s.COMP = IVOTE__factory.connect(s.compAddress, s.Frank);
         s.ENS = IVOTE__factory.connect(s.ensAddress, s.Frank);
         s.DYDX = IVOTE__factory.connect(s.dydxAddress, s.Frank);

@@ -10,6 +10,8 @@ export class TestScope extends MainnetAddresses {
     USDC!: IERC20;
     COMP!: IVOTE;
     WETH!: IERC20;
+    UNI!: IERC20;
+    WBTC!:IERC20;
 
     ENS!: IVOTE;
     DYDX!: IVOTE;
