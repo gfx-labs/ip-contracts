@@ -35,6 +35,8 @@ import {
 } from "../../../typechain-types"
 import { red } from "bn.js"
 import exp from "constants"
+import { wavepoolSol } from "../../../typechain-types/IPTsale"
+import { iTokenSol } from "../../../typechain-types/governance/token"
 
 const hre = require("hardhat")
 const { ethers } = hre
@@ -631,26 +633,22 @@ describe("Redemptions", () => {
         expect(calculated).to.eq(true)
     })
     it("try admin withdraw", async () => {
-        const startBalance = await s.IPT.balanceOf(s.Carol.address)
-        showBody(await toNumber(startBalance))
-        const waveIPT = await s.IPT.balanceOf(Wave.address)
-        showBody(await toNumber(waveIPT))
+        let totalClaimed = await Wave._totalClaimed()
+        const formatClaimed = totalClaimed.mul(BN("1e12"))
+
+        let balance = await s.IPT.balanceOf(s.Carol.address)
+        expect(balance).to.eq(0)//carol holds no IPT yet
+
+        showBodyCyan("WITHDRAW")
         await Wave.connect(s.Carol).withdraw()
         await mineBlock()
-        let balance = await s.IPT.balanceOf(s.Carol.address)
 
-        showBody(await toNumber(balance))
+        let waveIPT = await s.IPT.balanceOf(Wave.address)
+        expect(await toNumber(waveIPT)).to.eq(await toNumber(formatClaimed.mul(2)))
 
-
-        
-    /**
-      total reward = 30mm IPT
-      total claimed = total USDC received
-    
-    
-     */
     })
-    it("Bob redeems", async () => {
+    /**
+     it("Bob redeems", async () => {
         //Bob claimed 3x so his points are keyAmount * 3
         const claimAmount = keyAmount.mul(3)
         const startingIPT = await s.IPT.balanceOf(s.Bob.address)
@@ -665,10 +663,11 @@ describe("Redemptions", () => {
 
         let scaledClaimAmount = claimAmount.mul(BN("1e12"))
         let balance = await s.IPT.balanceOf(s.Bob.address)
-        showBody(scaledClaimAmount)
-        showBody(balance)
+        //showBody(scaledClaimAmount)
+        //showBody(balance)
 
 
+        //todo
         //let balance = await s.IPT.balanceOf(s.Bob.address)
         //let scaledClaimAmount = claimAmount.mul(BN("1e12"))
         //let scaledFloor = BN(floor).mul(BN("1e12"))
@@ -677,6 +676,32 @@ describe("Redemptions", () => {
 
         //expect(await toNumber(balance)).to.eq(await toNumber(expected))
 
+    })
+     */
+
+    it("Everyone redeems", async () => {
+
+        //wave 1
+        await Wave.connect(s.Bob).redeem(1)
+        await mineBlock()
+        await Wave.connect(s.Dave).redeem(1)
+        await mineBlock()
+
+        //wave 2
+        for (let i = 0; i < whitelist2.length; i++) {
+
+            const redeemResult = await Wave.connect(s.accounts[i]).redeem(2)
+            await mineBlock()
+
+            let data = await Wave._data(2, s.accounts[i].address)
+            expect(data.redeemed).to.eq(true)
+        }
+
+        //wave 3
+        await Wave.connect(s.Bob).redeem(3)
+        await mineBlock()
+        await Wave.connect(s.Igor).redeem(3)
+        await mineBlock()
     })
 
     it("Bob tries to redeem again", async () => {
@@ -698,16 +723,12 @@ describe("Redemptions", () => {
     it("try admin withdraw", async () => {
         await expect(Wave.connect(s.Carol).withdraw()).to.be.reverted
         await mineBlock()
+        let waveIPT = await s.IPT.balanceOf(Wave.address)
 
-
-
-        
-    /**
-      total reward = 30mm IPT
-      total claimed = total USDC received
-    
-    
-     */
+    })
+    it("After admin withdraw, followed by all redemptions, wave IPT should be 0", async () => {
+        let waveIPT = await s.IPT.balanceOf(Wave.address)
+        expect(waveIPT).to.eq(0)
     })
 
 })
