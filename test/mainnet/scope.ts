@@ -10,8 +10,8 @@ export class TestScope extends MainnetAddresses {
     USDC!: IERC20;
     COMP!: IVOTE;
     WETH!: IERC20;
-    UNI!: IERC20;
-    WBTC!:IERC20;
+    UNI!: IVOTE;
+    WBTC!: IERC20;
 
     ENS!: IVOTE;
     DYDX!: IVOTE;
@@ -35,12 +35,13 @@ export class TestScope extends MainnetAddresses {
     Curve!: ICurveMaster;
     ThreeLines!: ThreeLines0_100;
 
-    Frank!: SignerWithAddress  // frank is the Frank and master of USDI
+    Frank!: SignerWithAddress  // frank is the Frank and master of USDI, and symbolizes the power of governance
     Andy!: SignerWithAddress   // andy is a usdc holder. He wishes to deposit his USDC to hold USDI
     Bob!: SignerWithAddress    // bob is an eth holder. He wishes to deposit his eth and borrow USDI
-    Carol!: SignerWithAddress  // carol is a comp holder. she wishes to deposit her comp and then vote
+    Carol!: SignerWithAddress  // carol is a uni holder. She wishes to deposit uni and borrow USDI, and still be able to vote
     Dave!: SignerWithAddress   // dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
     Eric!: SignerWithAddress   // eric only holds ETH and generally does not use IP unless a clean slate is needed
+    Gus!: SignerWithAddress    // gus is a wBTC holder. He wishes to deposit wBTC and borrow USDI
 
     BobVault!: IVault
     CarolVault!: IVault
@@ -48,7 +49,9 @@ export class TestScope extends MainnetAddresses {
     Andy_USDC = BN("1e8")
     Bob_USDC = BN("1000e6")
     Bob_WETH = BN("10e18")
-    Carol_COMP = BN("100e18")
+    Carol_UNI = BN("100e18")
+    Gus_WBTC = BN("10e8")
+
     Dave_USDC = BN("1e10")
 
     Carol_ENS = BN("100e18")
