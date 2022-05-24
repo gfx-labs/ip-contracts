@@ -7,7 +7,7 @@ export interface Addresser {
     usdcWethPool: string;
     usdcCompPool: string;
 
-    chainlinkEth: string;
+    chainlinkEthFeed: string;
     compVotingAddress: string;
 }
 
