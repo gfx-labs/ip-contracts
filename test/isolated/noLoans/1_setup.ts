@@ -78,17 +78,21 @@ describe("Token Setup", () => {
 
     });
     it("Should succesfully transfer money", async () => {
-        //showBody(`stealing ${s.Andy_USDC} to andy from ${s.usdcAddress}`);
-        await expect(
+         //showBody(`stealing ${s.Andy_USDC} to andy from ${s.usdcAddress}`);
+         await expect(
             stealMoney(usdc_minter, s.Andy.address, s.usdcAddress, s.Andy_USDC)
         ).to.not.be.reverted;
         //showBody(`stealing ${s.Dave_USDC} to dave from ${s.usdcAddress}`);
         await expect(
             stealMoney(usdc_minter, s.Dave.address, s.usdcAddress, s.Dave_USDC)
         ).to.not.be.reverted;
-        //showBody(`stealing ${s.Carol_COMP} to carol from ${s.compAddress}`);
+        //showBody(`stealing ${s.Carol_UNI} to carol from ${s.uniAddress}`);
         await expect(
-            stealMoney(comp_minter, s.Carol.address, s.compAddress, s.Carol_UNI)
+            stealMoney(uni_minter, s.Carol.address, s.uniAddress, s.Carol_UNI)
+        ).to.not.be.reverted;
+        //showBody(`stealing ${s.Gus_WBTC} to gus from ${s.wbtcAddress}`);
+        await expect(
+            stealMoney(wbtc_minter, s.Gus.address, s.wbtcAddress, s.Gus_WBTC)
         ).to.not.be.reverted;
         //showBody(`stealing ${s.Bob_WETH} weth to bob from ${s.wethAddress}`);
         await expect(
@@ -114,7 +118,6 @@ describe("Token Setup", () => {
         await expect(
             stealMoney(tribe_minter, s.Carol.address, s.tribeAddress, s.Carol_TRIBE)
         ).to.not.be.reverted;
-
 
         await mineBlock();
     });
