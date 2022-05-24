@@ -20,6 +20,8 @@ export class TestScope extends MainnetAddresses {
     LiquidationIncentive = BN("5e16")
     wETH_LTV = BN("5e17")
     COMP_LTV = BN("4e17")
+    UNI_LTV = BN("4e17")
+    wBTC_LTV = BN("5e17")
 
     ProxyAdmin!: ProxyAdmin;
     VaultController!: IVaultController;
@@ -27,10 +29,16 @@ export class TestScope extends MainnetAddresses {
     Oracle!: IOracleMaster;
     AnchoredViewEth!: AnchoredViewRelay
     AnchoredViewComp!: AnchoredViewRelay
+    AnchoredViewUni!: AnchoredViewRelay
+    AnchoredViewBtc!: AnchoredViewRelay
     ChainlinkEth!: ChainlinkOracleRelay
     ChainlinkComp!: ChainlinkOracleRelay
+    ChainLinkUni!: ChainlinkOracleRelay
+    ChainLinkBtc!: ChainlinkOracleRelay
     UniswapRelayEthUsdc!: IOracleRelay;
     UniswapRelayCompUsdc!: IOracleRelay;
+    UniswapRelayUniUsdc!: IOracleRelay;
+    UniswapRelayWbtcUsdc!: IOracleRelay;
 
     Curve!: ICurveMaster;
     ThreeLines!: ThreeLines0_100;

@@ -5,6 +5,7 @@ import "../IOracleRelay.sol";
 import "../../_external/uniswap/IUniswapV3PoolDerivedState.sol";
 import "../../_external/uniswap/TickMath.sol";
 
+
 /// @title Oracle that wraps a univ3 pool
 /// @notice The oracle returns (univ3) * mul / div
 /// if quote_token_is_token0 == true, then the reciprocal is returned
@@ -48,7 +49,9 @@ contract UniswapV3OracleRelay is IOracleRelay {
     uint32[] memory input = new uint32[](2);
     input[0] = seconds_;
     input[1] = 0;
+
     (tickCumulatives, ) = _pool.observe(input);
+
     uint32 tickTimeDifference = seconds_;
     int56 tickCumulativeDifference = tickCumulatives[0] - tickCumulatives[1];
     bool tickNegative = tickCumulativeDifference < 0;
@@ -58,6 +61,7 @@ contract UniswapV3OracleRelay is IOracleRelay {
     } else {
       tickAbs = uint56(tickCumulativeDifference);
     }
+
     uint56 bigTick = tickAbs / tickTimeDifference;
     require(bigTick < 887272, "Tick time diff fail");
     int24 tick;
@@ -69,11 +73,16 @@ contract UniswapV3OracleRelay is IOracleRelay {
     // we use 1e18 bc this is what we're going to use in exp
     // basically, you need the "price" amount of the quote in order to buy 1 base
     // or, 1 base is worth this much quote;
-    price = (1e18 * ((uint256(TickMath.getSqrtRatioAtTick(tick)))**2)) / (2**(2 * 96));
+
+    price = (1e9 * ((uint256(TickMath.getSqrtRatioAtTick(tick))))) / (2**(2 * 48));
+
+    price = price * price;
+
     if (!_quoteTokenIsToken0) {
       price = (1e18 * 1e18) / price;
     }
 
     price = (price * _mul) / _div;
+
   }
 }

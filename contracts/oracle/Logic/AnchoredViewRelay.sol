@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
-
+import "hardhat/console.sol";
 
 /// @title implementation of compounds' AnchoredView
 /// @notice using a main relay and an anchor relay, the AnchoredView
@@ -47,7 +47,6 @@ contract AnchoredViewRelay is IOracleRelay {
   }
 
   function getLastSecond() private view returns (uint256) {
-    //(bool success, bytes memory result) = _mainAddress.call(abi.encodeWithSignature("currentValue()", msg.sender));
     // get the main price
     uint256 mainValue = _mainRelay.currentValue();
     require(mainValue > 0, "invalid oracle value");
