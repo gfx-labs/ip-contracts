@@ -44,6 +44,8 @@ import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 let ProxyController: ProxyAdmin
 
 
+
+
 const deployProxy = async () => {
     s.ProxyAdmin = await DeployContract(new ProxyAdmin__factory(s.Frank), s.Frank)
     await mineBlock()
@@ -134,13 +136,23 @@ describe("Deploy Contracts", () => {
             s.Oracle.address
         )).to.not.reverted;
 
-        //showBody("create uniswap comp relay")
+        /**
+         showBody("create uniswap comp relay")
         s.UniswapRelayCompUsdc = await DeployContract(new UniswapV3OracleRelay__factory(s.Frank),
             s.Frank,
             60,
             s.usdcCompPool, true, BN("1e12"), BN("1"));
         await mineBlock()
         expect(await s.UniswapRelayCompUsdc.currentValue()).to.not.eq(0)
+         */
+
+        //showBody("create uniswap wbtc relay")
+        s.UniswapRelayWbtcUsdc = await DeployContract(new UniswapV3OracleRelay__factory(s.Frank),
+            s.Frank,
+            60,
+            s.usdcWbtcPool, false, BN("1e2"), BN("1"));
+        await mineBlock()
+        expect(await s.UniswapRelayWbtcUsdc.currentValue()).to.not.eq(0)
 
         //showBody("create uniswap eth relay")
         s.UniswapRelayEthUsdc = await DeployContract(new UniswapV3OracleRelay__factory(s.Frank),
@@ -149,21 +161,48 @@ describe("Deploy Contracts", () => {
             s.usdcWethPool, true, BN("1e12"), BN("1"));
         await mineBlock()
 
-        //showBody("create chainlink comp relay")
+        expect(await s.UniswapRelayEthUsdc.currentValue()).to.not.eq(0)
+
+
+        //showBody("create uniswap uni relay")
+        s.UniswapRelayUniUsdc = await DeployContract(new UniswapV3OracleRelay__factory(s.Frank),
+            s.Frank,
+            60,
+            s.usdcUniPool, false, BN("1e12"), BN("1"));
+        await mineBlock()
+        expect(await s.UniswapRelayUniUsdc.currentValue()).to.not.eq(0)
+        /**
+         showBody("create chainlink comp relay")
         s.ChainlinkComp = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
-            "0xdbd020caef83efd542f4de03e3cf0c28a4428bd5", BN("1e10"), BN("1")
+            s.chainlinkCompFeed, BN("1e10"), BN("1")
         );
         await mineBlock()
         expect(await s.ChainlinkComp.currentValue()).to.not.eq(0)
+         */
+
+        //showBody("create chainlink uni relay")
+        s.ChainLinkUni = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
+            s.chainlinkUniFeed, BN("1e10"), BN("1")
+        );
+        await mineBlock()
+        expect(await s.ChainLinkUni.currentValue()).to.not.eq(0)
+
+        //showBody("create chainlink btc relay")
+        s.ChainLinkBtc = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
+            s.chainlinkBtcFeed, BN("1e10"), BN("1")
+        );
+        await mineBlock()
+        expect(await s.ChainLinkBtc.currentValue()).to.not.eq(0)
 
         //showBody("create chainlink eth relay")
         s.ChainlinkEth = await DeployContract(new ChainlinkOracleRelay__factory(s.Frank), s.Frank,
-            "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419", BN("1e10"), BN("1")
+            s.chainlinkEthFeed, BN("1e10"), BN("1")
         )
         await mineBlock()
         expect(await s.ChainlinkEth.currentValue()).to.not.eq(0)
 
-        //showBody("create COMP anchoredview")
+        /**
+         showBody("create COMP anchoredview")
         s.AnchoredViewComp = await DeployContract(new AnchoredViewRelay__factory(s.Frank), s.Frank,
             s.UniswapRelayCompUsdc.address,
             s.ChainlinkComp.address,
@@ -172,6 +211,28 @@ describe("Deploy Contracts", () => {
         );
         await mineBlock()
         expect(await s.AnchoredViewComp.currentValue()).to.not.eq(0)
+         */
+
+        //showBody("create Uni anchoredview")
+        s.AnchoredViewUni = await DeployContract(new AnchoredViewRelay__factory(s.Frank), s.Frank,
+            s.UniswapRelayUniUsdc.address,
+            s.ChainLinkUni.address,
+            BN("30"),
+            BN("100")
+        );
+        await mineBlock()
+        expect(await s.AnchoredViewUni.currentValue()).to.not.eq(0)
+
+        //showBody("create Btc anchoredview")
+        s.AnchoredViewBtc = await DeployContract(new AnchoredViewRelay__factory(s.Frank), s.Frank,
+            s.UniswapRelayWbtcUsdc.address,
+            s.ChainLinkBtc.address,
+            BN("30"),
+            BN("100")
+        );
+        await mineBlock()
+        expect(await s.AnchoredViewBtc.currentValue()).to.not.eq(0)
+
 
         //showBody("create ETH anchoredview")
         s.AnchoredViewEth = await DeployContract(new AnchoredViewRelay__factory(s.Frank), s.Frank,
@@ -186,17 +247,31 @@ describe("Deploy Contracts", () => {
     })
 
     it("Set vault oracles and CFs", async () => {
-        //showBody("set vault COMP oracle to anchored view")
+        /**
+         //showBody("set vault COMP oracle to anchored view")
         await expect(s.Oracle.connect(s.Frank).setRelay(
             s.compAddress,
             s.AnchoredViewComp.address
         )).to.not.reverted;
+         */
+        //showBody("set vault Uni oracle to anchored view")
+        await expect(s.Oracle.connect(s.Frank).setRelay(
+            s.uniAddress,
+            s.AnchoredViewUni.address
+        )).to.not.reverted;
+
+        //showBody("set vault Btc oracle to anchored view")
+        await expect(s.Oracle.connect(s.Frank).setRelay(
+            s.wbtcAddress,
+            s.AnchoredViewBtc.address
+        )).to.not.reverted;
 
         //showBody("set vault ETH oracle to anchored view")
-        await s.Oracle.connect(s.Frank).setRelay(
+        await expect(s.Oracle.connect(s.Frank).setRelay(
             s.wethAddress,
             s.AnchoredViewEth.address,
-        );
+        )).to.not.reverted
+
         //showBody("register weth")
         await expect(s.VaultController.connect(s.Frank).registerErc20(
             s.wethAddress,
@@ -204,13 +279,29 @@ describe("Deploy Contracts", () => {
             s.wethAddress,
             s.LiquidationIncentive,
         )).to.not.reverted;
-        //showBody("register comp")
+        //showBody("register Uni")
+        await expect(s.VaultController.connect(s.Frank).registerErc20(
+            s.uniAddress,
+            s.UNI_LTV,
+            s.uniAddress,
+            s.LiquidationIncentive,
+        )).to.not.reverted;
+        //showBody("register WBTC")
+        await expect(s.VaultController.connect(s.Frank).registerErc20(
+            s.wbtcAddress,
+            s.wBTC_LTV,
+            s.wbtcAddress,
+            s.LiquidationIncentive,
+        )).to.not.reverted;
+        /**
+         //showBody("register comp")
         await expect(s.VaultController.connect(s.Frank).registerErc20(
             s.compAddress,
             s.COMP_LTV,
             s.compAddress,
             s.LiquidationIncentive,
         )).to.not.reverted;
+         */
 
         //showBody("register vaultcontroller usdi")
         await expect(s.VaultController.connect(s.Frank)

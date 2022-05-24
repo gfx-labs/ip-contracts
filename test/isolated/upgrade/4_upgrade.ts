@@ -27,7 +27,7 @@ describe("Testing explicit upgradeability ", () => {
         expect(interestFactor).to.eq(BN("1e18"))
 
         const tokensRegistered = await s.VaultController.tokensRegistered()
-        expect(tokensRegistered).to.eq(BN("2"))//weth && comp
+        expect(tokensRegistered).to.eq(BN("3"))//weth, UNI, wBTC
 
         //no new USDi has been minted
         const totalSupply = await s.USDI.totalSupply()
