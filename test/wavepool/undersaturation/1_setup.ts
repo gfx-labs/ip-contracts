@@ -22,9 +22,10 @@ require("chai").should();
 // dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
 
 // configurable variables
-
 let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 let comp_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
+let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
+let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
 let dydx_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let ens_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let aave_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
