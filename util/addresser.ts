@@ -17,7 +17,9 @@ export class MainnetAddresses {
     readonly usdcWethPool: string = "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8";
     readonly compAddress: string = "0xc00e94cb662c3520282e6f5717214004a7f26888";
     readonly wbtcAddress: string = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
-    readonly uniAddress: string = "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984";    
+    readonly usdcWbtcPool: string = "0x99ac8cA7087fA4A2A1FB6357269965A2014ABc35";
+    readonly uniAddress: string = "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984";
+    readonly usdcUniPool: string = "0xD0fC8bA7E267f2bc56044A7715A489d851dC6D78";    
     readonly ensAddress: string = "0xc18360217d8f7ab5e7c516566761ea12ce7f9d72";
     readonly dydxAddress: string = "0x92d6c1e31e14520e676a687f0a93788b716beff5";
     readonly aaveAddress: string = "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9";
