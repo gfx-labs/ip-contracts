@@ -670,6 +670,8 @@ describe("Redemptions", () => {
     })
     it("try admin withdraw", async () => {
         const startBalance = await s.IPT.balanceOf(s.Carol.address)
+        const waveIPT = await s.IPT.balanceOf(Wave.address)
+        showBody(await toNumber(waveIPT))
         await Wave.connect(s.Carol).withdraw()
         await mineBlock()
         let balance = await s.IPT.balanceOf(s.Carol.address)
