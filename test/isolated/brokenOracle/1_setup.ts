@@ -22,9 +22,10 @@ require("chai").should();
 // dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
 
 // configurable variables
-
 let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 let comp_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
+let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
+let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
 let dydx_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let ens_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let aave_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
@@ -67,6 +68,8 @@ describe("Token Setup", () => {
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
         s.WETH = IERC20__factory.connect(s.wethAddress, s.Frank);
+        s.UNI = IVOTE__factory.connect(s.uniAddress, s.Frank);
+        s.WBTC = IERC20__factory.connect(s.wbtcAddress, s.Frank);
         s.COMP = IVOTE__factory.connect(s.compAddress, s.Frank);
         s.ENS = IVOTE__factory.connect(s.ensAddress, s.Frank);
         s.DYDX = IVOTE__factory.connect(s.dydxAddress, s.Frank);
@@ -85,7 +88,7 @@ describe("Token Setup", () => {
         ).to.not.be.reverted;
         //showBody(`stealing ${s.Carol_COMP} to carol from ${s.compAddress}`);
         await expect(
-            stealMoney(comp_minter, s.Carol.address, s.compAddress, s.Carol_COMP)
+            stealMoney(comp_minter, s.Carol.address, s.compAddress, s.Carol_UNI)
         ).to.not.be.reverted;
         //showBody(`stealing ${s.Bob_WETH} weth to bob from ${s.wethAddress}`);
         await expect(
