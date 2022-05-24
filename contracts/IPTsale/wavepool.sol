@@ -70,6 +70,11 @@ contract WavePool {
   // the amount of points token that have been sent to the contract
   uint256 public _totalClaimed = 0;
 
+  uint256 public impliedPrice;
+  bool public saturation;
+  bool public calculated;
+  bool public withdrawn;
+
   event Points(address indexed from, uint256 wave, uint256 amount);
 
   constructor(
@@ -107,6 +112,10 @@ contract WavePool {
     _metadata[3].enabled = true;
     _metadata[3].merkleRoot = merkle3;
     _metadata[3].enableTime = enable3;
+
+    calculated = false;
+    saturation = false;
+    withdrawn = false;
   }
 
   /// @notice tells whether the wave is enabled or not
@@ -128,6 +137,40 @@ contract WavePool {
     return block.timestamp > _claimTime;
   }
 
+  /// @notice calculate pricing 1 time to save gas
+  function calculatePricing() external {
+    require(!calculated, "Calculated already");
+    // implied price is assuming pro rata, how many points you need for one reward
+    // for instance, if the totalReward was 1, and _totalClaimed was below 500_000, then the impliedPrice would be below 500_000
+    impliedPrice = _totalClaimed / (_totalReward / 1e18);
+    if (!(impliedPrice < _floor)) {
+      saturation = true;
+    }
+    calculated = true;
+  }
+
+  /// @notice redeem points for token
+  function redeem(uint256 wave) external {
+    require(canRedeem() == true, "can't redeem yet");
+    require(_data[wave][msg.sender].redeemed == false, "already redeem");
+    require(calculated, "calculatePricing() first");
+    _data[wave][msg.sender].redeemed = true;
+    uint256 rewardAmount;
+    RedemptionData memory user = _data[wave][msg.sender];
+
+    if (!saturation) {
+      // if the implied price is smaller than the floor price, that means that
+      // not enough points have been claimed to get to the floor price
+      // in that case, charge the floor price
+      rewardAmount = ((1e18 * user.claimed) / _floor);
+    } else {
+      // if the implied price is above the floor price, the price is the implied price
+      rewardAmount = ((1e18 * user.claimed) / impliedPrice);
+    }
+    giveTo(msg.sender, rewardAmount);
+  }
+
+  /**
   /// @notice redeem points for token
   function redeem(uint256 wave) external {
     require(canRedeem() == true, "can't redeem yet");
@@ -150,6 +193,7 @@ contract WavePool {
     giveTo(msg.sender, rewardAmount);
   }
 
+   */
   /// @notice get points
   /// @param amount amount of usdc
   /// @param key the total amount the points the user may claim - ammount allocated
@@ -167,7 +211,7 @@ contract WavePool {
       require(verifyClaim(wave, msg.sender, key, merkleProof) == true, "invalid proof");
       require(target <= key, "max alloc claimed");
     }
-    
+
     _data[wave][msg.sender].claimed = target;
     _totalClaimed = _totalClaimed + amount;
 
@@ -232,8 +276,20 @@ contract WavePool {
   ///@notice sends all unclaimed reward tokens to the receiver
   function withdraw() external {
     require(msg.sender == _receiver, "Only Receiver");
-    require(block.timestamp > (_claimTime + (7 days)), "wait for claim time");
-    uint256 amount = _totalReward - (((_totalClaimed * _floor) / 1e6) * 1e12);
-    giveTo(_receiver, amount);
+    //require(block.timestamp > (_claimTime + (7 days)), "wait for claim time");
+    require(calculated, "calculatePricing() first");
+    require(!withdrawn, "Withdrawn already");
+
+    //uint256 amount = _totalReward - (((_totalClaimed * _floor) / 1e6) * 1e12);
+    uint256 rewardAmount;
+    if (!saturation) {
+      rewardAmount = ((1e18 * _totalClaimed) / _floor);
+    } else {
+      revert("Saturation reached");
+    }
+
+    rewardAmount = _totalReward - rewardAmount;
+   
+    giveTo(_receiver, rewardAmount);
   }
 }

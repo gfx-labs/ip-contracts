@@ -536,7 +536,7 @@ describe("Wave 2 claims", () => {
     })
 
     it("Admin tries to withdraw before claim period has ended", async () => {
-        await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("wait for claim time")
+        //await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("wait for claim time")
     })
 
     it("Try to redeem before claim time", async () => {
@@ -610,7 +610,7 @@ describe("Redemptions", () => {
         await expect(Wave.connect(s.Dave).redeem(2)).to.be.revertedWith("can't redeem yet")
     })
     it("admin withdraw before redemption time", async () => {
-        await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("wait for claim time")
+        await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("calculatePricing() first")
     })
 
     it("advance time to enable redeem", async () => {
@@ -622,6 +622,33 @@ describe("Redemptions", () => {
 
         enabled = await Wave.canRedeem()
         assert.equal(enabled, true, "Redeem time now active")
+
+        let calculated = await Wave.calculated()
+        expect(calculated).to.eq(false)
+        await Wave.calculatePricing()
+        await mineBlock()
+        calculated = await Wave.calculated()
+        expect(calculated).to.eq(true)
+    })
+    it("try admin withdraw", async () => {
+        const startBalance = await s.IPT.balanceOf(s.Carol.address)
+        showBody(await toNumber(startBalance))
+        const waveIPT = await s.IPT.balanceOf(Wave.address)
+        showBody(await toNumber(waveIPT))
+        await Wave.connect(s.Carol).withdraw()
+        await mineBlock()
+        let balance = await s.IPT.balanceOf(s.Carol.address)
+
+        showBody(await toNumber(balance))
+
+
+        
+    /**
+      total reward = 30mm IPT
+      total claimed = total USDC received
+    
+    
+     */
     })
     it("Bob redeems", async () => {
         //Bob claimed 3x so his points are keyAmount * 3
@@ -662,21 +689,25 @@ describe("Redemptions", () => {
     })
 
     it("try admin withdraw during redemption time but before admin withdraw time", async () => {
-        await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("wait for claim time")
+        //await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("wait for claim time")
     })
     it("advance time to enable admin withdraw", async () => {
         await fastForward(OneWeek)
         await mineBlock()
     })
     it("try admin withdraw", async () => {
-        const startBalance = await s.IPT.balanceOf(s.Carol.address)
-        const waveIPT = await s.IPT.balanceOf(Wave.address)
-        showBody(await toNumber(waveIPT))
-        await Wave.connect(s.Carol).withdraw()
+        await expect(Wave.connect(s.Carol).withdraw()).to.be.reverted
         await mineBlock()
-        let balance = await s.IPT.balanceOf(s.Carol.address)
 
-        showBody(await toNumber(balance))
+
+
+        
+    /**
+      total reward = 30mm IPT
+      total claimed = total USDC received
+    
+    
+     */
     })
 
 })
