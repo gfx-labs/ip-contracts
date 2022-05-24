@@ -138,7 +138,7 @@ contract WavePool {
   }
 
   /// @notice calculate pricing 1 time to save gas
-  function calculatePricing() external {
+  function calculatePricing() internal {
     require(!calculated, "Calculated already");
     // implied price is assuming pro rata, how many points you need for one reward
     // for instance, if the totalReward was 1, and _totalClaimed was below 500_000, then the impliedPrice would be below 500_000
@@ -153,7 +153,10 @@ contract WavePool {
   function redeem(uint256 wave) external {
     require(canRedeem() == true, "can't redeem yet");
     require(_data[wave][msg.sender].redeemed == false, "already redeem");
-    require(calculated, "calculatePricing() first");
+    if(!calculated){
+      calculatePricing();
+    }
+
     _data[wave][msg.sender].redeemed = true;
     uint256 rewardAmount;
     RedemptionData memory user = _data[wave][msg.sender];
@@ -287,7 +290,7 @@ contract WavePool {
     } else {
       revert("Saturation reached");
     }
-
+    withdrawn = true;
     rewardAmount = _totalReward - rewardAmount;
    
     giveTo(_receiver, rewardAmount);

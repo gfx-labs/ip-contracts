@@ -625,28 +625,9 @@ describe("Redemptions", () => {
         enabled = await Wave.canRedeem()
         assert.equal(enabled, true, "Redeem time now active")
 
-        let calculated = await Wave.calculated()
-        expect(calculated).to.eq(false)
-        await Wave.calculatePricing()
-        await mineBlock()
-        calculated = await Wave.calculated()
-        expect(calculated).to.eq(true)
+        
     })
-    it("try admin withdraw", async () => {
-        let totalClaimed = await Wave._totalClaimed()
-        const formatClaimed = totalClaimed.mul(BN("1e12"))
-
-        let balance = await s.IPT.balanceOf(s.Carol.address)
-        expect(balance).to.eq(0)//carol holds no IPT yet
-
-        showBodyCyan("WITHDRAW")
-        await Wave.connect(s.Carol).withdraw()
-        await mineBlock()
-
-        let waveIPT = await s.IPT.balanceOf(Wave.address)
-        expect(await toNumber(waveIPT)).to.eq(await toNumber(formatClaimed.mul(2)))
-
-    })
+    
     /**
      it("Bob redeems", async () => {
         //Bob claimed 3x so his points are keyAmount * 3
@@ -720,15 +701,14 @@ describe("Redemptions", () => {
         await fastForward(OneWeek)
         await mineBlock()
     })
-    it("try admin withdraw", async () => {
-        await expect(Wave.connect(s.Carol).withdraw()).to.be.reverted
+    it("Admin withdraws exactly what is left after all redemptions are done", async () => {
+        await Wave.connect(s.Carol).withdraw()
         await mineBlock()
-        let waveIPT = await s.IPT.balanceOf(Wave.address)
 
-    })
-    it("After admin withdraw, followed by all redemptions, wave IPT should be 0", async () => {
         let waveIPT = await s.IPT.balanceOf(Wave.address)
         expect(waveIPT).to.eq(0)
+
     })
+    
 
 })

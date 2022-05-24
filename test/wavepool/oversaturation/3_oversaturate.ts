@@ -668,12 +668,6 @@ describe("Redemptions", () => {
     enabled = await Wave.canRedeem()
     assert.equal(enabled, true, "Redeem time now active")
 
-    let calculated = await Wave.calculated()
-    expect(calculated).to.eq(false)
-    await Wave.calculatePricing()
-    await mineBlock()
-    calculated = await Wave.calculated()
-    expect(calculated).to.eq(true)
   })
   it("Bob redeems", async () => {
     //Bob claimed 3x so his points are keyAmount * 3

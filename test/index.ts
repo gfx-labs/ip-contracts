@@ -1,4 +1,4 @@
 import "./governance/index"
 import "./mainnet/index"
-import "./presale/index"
+import "./wavepool/index"
 import "./isolated/index"
