@@ -28,7 +28,7 @@ describe("What happens when there is no reserve?", () => {
         expect(interestFactor).to.eq(BN("1e18"))
 
         const tokensRegistered = await s.VaultController.tokensRegistered()
-        expect(tokensRegistered).to.eq(BN("2"))//weth && comp
+        expect(tokensRegistered).to.eq(BN("3"))//weth, UNI, wBTC
 
         //no new USDi has been minted
         const totalSupply = await s.USDI.totalSupply()
@@ -57,7 +57,7 @@ describe("What happens when there is no reserve?", () => {
         expect(interestFactor).to.not.eq(BN("1e18"))//Interest factor is slightly higher due to time passing
 
         const tokensRegistered = await s.VaultController.tokensRegistered()
-        expect(tokensRegistered).to.eq(BN("2"))//weth && comp
+        expect(tokensRegistered).to.eq(BN("3"))//weth, UNI, wBTC
 
         //no new USDi has been minted
         const totalSupply = await s.USDI.totalSupply()
@@ -130,12 +130,12 @@ describe("What happens when there is no reserve?", () => {
         await mineBlock()
 
 
-        //Carol transfers COMP collateral
-        let balance = await s.COMP.balanceOf(s.Carol.address)
-        expect(balance).to.eq(s.Carol_COMP)
+        //Carol transfers UNI collateral
+        let balance = await s.UNI.balanceOf(s.Carol.address)
+        expect(balance).to.eq(s.Carol_UNI)
 
-        //Carol transfers all COMP
-        await s.COMP.connect(s.Carol).transfer(s.CarolVault.address, balance)
+        //Carol transfers all UNI
+        await s.UNI.connect(s.Carol).transfer(s.CarolVault.address, balance)
         await mineBlock()
 
         let borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
@@ -181,7 +181,7 @@ describe("What happens when there is no reserve?", () => {
 
     it("Large liability, to reserve, try to withdraw USDC for USDI", async () => {
         let balance = await s.USDI.balanceOf(s.Frank.address)
-        expect(await toNumber(balance)).to.be.gt(1)
+        expect(await toNumber(balance)).to.be.gt(0)
         //confirm reserve is 0
         let reserve = await s.USDC.balanceOf(s.USDI.address)
         expect(reserve).to.eq(0)

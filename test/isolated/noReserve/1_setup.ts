@@ -22,9 +22,10 @@ require("chai").should();
 // dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
 
 // configurable variables
-
 let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 let comp_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
+let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
+let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
 let dydx_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let ens_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let aave_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
@@ -67,6 +68,8 @@ describe("Token Setup", () => {
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
         s.WETH = IERC20__factory.connect(s.wethAddress, s.Frank);
+        s.UNI = IVOTE__factory.connect(s.uniAddress, s.Frank);
+        s.WBTC = IERC20__factory.connect(s.wbtcAddress, s.Frank);
         s.COMP = IVOTE__factory.connect(s.compAddress, s.Frank);
         s.ENS = IVOTE__factory.connect(s.ensAddress, s.Frank);
         s.DYDX = IVOTE__factory.connect(s.dydxAddress, s.Frank);
@@ -75,17 +78,21 @@ describe("Token Setup", () => {
 
     });
     it("Should succesfully transfer money", async () => {
-        //showBody(`stealing ${s.Andy_USDC} to andy from ${s.usdcAddress}`);
-        await expect(
+         //showBody(`stealing ${s.Andy_USDC} to andy from ${s.usdcAddress}`);
+         await expect(
             stealMoney(usdc_minter, s.Andy.address, s.usdcAddress, s.Andy_USDC)
         ).to.not.be.reverted;
         //showBody(`stealing ${s.Dave_USDC} to dave from ${s.usdcAddress}`);
         await expect(
             stealMoney(usdc_minter, s.Dave.address, s.usdcAddress, s.Dave_USDC)
         ).to.not.be.reverted;
-        //showBody(`stealing ${s.Carol_COMP} to carol from ${s.compAddress}`);
+        //showBody(`stealing ${s.Carol_UNI} to carol from ${s.uniAddress}`);
         await expect(
-            stealMoney(comp_minter, s.Carol.address, s.compAddress, s.Carol_COMP)
+            stealMoney(uni_minter, s.Carol.address, s.uniAddress, s.Carol_UNI)
+        ).to.not.be.reverted;
+        //showBody(`stealing ${s.Gus_WBTC} to gus from ${s.wbtcAddress}`);
+        await expect(
+            stealMoney(wbtc_minter, s.Gus.address, s.wbtcAddress, s.Gus_WBTC)
         ).to.not.be.reverted;
         //showBody(`stealing ${s.Bob_WETH} weth to bob from ${s.wethAddress}`);
         await expect(
@@ -111,7 +118,6 @@ describe("Token Setup", () => {
         await expect(
             stealMoney(tribe_minter, s.Carol.address, s.tribeAddress, s.Carol_TRIBE)
         ).to.not.be.reverted;
-
 
         await mineBlock();
     });
