@@ -38,7 +38,7 @@ interface IVault is VaultEvents {
 
   function modifyLiability(bool increase, uint256 base_amount) external returns (uint256);
 
-  function depositETH() external payable;
+  //function depositETH() external payable;
 
-  function withdrawEther(uint256 amount) external;
+  //function withdrawEther(uint256 amount) external;
 }
