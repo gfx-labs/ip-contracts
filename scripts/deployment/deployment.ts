@@ -35,16 +35,19 @@ import { BN } from "../../util/number";
 
 export interface DeploymentInfo {
   USDC: string;
-  COMP: string;
+  UNI: string;
+  WBTC: string;
   WETH: string;
   USDC_ETH_POOL: string;
-  USDC_COMP_POOL: string;
+  USDC_UNI_POOL: string;
+  USDC_WBTC_POOL: string;
   USDI?: string;
   ProxyAdmin?: string;
   VaultController?: string;
   Oracle?: string;
   EthOracle?: string;
-  CompOracle?: string;
+  UniOracle?: string;
+  WBTCOracle?: string;
   Curve?: string;
   ThreeLines?: string;
 }
@@ -52,8 +55,9 @@ export interface DeploymentInfo {
 export class Deployment {
   USDI!: USDI;
   USDC!: IERC20;
-  COMP!: IVOTE;
+  UNI!: IVOTE;
   WETH!: IERC20;
+  WBTC!: IERC20;
 
   ProxyAdmin!: ProxyAdmin;
   VaultController!: VaultController;
@@ -61,7 +65,8 @@ export class Deployment {
   Oracle!: OracleMaster;
 
   EthOracle!: IOracleRelay;
-  CompOracle!: IOracleRelay;
+  UniOracle!: IOracleRelay;
+  WBTCOracle!: IOracleRelay;
 
   Curve!: CurveMaster;
   ThreeLines!: ThreeLines0_100;
@@ -86,12 +91,14 @@ export class Deployment {
 
     await this.ensureOracle();
     await this.ensureEthOracle();
-    await this.ensureCompOracle();
+    await this.ensureUniOracle();
+    await this.ensureWBTCOracle();
   }
   async ensureExternal() {
     this.USDC = IERC20__factory.connect(this.Info.USDC!, this.deployer);
-    this.COMP = IVOTE__factory.connect(this.Info.COMP!, this.deployer);
+    this.UNI = IVOTE__factory.connect(this.Info.UNI!, this.deployer);
     this.WETH = IERC20__factory.connect(this.Info.WETH!, this.deployer);
+    this.WBTC = IERC20__factory.connect(this.Info.WBTC!, this.deployer);
   }
 
   async ensureProxyAdmin() {
@@ -204,47 +211,91 @@ export class Deployment {
     }
   }
 
-  async ensureCompOracle() {
-    if (this.Info.CompOracle != undefined) {
-      this.CompOracle = IOracleRelay__factory.connect(
-        this.Info.CompOracle,
+  async ensureWBTCOracle() {
+    if (this.Info.WBTCOracle != undefined) {
+      this.WBTCOracle = IOracleRelay__factory.connect(
+        this.Info.WBTCOracle,
         this.deployer
       );
-      console.log(`found CompOracle at ${this.Info.CompOracle}`);
+      console.log(`found WBTCOracle at ${this.Info.WBTCOracle}`);
     } else {
       const UniswapRelayFactory = new UniswapV3OracleRelay__factory(
         this.deployer
       );
-      this.CompOracle = await UniswapRelayFactory.deploy(
+      console.log("setting wbtc oracle to be an adjsted eth-wbtc pool (lol)");
+      this.WBTCOracle = await UniswapRelayFactory.deploy(
         60, //lookback
-        this.Info.USDC_COMP_POOL, //pool_address
+        this.Info.USDC_WBTC_POOL, //pool_address
         true, //quote_token_is_token0
         BN("1e12"), //mul
         BN("1") //div
       );
-      await this.CompOracle.deployed();
-      this.Info.CompOracle = this.CompOracle.address;
+      await this.WBTCOracle.deployed();
+      this.Info.WBTCOracle = this.WBTCOracle.address;
     }
     if (
-      (await this.Oracle._relays(this.COMP.address)) != this.CompOracle.address
+      (await this.Oracle._relays(this.WBTC.address)) != this.WBTCOracle.address
     ) {
-      console.log("setting comp oracle to be eth relay");
       let r2 = await this.Oracle.setRelay(
-        this.COMP.address,
-        this.CompOracle.address
+        this.WBTC.address,
+        this.WBTCOracle.address
+      );
+      await r2.wait();
+    }
+    const tokenid = await this.VaultController._tokenAddress_tokenId(
+      this.WBTC.address
+    );
+    if (tokenid.eq(0)) {
+      console.log("registering wbtc into vault controller");
+      let t = await this.VaultController.registerErc20(
+        this.WBTC.address,
+        BN("5e17"),
+        this.WBTC.address,
+        BN("5e16")
+      );
+      await t.wait();
+    }
+  }
+
+  async ensureUniOracle() {
+    if (this.Info.UniOracle != undefined) {
+      this.UniOracle = IOracleRelay__factory.connect(
+        this.Info.UniOracle,
+        this.deployer
+      );
+      console.log(`found UniOracle at ${this.Info.UniOracle}`);
+    } else {
+      const UniswapRelayFactory = new UniswapV3OracleRelay__factory(
+        this.deployer
+      );
+      console.log("setting uni oracle to be an adjusted eth relay (lol)");
+      this.UniOracle = await UniswapRelayFactory.deploy(
+        60, //lookback
+        this.Info.USDC_UNI_POOL, //pool_address
+        true, //quote_token_is_token0
+        BN("5e10"), //mul
+        BN("1") //div
+      );
+      await this.UniOracle.deployed();
+      this.Info.UniOracle = this.UniOracle.address;
+    }
+    if (
+      (await this.Oracle._relays(this.UNI.address)) != this.UniOracle.address
+    ) {
+      let r2 = await this.Oracle.setRelay(
+        this.UNI.address,
+        this.UniOracle.address
       );
       await r2.wait();
     }
     if (
-      (await this.VaultController._tokenAddress_tokenId(this.COMP.address)).eq(
-        0
-      )
+      (await this.VaultController._tokenAddress_tokenId(this.UNI.address)).eq(0)
     ) {
-      console.log("registering comp into vault controller");
+      console.log("registering uni into vault controller");
       let t = await this.VaultController.registerErc20(
-        this.COMP.address,
+        this.UNI.address,
         BN("5e17"),
-        this.COMP.address,
+        this.UNI.address,
         BN("5e16")
       );
       await t.wait();

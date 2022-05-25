@@ -410,9 +410,7 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) internal view returns (uint256, uint256) {
-
     require(!checkVault(id), "Vault is solvent");
-
 
     IVault vault = getVault(id);
 
@@ -499,6 +497,7 @@ contract VaultController is
         continue;
       }
       // get the address of the token through the array of enabled tokens
+      // note that index 0 of this vaultId 1, so we must subtract 1
       address token_address = _enabledTokens[i - 1];
       // the balance is the vaults token balance of the current collateral token in the loop
       uint256 balance = vault.tokenBalance(token_address);
