@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
+import "hardhat/console.sol";
 
 /// @title implementation of compounds' AnchoredView
 /// @notice using a main relay and an anchor relay, the AnchoredView
@@ -60,6 +61,7 @@ contract AnchoredViewRelay is IOracleRelay {
     // create upper and lower bounds
     uint256 upperBounds = anchorPrice + buffer;
     uint256 lowerBounds = anchorPrice - buffer;
+    
 
     // ensure the anchor price is within bounds
     require(mainValue < upperBounds, "anchor too high");

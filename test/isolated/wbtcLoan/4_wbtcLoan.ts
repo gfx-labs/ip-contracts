@@ -11,7 +11,7 @@ import { IVault__factory } from "../../../typechain-types";
 import { utils } from "ethers";
 
 
-describe("What happens when there are no loans?", () => {
+describe("Borrow against wBTC, liquidate, and repay", () => {
     //9000 USDC
     const depositAmount = s.Dave_USDC.sub(BN("1000e6"))
     const depositAmount_e18 = depositAmount.mul(BN("1e12"))
@@ -164,7 +164,7 @@ describe("What happens when there are no loans?", () => {
         //liquidate
         await s.USDI.connect(s.Dave).approve(s.VaultController.address, amountToSolvency.add(utils.parseEther("5")))
         await mineBlock()
-        await s.VaultController.connect(s.Dave).liquidateVault(vaultID, s.WBTC.address, 7748524) //7748524 - true amount? 5167172 - off by 1
+        await s.VaultController.connect(s.Dave).liquidateVault(vaultID, s.WBTC.address, 22798917) //7748524 - true amount? 5167172 - off by 1
         await mineBlock()
         await s.VaultController.calculateInterest()
         await mineBlock()
@@ -186,6 +186,10 @@ describe("What happens when there are no loans?", () => {
         borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         showBody("Vault borrowPower: ", await toNumber(borrowPower))
 
+        await s.VaultController.calculateInterest()
+        await mineBlock()
+        amountToSolvency = await s.VaultController.amountToSolvency(vaultID)
+        showBodyCyan("amountToSolvency: ", await toNumber(amountToSolvency))
 
     })
 
