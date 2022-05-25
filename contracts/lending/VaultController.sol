@@ -18,6 +18,8 @@ import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 /// @title Controller of all vaults in the USDI borrow/lend system
 /// @notice VaultController contains all business logic for borrowing and lending through the protocol.
 /// It is also in charge of accruing interest.
@@ -416,6 +418,7 @@ contract VaultController is
 
     //get price of asset scaled to decimal 18
     uint256 price = _oracleMaster.getLivePrice(asset_address);
+    console.log("Price: ", price);
 
     // get price discounted by liquidation penalty
     // price * (100% - liquidationIncentive)
@@ -430,6 +433,7 @@ contract VaultController is
     // the maximum amount of tokens to liquidate is the amount that will bring the vault to solvency
     // divided by the denominator
     uint256 max_tokens_to_liquidate = (_amountToSolvency(id) * 1e18) / denominator;
+
     //Cannot liquidate more than is necessary to make vault over-collateralized
     if (tokens_to_liquidate > max_tokens_to_liquidate) {
       tokens_to_liquidate = max_tokens_to_liquidate;

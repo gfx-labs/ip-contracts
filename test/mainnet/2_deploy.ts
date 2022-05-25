@@ -153,7 +153,7 @@ describe("Deploy Contracts", () => {
         expect(await s.UniswapRelayCompUsdc.currentValue()).to.not.eq(0)
          */
 
-    //showBody("create uniswap wbtc relay")
+    showBody("create uniswap wbtc relay")
     s.UniswapRelayWbtcUsdc = await DeployContract(
       new UniswapV3OracleRelay__factory(s.Frank),
       s.Frank,
@@ -166,7 +166,7 @@ describe("Deploy Contracts", () => {
     await mineBlock();
     expect(await s.UniswapRelayWbtcUsdc.currentValue()).to.not.eq(0);
 
-    //showBody("create uniswap eth relay")
+    showBody("create uniswap eth relay")
     s.UniswapRelayEthUsdc = await DeployContract(
       new UniswapV3OracleRelay__factory(s.Frank),
       s.Frank,
@@ -180,7 +180,7 @@ describe("Deploy Contracts", () => {
 
     expect(await s.UniswapRelayEthUsdc.currentValue()).to.not.eq(0);
 
-    //showBody("create uniswap uni relay")
+    showBody("create uniswap uni relay")
     s.UniswapRelayUniUsdc = await DeployContract(
       new UniswapV3OracleRelay__factory(s.Frank),
       s.Frank,
@@ -201,7 +201,7 @@ describe("Deploy Contracts", () => {
         expect(await s.ChainlinkComp.currentValue()).to.not.eq(0)
          */
 
-    //showBody("create chainlink uni relay")
+    showBody("create chainlink uni relay")
     s.ChainLinkUni = await DeployContract(
       new ChainlinkOracleRelay__factory(s.Frank),
       s.Frank,
@@ -212,18 +212,18 @@ describe("Deploy Contracts", () => {
     await mineBlock();
     expect(await s.ChainLinkUni.currentValue()).to.not.eq(0);
 
-    //showBody("create chainlink btc relay")
+    showBody("create chainlink btc relay")
     s.ChainLinkBtc = await DeployContract(
       new ChainlinkOracleRelay__factory(s.Frank),
       s.Frank,
       s.chainlinkBtcFeed,
-      BN("1e10"),
+      BN("1e20"),
       BN("1")
     );
     await mineBlock();
     expect(await s.ChainLinkBtc.currentValue()).to.not.eq(0);
 
-    //showBody("create chainlink eth relay")
+    showBody("create chainlink eth relay")
     s.ChainlinkEth = await DeployContract(
       new ChainlinkOracleRelay__factory(s.Frank),
       s.Frank,
@@ -246,7 +246,7 @@ describe("Deploy Contracts", () => {
         expect(await s.AnchoredViewComp.currentValue()).to.not.eq(0)
          */
 
-    //showBody("create Uni anchoredview")
+    showBody("create Uni anchoredview")
     s.AnchoredViewUni = await DeployContract(
       new AnchoredViewRelay__factory(s.Frank),
       s.Frank,
@@ -258,7 +258,7 @@ describe("Deploy Contracts", () => {
     await mineBlock();
     expect(await s.AnchoredViewUni.currentValue()).to.not.eq(0);
 
-    //showBody("create Btc anchoredview")
+    showBody("create Btc anchoredview")
     s.AnchoredViewBtc = await DeployContract(
       new AnchoredViewRelay__factory(s.Frank),
       s.Frank,
@@ -268,9 +268,11 @@ describe("Deploy Contracts", () => {
       BN("100")
     );
     await mineBlock();
+    showBody("Anchorview created for BTC")
+
     expect(await s.AnchoredViewBtc.currentValue()).to.not.eq(0);
 
-    //showBody("create ETH anchoredview")
+    showBody("create ETH anchoredview")
     s.AnchoredViewEth = await DeployContract(
       new AnchoredViewRelay__factory(s.Frank),
       s.Frank,

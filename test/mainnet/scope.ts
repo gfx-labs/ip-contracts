@@ -21,7 +21,7 @@ export class TestScope extends MainnetAddresses {
     wETH_LTV = BN("5e17")
     COMP_LTV = BN("4e17")
     UNI_LTV = BN("4e17")
-    wBTC_LTV = BN("5e17")
+    wBTC_LTV = BN("80e16")
 
     ProxyAdmin!: ProxyAdmin;
     VaultController!: IVaultController;

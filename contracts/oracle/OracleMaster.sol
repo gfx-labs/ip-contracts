@@ -6,6 +6,8 @@ import "./IOracleRelay.sol";
 
 import "../_external/Ownable.sol";
 
+import "hardhat/console.sol";
+
 /// @title An addressbook for oracle relays
 /// @notice the oraclemaster is simply an addressbook of address->relay
 /// this is so that contracts may use the OracleMaster to call any registered relays.

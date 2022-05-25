@@ -18,10 +18,12 @@ export class TestScope extends MainnetAddresses {
     AAVE!: IVOTE;
     TRIBE!: IVOTE;
     LiquidationIncentive = BN("5e16")
-    wETH_LTV = BN("5e17")
-    COMP_LTV = BN("4e17")
-    UNI_LTV = BN("4e17")
-    wBTC_LTV = BN("5e17")
+    wETH_LTV = BN("85e16")
+    //COMP_LTV = BN("4e17")
+    UNI_LTV = BN("75e16")
+    wBTC_LTV = BN("80e16")
+
+    ONE_BTC = BN("1e8")
 
     ProxyAdmin!: ProxyAdmin;
     VaultController!: IVaultController;
@@ -54,6 +56,7 @@ export class TestScope extends MainnetAddresses {
     
     BobVault!: IVault
     CarolVault!: IVault
+    GusVault!: IVault
 
     Andy_USDC = BN("1e8")
     Bob_USDC = BN("1000e6")

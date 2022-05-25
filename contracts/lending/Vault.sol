@@ -85,8 +85,7 @@ contract Vault is IVault, Context {
 
   /// @notice get vaults balance of an erc20 token
   /// @param addr address of the erc20 token
-  /// @dev all this does is call IERC20(addr).balanceOf(address(this))
-  /// this is here to serve as a reminder that we can possibly modify this function in the future
+  /// @dev scales wBTC up to normal erc20 size
   function tokenBalance(address addr) external view override returns (uint256) {
     return IERC20(addr).balanceOf(address(this));
   }
@@ -138,7 +137,6 @@ contract Vault is IVault, Context {
     }
     return _baseLiability;
   }
-
 
   /**
   function depositETH() external payable override {
