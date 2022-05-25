@@ -100,13 +100,12 @@ describe("Borrow against wBTC, liquidate, and repay", () => {
         expect(balance).to.eq(s.Gus_WBTC)
 
         //Bob transfers 3 WBTC
-        await s.WBTC.connect(s.Gus).transfer(s.GusVault.address, s.ONE_BTC.mul(3))
+        await s.WBTC.connect(s.Gus).transfer(s.GusVault.address, s.ONE_BTC)
         await mineBlock()
 
     })
     it("Check borrowing power and borrow USDi", async () => {
         let borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
-        showBody("BorrowPower: ", await toNumber(borrowPower))
 
         //borrow full amount
         const borrowResult = await s.VaultController.connect(s.Gus).borrowUsdi(vaultID, borrowPower)
@@ -134,63 +133,36 @@ describe("Borrow against wBTC, liquidate, and repay", () => {
     it("Liquidate", async () => {
 
         let amountToSolvency = await s.VaultController.amountToSolvency(vaultID)
-        showBody("amountToSolvency: ", await toNumber(amountToSolvency))
-        let vaultLiab = await s.VaultController.vaultLiability(vaultID)
-        let baseLiab = await s.GusVault.baseLiability()
-        showBody("Starting base liability: ", baseLiab)
-        showBody("Vault liability: ", await toNumber(vaultLiab))
-        let borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
-        showBody("Vault borrowPower: ", await toNumber(borrowPower))
-
+    
 
         const balance = await s.USDI.balanceOf(s.Dave.address)
-        showBody("Dave USDI: ", await toNumber(balance))
 
         //confirm Dave has enough to liquidate
         expect(await toNumber(balance)).to.be.gt(await toNumber(amountToSolvency))
 
-
-
         const tokensToLiq = await s.VaultController.tokensToLiquidate(vaultID, s.WBTC.address)
-        let adj = tokensToLiq//tokensToLiq.div(BN("1e10"))
-        showBody("Tokens to liq: ", adj)
 
         const startingWBTC = await s.WBTC.balanceOf(s.Dave.address)
-        showBody("startingWBTC :", startingWBTC)
+        expect(startingWBTC).to.eq(0)//liquidator holds no wBTC prior to liquidation
 
-        
-
-        showBodyCyan("LIQ")
         //liquidate
         await s.USDI.connect(s.Dave).approve(s.VaultController.address, amountToSolvency.add(utils.parseEther("5")))
         await mineBlock()
-        await s.VaultController.connect(s.Dave).liquidateVault(vaultID, s.WBTC.address, 22798917) //7748524 - true amount? 5167172 - off by 1
+        await s.VaultController.connect(s.Dave).liquidateVault(vaultID, s.WBTC.address, tokensToLiq) //7748524 - true amount? 5167172 - off by 1 22798917 - maximum ish
         await mineBlock()
         await s.VaultController.calculateInterest()
         await mineBlock()
         let wbtcAmount = await s.WBTC.balanceOf(s.Dave.address)
-        showBody("endinggg WBTC :", wbtcAmount)
+        expect(wbtcAmount).to.be.gt(0)
+
+
         let endUSDI = await s.USDI.balanceOf(s.Dave.address) 
         let difference = balance.sub(endUSDI)
-        showBody("USDI spent: ", await toNumber(difference))
+
+        expect(await toNumber(difference)).to.be.gt(0)
 
         amountToSolvency = await s.VaultController.amountToSolvency(vaultID)
-        showBodyCyan("amountToSolvency: ", await toNumber(amountToSolvency))
-
-        baseLiab = await s.GusVault.baseLiability()
-        showBody("Ending base liability: ", baseLiab)
-
-        vaultLiab = await s.VaultController.vaultLiability(vaultID)
-        showBody("Vault liability: ", await toNumber(vaultLiab))
-
-        borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
-        showBody("Vault borrowPower: ", await toNumber(borrowPower))
-
-        await s.VaultController.calculateInterest()
-        await mineBlock()
-        amountToSolvency = await s.VaultController.amountToSolvency(vaultID)
-        showBodyCyan("amountToSolvency: ", await toNumber(amountToSolvency))
-
+        expect(await toNumber(amountToSolvency)).to.be.closeTo(0, 0.1)
     })
 
     it("Repay all and withdraw", async () => {

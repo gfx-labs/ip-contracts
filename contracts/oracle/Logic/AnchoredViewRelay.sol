@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
-import "hardhat/console.sol";
 
 /// @title implementation of compounds' AnchoredView
 /// @notice using a main relay and an anchor relay, the AnchoredView
