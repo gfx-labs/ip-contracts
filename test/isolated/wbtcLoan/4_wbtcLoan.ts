@@ -131,14 +131,7 @@ describe("Borrow against wBTC, liquidate, and repay", () => {
     })
 
     it("Liquidate", async () => {
-
-        let amountToSolvency = await s.VaultController.amountToSolvency(vaultID)
-    
-
         const balance = await s.USDI.balanceOf(s.Dave.address)
-
-        //confirm Dave has enough to liquidate
-        expect(await toNumber(balance)).to.be.gt(await toNumber(amountToSolvency))
 
         const tokensToLiq = await s.VaultController.tokensToLiquidate(vaultID, s.WBTC.address)
 
@@ -146,7 +139,7 @@ describe("Borrow against wBTC, liquidate, and repay", () => {
         expect(startingWBTC).to.eq(0)//liquidator holds no wBTC prior to liquidation
 
         //liquidate
-        await s.USDI.connect(s.Dave).approve(s.VaultController.address, amountToSolvency.add(utils.parseEther("5")))
+        await s.USDI.connect(s.Dave).approve(s.VaultController.address, balance)
         await mineBlock()
         await s.VaultController.connect(s.Dave).liquidateVault(vaultID, s.WBTC.address, tokensToLiq) //7748524 - true amount? 5167172 - off by 1 22798917 - maximum ish
         await mineBlock()
