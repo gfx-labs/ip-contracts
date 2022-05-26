@@ -166,7 +166,15 @@ describe("Borrow against wBTC, liquidate, and repay", () => {
     })
 
     it("Repay all and withdraw", async () => {
+        let balance = await s.USDI.balanceOf(s.Dave.address)
+        await s.USDI.connect(s.Dave).transfer(s.Gus.address, utils.parseEther("500"))
+        await mineBlock()
 
+        await s.VaultController.connect(s.Gus).repayAllUSDi(vaultID)
+        await mineBlock()
+
+        let liability = await s.GusVault.baseLiability()
+        expect(liability).to.eq(0)
 
     })
 })
