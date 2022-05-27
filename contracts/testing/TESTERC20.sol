@@ -30,20 +30,20 @@ contract TESTERC20 {
   /**
    * @dev Returns the name of the token.
    */
-  function name() public view virtual returns (string memory) {
+  function name() public view returns (string memory) {
     return _name;
   }
 
-  function symbol() public view virtual returns (string memory) {
+  function symbol() public view returns (string memory) {
     return _symbol;
   }
 
-  function decimals() public view virtual returns (uint8) {
+  function decimals() public view returns (uint8) {
     return _decimals;
   }
 
-  function publicMint() public {
-    _mint(msg.sender, _decimals * 100);
+  function publicMint() external {
+    _mint(msg.sender, (10**_decimals) * 100);
   }
 
   function delegate(address a) public {
@@ -53,14 +53,14 @@ contract TESTERC20 {
   /**
    * @dev See {IERC20-totalSupply}.
    */
-  function totalSupply() public view virtual returns (uint256) {
+  function totalSupply() public view returns (uint256) {
     return _totalSupply;
   }
 
   /**
    * @dev See {IERC20-balanceOf}.
    */
-  function balanceOf(address account) public view virtual returns (uint256) {
+  function balanceOf(address account) public view returns (uint256) {
     return _balances[account];
   }
 
@@ -72,7 +72,7 @@ contract TESTERC20 {
    * - `to` cannot be the zero address.
    * - the caller must have a balance of at least `amount`.
    */
-  function transfer(address to, uint256 amount) public virtual returns (bool) {
+  function transfer(address to, uint256 amount) public returns (bool) {
     address owner = msg.sender;
     _transfer(owner, to, amount);
     return true;
@@ -81,7 +81,7 @@ contract TESTERC20 {
   /**
    * @dev See {IERC20-allowance}.
    */
-  function allowance(address owner, address spender) public view virtual returns (uint256) {
+  function allowance(address owner, address spender) public view returns (uint256) {
     return _allowances[owner][spender];
   }
 
@@ -95,7 +95,7 @@ contract TESTERC20 {
    *
    * - `spender` cannot be the zero address.
    */
-  function approve(address spender, uint256 amount) public virtual returns (bool) {
+  function approve(address spender, uint256 amount) public returns (bool) {
     address owner = msg.sender;
     _approve(owner, spender, amount);
     return true;
@@ -121,20 +121,20 @@ contract TESTERC20 {
     address from,
     address to,
     uint256 amount
-  ) public virtual returns (bool) {
+  ) public returns (bool) {
     address spender = msg.sender;
     _spendAllowance(from, spender, amount);
     _transfer(from, to, amount);
     return true;
   }
 
-  function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+  function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
     address owner = msg.sender;
     _approve(owner, spender, allowance(owner, spender) + addedValue);
     return true;
   }
 
-  function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+  function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
     address owner = msg.sender;
     uint256 currentAllowance = allowance(owner, spender);
     require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
@@ -149,7 +149,7 @@ contract TESTERC20 {
     address from,
     address to,
     uint256 amount
-  ) internal virtual {
+  ) internal {
     require(from != address(0), "ERC20: transfer from the zero address");
     require(to != address(0), "ERC20: transfer to the zero address");
 
@@ -176,7 +176,7 @@ contract TESTERC20 {
    *
    * - `account` cannot be the zero address.
    */
-  function _mint(address account, uint256 amount) internal virtual {
+  function _mint(address account, uint256 amount) internal {
     require(account != address(0), "ERC20: mint to the zero address");
 
     _beforeTokenTransfer(address(0), account, amount);
@@ -199,7 +199,7 @@ contract TESTERC20 {
    * - `account` cannot be the zero address.
    * - `account` must have at least `amount` tokens.
    */
-  function _burn(address account, uint256 amount) internal virtual {
+  function _burn(address account, uint256 amount) internal {
     require(account != address(0), "ERC20: burn from the zero address");
 
     _beforeTokenTransfer(account, address(0), amount);
@@ -233,7 +233,7 @@ contract TESTERC20 {
     address owner,
     address spender,
     uint256 amount
-  ) internal virtual {
+  ) internal {
     require(owner != address(0), "ERC20: approve from the zero address");
     require(spender != address(0), "ERC20: approve to the zero address");
 
@@ -253,7 +253,7 @@ contract TESTERC20 {
     address owner,
     address spender,
     uint256 amount
-  ) internal virtual {
+  ) internal {
     uint256 currentAllowance = allowance(owner, spender);
     if (currentAllowance != type(uint256).max) {
       require(currentAllowance >= amount, "ERC20: insufficient allowance");
@@ -281,7 +281,7 @@ contract TESTERC20 {
     address from,
     address to,
     uint256 amount
-  ) internal virtual {}
+  ) internal {}
 
   /**
    * @dev Hook that is called after any transfer of tokens. This includes
@@ -301,5 +301,5 @@ contract TESTERC20 {
     address from,
     address to,
     uint256 amount
-  ) internal virtual {}
+  ) internal {}
 }

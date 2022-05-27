@@ -418,7 +418,8 @@ export class Deployment {
       console.log("USDI proxy address: ", USDI.address);
       //attach
       this.USDI = new USDI__factory(this.deployer).attach(USDI.address);
-      await this.USDI.initialize(this.USDC.address);
+      let t = await this.USDI.initialize(this.USDC.address);
+      await t.wait();
       console.log("USDI initialized: ", this.USDI.address);
       this.Info.USDI = this.USDI.address;
     }
