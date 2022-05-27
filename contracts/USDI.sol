@@ -10,6 +10,7 @@ import "./_external/IERC20.sol";
 import "./_external/compound/ExponentialNoError.sol";
 import "./_external/openzeppelin/PausableUpgradeable.sol";
 
+
 /// @title USDI token contract
 /// @notice handles all minting/burning of usdi
 /// @dev extends UFragments
@@ -221,9 +222,9 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   function donateReserve() external override onlyOwner whenNotPaused {
     uint256 totalUSDC = (_reserve.balanceOf(address(this))) * 1e12;
     uint256 totalLiability = truncate(_VaultController.totalBaseLiability() * _VaultController.interestFactor());
-    require((totalUSDC + totalLiability ) > _totalSupply, "No extra reserve");
+    require((totalUSDC + totalLiability) > _totalSupply, "No extra reserve");
 
-    _donation((totalUSDC + totalLiability ) - _totalSupply);
+    _donation((totalUSDC + totalLiability) - _totalSupply);
   }
 
   /// @notice function for the vaultController to mint

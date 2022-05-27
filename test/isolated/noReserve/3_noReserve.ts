@@ -229,28 +229,25 @@ describe("What happens when there is no reserve?", () => {
         let difference = trueTotal.sub(totalSupply)
 
 
-        //donate
+        //do a normal donate
+        await s.USDC.connect(s.Dave).approve(s.USDI.address, eroniousAmount)
+        await mineBlock()
+
+        await s.USDI.connect(s.Dave).donate(eroniousAmount)
+        await mineBlock()
+
+
+        //donateReserve
         const result = await s.USDI.connect(s.Frank).donateReserve()
         await mineBlock()
         const args = await getArgs(result)
 
+        //donated amount from event receipt matches the eronious amount
         expect(await toNumber(args._value)).to.be.closeTo(await toNumber(BN("1e12").mul(eroniousAmount)), 1)
+        //expected difference matches amount from event receipt
         expect(await toNumber(difference)).to.be.closeTo(await toNumber(args._value), 1)
 
-        //check more things        
-
-        IF = await s.VaultController.interestFactor()
-        totalLiability = await s.VaultController.totalBaseLiability()
-        totalLiability = await truncate(totalLiability.mul(IF))
-
-        trueTotal = (totalUSDC.mul(BN("1e12"))).add(totalLiability)
-
-        totalSupply = await s.USDI.totalSupply()
-        difference = trueTotal.sub(totalSupply)
-
-        //no reserve to donate
-        expect(difference).to.eq(0)
-
+        //donateReserve still only donated the eronious amount, and there is no reserve left to donate now 
         await expect(s.USDI.donateReserve()).to.be.revertedWith("No extra reserve")
 
 
