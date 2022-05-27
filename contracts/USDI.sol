@@ -220,9 +220,10 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice without this, any USDC sent to the contract could mess up the reserve ratio
   function donateReserve() external override whenNotPaused {
     uint256 totalUSDC = (_reserve.balanceOf(address(this))) * 1e12;
-    require(totalUSDC > _totalSupply, "No extra reserve");
+    uint256 totalLiability = truncate(_VaultController.totalBaseLiability() * _VaultController.interestFactor());
+    require((totalUSDC + totalLiability ) > _totalSupply, "No extra reserve");
 
-    _donation(totalUSDC - _totalSupply);
+    _donation((totalUSDC + totalLiability ) - _totalSupply);
   }
 
   /// @notice function for the vaultController to mint

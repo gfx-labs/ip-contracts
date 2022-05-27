@@ -194,4 +194,67 @@ describe("What happens when there is no reserve?", () => {
         await mineBlock()
 
     })
+
+    it("test donateReserve", async () => {
+        const eroniousAmount = 500e6
+
+        let totalUSDC = await s.USDC.balanceOf(s.USDI.address)
+        assert.equal(totalUSDC.toNumber(), 0, "No USDC is held by the USDI contract")
+
+        //deposit some USDC
+        let balance = await s.USDC.balanceOf(s.Bob.address)
+        expect(balance).to.eq(s.Bob_USDC)
+        await s.USDC.connect(s.Bob).approve(s.USDI.address, balance)
+        await mineBlock()
+        const depositResult = await s.USDI.connect(s.Bob).deposit(balance)
+        await mineBlock()
+
+        //erouniously transfer some USDC to the reserve
+        balance = await s.USDC.balanceOf(s.Dave.address)
+        expect(balance).to.eq(s.Dave_USDC)
+        await s.USDC.connect(s.Dave).transfer(s.USDI.address, eroniousAmount)//eroniously transfer 500 USDC
+        await mineBlock()
+
+        //check things before donate
+        totalUSDC = await s.USDC.balanceOf(s.USDI.address)
+        assert.equal(totalUSDC.toNumber(), (s.Bob_USDC.toNumber() + eroniousAmount), "Correct amount of USDC is held by the USDI contract")
+
+        let IF = await s.VaultController.interestFactor()
+        let totalLiability = await s.VaultController.totalBaseLiability()
+        totalLiability = await truncate(totalLiability.mul(IF))
+
+        let trueTotal = (totalUSDC.mul(BN("1e12"))).add(totalLiability)
+
+        let totalSupply = await s.USDI.totalSupply()
+        let difference = trueTotal.sub(totalSupply)
+
+
+        //donate
+        const result = await s.USDI.donateReserve()
+        await mineBlock()
+        const args = await getArgs(result)
+
+        expect(await toNumber(args._value)).to.be.closeTo(await toNumber(BN("1e12").mul(eroniousAmount)), 1)
+        expect(await toNumber(difference)).to.be.closeTo(await toNumber(args._value), 1)
+
+        //check more things        
+
+        IF = await s.VaultController.interestFactor()
+        totalLiability = await s.VaultController.totalBaseLiability()
+        totalLiability = await truncate(totalLiability.mul(IF))
+
+        trueTotal = (totalUSDC.mul(BN("1e12"))).add(totalLiability)
+
+        totalSupply = await s.USDI.totalSupply()
+        difference = trueTotal.sub(totalSupply)
+
+        //no reserve to donate
+        expect(difference).to.eq(0)
+
+        await expect(s.USDI.donateReserve()).to.be.revertedWith("No extra reserve")
+
+
+
+
+    })
 })
