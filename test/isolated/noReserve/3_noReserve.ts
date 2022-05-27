@@ -230,7 +230,7 @@ describe("What happens when there is no reserve?", () => {
 
 
         //donate
-        const result = await s.USDI.donateReserve()
+        const result = await s.USDI.connect(s.Frank).donateReserve()
         await mineBlock()
         const args = await getArgs(result)
 
