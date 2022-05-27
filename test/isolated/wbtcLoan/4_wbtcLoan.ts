@@ -154,7 +154,7 @@ describe("Borrow against wBTC, liquidate, and repay", () => {
 
         expect(await toNumber(difference)).to.be.gt(0)
 
-        amountToSolvency = await s.VaultController.amountToSolvency(vaultID)
+        let amountToSolvency = await s.VaultController.amountToSolvency(vaultID)
         expect(await toNumber(amountToSolvency)).to.be.closeTo(0, 0.1)
     })
 

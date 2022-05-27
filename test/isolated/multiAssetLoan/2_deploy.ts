@@ -373,4 +373,13 @@ describe("Deploy Contracts", () => {
     )).to.not.reverted;
     await mineBlock();
   })
+  it("Set pauser", async () => {
+    //set pauser
+    let pauser = await s.USDI.pauser()
+    expect(pauser).to.eq("0x0000000000000000000000000000000000000000")
+    await s.USDI.connect(s.Frank).setPauser(s.Frank.address)
+    await mineBlock()
+    pauser = await s.USDI.pauser()
+    expect(pauser).to.eq(s.Frank.address)
+  })
 });
