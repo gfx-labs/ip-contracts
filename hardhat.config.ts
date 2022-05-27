@@ -33,6 +33,16 @@ const config: HardhatUserConfig = {
       gasPrice: 53000000000,
       //gasPrice: 2000000000,
     },
+    rinkeby: {
+      url: process.env.RINKEBY_URL!,
+      accounts: [process.env.RINKEBY_PRIVATE_KEY!],
+      chainId: 4, // Ropsten's id
+    },
+    polygon: {
+      url: process.env.POLYGON_URL!,
+      accounts: [process.env.POLYGON_PRIVATE_KEY!],
+      chainId: 137, // Ropsten's id
+    },
     localhost: {
       url: "http://localhost:8545",
     },

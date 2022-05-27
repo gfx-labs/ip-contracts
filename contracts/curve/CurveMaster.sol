@@ -47,4 +47,9 @@ contract CurveMaster is ICurveMaster, Ownable {
     }
     _curves[token_address] = curve_address;
   }
+
+  /// @notice special function that does not calculate interest, used for deployment et al
+  function forceSetCurve(address token_address, address curve_address) external onlyOwner {
+    _curves[token_address] = curve_address;
+  }
 }

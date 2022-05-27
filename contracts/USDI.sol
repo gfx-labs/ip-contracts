@@ -15,12 +15,19 @@ import "./_external/openzeppelin/PausableUpgradeable.sol";
 /// @dev extends UFragments
 contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, ExponentialNoError {
   IERC20 public _reserve;
-
   IVaultController public _VaultController;
+
+  address public _pauser;
 
   /// @notice checks if _msgSender() is VaultController
   modifier onlyVaultController() {
     require(_msgSender() == address(_VaultController), "only VaultController");
+    _;
+  }
+
+  /// @notice checks if _msgSender() is pauser
+  modifier onlyPauser() {
+    require(_msgSender() == address(_pauser), "only pauser");
     _;
   }
 
@@ -39,14 +46,22 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _reserve = IERC20(reserveAddr);
   }
 
-  /// @notice pause contract, owner only
-  function pause() external override onlyOwner {
+  function setPauser(address pauser_) external override onlyOwner {
+    _pauser = pauser_;
+  }
+
+  /// @notice pause contract, pauser only
+  function pause() external override onlyPauser {
     _pause();
   }
 
-  /// @notice unpause contract, owner only
-  function unpause() external override onlyOwner {
+  /// @notice unpause contract, pauser only
+  function unpause() external override onlyPauser {
     _unpause();
+  }
+
+  function pauser() public view returns (address) {
+    return _pauser;
   }
 
   function owner() public view override(IUSDI, OwnableUpgradeable) returns (address) {

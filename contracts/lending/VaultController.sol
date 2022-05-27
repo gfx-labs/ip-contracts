@@ -20,7 +20,6 @@ import "../_external/openzeppelin/PausableUpgradeable.sol";
 
 import "hardhat/console.sol";
 
-
 /// @title Controller of all vaults in the USDI borrow/lend system
 /// @notice VaultController contains all business logic for borrowing and lending through the protocol.
 /// It is also in charge of accruing interest.
@@ -69,6 +68,11 @@ contract VaultController is
   /// @notice any function with this modifier will call the pay_interest() function before
   modifier paysInterest() {
     pay_interest();
+    _;
+  }
+
+  modifier onlyPauser() {
+    require(_msgSender() == _usdi.pauser(), "only pauser");
     _;
   }
 
@@ -150,12 +154,12 @@ contract VaultController is
   }
 
   /// @notice pause the contract
-  function pause() external override onlyOwner {
+  function pause() external override onlyPauser {
     _pause();
   }
 
   /// @notice unpause the contract
-  function unpause() external override onlyOwner {
+  function unpause() external override onlyPauser {
     _unpause();
   }
 

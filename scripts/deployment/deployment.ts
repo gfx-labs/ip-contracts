@@ -29,18 +29,24 @@ import {
   ThreeLines0_100__factory,
   UniswapV3OracleRelay__factory,
   IOracleRelay__factory,
+  ChainlinkOracleRelay__factory,
+  ERC20Detailed__factory,
+  TESTERC20__factory,
 } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
 export interface DeploymentInfo {
-  USDC: string;
-  UNI: string;
-  WBTC: string;
-  WETH: string;
-  USDC_ETH_POOL: string;
-  USDC_UNI_POOL: string;
-  USDC_WBTC_POOL: string;
+  USDC?: string;
+  UNI?: string;
+  WBTC?: string;
+  WETH?: string;
+  USDC_ETH_CL?: string;
+  USDC_UNI_CL?: string;
+  USDC_WBTC_CL?: string;
+  USDC_ETH_POOL?: string;
+  USDC_UNI_POOL?: string;
+  USDC_WBTC_POOL?: string;
   USDI?: string;
   ProxyAdmin?: string;
   VaultController?: string;
@@ -84,21 +90,66 @@ export class Deployment {
     await this.ensureExternal();
     await this.ensureProxyAdmin();
     await this.ensureVaultController();
-
     await this.ensureUSDI();
-
     await this.ensureCurve();
-
     await this.ensureOracle();
     await this.ensureEthOracle();
     await this.ensureUniOracle();
     await this.ensureWBTCOracle();
   }
   async ensureExternal() {
-    this.USDC = IERC20__factory.connect(this.Info.USDC!, this.deployer);
-    this.UNI = IVOTE__factory.connect(this.Info.UNI!, this.deployer);
-    this.WETH = IERC20__factory.connect(this.Info.WETH!, this.deployer);
-    this.WBTC = IERC20__factory.connect(this.Info.WBTC!, this.deployer);
+    if (this.Info.USDC) {
+      this.USDC = IERC20__factory.connect(this.Info.USDC!, this.deployer);
+    } else {
+      console.log("deploying usdc");
+      this.USDC = await new TESTERC20__factory(this.deployer).deploy(
+        "USD Coin",
+        "USDC",
+        6
+      );
+      await this.USDC.deployed();
+      this.Info.USDC = this.USDC.address;
+      console.log("USDC deployed at:", this.USDC.address);
+    }
+    if (this.Info.WETH) {
+      this.WETH = IERC20__factory.connect(this.Info.WETH!, this.deployer);
+    } else {
+      console.log("deploying eth");
+      this.WETH = await new TESTERC20__factory(this.deployer).deploy(
+        "Wrapped Ether",
+        "WETH",
+        18
+      );
+      await this.WETH.deployed();
+      this.Info.WETH = this.WETH.address;
+      console.log("WETH deployed at:", this.WETH.address);
+    }
+    if (this.Info.WBTC) {
+      this.WBTC = IERC20__factory.connect(this.Info.WBTC!, this.deployer);
+    } else {
+      console.log("deploying wbtc");
+      this.WBTC = (await new TESTERC20__factory(this.deployer).deploy(
+        "Wrapped Bitcoin",
+        "WBTC",
+        8
+      )) as any;
+      await this.WBTC.deployed();
+      this.Info.WBTC = this.WBTC.address;
+      console.log("WBTC deployed at:", this.WBTC.address);
+    }
+    if (this.Info.UNI) {
+      this.UNI = IVOTE__factory.connect(this.Info.UNI!, this.deployer);
+    } else {
+      console.log("deploying uni");
+      this.UNI = (await new TESTERC20__factory(this.deployer).deploy(
+        "Uniswap Token",
+        "UNI",
+        18
+      )) as any;
+      console.log("UNI deployed at:", this.UNI.address);
+      this.Info.UNI = this.UNI.address;
+      await this.UNI.deployed();
+    }
   }
 
   async ensureProxyAdmin() {
@@ -150,12 +201,10 @@ export class Deployment {
       );
       console.log(`found OracleMaster at ${this.Info.Oracle}`);
     } else {
-      const oracleMaster = await new OracleMaster__factory(
-        this.deployer
-      ).deploy();
-      await oracleMaster.deployed();
+      this.Oracle = await new OracleMaster__factory(this.deployer).deploy();
+      await this.Oracle.deployed();
       this.Info.Oracle = this.Oracle.address;
-      console.log("oracleMaster deployed: ", oracleMaster.address);
+      console.log("oracleMaster deployed: ", this.Oracle.address);
     }
     if ((await this.VaultController.getOracleMaster()) != this.Oracle.address) {
       console.log("Registering oracle master");
@@ -172,17 +221,35 @@ export class Deployment {
       );
       console.log(`found EthOracle at ${this.Info.EthOracle}`);
     } else {
-      const UniswapRelayFactory = new UniswapV3OracleRelay__factory(
-        this.deployer
-      );
-      this.EthOracle = await UniswapRelayFactory.deploy(
-        60, //lookback
-        this.Info.USDC_ETH_POOL, //pool_address
-        true, //quote_token_is_token0
-        BN("1e12"), //mul
-        BN("1") //div
-      );
-      await this.EthOracle.deployed();
+      console.log("deplying new eth oracle");
+      let cl = undefined;
+      let pool = undefined;
+      if (this.Info.USDC_ETH_POOL) {
+        pool = await new UniswapV3OracleRelay__factory(this.deployer).deploy(
+          60, //lookback
+          this.Info.USDC_ETH_POOL, //pool_address
+          true, //quote_token_is_token0
+          BN("1e12"), //mul
+          BN("1") //div
+        );
+        await pool.deployed();
+      }
+      if (this.Info.USDC_ETH_CL) {
+        cl = await new ChainlinkOracleRelay__factory(this.deployer).deploy(
+          this.Info.USDC_ETH_CL, //pool_address
+          BN("1e10"), //mul
+          BN("1") //div
+        );
+        await cl.deployed();
+      }
+      if (cl && pool) {
+        this.EthOracle = await new AnchoredViewRelay__factory(
+          this.deployer
+        ).deploy(pool.address, cl.address, 30, 100);
+        await this.EthOracle.deployed();
+      } else {
+        this.EthOracle = cl ? cl : pool!;
+      }
       this.Info.EthOracle = this.EthOracle.address;
     }
     if (
@@ -219,17 +286,34 @@ export class Deployment {
       );
       console.log(`found WBTCOracle at ${this.Info.WBTCOracle}`);
     } else {
-      const UniswapRelayFactory = new UniswapV3OracleRelay__factory(
-        this.deployer
-      );
-      console.log("setting wbtc oracle to be an adjsted eth-wbtc pool (lol)");
-      this.WBTCOracle = await UniswapRelayFactory.deploy(
-        60, //lookback
-        this.Info.USDC_WBTC_POOL, //pool_address
-        true, //quote_token_is_token0
-        BN("1e12"), //mul
-        BN("1") //div
-      );
+      console.log("deplying new wbtc oracle");
+      let cl = undefined;
+      let pool = undefined;
+      if (this.Info.USDC_WBTC_CL) {
+        cl = await new ChainlinkOracleRelay__factory(this.deployer).deploy(
+          this.Info.USDC_WBTC_CL, //pool_address
+          BN("1e20"), //mul
+          BN("1") //div
+        );
+      }
+      if (this.Info.USDC_WBTC_POOL) {
+        pool = await new UniswapV3OracleRelay__factory(this.deployer).deploy(
+          60, //lookback
+          this.Info.USDC_WBTC_POOL, //pool_address
+          false, //quote_token_is_token0
+          BN("1e12"), //mul
+          BN("1") //div
+        );
+      }
+      if (cl && pool) {
+        await cl.deployed();
+        await pool.deployed();
+        this.WBTCOracle = await new AnchoredViewRelay__factory(
+          this.deployer
+        ).deploy(pool.address, cl.address, 30, 100);
+      } else {
+        this.WBTCOracle = cl ? cl : pool!;
+      }
       await this.WBTCOracle.deployed();
       this.Info.WBTCOracle = this.WBTCOracle.address;
     }
@@ -246,7 +330,6 @@ export class Deployment {
       this.WBTC.address
     );
     if (tokenid.eq(0)) {
-      console.log("registering wbtc into vault controller");
       let t = await this.VaultController.registerErc20(
         this.WBTC.address,
         BN("5e17"),
@@ -265,17 +348,34 @@ export class Deployment {
       );
       console.log(`found UniOracle at ${this.Info.UniOracle}`);
     } else {
-      const UniswapRelayFactory = new UniswapV3OracleRelay__factory(
-        this.deployer
-      );
-      console.log("setting uni oracle to be an adjusted eth relay (lol)");
-      this.UniOracle = await UniswapRelayFactory.deploy(
-        60, //lookback
-        this.Info.USDC_UNI_POOL, //pool_address
-        true, //quote_token_is_token0
-        BN("5e10"), //mul
-        BN("1") //div
-      );
+      console.log("deploying new uni oracle");
+      let cl = undefined;
+      let pool = undefined;
+      if (this.Info.USDC_UNI_CL) {
+        cl = await new ChainlinkOracleRelay__factory(this.deployer).deploy(
+          this.Info.USDC_UNI_CL, //pool_address
+          BN("1e10"), //mul
+          BN("1") //div
+        );
+      }
+      if (this.Info.USDC_UNI_POOL) {
+        pool = await new UniswapV3OracleRelay__factory(this.deployer).deploy(
+          60, //lookback
+          this.Info.USDC_UNI_POOL, //pool_address
+          true, //quote_token_is_token0
+          BN("1e12"), //mul
+          BN("1") //div
+        );
+      }
+      if (cl && pool) {
+        await cl.deployed();
+        await pool.deployed();
+        this.UniOracle = await new AnchoredViewRelay__factory(
+          this.deployer
+        ).deploy(pool.address, cl.address, 30, 100);
+      } else {
+        this.UniOracle = cl ? cl : pool!;
+      }
       await this.UniOracle.deployed();
       this.Info.UniOracle = this.UniOracle.address;
     }
@@ -316,26 +416,20 @@ export class Deployment {
       ).deploy(uUSDI.address, this.ProxyAdmin.address, "0x");
       await USDI.deployed();
       console.log("USDI proxy address: ", USDI.address);
-
       //attach
-      const USDIcontract = new USDI__factory(this.deployer).attach(
-        USDI.address
-      );
-
-      await USDIcontract.initialize(this.USDC.address);
-      console.log("USDI initialized: ", USDIcontract.address);
+      this.USDI = new USDI__factory(this.deployer).attach(USDI.address);
+      await this.USDI.initialize(this.USDC.address);
+      console.log("USDI initialized: ", this.USDI.address);
       this.Info.USDI = this.USDI.address;
     }
     if (
       (await this.USDI.connect(this.deployer).getVaultController()) !=
       this.VaultController.address
     ) {
-      {
-        let t = await this.USDI.connect(this.deployer).setVaultController(
-          this.VaultController.address
-        );
-        await t.wait();
-      }
+      let t = await this.USDI.connect(this.deployer).setVaultController(
+        this.VaultController.address
+      );
+      await t.wait();
       console.log(
         "Set VaultController on USDI to: ",
         this.VaultController.address
@@ -365,13 +459,16 @@ export class Deployment {
       this.Curve = await curveFactory.deploy();
       await this.Curve.deployed();
       this.Info.Curve = this.Curve.address;
+      console.log("deployed curve master at", this.Info.Curve);
     }
     if (
       (await this.Curve._vaultControllerAddress()) !=
       this.VaultController.address
     ) {
       console.log("setting Curve vault controller");
-      this.Curve.setVaultController(this.VaultController.address);
+      await (
+        await this.Curve.setVaultController(this.VaultController.address)
+      ).wait();
     }
     if (this.Info.ThreeLines != undefined) {
       this.ThreeLines = new ThreeLines0_100__factory(this.deployer).attach(
@@ -379,6 +476,7 @@ export class Deployment {
       );
       console.log(`found ThreeLines at ${this.Info.ThreeLines}`);
     } else {
+      console.log("deploying three lines");
       this.ThreeLines = await new ThreeLines0_100__factory(
         this.deployer
       ).deploy(
@@ -390,13 +488,15 @@ export class Deployment {
       );
       await this.ThreeLines.deployed();
       this.Info.ThreeLines = this.ThreeLines.address;
+      console.log("deployed three lines at", this.Info.ThreeLines);
     }
     if (
       (await this.Curve._curves(
         "0x0000000000000000000000000000000000000000"
       )) != this.ThreeLines.address
     ) {
-      let t = await this.Curve.setCurve(
+      console.log("setting 0 curve to threelines");
+      let t = await this.Curve.forceSetCurve(
         "0x0000000000000000000000000000000000000000",
         this.ThreeLines.address
       );

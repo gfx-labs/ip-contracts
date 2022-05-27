@@ -39,6 +39,11 @@ interface IUSDI is IERC20Metadata, USDIEvents {
   function donateReserve() external;
 
   // admin functions
+
+  function setPauser(address pauser_) external;
+
+  function pauser() external view returns (address);
+
   function pause() external;
 
   function unpause() external;
