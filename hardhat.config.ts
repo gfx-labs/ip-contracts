@@ -4,6 +4,7 @@ import "hardhat-watcher";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-gas-reporter";
 import "@tenderly/hardhat-tenderly";
+import "@nomiclabs/hardhat-etherscan";
 
 import "@typechain/hardhat";
 import "hardhat-docgen";
@@ -99,6 +100,11 @@ const config: HardhatUserConfig = {
   },
   gasReporter: {
     enabled: false,
+  },
+  etherscan: {
+    apiKey: {
+      polygon: process.env.ETHERSCAN_POLYGON_KEY!,
+    },
   },
 };
 
