@@ -1,4 +1,5 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { ethers } from "ethers";
 import fs from "fs";
 import {
   USDI,
@@ -32,6 +33,14 @@ import {
   ChainlinkOracleRelay__factory,
   ERC20Detailed__factory,
   TESTERC20__factory,
+  InterestProtocolTokenDelegate__factory,
+  InterestProtocolTokenDelegate,
+  InterestProtocolToken__factory,
+  GovernorCharlieDelegate__factory,
+  GovernorCharlieDelegator__factory,
+  GovernorCharlieDelegator,
+  GovernorCharlieDelegate,
+  InterestProtocolToken,
 } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
@@ -56,6 +65,12 @@ export interface DeploymentInfo {
   WBTCOracle?: string;
   Curve?: string;
   ThreeLines?: string;
+
+  IPTDelegate?: string;
+  IPTDelegator?: string;
+
+  CharlieDelegate?: string;
+  CharlieDelegator?: string;
 }
 
 export class Deployment {
@@ -79,6 +94,12 @@ export class Deployment {
 
   Info: DeploymentInfo;
 
+  IPTDelegate!: InterestProtocolTokenDelegate;
+  IPTDelegator!: InterestProtocolToken;
+
+  CharlieDelegator!: GovernorCharlieDelegator;
+  CharlieDelegate!: GovernorCharlieDelegate;
+
   deployer: SignerWithAddress;
 
   constructor(deployer: SignerWithAddress, i: DeploymentInfo) {
@@ -96,6 +117,8 @@ export class Deployment {
     await this.ensureEthOracle();
     await this.ensureUniOracle();
     await this.ensureWBTCOracle();
+    console.log(this.Info);
+    await this.ensureCharlie();
   }
   async ensureExternal() {
     if (this.Info.USDC) {
@@ -509,6 +532,76 @@ export class Deployment {
         this.Curve.address
       );
       await t.wait();
+    }
+  }
+
+  async ensureCharlie() {
+    if (this.Info.CharlieDelegator) {
+      console.log("found charlie at", this.Info.CharlieDelegator);
+    } else {
+      console.log("Deploying governance stack");
+      let txCount = await this.deployer.getTransactionCount();
+      this.IPTDelegate = await new InterestProtocolTokenDelegate__factory(
+        this.deployer
+      ).deploy();
+      await this.IPTDelegate.deployed();
+      console.log(
+        "InterestProtocolTokenDelegate deployed: ",
+        this.IPTDelegate.address
+      );
+      const totalSupply_ = BN("1e26");
+      console.log("Deploying GovernorCharlieDelegate...");
+      this.CharlieDelegate = await new GovernorCharlieDelegate__factory(
+        this.deployer
+      ).deploy();
+      await this.CharlieDelegate.deployed();
+
+      const owner_ = ethers.utils.getContractAddress({
+        from: this.deployer.address,
+        nonce: txCount + 2,
+      });
+      this.IPTDelegator = await new InterestProtocolToken__factory(
+        this.deployer
+      ).deploy(
+        this.deployer.address,
+        owner_,
+        this.IPTDelegate.address,
+        totalSupply_
+      );
+      await this.IPTDelegator.deployed();
+      console.log("IPTDelegator deployed: ", this.IPTDelegator.address);
+      console.log("Deploying GovernorCharlieDelegator...");
+      const votingPeriod_ = BN("600");
+      const votingDelay_ = BN("10");
+      const proposalThreshold_ = BN("100");
+      const proposalTimelockDelay_ = BN("800");
+      const quorumVotes_ = BN("1000");
+      const emergencyQuorumVotes_ = BN("100");
+      const emergencyVotingPeriod_ = BN("300");
+      const emergencyTimelockDelay_ = BN("600");
+      this.CharlieDelegator = await new GovernorCharlieDelegator__factory(
+        this.deployer
+      ).deploy(
+        this.IPTDelegator.address,
+        this.CharlieDelegate.address,
+        votingPeriod_,
+        votingDelay_,
+        proposalThreshold_,
+        proposalTimelockDelay_,
+        quorumVotes_,
+        emergencyQuorumVotes_,
+        emergencyVotingPeriod_,
+        emergencyTimelockDelay_
+      );
+      await this.CharlieDelegator.deployed();
+      console.log(
+        "Charlie Delegator Deployed: ",
+        this.CharlieDelegator.address
+      );
+      this.Info.CharlieDelegator = this.CharlieDelegator.address;
+      this.Info.CharlieDelegate = this.CharlieDelegate.address;
+      this.Info.IPTDelegator = this.IPTDelegator.address;
+      this.Info.IPTDelegate = this.IPTDelegate.address;
     }
   }
 }

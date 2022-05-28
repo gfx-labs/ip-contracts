@@ -36,6 +36,10 @@ async function main() {
     EthOracle: "0xBbBFb84b345021905AD2cf4C41A3C91C98718f57",
     UniOracle: "0x4Bf87FA180DeD055BCc76B387d0d52b66001C7fC",
     WBTCOracle: "0x6eFC9A84CF7e66F767AcbBB7C8e17dDF6BCC0f9D",
+    CharlieDelegator: "0xF5010a6787EF0ee6669D646Ea227b6E03f8974a2",
+    CharlieDelegate: "0x5ABFDcb41f5b02ff8AaB60f5d8e54a0A480B1f79",
+    IPTDelegator: "0x416a2337D150D01C4656D6232E2d2abe959D4654",
+    IPTDelegate: "0x31c0842494f35d701410fc53187b0599A880c9Da",
   };
 
   const d = new Deployment(deployer, info);

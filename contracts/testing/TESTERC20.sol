@@ -46,6 +46,10 @@ contract TESTERC20 {
     _mint(msg.sender, (10**_decimals) * 100);
   }
 
+  function publicMintMany() external {
+    _mint(msg.sender, (10**_decimals) * 10000);
+  }
+
   function delegate(address a) public {
     _delegations[msg.sender] = a;
   }
