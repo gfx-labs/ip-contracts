@@ -217,7 +217,7 @@ contract VaultController is
     require(_tokenAddress_tokenId[token_address] == 0, "token already registered");
 
     //LTV must be compatible with liquidation incentive
-    require(LTV < (expScale - liquidationIncentive), "LTV:liquidationIncentive incompatible");
+    require(LTV < (expScale - liquidationIncentive), "incompatible LTV");
 
     // increment the amount of registered token
     _tokensRegistered = _tokensRegistered + 1;
@@ -250,7 +250,7 @@ contract VaultController is
     require(_tokenAddress_tokenId[token_address] != 0, "token is not registered");
 
     //LTV must be compatible with liquidation incentive
-    require(LTV < (expScale - liquidationIncentive), "LTV:liquidationIncentive incompatible");
+    require(LTV < (expScale - liquidationIncentive), "incompatible LTV");
 
     // set the oracle of the token
     _tokenId_oracleAddress[_tokensRegistered] = oracle_address;
