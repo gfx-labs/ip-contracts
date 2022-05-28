@@ -1,3 +1,4 @@
+import "@typechain/hardhat";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-watcher";
@@ -6,7 +7,6 @@ import "hardhat-gas-reporter";
 import "@tenderly/hardhat-tenderly";
 import "@nomiclabs/hardhat-etherscan";
 
-import "@typechain/hardhat";
 import "hardhat-docgen";
 
 import { HardhatUserConfig } from "hardhat/types";
@@ -105,6 +105,11 @@ const config: HardhatUserConfig = {
     apiKey: {
       polygon: process.env.ETHERSCAN_POLYGON_KEY!,
     },
+  },
+  typechain: {
+    outDir: "typechain-types",
+    target: "ethers-v5",
+    alwaysGenerateOverloads: true, // should overloads with full signatures like deposit(uint256) be generated always, even if there are no overloads?
   },
 };
 
