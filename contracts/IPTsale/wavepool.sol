@@ -5,6 +5,7 @@ import "hardhat/console.sol";
 
 /// @title interfact to interact with ERC20 tokens
 /// @author elee
+
 interface IERC20 {
   function mint(address account, uint256 amount) external;
 
@@ -29,6 +30,7 @@ interface IERC20 {
 }
 
 /// @title Wavepool is the second genration wave contract
+// solhint-disable comprehensive-interface
 contract WavePool {
   struct RedemptionData {
     uint256 claimed;
@@ -153,7 +155,7 @@ contract WavePool {
   function redeem(uint256 wave) external {
     require(canRedeem() == true, "can't redeem yet");
     require(_data[wave][msg.sender].redeemed == false, "already redeem");
-    if(!calculated){
+    if (!calculated) {
       calculatePricing();
     }
 
@@ -173,30 +175,6 @@ contract WavePool {
     giveTo(msg.sender, rewardAmount);
   }
 
-  /**
-  /// @notice redeem points for token
-  function redeem(uint256 wave) external {
-    require(canRedeem() == true, "can't redeem yet");
-    require(_data[wave][msg.sender].redeemed == false, "already redeem");
-    _data[wave][msg.sender].redeemed = true;
-    uint256 rewardAmount;
-    RedemptionData memory user = _data[wave][msg.sender];
-    // implied price is assuming pro rata, how many points you need for one reward
-    // for instance, if the totalReward was 1, and _totalClaimed was below 500_000, then the impliedPrice would be below 500_000
-    uint256 impliedPrice = _totalClaimed / (_totalReward / 1e18);
-    if (impliedPrice < _floor) {
-      // if the implied price is smaller than the floor price, that means that
-      // not enough points have been claimed to get to the floor price
-      // in that case, charge the floor price
-      rewardAmount = ((1e18 * user.claimed) / _floor);
-    } else {
-      // if the implied price is above the floor price, the price is the implied price
-      rewardAmount = ((1e18 * user.claimed) / impliedPrice);
-    }
-    giveTo(msg.sender, rewardAmount);
-  }
-
-   */
   /// @notice get points
   /// @param amount amount of usdc
   /// @param key the total amount the points the user may claim - ammount allocated
@@ -241,6 +219,7 @@ contract WavePool {
     return verifyProof(merkleProof, merkleRoot, leaf);
   }
 
+  //solhint-disable-next-line max-line-length
   //merkle logic: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/c9bdb1f0ae168e00a942270f2b85d6a7d3293550/contracts/utils/cryptography/MerkleProof.sol
   //MIT: OpenZeppelin Contracts v4.3.2 (utils/cryptography/MerkleProof.sol)
   function verifyProof(
@@ -283,7 +262,6 @@ contract WavePool {
     require(calculated, "calculatePricing() first");
     require(!withdrawn, "Withdrawn already");
 
-    //uint256 amount = _totalReward - (((_totalClaimed * _floor) / 1e6) * 1e12);
     uint256 rewardAmount;
     if (!saturation) {
       rewardAmount = ((1e18 * _totalClaimed) / _floor);
@@ -292,7 +270,8 @@ contract WavePool {
     }
     withdrawn = true;
     rewardAmount = _totalReward - rewardAmount;
-   
+
     giveTo(_receiver, rewardAmount);
   }
 }
+// solhint-enable comprehensive-interface

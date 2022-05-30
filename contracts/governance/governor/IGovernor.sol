@@ -113,7 +113,7 @@ interface GovernorCharlieEvents {
     string[] signatures,
     bytes[] calldatas,
     uint256 indexed startBlock,
-    uint256 indexed endBlock,
+    uint256 endBlock,
     string description
   );
 

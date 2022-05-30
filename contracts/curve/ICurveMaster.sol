@@ -11,4 +11,6 @@ interface ICurveMaster {
   function setVaultController(address vault_master_address) external;
 
   function setCurve(address token_address, address curve_address) external;
+
+  function forceSetCurve(address token_address, address curve_address) external;
 }

@@ -128,7 +128,8 @@ export class Deployment {
       this.USDC = await new TESTERC20__factory(this.deployer).deploy(
         "USD Coin",
         "USDC",
-        6
+        6,
+        20000
       );
       await this.USDC.deployed();
       this.Info.USDC = this.USDC.address;
@@ -141,7 +142,8 @@ export class Deployment {
       this.WETH = await new TESTERC20__factory(this.deployer).deploy(
         "Wrapped Ether",
         "WETH",
-        18
+        18,
+        2
       );
       await this.WETH.deployed();
       this.Info.WETH = this.WETH.address;
@@ -154,7 +156,8 @@ export class Deployment {
       this.WBTC = (await new TESTERC20__factory(this.deployer).deploy(
         "Wrapped Bitcoin",
         "WBTC",
-        8
+        8,
+        1
       )) as any;
       await this.WBTC.deployed();
       this.Info.WBTC = this.WBTC.address;
@@ -167,7 +170,8 @@ export class Deployment {
       this.UNI = (await new TESTERC20__factory(this.deployer).deploy(
         "Uniswap Token",
         "UNI",
-        18
+        18,
+        500
       )) as any;
       console.log("UNI deployed at:", this.UNI.address);
       this.Info.UNI = this.UNI.address;
@@ -293,7 +297,7 @@ export class Deployment {
       console.log("registering eth into vault controller");
       let t = await this.VaultController.registerErc20(
         this.WETH.address,
-        BN("5e17"),
+        BN("8e17"),
         this.WETH.address,
         BN("5e16")
       );
@@ -355,7 +359,7 @@ export class Deployment {
     if (tokenid.eq(0)) {
       let t = await this.VaultController.registerErc20(
         this.WBTC.address,
-        BN("5e17"),
+        BN("8e17"),
         this.WBTC.address,
         BN("5e16")
       );
@@ -417,7 +421,7 @@ export class Deployment {
       console.log("registering uni into vault controller");
       let t = await this.VaultController.registerErc20(
         this.UNI.address,
-        BN("5e17"),
+        BN("55e16"),
         this.UNI.address,
         BN("5e16")
       );
@@ -504,11 +508,11 @@ export class Deployment {
       this.ThreeLines = await new ThreeLines0_100__factory(
         this.deployer
       ).deploy(
-        BN("200e16"), //r0
-        BN("5e16"), //r1
-        BN("45e15"), //r2
-        BN("50e16"), //s1
-        BN("55e16") //s2
+        BN("200e16"), //r1
+        BN("10e16"), //r2
+        BN("5e15"), //r3
+        BN("40e16"), //s1
+        BN("60e16") //s2
       );
       await this.ThreeLines.deployed();
       this.Info.ThreeLines = this.ThreeLines.address;

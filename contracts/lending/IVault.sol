@@ -13,20 +13,16 @@ interface VaultEvents {
 interface IVault is VaultEvents {
   /// @notice value of _baseLiability
   function baseLiability() external view returns (uint256);
-
   /// @notice value of _vaultInfo.minter
   function minter() external view returns (address);
-
   /// @notice value of _vaultInfo.id
   function id() external view returns (uint96);
-
   /// @notice value of _tokenBalance
   function tokenBalance(address) external view returns (uint256);
 
   // business logic
 
   function withdrawErc20(address token_address, uint256 amount) external;
-
   function delegateCompLikeTo(address compLikeDelegatee, address compLikeToken) external;
 
   // administrative functions
@@ -37,8 +33,4 @@ interface IVault is VaultEvents {
   ) external;
 
   function modifyLiability(bool increase, uint256 base_amount) external returns (uint256);
-
-  //function depositETH() external payable;
-
-  //function withdrawEther(uint256 amount) external;
 }

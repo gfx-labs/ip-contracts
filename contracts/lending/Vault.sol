@@ -29,8 +29,6 @@ contract Vault is IVault, Context {
     uint96 id;
     address minter;
   }
-  //address constant wETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-
   /// @notice Metadata of vault, aka the id & the minter's address
   VaultInfo public _vaultInfo;
   IVaultController public immutable _controller;
@@ -137,28 +135,4 @@ contract Vault is IVault, Context {
     }
     return _baseLiability;
   }
-
-  /**
-  function depositETH() external payable override {
-    require(msg.value > 0, "msg.value == 0");
-    IWETH(wETH).deposit{value: msg.value}();
-  }
-
-  function withdrawEther(uint256 amount) external override onlyMinter {
-    IWETH(wETH).withdraw(amount);
-    address payable sender = payable(_msgSender());
-
-    (bool success, bytes memory data) = sender.call{value: amount}("");
-
-    require(success && (data.length == 0 || abi.decode(data, (bool))), "Vault: TRANSFER_FAILED");
-
-    //  check if the account is solvent
-    bool solvency = _controller.checkVault(_vaultInfo.id);
-    require(solvency, "over-withdrawal");
-  }
-
-  receive() external payable {
-    assert(_msgSender() == wETH); // only accept ETH via fallback from the WETH contract
-  }
-   */
 }

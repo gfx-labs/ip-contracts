@@ -494,6 +494,7 @@ contract VaultController is
   }
 
   /// @notice the actual implementation of get_vaultA_borrowing_power
+  //solhint-disable-next-line code-complexity
   function get_vault_borrowing_power(IVault vault) private view returns (uint192) {
     uint192 total_liquidity_value = 0;
     // loop over each registed token, adding the indivuduals LTV to the total LTV of the vault
