@@ -251,6 +251,9 @@ contract WavePool {
 
   /// @notice function which sends the reward token
   function giveTo(address target, uint256 amount) internal {
+    if(_rewardToken.balanceOf(address(this)) < amount){
+      amount = _rewardToken.balanceOf(address(this));
+    }
     bool check = _rewardToken.transfer(target, amount);
     require(check, "erc20 transfer failed");
   }

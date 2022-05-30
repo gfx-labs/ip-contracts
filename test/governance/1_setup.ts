@@ -38,7 +38,6 @@ describe("Token Setup", () => {
         s.Eric = accounts[5];
         s.Andy = accounts[6];
         s.Bob = accounts[7];
-        console.log(s.Bob.address);
     });
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
