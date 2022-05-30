@@ -43,7 +43,7 @@ describe("Token Setup", () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
     });
     it("Should succesfully transfer money", async () => {
-        showBody(`stealing ${s.Frank_USDC} to andy from ${s.usdcAddress}`);
+        //showBody(`stealing ${s.Frank_USDC} to andy from ${s.usdcAddress}`);
         await expect(
             stealMoney(usdc_minter, "0x70bDA08DBe07363968e9EE53d899dFE48560605B", s.usdcAddress, s.Frank_USDC)
         ).to.not.be.reverted;
@@ -98,7 +98,7 @@ const deployGovAndToken = async () => {
     )
     await mineBlock()
     let owner = await s.InterestProtocolToken.owner()
-    showBody("OWNER: ", owner)
+    //showBody("OWNER: ", owner)
     s.GovernorCharlieDelegate = await DeployContract(new GovernorCharlieDelegate__factory(s.Frank), s.Frank)
     await mineBlock()
     s.GovernorCharlieDelegator = await DeployContract(
@@ -119,35 +119,35 @@ const deployGovAndToken = async () => {
     s.GOV = GovernorCharlieDelegate__factory.connect(s.GovernorCharlieDelegator.address, s.Frank);
     s.IPT = InterestProtocolTokenDelegate__factory.connect(s.InterestProtocolToken.address, s.Frank);
     let govToken = await s.GOV.ipt()
-    showBody("IPT token: ", govToken)
+    //showBody("IPT token: ", govToken)
 }
 
 require('chai').should()
 describe("Governance & IPT Contracts", () => {
     before(async () => {
         await deployGovAndToken()
-        showBody("ipt_", await s.GOV.ipt())
-        showBody("votingPeriod_", await s.GOV.votingPeriod())
-        showBody("votingDelay_", await s.GOV.votingDelay())
-        showBody("proposalThreshold_", await s.GOV.proposalThreshold())
-        showBody("proposalTimelockDelay_", await s.GOV.proposalTimelockDelay())
-        showBody("quorumVotes_", await s.GOV.quorumVotes())
-        showBody("emergencyQuorumVotes_", await s.GOV.emergencyQuorumVotes())
-        showBody("emergencyVotingPeriod_", await s.GOV.emergencyVotingPeriod())
-        showBody("emergencyTimelockDelay_", await s.GOV.emergencyTimelockDelay())
-        showBody("proposalCount ", await s.GOV.proposalCount())
+        //showBody("ipt_", await s.GOV.ipt())
+        //showBody("votingPeriod_", await s.GOV.votingPeriod())
+        //showBody("votingDelay_", await s.GOV.votingDelay())
+        //showBody("proposalThreshold_", await s.GOV.proposalThreshold())
+        //showBody("proposalTimelockDelay_", await s.GOV.proposalTimelockDelay())
+        //showBody("quorumVotes_", await s.GOV.quorumVotes())
+        //showBody("emergencyQuorumVotes_", await s.GOV.emergencyQuorumVotes())
+        //showBody("emergencyVotingPeriod_", await s.GOV.emergencyVotingPeriod())
+        //showBody("emergencyTimelockDelay_", await s.GOV.emergencyTimelockDelay())
+        //showBody("proposalCount ", await s.GOV.proposalCount())
     })
     it("Verify owner of governance is IPT", async () => {
         expect(await s.GOV.ipt()).to.equal(await s.InterestProtocolToken.address);
     })
     it("Verify gov token admin is gov", async () => {
-        showBody("GOV owner", await s.GOV.address)
-        showBody("IPT owner", await s.IPT.owner())
+        //showBody("GOV owner", await s.GOV.address)
+        //showBody("IPT owner", await s.IPT.owner())
         expect(await s.GOV.address).to.equal(await s.IPT.owner());
     })
     it("Verify gov token admin is gov", async () => {
-        showBody("GOV owner", await s.GOV.address)
-        showBody("IPT owner", await s.IPT.owner())
+        //showBody("GOV owner", await s.GOV.address)
+        //showBody("IPT owner", await s.IPT.owner())
         expect(await s.GOV.address).to.equal(await s.IPT.owner());
     })
     it("Verify Frank can't make a proposal", async () => {
@@ -162,10 +162,10 @@ describe("Governance & IPT Contracts", () => {
     })
     it("Verify Frank delegated votes to himself", async () => {
         let bn = await ethers.provider.getBlockNumber();
-        showBody("Frank's votes", await s.IPT.getCurrentVotes(s.Frank.address))
+        //showBody("Frank's votes", await s.IPT.getCurrentVotes(s.Frank.address))
         await s.IPT.connect(s.Frank).delegate(s.Frank.address)
         await mineBlock()
-        showBody("Frank's votes", await s.IPT.getCurrentVotes(s.Frank.address))
+        //showBody("Frank's votes", await s.IPT.getCurrentVotes(s.Frank.address))
         expect(await s.IPT.getCurrentVotes(s.Frank.address)).to.be.gt(0)
         expect(await s.IPT.getPriorVotes(s.Frank.address,bn)).to.eq(0)        
     })
@@ -177,20 +177,20 @@ describe("Governance & IPT Contracts", () => {
         const description = "test proposal"
         const emergency = false
         await mineBlock()
-        showBody("proposal count",await s.GOV.proposalCount())
+        //showBody("proposal count",await s.GOV.proposalCount())
         await s.GOV.propose(targets,values,signatures,calldatas,description,emergency)
         await mineBlock()
-        showBody("proposal count",await s.GOV.proposalCount())
+        //showBody("proposal count",await s.GOV.proposalCount())
         expect (await s.GOV.proposalCount()).to.be.gt(0)
     })
 
     it("Verify Frank can't vote bc review period", async () => {
         let bn = await ethers.provider.getBlockNumber();
-        showBody("currentBlockNumber: ", bn)
+        //showBody("currentBlockNumber: ", bn)
         const proposalId = await s.GOV.proposalCount()
         let proposalInfo = await s.GOV.proposals(proposalId);
-        showBody("start block",proposalInfo['startBlock'])
-        showBody("before vote",proposalInfo['forVotes'])
+        //showBody("start block",proposalInfo['startBlock'])
+        //showBody("before vote",proposalInfo['forVotes'])
         const support = 1
         const reason = "good proposal"
         await expect(s.GOV.castVoteWithReason(proposalId, support, reason)).to.be.reverted
@@ -199,22 +199,22 @@ describe("Governance & IPT Contracts", () => {
     it("Verify Frank can vote after the review period", async () => {
         await advanceBlockHeight((await s.GOV.votingDelay()).toNumber())
         let bn = await ethers.provider.getBlockNumber();
-        showBody("currentBlockNumber: ", bn)
+        //showBody("currentBlockNumber: ", bn)
         const proposalId = await s.GOV.proposalCount()
         let proposalInfo = await s.GOV.proposals(proposalId);
-        showBody("start block",proposalInfo['startBlock'])
-        showBody("before vote",proposalInfo['forVotes'])
+        //showBody("start block",proposalInfo['startBlock'])
+        //showBody("before vote",proposalInfo['forVotes'])
         const support = 1
         const reason = "good proposal"
         await s.GOV.castVoteWithReason(proposalId, support, reason)
         await mineBlock()
         proposalInfo = await s.GOV.proposals(proposalId);
-        showBody("after vote",proposalInfo['forVotes'])
+        //showBody("after vote",proposalInfo['forVotes'])
     })
 
     it("Verify Frank can't queue the proposal", async () => {
         const proposalId = await s.GOV.proposalCount()
-        showBody("proposal count", proposalId)
+        //showBody("proposal count", proposalId)
         await expect(s.GOV.queue(proposalId)).to.be.reverted
     })
     
@@ -224,7 +224,7 @@ describe("Governance & IPT Contracts", () => {
         await s.GOV.queue(proposalId)
         await mineBlock()
         let state = await s.GOV.state(proposalId);
-        showBody("state: ", state)
+        //showBody("state: ", state)
         await expect(state).to.equal(5)
     })
 
@@ -266,9 +266,9 @@ describe("Governance & IPT Contracts", () => {
         const proposalId = await s.GOV.proposalCount()
         let proposalInfo = await s.GOV.proposals(proposalId);
         let bn = await ethers.provider.getBlockNumber();
-        showBody("currentBlockNumber: ", bn)
-        showBody("start block: ",proposalInfo['startBlock'])
-        showBody("end vote: ",proposalInfo['endBlock'])
+        //showBody("currentBlockNumber: ", bn)
+        //showBody("start block: ",proposalInfo['startBlock'])
+        //showBody("end vote: ",proposalInfo['endBlock'])
         expect (proposalId).to.be.gt(1)
     })
     it("Verify Andy can immediately vote", async () => {
@@ -279,20 +279,20 @@ describe("Governance & IPT Contracts", () => {
         await mineBlock()
         let proposalInfo = await s.GOV.proposals(proposalId);
         let newVotes = proposalInfo['forVotes']
-        showBody("newVotes: ", newVotes)
+        //showBody("newVotes: ", newVotes)
         expect(newVotes).to.be.gt(0)
     })
     //a proposal can fail for two reasons: not enough votes or not enough time
     it("Verify Frank can't queue the proposal bc time", async () => {
         const proposalId = await s.GOV.proposalCount()
-        showBody("proposal count", proposalId)
+        //showBody("proposal count", proposalId)
         await expect(s.GOV.connect(s.Andy).queue(proposalId)).to.be.revertedWith("can only be queued if succeeded")
         
     })
     it("Verify Frank can't queue the proposal bc votes", async () => {
         await advanceBlockHeight((await s.GOV.emergencyVotingPeriod()).toNumber())
         const proposalId = await s.GOV.proposalCount()
-        showBody("proposal count", proposalId)
+        //showBody("proposal count", proposalId)
         await expect(s.GOV.connect(s.Andy).queue(proposalId)).to.be.revertedWith("can only be queued if succeeded")
     })
     it("Verify emergency proposals work", async () => {
@@ -310,9 +310,9 @@ describe("Governance & IPT Contracts", () => {
         let bn = await ethers.provider.getBlockNumber()
         let bnData = await ethers.provider.getBlock(bn)
         //showBody("time at propose: ", bnData.timestamp)
-        showBody("currentBlockNumber: ", bn)
-        showBody("start block: ",proposalInfo['startBlock'])
-        showBody("end vote: ",proposalInfo['endBlock'])
+        //showBody("currentBlockNumber: ", bn)
+        //showBody("start block: ",proposalInfo['startBlock'])
+        //showBody("end vote: ",proposalInfo['endBlock'])
         expect (proposalId).to.be.gt(2)
         const support = 1
         const reason = "good proposal"
@@ -320,15 +320,15 @@ describe("Governance & IPT Contracts", () => {
         await mineBlock()
         proposalInfo = await s.GOV.proposals(proposalId);
         let newVotes = proposalInfo['forVotes']
-        showBody("newVotes: ", newVotes)
+        //showBody("newVotes: ", newVotes)
         expect(newVotes).to.be.gt(0)
         await s.GOV.castVoteWithReason(proposalId, support, reason)
         await mineBlock()
         await advanceBlockHeight((await s.GOV.emergencyVotingPeriod()).toNumber())
         bn = await ethers.provider.getBlockNumber()
         bnData = await ethers.provider.getBlock(bn)
-        showBody("before queue time: ", bnData.timestamp)
-        showBody("expected eta: ", proposalInfo['delay'].add(bnData.timestamp))
+        //showBody("before queue time: ", bnData.timestamp)
+        //showBody("expected eta: ", proposalInfo['delay'].add(bnData.timestamp))
         await s.GOV.connect(s.Andy).queue(proposalId)
         await mineBlock()
         await fastForward((await s.GOV.emergencyTimelockDelay()).toNumber())
@@ -336,9 +336,9 @@ describe("Governance & IPT Contracts", () => {
         await mineBlock()
         bn = await ethers.provider.getBlockNumber()
         bnData = await ethers.provider.getBlock(bn)
-        showBody("time at execute: ", bnData.timestamp)
+        //showBody("time at execute: ", bnData.timestamp)
         proposalInfo = await s.GOV.proposals(proposalId);
-        showBody("eta: ", proposalInfo['eta'])
+        //showBody("eta: ", proposalInfo['eta'])
         await s.GOV.execute(proposalId)
         await mineBlock()
         let endingBalance = await s.USDC.balanceOf(s.GOV.address)
@@ -386,11 +386,11 @@ describe("Governance & IPT Contracts", () => {
         ]
         const description = "test proposal"
         const emergency = false
-        showBody("proposal count: ", await s.GOV.proposalCount())
+        //showBody("proposal count: ", await s.GOV.proposalCount())
         await s.GOV.connect(s.Andy).propose(targets,values,signatures,calldatas,description,emergency)
         await mineBlock()
         const proposalId = await s.GOV.proposalCount()
-        showBody("proposal count: ", proposalId)
+        //showBody("proposal count: ", proposalId)
         let proposalInfo = await s.GOV.proposals(proposalId)
         expect (proposalId).to.be.gt(3)
         const support = 1
@@ -408,16 +408,16 @@ describe("Governance & IPT Contracts", () => {
         await mineBlock()
         await s.GOV.connect(s.Andy).execute(proposalId)
         await mineBlock()
-        showBody("proposalTimelockDelay_", await s.GOV.proposalTimelockDelay())
-        showBody("emergencyTimelockDelay_", await s.GOV.emergencyTimelockDelay())
-        showBody("votingDelay_", await s.GOV.votingDelay())
-        showBody("votingPeriod_", await s.GOV.votingPeriod())
-        showBody("emergencyVotingPeriod_", await s.GOV.emergencyVotingPeriod())
-        showBody("proposalThreshold_", await s.GOV.proposalThreshold())
-        showBody("quorumVotes_", await s.GOV.quorumVotes())
-        showBody("emergencyQuorumVotes_", await s.GOV.emergencyQuorumVotes())
-        showBody("is whitelisted?: ", await s.GOV.isWhitelisted(s.Eric.address))
-        showBody("is whitelistGuardian: ", await s.GOV.whitelistGuardian());
+        //showBody("proposalTimelockDelay_", await s.GOV.proposalTimelockDelay())
+        //showBody("emergencyTimelockDelay_", await s.GOV.emergencyTimelockDelay())
+        //showBody("votingDelay_", await s.GOV.votingDelay())
+        //showBody("votingPeriod_", await s.GOV.votingPeriod())
+        //showBody("emergencyVotingPeriod_", await s.GOV.emergencyVotingPeriod())
+        //showBody("proposalThreshold_", await s.GOV.proposalThreshold())
+        //showBody("quorumVotes_", await s.GOV.quorumVotes())
+        //showBody("emergencyQuorumVotes_", await s.GOV.emergencyQuorumVotes())
+        //showBody("is whitelisted?: ", await s.GOV.isWhitelisted(s.Eric.address))
+        //showBody("is whitelistGuardian: ", await s.GOV.whitelistGuardian());
         expect (await s.GOV.isWhitelisted(s.Bob.address)).to.eq(true)
     })
     it("Verify proposer can cancel", async () => {
@@ -428,11 +428,11 @@ describe("Governance & IPT Contracts", () => {
         const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000005f5e100"]
         const description = "test proposal"
         const emergency = false
-        showBody("proposal count: ", await s.GOV.proposalCount())
+        //showBody("proposal count: ", await s.GOV.proposalCount())
         await s.GOV.connect(s.Andy).propose(targets,values,signatures,calldatas,description,emergency)
         await mineBlock()
         const proposalId = await s.GOV.proposalCount()
-        showBody("proposal count: ", proposalId)
+        //showBody("proposal count: ", proposalId)
         let proposalInfo = await s.GOV.proposals(proposalId)
         expect (proposalId).to.be.gt(4)
         const support = 1
@@ -452,11 +452,11 @@ describe("Governance & IPT Contracts", () => {
         const calldatas = ["0x00000000000000000000000002a3037749fa094d7f2e206f70c0eb5fc4004c1c0000000000000000000000000000000000000000000000000000000005f5e100"]
         const description = "test proposal"
         const emergency = false
-        showBody("proposal count: ", await s.GOV.proposalCount())
+        //showBody("proposal count: ", await s.GOV.proposalCount())
         await s.GOV.connect(s.Andy).propose(targets,values,signatures,calldatas,description,emergency)
         await mineBlock()
         const proposalId = await s.GOV.proposalCount()
-        showBody("proposal count: ", proposalId)
+        //showBody("proposal count: ", proposalId)
         expect (proposalId).to.be.gt(5)
         const support = 1
         const reason = "good proposal"
@@ -471,9 +471,9 @@ describe("Governance & IPT Contracts", () => {
     })
     it("Verify whitelisted address can make a proposal & IPT onlyOwner functions work", async () => {
         await mineBlock()
-        showBody("name: ", await s.IPT.name())
-        showBody("symbol: ", await s.IPT.symbol())
-        showBody("bob's ipt balance: ", await s.IPT.balanceOf(s.Bob.address))
+        //showBody("name: ", await s.IPT.name())
+        //showBody("symbol: ", await s.IPT.symbol())
+        //showBody("bob's ipt balance: ", await s.IPT.balanceOf(s.Bob.address))
         const targets = [s.IPT.address, s.IPT.address, s.IPT.address]
         const values = ["0","0","0"]
         const signatures = ["changeName(string)","changeSymbol(string)","mint(address,uint256)"]
@@ -484,11 +484,11 @@ describe("Governance & IPT Contracts", () => {
         ]
         const description = "test proposal"
         const emergency = false
-        showBody("proposal count: ", await s.GOV.proposalCount())
+        //showBody("proposal count: ", await s.GOV.proposalCount())
         await s.GOV.connect(s.Bob).propose(targets,values,signatures,calldatas,description,emergency)
         await mineBlock()
         const proposalId = await s.GOV.proposalCount()
-        showBody("proposal count: ", proposalId)
+        //showBody("proposal count: ", proposalId)
         let proposalInfo = await s.GOV.proposals(proposalId)
         expect (proposalId).to.be.gt(6)
         const support = 1
@@ -515,14 +515,14 @@ describe("Governance & IPT Contracts", () => {
         expect (await s.IPT.balanceOf(s.Bob.address)).to.be.gt(0)
     })
     it("allowance/transferFrom", async () => {
-        showBody("bob's allowance: ", await s.IPT.allowance(s.Bob.address, s.Eric.address))
-        showBody("andy's balance: ", await s.IPT.balanceOf(s.Andy.address))
+        //showBody("bob's allowance: ", await s.IPT.allowance(s.Bob.address, s.Eric.address))
+        //showBody("andy's balance: ", await s.IPT.balanceOf(s.Andy.address))
         await s.IPT.connect(s.Bob).approve(s.Eric.address,BN("1e28"))
         await mineBlock()
-        showBody("bob's allowance", await s.IPT.allowance(s.Bob.address, s.Eric.address))
+        //showBody("bob's allowance", await s.IPT.allowance(s.Bob.address, s.Eric.address))
         await s.IPT.connect(s.Eric).transferFrom(s.Bob.address,s.Andy.address,BN("1e18"))
         await mineBlock()
-        showBody("andy's balance: ", await s.IPT.balanceOf(s.Andy.address))
+        //showBody("andy's balance: ", await s.IPT.balanceOf(s.Andy.address))
     })
 })
 

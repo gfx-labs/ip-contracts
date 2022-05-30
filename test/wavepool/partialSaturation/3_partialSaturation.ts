@@ -761,22 +761,7 @@ describe("Redemptions", () => {
     await mineBlock()
   })
 
-  it("Check Bank ending balances", async () => {
-
-    let balance = await s.IPT.balanceOf(Wave.address)
-    assert.equal(balance.toNumber(), 0, "Wave contract holds 0 IPT, all has been redeemed")
-
-    balance = await s.USDC.balanceOf(s.Bank.address)
-    const bankSpent = s.Bank_USDC.sub(balance)
-    const bankIPT = await s.IPT.balanceOf(s.Bank.address)
-
-    const actualPrice = bankSpent.toNumber() / await toNumber(bankIPT)
-    const impliedPrice = await Wave.impliedPrice()
-    expect(actualPrice).to.be.closeTo(impliedPrice.toNumber(), 1)//not exact due to rounding error
-    
-  })
-
-  it("Check Eric ending balances", async () => {
+  it("Check ending balance of a claimer", async () => {
 
     let balance = await s.IPT.balanceOf(Wave.address)
     assert.equal(balance.toNumber(), 0, "Wave contract holds 0 IPT, all has been redeemed")
@@ -791,10 +776,22 @@ describe("Redemptions", () => {
     expect(actualPrice).to.be.eq(impliedPrice.toNumber())//exact because Eric was not the last to redeem    
   })
 
+  it("Check ending balance of the last to withdraw", async () => {
 
+    let balance = await s.IPT.balanceOf(Wave.address)
+    assert.equal(balance.toNumber(), 0, "Wave contract holds 0 IPT, all has been redeemed")
+
+    balance = await s.USDC.balanceOf(s.Bank.address)
+    const bankSpent = s.Bank_USDC.sub(balance)
+    const bankIPT = await s.IPT.balanceOf(s.Bank.address)
+
+    const actualPrice = bankSpent.toNumber() / await toNumber(bankIPT)
+    const impliedPrice = await Wave.impliedPrice()
+    expect(actualPrice).to.be.closeTo(impliedPrice.toNumber(), 1)//not exact due to rounding error
+    
+  })
 
   it("try admin withdraw", async () => {
     await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("Saturation reached")
-
   })
 })

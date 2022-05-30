@@ -34,7 +34,7 @@ describe("ETH:", () => {
      */
     it("verify chainlink price within anchor bounds", async () => {
         let anchorPrice = (await s.UniswapRelayUniUsdc.currentValue()).div(1e14).toNumber() / 1e4
-        showBody("UNISWAP UNI ANCHOR PRICE: ", anchorPrice)
+        //showBody("UNISWAP UNI ANCHOR PRICE: ", anchorPrice)
         let chainlinkPrice = (await s.ChainlinkEth.currentValue()).div(1e14).toNumber() / 1e4
         let numerator = (await s.AnchoredViewEth._widthNumerator()).toNumber();
         let denominator = (await s.AnchoredViewEth._widthDenominator()).toNumber();

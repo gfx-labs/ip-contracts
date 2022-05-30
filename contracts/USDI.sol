@@ -190,6 +190,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     emit Transfer(address(0), _msgSender(), amount);
     emit Mint(_msgSender(), amount);
   }
+  
 
   /// @notice admin function to burn USDi
   /// @param usdc_amount the amount of USDi to burn, denominated in USDC

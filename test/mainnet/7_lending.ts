@@ -199,7 +199,7 @@ describe("Testing repay", () => {
 
         //in order to pay the interest, bob needs to mint some USDI
         //get his expected usdi liability subtracted by his balance of usdi
-        showBody("bob deposits", BN(neededUSDI).div(BN("1e12")), "usdc, and receives ", neededUSDI, " usdi")
+        //showBody("bob deposits", BN(neededUSDI).div(BN("1e12")), "usdc, and receives ", neededUSDI, " usdi")
         const deposit = s.USDI.connect(s.Bob).deposit(neededUSDI.div(BN("1e12")).add(1))
         await expect(deposit.catch(console.log)).to.not.reverted;
         const repayResult = await s.VaultController.connect(s.Bob).repayAllUSDi(1)
@@ -841,21 +841,8 @@ describe("Testing remaining vault functions", () => {
 
         assert.equal(AccountLiability.toString(), "0", "New vault has 0 liability")
 
-        let anchorPrice = (await s.UniswapRelayUniUsdc.currentValue())//.div(1e14).toNumber() / 1e4
-
-        showBody(anchorPrice)
-        balance = await s.UNI.balanceOf(newVault.address)
-        let tokenAmount = await truncate((anchorPrice.mul(balance)).mul(s.UNI_LTV))
-
-        showBody(tokenAmount)
-        tokenAmount = await truncate(tokenAmount)
-        showBody(tokenAmount)
-        showBody(utils.formatEther(tokenAmount.toString()))
-
-
         //this vault is able to be borrowed from
         expect(borrowPower).to.be.gt(0)
-        showBody("Borrow Power: ", utils.formatEther(borrowPower.toString()))
 
     })
 })

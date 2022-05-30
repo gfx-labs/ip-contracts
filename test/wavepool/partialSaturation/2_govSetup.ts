@@ -64,7 +64,7 @@ const deployGovAndToken = async () => {
     )
     await mineBlock()
     let owner = await s.InterestProtocolToken.owner()
-    showBody("OWNER: ", owner)
+    //showBody("OWNER: ", owner)
     s.GovernorCharlieDelegate = await DeployContract(new GovernorCharlieDelegate__factory(s.Frank), s.Frank)
     await mineBlock()
     s.GovernorCharlieDelegator = await DeployContract(
@@ -85,7 +85,7 @@ const deployGovAndToken = async () => {
     s.GOV = GovernorCharlieDelegate__factory.connect(s.GovernorCharlieDelegator.address, s.Frank);
     s.IPT = InterestProtocolTokenDelegate__factory.connect(s.InterestProtocolToken.address, s.Frank);
     let govToken = await s.GOV.ipt()
-    showBody("IPT token: ", govToken)
+    //showBody("IPT token: ", govToken)
 }
 
 describe("Deploy gov and token", () => {
