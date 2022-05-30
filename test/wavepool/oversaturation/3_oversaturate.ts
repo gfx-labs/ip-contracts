@@ -28,7 +28,6 @@ import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs"
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils"
 import {
-  Wave,
   IERC20__factory,
   WavePool__factory,
   WavePool,
