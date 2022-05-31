@@ -4,7 +4,7 @@ repository url:
 gfx.cafe: https://gfx.cafe/ip/contracts
 
 mirrors:
-github: https://github.com/gfx-labs/ip
+github: https://github.com/gfx-labs/ip-contracts
 
 Looking for the app? [Click here](https://gfx.cafe/ip/app)
 
