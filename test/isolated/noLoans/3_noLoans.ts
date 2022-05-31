@@ -7,7 +7,6 @@ import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { advanceBlockHeight, reset, mineBlock, fastForward, OneYear } from "../../../util/block";
 import { IVault__factory } from "../../../typechain-types";
-//import { assert } from "console";
 import { utils } from "ethers";
 
 
@@ -111,7 +110,6 @@ describe("What happens when there are no loans?", () => {
 
         const initialTotalSupply = await s.USDI.totalSupply()
 
-
         //Dave approves and donates half of his remaining USDC
         const donateAmount = balance.div(2)
 
@@ -130,10 +128,8 @@ describe("What happens when there are no loans?", () => {
         expect(await toNumber(reserveRatio)).to.be.lt(1)
         expect(await toNumber(reserveRatio)).to.be.closeTo(1, 0.001)
 
-
         balance = await s.USDI.balanceOf(s.Dave.address)
         expect(balance).to.be.gt(s.Dave_USDC.sub(depositAmount).toNumber())
-        //showBody("Dave USDI: ", utils.formatEther(balance.toString()))
 
         //andy sends 100 USDC to the USDI contract
         await s.USDC.connect(s.Andy).transfer(s.USDI.address, BN("100e6"))
@@ -141,9 +137,15 @@ describe("What happens when there are no loans?", () => {
         reserveRatio = await s.USDI.reserveRatio()
         expect(await toNumber(reserveRatio)).to.be.gt(1)//reserve ratio is too high
 
-
     })
-
+    
+    /**
+     * NOTE: once governance calls donateReserve(), there is no longer a possibility for a 
+     * refund for any USDC accidently sent to the USDi contract, unless governance decides to 
+     * issue a refund from its treasury
+     * 
+     * Once donateReserve() is called, all USDC held by the USDi contract will be rebased to all USDi holders irreversibly 
+     */
     it("Test donateReserve", async () => {
 
         const daveBalanceInit = await s.USDI.balanceOf(s.Dave.address)
@@ -164,7 +166,6 @@ describe("What happens when there are no loans?", () => {
     })
 
     it("Repay when reserve ratio is > 1e18", async () => {
-
 
         //andy sends the rest of his USDC to USDI contract
         let balance = await s.USDC.balanceOf(s.Andy.address)

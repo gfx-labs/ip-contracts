@@ -1,5 +1,5 @@
 import { s } from "../scope"
-//import { expect, assert } from "chai"
+import { expect, assert } from "chai"
 import { showBody, showBodyCyan } from "../../../util/format"
 import { BN } from "../../../util/number"
 import {
@@ -35,19 +35,12 @@ import {
 import { red } from "bn.js"
 import exp from "constants"
 import { format } from "path"
-
-const hre = require("hardhat")
-const { ethers } = hre
-const chai = require("chai")
-
 const { solidity } = require("ethereum-waffle")
-chai.use(solidity)
-const { expect, assert } = chai
+
 
 
 
 const initMerkle = async () => {
-  //8 accunts to make a simple merkle tree
   whitelist1 = [
     s.Bob.address,
     s.Dave.address,
@@ -58,6 +51,7 @@ const initMerkle = async () => {
   merkleTree1 = new MerkleTree(leafNodes, keccak256, { sortPairs: true })
   root1 = merkleTree1.getHexRoot()
 
+  //8 accunts to make a simple merkle tree
   whitelist2 = [
     s.Frank.address,
     s.Andy.address,
@@ -89,7 +83,6 @@ const totalReward = utils.parseEther("30000000")//30,000,000 IPT
 
 let Wave: WavePool
 
-//todo - what happens if not all is redeemed, IPT stuck on Wave? Redeem deadline?
 require("chai").should()
 describe("Deploy wave - OVERSATURATION", () => {
   before(async () => {
@@ -98,12 +91,10 @@ describe("Deploy wave - OVERSATURATION", () => {
 
   it("deploys wave", async () => {
     //init constructor args
-
     const block = await currentBlock()
     const enableTime = block.timestamp
     disableTime = enableTime + (OneWeek * 3)
     const receiver = s.Carol.address
-    //showBody(s.Frank.address)
 
     const waveFactory = new WavePool__factory(s.Frank)
     Wave = await waveFactory.deploy(
@@ -160,10 +151,6 @@ describe("Wave 1 claims", () => {
   let leaf: string
   let merkleProof: string[]
   let claimer: string
-
-
-
-
   it("Dave claims all possible tokens", async () => {
     claimer = s.Dave.address
 
@@ -173,7 +160,7 @@ describe("Wave 1 claims", () => {
 
     //starting balance is as expected
     const startBalance = await s.USDC.balanceOf(claimer)
-    //assert.equal(startBalance.toString(), s.Dave_USDC.sub(amount).toString(), "Dave's starting balance is correct")
+    assert.equal(startBalance.toString(), s.Dave_USDC.toString(), "Dave's starting balance is correct")
 
     //approve
     await s.USDC.connect(s.Dave).approve(Wave.address, keyAmount)
@@ -237,8 +224,6 @@ describe("Wave 1 claims", () => {
     )
     await mineBlock()
     await expect(pointsResult).to.be.reverted
-
-    //todo check state before revert
   })
 
   it("Bob claims some, but less than maximum", async () => {
@@ -247,7 +232,7 @@ describe("Wave 1 claims", () => {
     let cap = await Wave._cap()
     let total = await Wave._totalClaimed()
     expect(total).to.be.lt(cap) //cap has not been reached
-    //starting balance is as expected
+
     const startBalance = await s.USDC.balanceOf(claimer)
     assert.equal(
       startBalance.toString(),
@@ -258,7 +243,6 @@ describe("Wave 1 claims", () => {
     //merkle things
     leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
     merkleProof = merkleTree1.getHexProof(leaf)
-    //   showBody("leaf proof: ", merkleProof)
 
     //approve
     await s.USDC.connect(s.Bob).approve(Wave.address, amount)
@@ -298,9 +282,6 @@ describe("Wave 1 claims", () => {
       keyAmount.div(2).toString(),
       "Claimed amount is correct"
     )
-
-    let _totalClaimed = await Wave._totalClaimed()
-    //todo?
   })
 
   it("try to make a claim that would exceed cap", async () => {
@@ -311,9 +292,7 @@ describe("Wave 1 claims", () => {
     let total = await Wave._totalClaimed()
     expect(total).to.be.lt(cap) //cap has not been reached
     const claimableAmount = cap.sub(total)
-    /**
-    assert.equal(await toNumber(difference), await toNumber(amount.div(2)), "Amount availalble to be claimed is correct")
-     */
+
     //approve
     await s.USDC.connect(s.Dave).approve(Wave.address, amount)
     await mineBlock()
@@ -321,7 +300,6 @@ describe("Wave 1 claims", () => {
     //merkle things
     leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
     merkleProof = merkleTree1.getHexProof(leaf)
-    //   showBody("leaf proof: ", merkleProof)
 
     const gpResult = Wave.connect(s.Bob).getPoints(
       1,
@@ -336,6 +314,7 @@ describe("Wave 1 claims", () => {
   it("try to claim the wrong wave", async () => {
 
     let balance = await s.USDC.balanceOf(s.Bob.address)
+
     //approve
     await s.USDC.connect(s.Bob).approve(Wave.address, balance)
     await mineBlock()
@@ -426,11 +405,11 @@ describe("Wave 1 claims", () => {
     let cap = await Wave._cap()
     let total = await Wave._totalClaimed()
     expect(total).to.be.lt(cap) //cap has not been reached
-    let claimableAmount = cap.sub(total)
 
     //merkle things
     leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
     merkleProof = merkleTree1.getHexProof(leaf)
+
     //approve
     await s.USDC.connect(s.Bob).approve(Wave.address, keyAmount.div(2))
     await mineBlock()
@@ -447,7 +426,6 @@ describe("Wave 1 claims", () => {
     expect(await toNumber(bobClaim.claimed)).to.eq(await toNumber(keyAmount))
 
   })
-
 })
 
 describe("Wave 2 claims", () => {
@@ -465,8 +443,8 @@ describe("Wave 2 claims", () => {
 
   it("Everyone on wave 2 claims their key amount", async () => {
 
+    //Bob and Dave have already claimed for wave 1 but not wave 2
     for (let i = 0; i < whitelist2.length; i++) {
-      //Bob and Dave have already claimed for wave 1 but not wave 2
       //merkle things
       let leaf = solidityKeccak256(["address", "uint256"], [whitelist2[i], keyAmount])
       let merkleProof = merkleTree2.getHexProof(leaf)
@@ -491,10 +469,10 @@ describe("Wave 2 claims", () => {
     let claimed2 = await Wave._data(2, s.Bob.address)
     assert.equal(claimed1.claimed.toString(), claimed2.claimed.toString(), "Bob claimed full key amount on waves 1 and 2")
 
-
     //can't claim anymore
     let leaf = solidityKeccak256(["address", "uint256"], [s.Bob.address, keyAmount])
     let merkleProof = merkleTree2.getHexProof(leaf)
+   
     //approve
     await s.USDC.connect(s.Bob).approve(Wave.address, 5)
     await mineBlock()
@@ -514,6 +492,7 @@ describe("Wave 2 claims", () => {
     //can't claim anymore
     let leaf = solidityKeccak256(["address", "uint256"], [s.Igor.address, keyAmount])
     let merkleProof = merkleTree2.getHexProof(leaf)
+    
     //approve
     await s.USDC.connect(s.Igor).approve(Wave.address, keyAmount)
     await mineBlock()
@@ -543,12 +522,10 @@ describe("Wave 2 claims", () => {
     await expect(Wave.connect(s.Bob).redeem(1)).to.be.revertedWith("can't redeem yet")
     await expect(Wave.connect(s.Bob).redeem(2)).to.be.revertedWith("can't redeem yet")
   })
-
 })//wave 2 claims
 
 describe("Wave 3 claims", () => {
   let merkleProof: any
-
   it("advance time to enable wave 3", async () => {
     let enabled = await Wave.isEnabled(BN("3"))
     assert.equal(enabled, false, "Wave 3 is not yet enabled")
@@ -565,7 +542,6 @@ describe("Wave 3 claims", () => {
     let leaf = solidityKeccak256(["address", "uint256"], [s.Bob.address, keyAmount])
     merkleProof = merkleTree2.getHexProof(leaf)
 
-
     //approve
     await s.USDC.connect(s.Bob).approve(Wave.address, keyAmount)
     await mineBlock()
@@ -580,7 +556,6 @@ describe("Wave 3 claims", () => {
 
     let claimed3 = await Wave._data(3, s.Bob.address)
     assert.equal(claimed3.claimed.toString(), keyAmount.toString(), "Bob claimed full key amount on wave 3")
-
 
   })
 
@@ -629,14 +604,6 @@ describe("Wave 3 claims", () => {
 
     totalClaimed = await Wave._totalClaimed()
     expect(totalClaimed.toNumber()).to.eq(cap.div(3).toNumber())
-    //showBody("Total Claimed: ", totalClaimed.toNumber())
-
-
-    //const expectedReward = totalClaimed.div(666666)
-    //let result = BN("30000030000030000030000030")
-    //showBodyCyan("Expected? : ", await toNumber(result))
-
-
   })
 
 })
@@ -661,7 +628,7 @@ describe("Redemptions", () => {
     assert.equal(enabled, true, "Redeem time now active")
 
   })
-  
+
   it("Everyone redeems", async () => {
 
     //wave 1
@@ -694,48 +661,6 @@ describe("Redemptions", () => {
     await Wave.connect(s.Bank).redeem(3)
     await mineBlock()
   })
-
-  /**
-   it("Bob redeems", async () => {
-    //Bob claimed 3x so his points are keyAmount * 3
-    const claimAmount = keyAmount.mul(3)
-    let bobPoints = await Wave._data(1, s.Bob.address)
-    let points = bobPoints.claimed.toNumber()
-
-    bobPoints = await Wave._data(2, s.Bob.address)
-    points += bobPoints.claimed.toNumber()
-
-    bobPoints = await Wave._data(3, s.Bob.address)
-    points += bobPoints.claimed.toNumber()
-
-    expect(points).to.eq(claimAmount)//Bob has the correct amount of points
-
-    const startingIPT = await s.IPT.balanceOf(s.Bob.address)
-    expect(startingIPT).to.eq(0)
-
-    await Wave.connect(s.Bob).redeem(1)
-    await mineBlock()
-    await Wave.connect(s.Bob).redeem(2)
-    await mineBlock()
-    await Wave.connect(s.Bob).redeem(3)
-    await mineBlock()
-
-
-    let totalClaimed = await Wave._totalClaimed()
-    let totalReward = await Wave._totalReward()
-    let impliedPrice = await totalClaimed.div((totalReward.div(BN("1e18"))))
-
-    expect(impliedPrice).to.be.gt(floor)
-
-
-    let expected = (BN("1e18").mul(points)).div(impliedPrice)
-
-    let balance = await s.IPT.balanceOf(s.Bob.address)
-
-    expect(await toNumber(balance)).to.eq(await toNumber(expected))
-
-  })
-   */
 
   it("confirm division error", async () => {
 
@@ -788,7 +713,7 @@ describe("Redemptions", () => {
     const actualPrice = bankSpent.toNumber() / await toNumber(bankIPT)
     const impliedPrice = await Wave.impliedPrice()
     expect(actualPrice).to.be.closeTo(impliedPrice.toNumber(), 1)//not exact due to rounding error
-    
+
   })
 
   it("try admin withdraw", async () => {

@@ -22,7 +22,6 @@ require("chai").should();
 // dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
 
 // configurable variables
-
 let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 let comp_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
@@ -118,8 +117,6 @@ describe("Token Setup", () => {
         await expect(
             stealMoney(tribe_minter, s.Carol.address, s.tribeAddress, s.Carol_TRIBE)
         ).to.not.be.reverted;
-
-
         await mineBlock();
     });
 });

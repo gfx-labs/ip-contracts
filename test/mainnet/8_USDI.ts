@@ -33,10 +33,6 @@ describe("TESTING USDI CONTRACT", async () => {
         await fundDave()
         await mineBlock()
     })
-    after(async () => {
-        //reset to previous block to fix balances
-        //await reset(startBlock)
-    })
 
     //check admin functions
     it("check admin mint", async () => {
@@ -50,7 +46,6 @@ describe("TESTING USDI CONTRACT", async () => {
         await expect(s.USDI.connect(s.Bob).mint(smallAmount_e6)).to.be.reverted
         await expect(s.USDI.connect(s.Frank).mint(0)).to.be.reverted
 
-
         const mintResult = await s.USDI.connect(s.Frank).mint(smallAmount_e6)
         await advanceBlockHeight(1)
         const mintArgs = await getArgs(mintResult)
@@ -59,12 +54,11 @@ describe("TESTING USDI CONTRACT", async () => {
         const mintGas = await getGas(mintResult)
         showBodyCyan("Gas cost to mint: ", mintGas)
 
-
         let balance = await s.USDI.balanceOf(s.Frank.address)
 
         let difference = balance.sub(startBalance)
 
-        //expect balance to be increased by smallAmount + interest -> TODO calc interest on smallAmount
+        //expect balance to be increased by smallAmount + interest 
         expect(difference).to.be.gt(smallAmount)
 
     })
@@ -87,11 +81,9 @@ describe("TESTING USDI CONTRACT", async () => {
         let balance = await s.USDI.balanceOf(s.Frank.address)
         let difference = balance.sub(startBalance)
 
-        //expect balance to be decreased by smallAmount - interest -> TODO calc interest on smallAmount
+        //expect balance to be decreased by smallAmount - interest
         expect(difference).to.be.gt(smallAmount)
     })
-
-
 
     it("check starting balance and deposit USDC", async () => {
 
@@ -130,42 +122,7 @@ describe("TESTING USDI CONTRACT", async () => {
         expect(usdiBalance).to.be.gt(startingUSDIAmount.add(usdcAmount.mul(1e12)))
     });
 
-    it("check interest generation rate", async () => {
-        await mineBlock()
-        await s.VaultController.calculateInterest()
-        await advanceBlockHeight(1)
-        const startingBalance = await s.USDI.balanceOf(s.Dave.address)
-        const startingIF = await s.VaultController.interestFactor()
-        const calcIF = await payInterestMath(startingIF)
-
-
-        //elapse time
-        //showBody("advance 5 weeks and then calculate interest")
-        await fastForward(OneWeek * 5)
-        await s.VaultController.calculateInterest()
-        await advanceBlockHeight(1)
-
-        let expectedBalance = await changeInBalance(startingIF, startingBalance)
-        let calcedBalance = await calculateBalance(startingIF, s.Dave)
-
-
-        let actualIF = await s.VaultController.interestFactor()
-        //showBody("Actual IF: ", actualIF)
-
-        let endBalance = await s.USDI.balanceOf(s.Dave.address)
-        //showBody("Dave starting balance      : ", utils.formatEther(startingBalance.toString()))
-        //showBody("Dave Calced ending  balance: ", utils.formatEther(calcedBalance.toString()))
-        //showBody("Dave expectedBalance       : ", utils.formatEther(expectedBalance.toString()))
-        //showBody("Dave ACTUAL ending  balance: ", utils.formatEther(endBalance.toString()))
-
-
-    })
-
-
-
-
     it("call deposit with amount == 0", async () => {
-
         //approve
         await s.USDC.connect(s.Dave).approve(s.USDI.address, usdcAmount)
         await mineBlock()
@@ -188,7 +145,6 @@ describe("TESTING USDI CONTRACT", async () => {
     })
 
     it("redeem USDC for USDI", async () => {
-
         //check pauseable 
         await s.USDI.connect(s.Frank).pause()
         await advanceBlockHeight(1)
@@ -235,10 +191,6 @@ describe("TESTING USDI CONTRACT", async () => {
     })
 
     it("withdraw total reserves", async () => {
-
-
-
-
         const usdiBalance = await s.USDI.balanceOf(s.Dave.address)
         const reserve = await s.USDC.balanceOf(s.USDI.address)
         const reserve_e18 = reserve.mul(BN("1e12"))
@@ -251,7 +203,6 @@ describe("TESTING USDI CONTRACT", async () => {
         await s.USDI.connect(s.Frank).transfer(s.Dave.address, reserve_e18)
         await mineBlock()
 
-
         const usdcBalance = await s.USDC.balanceOf(s.Dave.address)
 
         //const withdrawResult = await s.USDI.connect(s.Dave).withdraw(reserve)
@@ -262,7 +213,6 @@ describe("TESTING USDI CONTRACT", async () => {
         assert.equal(withdrawArgs._value.toString(), reserve_e18.toString(), "withdrawl amount correct on event receipt")
         showBodyCyan("withdraw all gas: ", withdrawGas)
 
-
         let ending_usdcBalance = await s.USDC.balanceOf(s.Dave.address)
         let formatUSDC = utils.formatEther(ending_usdcBalance.mul(BN("1e12")).toString())
         let ending_usdiBalance = await s.USDI.balanceOf(s.Dave.address)
@@ -270,17 +220,12 @@ describe("TESTING USDI CONTRACT", async () => {
         const end_reserve_e18 = reserve.mul(BN("1e12"))
         formatReserve = utils.formatEther(end_reserve_e18.toString())
 
-
         //verify things
         //const expectedUSDIamount = usdiBalance.sub(reserve)
         const expectedUSDCamount = usdcBalance.add(reserve)
         assert.equal(expectedUSDCamount.toString(), ending_usdcBalance.toString(), "Expected USDC balance is correct")
         const expectedUSDIamount = usdiBalance.sub(reserve_e18)
         const difference = ending_usdiBalance.sub(expectedUSDIamount)
-
-        //TODO calculate interest over time to pre determine difference
-        //expect(difference).to.be.gt(BN("0"))
-        //expect(difference).to.be.lt(BN("51515426655222589"))
 
         assert.equal(end_reserve.toString(), "0", "reserve is empty")
 
@@ -296,7 +241,6 @@ describe("TESTING USDI CONTRACT", async () => {
         assert.equal(reserve.toString(), "0", "reserve is 0, donations welcome :)")
 
         //todo check totalSupply and confirm interest rate changes
-
         //Dave approves and donates half of his USDC
         await s.USDC.connect(s.Dave).approve(s.USDI.address, balance.div(2))
         const donateResult = await s.USDI.connect(s.Dave).donate(balance.div(2))
@@ -304,12 +248,10 @@ describe("TESTING USDI CONTRACT", async () => {
         const donateGas = await getGas(donateResult)
         showBodyCyan("Gas cost to donate: ", donateGas)
 
-
         let updatedBalance = await s.USDC.balanceOf(s.Dave.address)
         let updatedReserve = await s.USDC.balanceOf(s.USDI.address)
 
-        expect(updatedBalance).to.be.closeTo(updatedReserve, 100)
-        //assert.equal(updatedBalance.toString(), updatedReserve.toString(), "Donate successful")
+        expect(updatedBalance).to.be.closeTo(updatedReserve, 100)//account for interest generation
     })
 
     it("what happens when someone simply transfers ether to USDi contract? ", async () => {
@@ -326,6 +268,9 @@ describe("TESTING USDI CONTRACT", async () => {
      * the only way for the USDC to leave the reserve is if the reserve is sufficiently depleated
      * 
      * donations to the USDi protocol should ideally go through the donate function
+     * 
+     * eronious donations can be rebased into the the custody of all USDi holders by governance via the donateReserve() function
+     * see ../isolated/noReserve for testing of this scenario
      */
     it("what happens when someone accidently transfers USDC to the USDi contract? ", async () => {
         const startingReserve = await s.USDC.balanceOf(s.USDI.address)

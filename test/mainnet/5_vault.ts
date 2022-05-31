@@ -4,6 +4,9 @@ import { showBody, showBodyCyan } from "../../util/format";
 import { mineBlock } from "../../util/block";
 import { IVault__factory } from "../../typechain-types";
 import { BN } from "../../util/number";
+import { toNumber } from "../../util/math";
+import { utils } from "ethers";
+
 
 describe("Vault setup:", () => {
   it("mint vaults", async () => {
@@ -11,7 +14,7 @@ describe("Vault setup:", () => {
     const mv = s.VaultController.connect(s.Bob).mintVault();
     await expect(mv).to.not.reverted;
     await mineBlock();
-    showBodyCyan("vault mint price", (await (await mv).wait()).gasUsed);
+    showBodyCyan("vault mint gas cost", (await (await mv).wait()).gasUsed);
     let bobVault = await s.VaultController.vaultAddress(1);
     s.BobVault = IVault__factory.connect(bobVault, s.Bob);
     expect(await s.BobVault.minter()).to.eq(s.Bob.address);
@@ -50,12 +53,18 @@ describe("Vault setup:", () => {
       s.TRIBE.connect(s.Carol).transfer(s.CarolVault.address, s.Carol_TRIBE)
     ).to.not.reverted;
   });
-  /**
-   * //todo - switch to uni delegation?? 
-   it("carol should be able to delegate votes", async () => {
-    await expect(
-      s.CarolVault.delegateCompLikeTo(s.compVotingAddress, s.compAddress)
-    ).to.not.reverted;
+
+  it("what happens when someone simply transfers ether to a vault? ", async () => {
+    let tx = {
+      to: s.BobVault.address,
+      value: utils.parseEther("1")
+    }
+    await expect(s.Bob.sendTransaction(tx)).to.be.reverted
+    await mineBlock()
+  })
+
+  it("carol should be able to delegate votes", async () => {
+
     await expect(
       s.CarolVault.delegateCompLikeTo(s.compVotingAddress, s.ensAddress)
     ).to.not.reverted;
@@ -69,38 +78,26 @@ describe("Vault setup:", () => {
       s.CarolVault.delegateCompLikeTo(s.compVotingAddress, s.tribeAddress)
     ).to.not.reverted;
     await mineBlock();
-    const currentVotesComp = await s.COMP.connect(s.Carol).getCurrentVotes(
-      s.compVotingAddress
-    );
-    showBody("carol has comp votes: ", currentVotesComp, "votes");
+
     const currentVotesAAVE = await s.AAVE.connect(s.Carol).getPowerCurrent(
       s.compVotingAddress,
       BN("0")
     );
-    showBody("carol has aave votes: ", currentVotesAAVE, "votes");
     const currentVotesENS = await s.ENS.connect(s.Carol).getVotes(
       s.compVotingAddress
     );
-    showBody("carol has ens votes: ", currentVotesENS, "votes");
     const currentVotesDYDX = await s.DYDX.connect(s.Carol).getPowerCurrent(
       s.compVotingAddress,
       BN("0")
     );
-    showBody("carol has dydx votes: ", currentVotesDYDX, "votes");
     const currentVotesTRIBE = await s.TRIBE.connect(s.Carol).getCurrentVotes(
       s.compVotingAddress
     );
-    showBody("carol has tribe votes: ", currentVotesTRIBE, "votes");
-    expect(s.Carol_COMP).to.eq(currentVotesComp);
+
     expect(s.Carol_AAVE).to.eq(currentVotesAAVE);
     expect(s.Carol_ENS).to.eq(currentVotesENS);
     expect(s.Carol_DYDX).to.eq(currentVotesDYDX);
     expect(s.Carol_TRIBE).to.eq(currentVotesTRIBE);
-    const currentVotes = await s.COMP.connect(s.Carol).getCurrentVotes(
-      s.compVotingAddress
-    );
-    //showBody("carol should have", currentVotes, "votes");
-    expect(currentVotes).to.eq(s.Carol_COMP);
+
   });
-   */
 });

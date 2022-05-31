@@ -16,7 +16,7 @@ import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 /// @notice our implentation of maker-vault like vault
 /// major differences:
 /// 1. multi-collateral
-/// 2. generate interest in USDI
+/// 2. generate interest in USDi
 /// 3. can delegate voting power of contained tokens
 contract Vault is IVault, Context {
   using SafeERC20Upgradeable for IERC20;

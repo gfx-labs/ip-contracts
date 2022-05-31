@@ -276,16 +276,16 @@ contract VaultController is
     return (total_liquidity_value >= usdi_liability);
   }
 
-  /// @notice borrow usdi from a vault. only vault minter may borrow from their vault
+  /// @notice borrow USDi from a vault. only vault minter may borrow from their vault
   /// @param id vault to borrow from
-  /// @param amount amount of usdi to borrow
+  /// @param amount amount of USDi to borrow
   /// @dev pays interest
   function borrowUsdi(uint96 id, uint192 amount) external override paysInterest whenNotPaused {
     // grab the vault by id if part of our system. revert if not
     IVault vault = getVault(id);
     // only the minter of the vault may borrow from their vault
     require(_msgSender() == vault.minter(), "sender not minter");
-    // the base amount is the amount of usdi they wish to borrow divided by the interest factor
+    // the base amount is the amount of USDi they wish to borrow divided by the interest factor
     uint192 base_amount = safeu192(uint256(amount * expScale) / uint256(_interest.factor));
     // base_liability should contain the vaults new liability, in terms of base units
     // true indicated that we are adding to the liability
@@ -305,14 +305,14 @@ contract VaultController is
     emit BorrowUSDi(id, address(vault), amount);
   }
 
-  /// @notice repay a vault's usdi loan. anyone may repay
+  /// @notice repay a vault's USDi loan. anyone may repay
   /// @param id vault to repay
-  /// @param amount amount of usdi to repay
+  /// @param amount amount of USDi to repay
   /// @dev pays interest
   function repayUSDi(uint96 id, uint192 amount) external override paysInterest whenNotPaused {
     // grab the vault by id if part of our system. revert if not
     IVault vault = getVault(id);
-    // the base amount is the amount of usdi entered divided by the interest factor
+    // the base amount is the amount of USDi entered divided by the interest factor
     uint192 base_amount = safeu192((amount * expScale) / _interest.factor);
     // decrease the total base liability by the calculated base amount
     _totalBaseLiability = _totalBaseLiability - base_amount;
@@ -321,24 +321,24 @@ contract VaultController is
     require(base_amount <= vault.baseLiability(), "repay > borrow amount"); //repay all here if true?
     // decrease the vaults liability by the calculated base amount
     vault.modifyLiability(false, base_amount);
-    // burn the amount of usdi submitted from the senders vault
+    // burn the amount of USDi submitted from the senders vault
     _usdi.vaultControllerBurn(_msgSender(), amount);
     // emit the event
     emit RepayUSDi(id, address(vault), amount);
   }
 
-  /// @notice repay all of a vaults usdi. anyone may repay a vaults liabilities
+  /// @notice repay all of a vaults USDi. anyone may repay a vaults liabilities
   /// @param id the vault to repay
   /// @dev pays interest
   function repayAllUSDi(uint96 id) external override paysInterest whenNotPaused {
     // grab the vault by id if part of our system. revert if not
     IVault vault = getVault(id);
-    // get the total usdi liability, equal to the interest factor * vault's base liabilty
+    // get the total USDi liability, equal to the interest factor * vault's base liabilty
     //uint256 usdi_liability = truncate(safeu192(_interest.factor * vault.baseLiability()));
     uint256 usdi_liability = uint256(safeu192(truncate(_interest.factor * vault.baseLiability())));
     // decrease the vaults liability by the vauls base liability
     vault.modifyLiability(false, vault.baseLiability());
-    // burn the amount of usdi paid back from the vault
+    // burn the amount of USDi paid back from the vault
     _usdi.vaultControllerBurn(_msgSender(), usdi_liability);
 
     emit RepayUSDi(id, address(vault), usdi_liability);
@@ -367,7 +367,7 @@ contract VaultController is
     if (tokenAmount != 0) {
       tokens_to_liquidate = tokenAmount;
     }
-    // the usdi to repurchase is equal to the bad fill price multiplied by the amount of tokens to liquidate
+    // the USDi to repurchase is equal to the bad fill price multiplied by the amount of tokens to liquidate
     uint256 usdi_to_repurchase = truncate(badFillPrice * tokens_to_liquidate);
     // get the vault that the liquidator wishes to liquidate
     IVault vault = getVault(id);
@@ -459,7 +459,7 @@ contract VaultController is
     vault = IVault(vault_address);
   }
 
-  ///@notice amount of USDI needed to reach even solvency
+  ///@notice amount of USDi needed to reach even solvency
   /// @param id id of vault
   function amountToSolvency(uint96 id) public view override returns (uint256) {
     require(!checkVault(id), "Vault is solvent");
@@ -472,7 +472,7 @@ contract VaultController is
 
   /// @notice get vault liability of vault
   /// @param id id of vault
-  /// @return amount of USDI the vault owes
+  /// @return amount of USDi the vault owes
   /// @dev implementation _vaultLiability
   function vaultLiability(uint96 id) external view override returns (uint192) {
     return _vaultLiability(id);
@@ -487,7 +487,7 @@ contract VaultController is
 
   /// @notice get vault borrowing power for vault
   /// @param id id of vault
-  /// @return amount of USDI the vault owes
+  /// @return amount of USDi the vault owes
   /// @dev implementation in get_vault_borrowing_power
   function vaultBorrowingPower(uint96 id) external view override returns (uint192) {
     return get_vault_borrowing_power(getVault(id));
@@ -545,7 +545,7 @@ contract VaultController is
     // cast the reserve ratio now to an int in order to get a curve value
     int256 reserve_ratio = int256(ui18);
 
-    // calculate the value at the curve. this vault controller is a USDI vault and will refernce
+    // calculate the value at the curve. this vault controller is a USDi vault and will refernce
     // the vault at address 0
     int256 int_curve_val = _curveMaster.getValueAt(address(0x00), reserve_ratio);
 
@@ -575,7 +575,7 @@ contract VaultController is
     // the protocol's fee amount is equal to this value multiplied by the protocol fee percentage, 1e18=100%
     uint192 protocolAmount = safeu192(truncate(uint256(valueAfter - valueBefore) * uint256(_protocolFee)));
     // donate the true amount of interest less the amount which the protocol is taking for itself
-    // this donation is what pays out interest to USDI holders
+    // this donation is what pays out interest to USDi holders
     _usdi.vaultControllerDonate(valueAfter - valueBefore - protocolAmount);
     // send the protocol's fee to the owner of this contract.
     _usdi.vaultControllerMint(owner(), protocolAmount);

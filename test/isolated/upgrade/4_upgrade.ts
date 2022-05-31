@@ -7,9 +7,7 @@ import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { advanceBlockHeight, reset, mineBlock, fastForward, OneYear, OneWeek } from "../../../util/block";
 import { IVaultController2, IVault__factory } from "../../../typechain-types";
-//import { assert } from "console";
 import { utils } from "ethers";
-//simport { truncate } from "fs";
 
 let VaultController2: IVaultController2
 describe("Testing explicit upgradeability ", () => {
@@ -58,7 +56,6 @@ describe("Testing explicit upgradeability ", () => {
         expect(await s.BobVault.minter()).to.eq(s.Bob.address)
         await mineBlock()
 
-
         //Bob transfers wETH collateral
         let balance = await s.WETH.balanceOf(s.Bob.address)
         expect(balance).to.eq(s.Bob_WETH)
@@ -95,8 +92,6 @@ describe("Testing explicit upgradeability ", () => {
         assert.equal(balance.toString(), depositAmount.mul(BN("1e12")).toString(), "Dave has the correct amount of USDI")
 
     })
-
-
 
     it("Upgrade VaultController contract", async () => {
         //deploy implementation
@@ -149,7 +144,6 @@ describe("Testing explicit upgradeability ", () => {
 
         const AccountLiability = await VaultController2.vaultLiability(vaultID)
         expect(await toNumber(AccountLiability)).to.be.gt(await toNumber(bobUSDI))//bob does not have enough USDI to completely repay the loan
-        //showBody("Account Liability: ", await toNumber(AccountLiability))
 
         const amountToSolvency = await VaultController2.amountToSolvency(vaultID)
         expect(await toNumber(amountToSolvency)).to.be.gt(0)
