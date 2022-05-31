@@ -86,7 +86,7 @@ describe("Deploy Contracts", () => {
     const expectedReserveAddress = s.usdcAddress;
     assert.equal(reserveAddress, expectedReserveAddress, "USDi Initialized");
   });
-  describe("Sanity check USDI deploy", () => {
+  describe("Sanity check USDi deploy", () => {
     it("Should return the right name, symbol, and decimals", async () => {
       expect(await s.USDI.name()).to.equal("USDI Token");
       expect(await s.USDI.symbol()).to.equal("USDI");
@@ -303,7 +303,7 @@ describe("Deploy Contracts", () => {
   });
 
   it("final setup", async () => {
-    //showBody("register vaultcontroller usdi")
+    //showBody("register vaultcontroller USDi")
     await expect(
       s.VaultController.connect(s.Frank).registerUSDi(s.USDI.address)
     ).to.not.reverted;

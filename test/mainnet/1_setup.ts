@@ -16,8 +16,8 @@ require("chai").should();
 // Carol: 100,000,000,000,000,000,000 (100 comp), 18dec
 // Dave: 10,000,000,000 usdc ($10,000) 6dec
 //
-// andy is a usdc holder. he wishes to deposit USDC to hold USDI
-// bob is an eth holder. He wishes to deposit his eth and borrow USDI
+// andy is a usdc holder. he wishes to deposit USDC to hold USDi
+// bob is an eth holder. He wishes to deposit his eth and borrow USDi
 // carol is a comp holder. she wishes to deposit her comp and then vote
 // dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
 

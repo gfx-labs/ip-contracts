@@ -140,11 +140,11 @@ describe("What happens when there are no loans?", () => {
     })
     
     /**
-     * NOTE: once governance calls donateReserve(), there is no longer a possibility for a 
-     * refund for any USDC accidently sent to the USDi contract, unless governance decides to 
+     * NOTE: once governance calls donateReserve(), there is no longer a possibility of a 
+     * refund for any USDC accidently sent to the USDi contract so far, unless governance decides to 
      * issue a refund from its treasury
      * 
-     * Once donateReserve() is called, all USDC held by the USDi contract will be rebased to all USDi holders irreversibly 
+     * Once donateReserve() is called, all excess USDC held by the USDi contract will be rebased to all USDi holders irreversibly 
      */
     it("Test donateReserve", async () => {
 

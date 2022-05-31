@@ -11,17 +11,17 @@ let firstBorrowIF: BigNumber
 const borrowAmount = BN("5000e18")
 describe("BORROW USDi", async () => {
 
-    //bob tries to borrow usdi against 10 eth as if eth is $100k
+    //bob tries to borrow USDi against 10 eth as if eth is $100k
     // remember bob has 10 wETH
     let actualBorrowAmount: any
     let expectedInterestFactor: BigNumber
-    it(`bob should not be able to borrow 1e6 * 1e18 * ${s.Bob_WETH} usdi`, async () => {
+    it(`bob should not be able to borrow 1e6 * 1e18 * ${s.Bob_WETH} USDi`, async () => {
         await expect(s.VaultController.connect(s.Bob).borrowUsdi(1,
             s.Bob_WETH.mul(BN("1e18")).mul(1e6),
         )).to.be.revertedWith("vault insolvent");
     });
 
-    it(`bob should be able to borrow ${utils.parseEther(borrowAmount.toString())} usdi`, async () => {
+    it(`bob should be able to borrow ${utils.parseEther(borrowAmount.toString())} USDi`, async () => {
 
         const initUSDiBalance = await s.USDI.balanceOf(s.Bob.address)
         assert.equal(initUSDiBalance.toString(), "0", "Bob starts with 0 USDi")
@@ -117,7 +117,7 @@ describe("Checking interest generation", () => {
 
 describe("Testing repay", () => {
     const borrowAmount = BN("10e18")
-    it(`bob should able to borrow ${borrowAmount} usdi`, async () => {
+    it(`bob should able to borrow ${borrowAmount} USDi`, async () => {
         await expect(s.VaultController.connect(s.Bob).borrowUsdi(1, borrowAmount)).to.not.be.reverted;
     });
     it("partial repay", async () => {
@@ -190,7 +190,7 @@ describe("Testing repay", () => {
         const repayGas = await getGas(repayResult)
         showBodyCyan("Gas cost do total repay: ", repayGas)
         const args = await getArgs(repayResult)
-        assert.equal(args.repayAmount.toString(), expectedUSDIliability.toString(), "Expected USDI amount repayed and burned")
+        assert.equal(args.repayAmount.toString(), expectedUSDIliability.toString(), "Expected USDi amount repayed and burned")
         assert.equal(expectedBalanceWithInterest.toString(), args.repayAmount.toString(), "Expected balance at the time of repay is correct")
 
         let updatedLiability = await s.BobVault.connect(s.Bob).baseLiability()
@@ -284,7 +284,7 @@ describe("Testing liquidations", () => {
         const tokens_to_liquidate = args!.tokens_to_liquidate
 
         assert.equal(tokens_to_liquidate.toString(), expectedT2L.toString(), "Tokens to liquidate is correct")
-        assert.equal(usdi_to_repurchase.toString(), expectedUSDI2Repurchase.toString(), "USDI to repurchase is correct")
+        assert.equal(usdi_to_repurchase.toString(), expectedUSDI2Repurchase.toString(), "USDi to repurchase is correct")
 
         //check ending liability 
         let liabiltiy = await s.VaultController.vaultLiability(vaultID)
@@ -305,7 +305,7 @@ describe("Testing liquidations", () => {
         //Dave spent USDi to liquidate -- TODO: precalc balance
         balance = await s.USDI.balanceOf(s.Dave.address)
         difference = expectedBalanceWithInterest.sub(balance)
-        assert.equal(difference.toString(), usdi_to_repurchase.toString(), "Dave spent the correct amount of usdi")
+        assert.equal(difference.toString(), usdi_to_repurchase.toString(), "Dave spent the correct amount of USDi")
 
         //Dave received wETH
         balance = await s.WETH.balanceOf(s.Dave.address)
@@ -319,7 +319,7 @@ describe("Testing liquidations", () => {
         const carolVaultInit = await s.UNI.balanceOf(s.CarolVault.address)
         const initUniBalanceDave = await s.UNI.balanceOf(s.Dave.address)
 
-        //borrow maximum usdi
+        //borrow maximum USDi
         const carolBorrowPower = await s.VaultController.vaultBorrowingPower(2)
         await advanceBlockHeight(1)
         const borrowResult = await s.VaultController.connect(s.Carol).borrowUsdi(vaultID, carolBorrowPower)
@@ -384,7 +384,7 @@ describe("Testing liquidations", () => {
         //Dave spent USDi to liquidate -- TODO: precalc balance
         balance = await s.USDI.balanceOf(s.Dave.address)
         difference = expectedBalanceWithInterest.sub(balance)
-        assert.equal(difference.toString(), usdi_to_repurchase.toString(), "Dave spent the correct amount of usdi")
+        assert.equal(difference.toString(), usdi_to_repurchase.toString(), "Dave spent the correct amount of USDi")
 
         //Dave received UNI
         balance = await s.UNI.balanceOf(s.Dave.address)
@@ -456,7 +456,7 @@ describe("Checking for eronious inputs and scenarios", () => {
 
 
 
-        //repay amount owed + 1 USDI to account for interest
+        //repay amount owed + 1 USDi to account for interest
         const repayResult = await s.VaultController.connect(s.Carol).repayUSDi(vaultID, amountUnderwater.add(utils.parseEther("1")))
         await advanceBlockHeight(1)
 
@@ -493,7 +493,7 @@ describe("Checking for eronious inputs and scenarios", () => {
     })
 
     it("liquidate when liquidator doesn't have enough USDi", async () => {
-        //send Eric 1 USDI
+        //send Eric 1 USDi
         const EricUSDI = utils.parseEther("1")
         await s.USDI.connect(s.Dave).transfer(s.Eric.address, EricUSDI)
         await advanceBlockHeight(1)
@@ -534,7 +534,7 @@ describe("Checking for eronious inputs and scenarios", () => {
         assert.equal(balance.toString(), startingBalance.toString(), "Balance has not changed, TX reverted")
     })
 
-    it("repay when borrower doesn't have enough USDI to do so", async () => {
+    it("repay when borrower doesn't have enough USDi to do so", async () => {
         balance = await s.USDI.balanceOf(s.Carol.address)
         //carol sends all USDi to Dave
         const transferAllResult = await s.USDI.connect(s.Carol).transferAll(s.Dave.address)
