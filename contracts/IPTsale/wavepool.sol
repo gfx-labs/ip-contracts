@@ -75,7 +75,6 @@ contract WavePool {
   uint256 public impliedPrice;
   bool public saturation;
   bool public calculated;
-  bool public withdrawn;
 
   event Points(address indexed from, uint256 wave, uint256 amount);
 
@@ -117,7 +116,6 @@ contract WavePool {
 
     calculated = false;
     saturation = false;
-    withdrawn = false;
   }
 
   /// @notice tells whether the wave is enabled or not
@@ -264,7 +262,6 @@ contract WavePool {
     require(msg.sender == _receiver, "Only Receiver");
     //require(block.timestamp > (_claimTime + (7 days)), "wait for claim time");
     require(calculated, "calculatePricing() first");
-    require(!withdrawn, "Withdrawn already");
 
     uint256 rewardAmount;
     if (!saturation) {
@@ -272,7 +269,6 @@ contract WavePool {
     } else {
       revert("Saturation reached");
     }
-    withdrawn = true;
     rewardAmount = _totalReward - rewardAmount;
 
     giveTo(_receiver, rewardAmount);
