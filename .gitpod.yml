@@ -1,0 +1,5 @@
+image: cr.gfx.cafe/gitpod/image/base:latest
+
+tasks:
+  - init: asdf install & asdf reshim
+  - init: npm run setup

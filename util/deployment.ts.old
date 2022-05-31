@@ -1,0 +1,134 @@
+import { ethers, BigNumber } from "ethers";
+
+import {
+    AnchoredViewRelay,
+    AnchoredViewRelay__factory,
+    ChainlinkOracleRelay,
+    ChainlinkOracleRelay__factory,
+    CurveMaster,
+    CurveMaster__factory,
+    IERC20,
+    IERC20__factory,
+    IOracleRelay,
+    OracleMaster,
+    OracleMaster__factory,
+    ThreeLines0_100,
+    ThreeLines0_100__factory,
+    UniswapV3OracleRelay__factory,
+    USDI,
+    USDI__factory,
+    Vault,
+    VaultController,
+    VaultController__factory,
+    IVOTE,
+    IVOTE__factory,
+} from "../../typechain-types";
+import { Addresser, Mainnet } from "./addresser";
+import { BN } from "./number";
+
+export interface as {
+    book: Addresser;
+
+    USDI?: USDI;
+    USDC?: IERC20;
+    COMP?: IVOTE;
+    WETH?: IERC20;
+
+    VaultController?: VaultController;
+
+    Oracle?: OracleMaster;
+    AnchoredViewEth?: AnchoredViewRelay
+    AnchoredViewComp?: AnchoredViewRelay
+    ChainlinkEth?: ChainlinkOracleRelay
+    ChainlinkComp?: ChainlinkOracleRelay
+    UniswapRelayEthUsdc?: IOracleRelay;
+    UniswapRelayCompUsdc?: IOracleRelay;
+
+    Curve?: CurveMaster;
+    ThreeLines?: ThreeLines0_100;
+
+
+}
+
+export class MainnetFreshDeploy {
+    deployed: boolean;
+    book: Addresser;
+
+    USDI?: USDI;
+    USDC?: IERC20;
+    COMP?: IVOTE;
+    COMPVOTE?: IVOTE;
+    WETH?: IERC20;
+
+    VaultController?: VaultController;
+
+    Oracle?: OracleMaster;
+    AnchoredViewEth?: AnchoredViewRelay
+    AnchoredViewComp?: AnchoredViewRelay
+    ChainlinkEth?: ChainlinkOracleRelay
+    ChainlinkComp?: ChainlinkOracleRelay
+    UniswapRelayEthUsdc?: IOracleRelay;
+    UniswapRelayCompUsdc?: IOracleRelay;
+
+    Curve?: CurveMaster;
+    ThreeLines?: ThreeLines0_100;
+
+    constructor() {
+        this.deployed = false;
+        this.book = Mainnet;
+    }
+
+    async deploy(deployer: ethers.Signer) {
+        if (this.deployed) {
+            return;
+        }
+        this.deployed = true;
+        // setup curve
+
+        //setup oracle master
+        this.Oracle = await new OracleMaster__factory(deployer).deploy();
+        //set oracle on the vault controller
+        await this.VaultController.connect(deployer).registerOracleMaster(
+            this.Oracle.address
+        );
+        //setup uniswap comp oracle
+        this.UniswapRelayCompUsdc = await new UniswapV3OracleRelay__factory(
+            deployer
+        ).deploy(this.book.usdcCompPool, true, BN("1e12"), BN("1"));
+        //setup chainlink comp oracle
+        this.ChainlinkComp = await new ChainlinkOracleRelay__factory(deployer).deploy(
+            "0xdbd020caef83efd542f4de03e3cf0c28a4428bd5", BN("1e10"), BN("1")
+        );
+        //setup anchored view for comp
+        this.AnchoredViewComp = await new AnchoredViewRelay__factory(deployer).deploy(
+            this.UniswapRelayCompUsdc.address,
+            this.ChainlinkComp.address,
+            BN("30"),
+            BN("100")
+        );
+        //setup comp anchored view on the oracle master
+        await this.Oracle.connect(deployer).setRelay(
+            this.book.compAddress,
+            this.AnchoredViewComp.address
+        );
+
+
+
+        //register tokens
+        await this.VaultController.connect(deployer).registerErc20(
+            this.book.wethAddress,
+            BN("5e17"),
+            this.book.wethAddress,
+            BN("5e16"),
+        );
+        await this.VaultController!.connect(deployer).registerErc20(
+            this.book.compAddress,
+            BN("4e17"),
+            this.book.compAddress,
+            BN("5e16"),
+        );
+        await this.VaultController!.connect(deployer).registerUSDi(this.USDI!.address)
+    }
+}
+
+export const Deployment = new MainnetFreshDeploy();
