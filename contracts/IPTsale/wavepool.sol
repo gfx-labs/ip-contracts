@@ -151,7 +151,8 @@ contract WavePool {
     calculated = true;
   }
 
-  /// @notice redeem points for token
+  /// @notice redeem points for reward token
+  /// @param wave if claimed on multiple waves, must redeem for each one separately 
   function redeem(uint256 wave) external {
     require(canRedeem() == true, "can't redeem yet");
     require(_data[wave][msg.sender].redeemed == false, "already redeem");
@@ -175,9 +176,9 @@ contract WavePool {
     giveTo(msg.sender, rewardAmount);
   }
 
-  /// @notice get points
+  /// @notice 1 USDC == 1 point - rewards distributed pro rata based on points
   /// @param amount amount of usdc
-  /// @param key the total amount the points the user may claim - ammount allocated
+  /// @param key the total amount the points the user may claim - ammount allocated in whitelist 
   /// @param merkleProof a proof proving that the caller may redeem up to `key` points
   function getPoints(
     uint256 wave,
@@ -249,7 +250,7 @@ contract WavePool {
     require(check, "erc20 transfer failed");
   }
 
-  /// @notice function which sends the reward token
+  /// @notice function which sends the reward token 
   function giveTo(address target, uint256 amount) internal {
     if(_rewardToken.balanceOf(address(this)) < amount){
       amount = _rewardToken.balanceOf(address(this));

@@ -69,6 +69,7 @@ contract VaultController is
     _;
   }
 
+  ///@notice any function with this modifier can be paused by USDI._pauser() in the case of an emergency 
   modifier onlyPauser() {
     require(_msgSender() == _usdi.pauser(), "only pauser");
     _;
@@ -110,6 +111,8 @@ contract VaultController is
     return _vaultId_vaultAddress[id];
   }
 
+  ///@notice get vaultIDs of a particular wallet
+  ///@return array of vault IDs owned by the wallet, from 0 to many
   function vaultIDs(address wallet) external view override returns (uint96[] memory) {
     return _wallet_vaultIDs[wallet];
   }
@@ -215,10 +218,8 @@ contract VaultController is
     // the oracle must be registered & the token must be unregistered
     require(_oracleMaster._relays(oracle_address) != address(0x0), "oracle does not exist");
     require(_tokenAddress_tokenId[token_address] == 0, "token already registered");
-
     //LTV must be compatible with liquidation incentive
     require(LTV < (expScale - liquidationIncentive), "incompatible LTV");
-
     // increment the amount of registered token
     _tokensRegistered = _tokensRegistered + 1;
     // set & give the token an id
@@ -248,10 +249,8 @@ contract VaultController is
     // the oracle and token must both exist and be registerd
     require(_oracleMaster._relays(oracle_address) != address(0x0), "oracle does not exist");
     require(_tokenAddress_tokenId[token_address] != 0, "token is not registered");
-
     //LTV must be compatible with liquidation incentive
     require(LTV < (expScale - liquidationIncentive), "incompatible LTV");
-
     // set the oracle of the token
     _tokenId_oracleAddress[_tokensRegistered] = oracle_address;
     // set the ltv of the token
@@ -345,18 +344,18 @@ contract VaultController is
   }
 
   /// @notice liquidate an underwater vault
-  /// vaults may be liquidated up to the point where they are exactly solvent
+  /// @notice vaults may be liquidated up to the point where they are exactly solvent
   /// @param id the vault liquidate
   /// @param asset_address the token the liquidator wishes to liquidate
-  /// @param tokens_to_liquidate - number of tokens to liquidate
-  /// @dev pays interest
+  /// @param tokens_to_liquidate  number of tokens to liquidate
+  /// @dev pays interest before liquidation 
   function liquidateVault(
     uint96 id,
     address asset_address,
     uint256 tokens_to_liquidate
   ) external override paysInterest whenNotPaused returns (uint256) {
+    //cannot liquidate 0
     require(tokens_to_liquidate > 0, "must liquidate>0");
-
     //check for registered asset - audit L3
     require(_tokenAddress_tokenId[asset_address] != 0, "Token not registered");
 
@@ -390,12 +389,13 @@ contract VaultController is
     return tokens_to_liquidate;
   }
 
-  /// @dev calculate amount of tokens to liquidate for a vault
+  /// @notice calculate amount of tokens to liquidate for a vault
   /// @param id the vault to get info for
   /// @param asset_address the token to calculate how many tokens to liquidate
   /// @return - amount of tokens liquidatable
-  /// @notice the amount of tokens owed is a moving target and changes with each block as pay_interest is called
-  /// all this function does is call _liquidationMath with 2**256-1 as the amount
+  /// @notice the amount of tokens owed is a moving target and changes with each block as pay_interest is called 
+  /// @notice this function can serve to give an indication of how many tokens can be liquidated
+  /// @dev all this function does is call _liquidationMath with 2**256-1 as the amount
   function tokensToLiquidate(uint96 id, address asset_address) external view override returns (uint256) {
     (
       uint256 tokenAmount, // bad fill price
@@ -415,6 +415,8 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) internal view returns (uint256, uint256) {
+
+    //require that the vault is solvent
     require(!checkVault(id), "Vault is solvent");
 
     IVault vault = getVault(id);
@@ -450,7 +452,7 @@ contract VaultController is
   }
 
   /// @notice internal helper function to wrap getting of vaults
-  /// it will revert if the vault does not exist
+  /// @notice it will revert if the vault does not exist
   /// @param id id of vault
   /// @return vault IVault contract of
   function getVault(uint96 id) internal view returns (IVault vault) {
@@ -460,12 +462,14 @@ contract VaultController is
   }
 
   ///@notice amount of USDi needed to reach even solvency
+  ///@notice this amount is a moving target and changes with each block as pay_interest is called 
   /// @param id id of vault
   function amountToSolvency(uint96 id) public view override returns (uint256) {
     require(!checkVault(id), "Vault is solvent");
     return _amountToSolvency(id);
   }
 
+  ///@notice bussiness logic for amountToSolvency
   function _amountToSolvency(uint96 id) internal view returns (uint256) {
     return _vaultLiability(id) - get_vault_borrowing_power(getVault(id));
   }
@@ -478,6 +482,7 @@ contract VaultController is
     return _vaultLiability(id);
   }
 
+  ///@notice bussiness logic for vaultLiability
   function _vaultLiability(uint96 id) internal view returns (uint192) {
     address vault_address = _vaultId_vaultAddress[id];
     require(vault_address != address(0x0), "vault does not exist");

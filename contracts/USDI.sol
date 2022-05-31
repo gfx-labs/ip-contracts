@@ -10,7 +10,6 @@ import "./_external/IERC20.sol";
 import "./_external/compound/ExponentialNoError.sol";
 import "./_external/openzeppelin/PausableUpgradeable.sol";
 
-
 /// @title USDI token contract
 /// @notice handles all minting/burning of usdi
 /// @dev extends UFragments
@@ -47,6 +46,8 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _reserve = IERC20(reserveAddr);
   }
 
+  ///@notice sets the pauser for both USDI and VaultController
+  ///@notice the pauser is a separate role from the owner
   function setPauser(address pauser_) external override onlyOwner {
     _pauser = pauser_;
   }
@@ -61,10 +62,12 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _unpause();
   }
 
+  ///@notice gets the pauser for both USDI and VaultController
   function pauser() public view returns (address) {
     return _pauser;
   }
 
+  ///@notice gets the owner of the USDI contract
   function owner() public view override(IUSDI, OwnableUpgradeable) returns (address) {
     return super.owner();
   }
@@ -190,7 +193,6 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     emit Transfer(address(0), _msgSender(), amount);
     emit Mint(_msgSender(), amount);
   }
-  
 
   /// @notice admin function to burn USDi
   /// @param usdc_amount the amount of USDi to burn, denominated in USDC
