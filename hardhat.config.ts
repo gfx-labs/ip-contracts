@@ -99,7 +99,7 @@ const config: HardhatUserConfig = {
     runOnCompile: false,
   },
   gasReporter: {
-    enabled: false,
+    enabled: true,
   },
   etherscan: {
     apiKey: {

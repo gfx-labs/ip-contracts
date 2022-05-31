@@ -115,7 +115,7 @@ describe("TESTING USDI CONTRACT", async () => {
         let usdcBalance = await s.USDC.balanceOf(s.Dave.address)
         assert.equal(usdcBalance.toString(), s.Dave_USDC.sub(usdcAmount).toString(), "Dave deposited USDC tokens")
 
-        //some interest has accrued, USDI balance should be slightly higher than existingUSDI balance + USDC amount deposited 
+        //some interest has accrued, USDi balance should be slightly higher than existingUSDi balance + USDC amount deposited 
         await s.VaultController.calculateInterest()
         await mineBlock();
         let usdiBalance = await s.USDI.balanceOf(s.Dave.address)
