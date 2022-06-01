@@ -45,6 +45,8 @@ contract AnchoredViewRelay is IOracleRelay {
     return getLastSecond();
   }
 
+  /// @notice compares the main value (chainlink) to the anchor value (uniswap v3)
+  /// @notice the two prices must closely match +-buffer, or it will revert
   function getLastSecond() private view returns (uint256) {
     // get the main price
     uint256 mainValue = _mainRelay.currentValue();

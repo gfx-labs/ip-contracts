@@ -40,7 +40,7 @@ describe("ETH:", () => {
      */
     it("verify chainlink price within anchor bounds", async () => {
         let anchorPrice = (await s.UniswapRelayUniUsdc.currentValue()).div(1e14).toNumber() / 1e4
-        showBody("UNISWAP UNI ANCHOR PRICE: ", anchorPrice)
+        //showBody("UNISWAP UNI ANCHOR PRICE: ", anchorPrice)
         let chainlinkPrice = (await s.ChainlinkEth.currentValue()).div(1e14).toNumber() / 1e4
         let numerator = (await s.AnchoredViewEth._widthNumerator()).toNumber();
         let denominator = (await s.AnchoredViewEth._widthDenominator()).toNumber();
@@ -67,40 +67,6 @@ describe("ETH:", () => {
         //showBody(oraclePrice)
     });
 });
-
-/**
- describe("COMP:", () => {
-    it("fetch uniswap relay price", async () => {
-        let anchorPrice = (await s.UniswapRelayCompUsdc.currentValue()).div(1e14).toNumber() / 1e4
-        expect(anchorPrice).to.be.above(100).and.to.be.below(1000);
-        //showBody(anchorPrice);
-    });
-    it("fetch chainlink relay price", async () => {
-        let chainlinkPrice = (await s.ChainlinkComp.currentValue()).div(1e14).toNumber() / 1e4
-        expect(chainlinkPrice).to.be.above(100).and.to.be.below(1000);
-        //showBody(chainlinkPrice);
-    });
-    it("verify chainlink price within anchor bounds", async () => {
-        let anchorPrice = (await s.UniswapRelayCompUsdc.currentValue()).div(1e14).toNumber() / 1e4
-        let chainlinkPrice = (await s.ChainlinkComp.currentValue()).div(1e14).toNumber() / 1e4
-        let numerator = (await s.AnchoredViewComp._widthNumerator()).toNumber();
-        let denominator = (await s.AnchoredViewComp._widthDenominator()).toNumber();
-        let buffer = (numerator * anchorPrice) / denominator;
-        let upperBounds = anchorPrice + buffer;
-        let lowerBounds = anchorPrice - buffer;
-        expect(chainlinkPrice < upperBounds);
-        expect(chainlinkPrice > lowerBounds);
-    });
-    it("fetch oracle master price", async () => {
-        let mainPrice = (await s.AnchoredViewComp.currentValue()).div(1e14).toNumber() / 1e4
-        let oraclePrice = (await s.Oracle.getLivePrice(s.compAddress)).div(1e14).toNumber() / 1e4
-        let chainlinkPrice = (await s.ChainlinkComp.currentValue()).div(1e14).toNumber() / 1e4
-        expect(mainPrice = chainlinkPrice);
-        expect(oraclePrice = mainPrice);
-        //showBody(oraclePrice)
-    });
-});
- */
 describe("UNI:", () => {
     it("fetch uniswap relay price", async () => {
         let anchorPrice = (await s.UniswapRelayUniUsdc.currentValue()).div(1e14).toNumber() / 1e4

@@ -7,11 +7,8 @@ import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { advanceBlockHeight, reset, mineBlock, currentBlock, fastForward, OneYear, OneWeek } from "../../../util/block";
 import { IVault__factory } from "../../../typechain-types";
-//import { assert } from "console";
 import { BigNumber, utils } from "ethers";
 import { token } from "../../../typechain-types";
-
-
 
 
 describe("Test Uniswap pool with rebasing USDi token", () => {
@@ -35,8 +32,6 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
 
     let pairV2: any
 
-
-
     const depositAmount = s.Dave_USDC.sub(BN("500e6"))
     const depositAmount_e18 = depositAmount.mul(BN("1e12"))
 
@@ -47,8 +42,11 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
 
     //1 half of Bob's wETH
     const collateralAmount = s.Bob_WETH.div(2)
+    const amount = utils.parseEther("500")
 
     let borrowAmount: BigNumber
+
+    let startingUSDIreserve: BigNumber
 
     it("Confirms contract holds no value", async () => {
         const totalLiability = await s.VaultController.totalBaseLiability()
@@ -98,8 +96,6 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
 
 
     it("Start some liability so USDi has yield", async () => {
-
-        //mint vault
         //Bob mints vault
         await expect(s.VaultController.connect(s.Bob).mintVault()).to.not.reverted;
         await mineBlock();
@@ -111,7 +107,6 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
         );
         expect(await s.BobVault.minter()).to.eq(s.Bob.address)
         await mineBlock()
-
 
         //Bob transfers wETH collateral
         let balance = await s.WETH.balanceOf(s.Bob.address)
@@ -131,9 +126,7 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
         const borrowArgs = await getArgs(borrowResult)
 
         expect(await toNumber(borrowAmount)).to.equal(await toNumber(borrowArgs.borrowAmount))
-
     })
-
 
     it("Use borrowed USDi to make a uni v2 pool", async () => {
         const wETHamount = await s.WETH.balanceOf(s.Bob.address)
@@ -142,7 +135,6 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
         usdiAmount = await s.USDI.balanceOf(s.Bob.address)
         const block = await currentBlock()
         const deadline = block.timestamp + 500
-
 
         //approvals
         await s.USDI.connect(s.Bob).approve(routerV2.address, usdiAmount)
@@ -187,7 +179,6 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
         expect(await toNumber(getReserves.reserve1)).to.equal(await toNumber(s.Bob_WETH.div(2)))
         expect(await toNumber(getReserves.reserve0)).to.equal(await toNumber(usdiAmount))
 
-
         //USDI token0 is correct
         const token0 = await pairV2.token0()
         expect(token0.toString().toUpperCase()).to.equal(s.USDI.address.toString().toUpperCase())
@@ -204,7 +195,7 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
         expect(await toNumber(liab)).to.be.gt(0)//there is liability on the protocol, so interest will accrue 
 
         let getReserves = await pairV2.getReserves()
-        const startingUSDIreserve = getReserves.reserve0
+        startingUSDIreserve = getReserves.reserve0
         const expectedWETH = getReserves.reserve1
         expect(await toNumber(expectedWETH)).to.equal(await toNumber(s.Bob_WETH.div(2)))
         const lptokens = await pairV2.balanceOf(s.Bob.address)
@@ -230,11 +221,10 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
 
     it("do a small swap", async () => {
         const startBalance = await s.USDI.balanceOf(s.Dave.address)
-        const amount = utils.parseEther("500")
+        
         expect(await toNumber(startBalance)).to.be.gt(await toNumber(amount))
 
         const startWETH = await s.WETH.balanceOf(s.Dave.address)
-
 
         //approve
         await s.USDI.connect(s.Dave).approve(routerV2.address, amount)
@@ -264,6 +254,23 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
 
     })
 
+    it("Check state of pool", async () => {
+        const liab = await s.VaultController.totalBaseLiability()
+        expect(await toNumber(liab)).to.be.gt(0)//there is liability on the protocol, so interest will accrue 
+
+        let getReserves = await pairV2.getReserves()
+        let currentUSDIreserve = getReserves.reserve0
+
+        //pool reports a reserve that includes interest generation, so it is higher than the original amount supplied + the amount swaped 
+        expect(await toNumber(currentUSDIreserve)).to.be.gt(await toNumber(startingUSDIreserve.add(amount)))
+
+        let trueBalance = await s.USDI.balanceOf(pairV2.address)
+
+        //pool reports the accurate number of USDi after a swap has taken place 
+        expect(await toNumber(trueBalance)).to.eq(await toNumber(currentUSDIreserve))
+
+    })
+
     it("remove all liquidity from pool and receive USDi + interest ", async () => {
         const lptokens = await pairV2.balanceOf(s.Bob.address)
 
@@ -287,7 +294,6 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
             s.Bob.address,
             deadline
         )
-
         await mineBlock()
 
         //pair USDi is very close to 0
@@ -298,7 +304,6 @@ describe("Test Uniswap pool with rebasing USDi token", () => {
         balance = await s.USDI.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.be.gt(await toNumber(usdiAmount))
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(pairUSDi), 100000)
-
 
         //pair wETH is very close to 0
         balance = await s.WETH.balanceOf(pairV2.address)

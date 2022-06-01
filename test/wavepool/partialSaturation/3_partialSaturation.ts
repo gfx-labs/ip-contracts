@@ -34,8 +34,10 @@ import {
 } from "../../../typechain-types"
 import { red } from "bn.js"
 import exp from "constants"
-import { start } from "repl"
+import { format } from "path"
 const { solidity } = require("ethereum-waffle")
+
+
 
 
 const initMerkle = async () => {
@@ -81,7 +83,6 @@ const totalReward = utils.parseEther("30000000")//30,000,000 IPT
 
 let Wave: WavePool
 
-//todo - what happens if not all is redeemed, IPT stuck on Wave? Redeem deadline?
 require("chai").should()
 describe("Deploy wave - OVERSATURATION", () => {
   before(async () => {
@@ -157,6 +158,7 @@ describe("Wave 1 claims", () => {
     leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
     merkleProof = merkleTree1.getHexProof(leaf)
 
+    //starting balance is as expected
     const startBalance = await s.USDC.balanceOf(claimer)
     assert.equal(startBalance.toString(), s.Dave_USDC.toString(), "Dave's starting balance is correct")
 
@@ -222,7 +224,6 @@ describe("Wave 1 claims", () => {
     )
     await mineBlock()
     await expect(pointsResult).to.be.reverted
-
   })
 
   it("Bob claims some, but less than maximum", async () => {
@@ -231,6 +232,7 @@ describe("Wave 1 claims", () => {
     let cap = await Wave._cap()
     let total = await Wave._totalClaimed()
     expect(total).to.be.lt(cap) //cap has not been reached
+
     const startBalance = await s.USDC.balanceOf(claimer)
     assert.equal(
       startBalance.toString(),
@@ -280,7 +282,6 @@ describe("Wave 1 claims", () => {
       keyAmount.div(2).toString(),
       "Claimed amount is correct"
     )
-
   })
 
   it("try to make a claim that would exceed cap", async () => {
@@ -291,6 +292,7 @@ describe("Wave 1 claims", () => {
     let total = await Wave._totalClaimed()
     expect(total).to.be.lt(cap) //cap has not been reached
     const claimableAmount = cap.sub(total)
+
     //approve
     await s.USDC.connect(s.Dave).approve(Wave.address, amount)
     await mineBlock()
@@ -298,7 +300,6 @@ describe("Wave 1 claims", () => {
     //merkle things
     leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
     merkleProof = merkleTree1.getHexProof(leaf)
-    //   showBody("leaf proof: ", merkleProof)
 
     const gpResult = Wave.connect(s.Bob).getPoints(
       1,
@@ -313,6 +314,7 @@ describe("Wave 1 claims", () => {
   it("try to claim the wrong wave", async () => {
 
     let balance = await s.USDC.balanceOf(s.Bob.address)
+
     //approve
     await s.USDC.connect(s.Bob).approve(Wave.address, balance)
     await mineBlock()
@@ -394,6 +396,7 @@ describe("Wave 1 claims", () => {
       merkleProof
     )).to.be.revertedWith("invalid proof")
     await mineBlock()
+
   })
 
   it("Bob claims exactly up to maximum", async () => {
@@ -406,6 +409,7 @@ describe("Wave 1 claims", () => {
     //merkle things
     leaf = solidityKeccak256(["address", "uint256"], [claimer, keyAmount])
     merkleProof = merkleTree1.getHexProof(leaf)
+
     //approve
     await s.USDC.connect(s.Bob).approve(Wave.address, keyAmount.div(2))
     await mineBlock()
@@ -422,7 +426,6 @@ describe("Wave 1 claims", () => {
     expect(await toNumber(bobClaim.claimed)).to.eq(await toNumber(keyAmount))
 
   })
-
 })
 
 describe("Wave 2 claims", () => {
@@ -439,6 +442,7 @@ describe("Wave 2 claims", () => {
   })
 
   it("Everyone on wave 2 claims their key amount", async () => {
+
     //Bob and Dave have already claimed for wave 1 but not wave 2
     for (let i = 0; i < whitelist2.length; i++) {
       //merkle things
@@ -468,6 +472,7 @@ describe("Wave 2 claims", () => {
     //can't claim anymore
     let leaf = solidityKeccak256(["address", "uint256"], [s.Bob.address, keyAmount])
     let merkleProof = merkleTree2.getHexProof(leaf)
+   
     //approve
     await s.USDC.connect(s.Bob).approve(Wave.address, 5)
     await mineBlock()
@@ -487,6 +492,7 @@ describe("Wave 2 claims", () => {
     //can't claim anymore
     let leaf = solidityKeccak256(["address", "uint256"], [s.Igor.address, keyAmount])
     let merkleProof = merkleTree2.getHexProof(leaf)
+    
     //approve
     await s.USDC.connect(s.Igor).approve(Wave.address, keyAmount)
     await mineBlock()
@@ -516,12 +522,10 @@ describe("Wave 2 claims", () => {
     await expect(Wave.connect(s.Bob).redeem(1)).to.be.revertedWith("can't redeem yet")
     await expect(Wave.connect(s.Bob).redeem(2)).to.be.revertedWith("can't redeem yet")
   })
-
 })//wave 2 claims
 
 describe("Wave 3 claims", () => {
   let merkleProof: any
-
   it("advance time to enable wave 3", async () => {
     let enabled = await Wave.isEnabled(BN("3"))
     assert.equal(enabled, false, "Wave 3 is not yet enabled")
@@ -571,7 +575,8 @@ describe("Wave 3 claims", () => {
     await mineBlock()
   })
 
-  it("claim up to cap to reach maximum saturation", async () => {
+  it("claim up to half of the available tokens to reach partial saturation", async () => {
+
     const cap = await Wave._cap()
     let totalClaimed = await Wave._totalClaimed()
     expect(totalClaimed).to.be.lt(cap) //cap has not been reached
@@ -581,46 +586,30 @@ describe("Wave 3 claims", () => {
     const startBalance = await s.USDC.balanceOf(s.Bank.address)
     expect(await toNumber(startBalance)).to.be.gt(await toNumber(claimableAmount))
 
-    //approve
-    await s.USDC.connect(s.Bank).approve(Wave.address, claimableAmount)
+    const partialSaturationAmount = cap.div(3).sub(totalClaimed)
+
+    await s.USDC.connect(s.Bank).approve(Wave.address, partialSaturationAmount)
     await mineBlock()
 
     const gpResult = await Wave.connect(s.Bank).getPoints(
       3,
-      claimableAmount,
+      partialSaturationAmount,
       keyAmount,//this is irrelevant for wave 3
       merkleProof//this is irrelevant for wave 3
     )
     await mineBlock()
 
-    //bank has the correct amount of points
     let bankPoints = await Wave._data(3, s.Bank.address)
-    expect(bankPoints.claimed.toNumber()).to.eq(claimableAmount.toNumber())
+    expect(bankPoints.claimed.toNumber()).to.eq(partialSaturationAmount.toNumber())
 
-    //cap has been reached
     totalClaimed = await Wave._totalClaimed()
-    expect(totalClaimed.toNumber()).to.eq(cap.toNumber())
-
-  })
-
-  it("Dave tries to claim some after cap has been reached", async () => {
-    //approve
-    await s.USDC.connect(s.Dave).approve(Wave.address, keyAmount)
-    await mineBlock()
-
-    await expect(Wave.connect(s.Dave).getPoints(
-      3,
-      keyAmount,
-      keyAmount,//this is irrelevant for wave 3
-      merkleProof//this is irrelevant for wave 3
-    )).to.be.revertedWith("Cap reached")
-    await mineBlock()
+    expect(totalClaimed.toNumber()).to.eq(cap.div(3).toNumber())
   })
 
 })
 
 describe("Redemptions", () => {
-  const floor = 500000 //$0.5 USDC - hard coded into contract
+
   it("try to redeem before redemption time", async () => {
     await expect(Wave.connect(s.Dave).redeem(2)).to.be.revertedWith("can't redeem yet")
   })
@@ -639,26 +628,52 @@ describe("Redemptions", () => {
     assert.equal(enabled, true, "Redeem time now active")
 
   })
-  it("Bob redeems", async () => {
-    //Bob claimed 3x so his points are keyAmount * 3
-    const claimAmount = keyAmount.mul(3)
-    const startingIPT = await s.IPT.balanceOf(s.Bob.address)
-    expect(startingIPT).to.eq(0)
 
-    await Wave.connect(s.Bob).redeem(1)
+  it("Everyone redeems", async () => {
+
+    //wave 1
+    let firstRedeem = await Wave.connect(s.Bob).redeem(1)
     await mineBlock()
-    await Wave.connect(s.Bob).redeem(2)
+    let gas = await getGas(firstRedeem)
+    showBodyCyan("First redeem gas: ", gas)//first redeemer pays the gas to cal price for everyone else
+
+    let secondRedeem = await Wave.connect(s.Dave).redeem(1)
     await mineBlock()
+    gas = await getGas(secondRedeem)
+    showBodyCyan("Second redeem gas: ", gas)
+
+    //wave 2
+    for (let i = 0; i < whitelist2.length; i++) {
+
+      const redeemResult = await Wave.connect(s.accounts[i]).redeem(2)
+      await mineBlock()
+
+      let data = await Wave._data(2, s.accounts[i].address)
+      expect(data.redeemed).to.eq(true)
+    }
+
+    //wave 3
     await Wave.connect(s.Bob).redeem(3)
     await mineBlock()
+    await Wave.connect(s.Igor).redeem(3)
+    await mineBlock()
 
-    let balance = await s.IPT.balanceOf(s.Bob.address)
-    let scaledClaimAmount = claimAmount.mul(BN("1e12"))
-    let scaledFloor = BN(floor).mul(BN("1e12"))
+    await Wave.connect(s.Bank).redeem(3)
+    await mineBlock()
+  })
 
-    let expected = await truncate(scaledClaimAmount.mul(scaledFloor))
+  it("confirm division error", async () => {
 
-    expect(await toNumber(balance)).to.eq(await toNumber(expected))
+    const totalClaimed = await Wave._totalClaimed()
+    const cap = await Wave._cap()
+
+    expect(totalClaimed).to.eq(cap.div(3))
+
+    const impliedPrice = await Wave.impliedPrice()
+
+    const expectedReward = (totalClaimed.div(impliedPrice)).mul(BN("1e18"))
+
+    expect(await toNumber(expectedReward)).to.be.gt(await toNumber(totalReward))//division error, does not divide evenly 
 
   })
 
@@ -671,17 +686,37 @@ describe("Redemptions", () => {
     await mineBlock()
   })
 
-  it("try admin withdraw during redemption time but before admin withdraw time", async () => {
-    await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("Saturation reached")
+  it("Check ending balance of a claimer", async () => {
+
+    let balance = await s.IPT.balanceOf(Wave.address)
+    assert.equal(balance.toNumber(), 0, "Wave contract holds 0 IPT, all has been redeemed")
+
+    balance = await s.USDC.balanceOf(s.Eric.address)
+    const ericSpent = s.Eric_USDC.sub(balance)
+    const ericIPT = await s.IPT.balanceOf(s.Eric.address)
+
+    const actualPrice = ericSpent.toNumber() / await toNumber(ericIPT)
+    const impliedPrice = await Wave.impliedPrice()
+
+    expect(actualPrice).to.be.eq(impliedPrice.toNumber())//exact because Eric was not the last to redeem    
   })
-  it("advance time to enable admin withdraw", async () => {
-    await fastForward(OneWeek)
-    await mineBlock()
+
+  it("Check ending balance of the last to withdraw", async () => {
+
+    let balance = await s.IPT.balanceOf(Wave.address)
+    assert.equal(balance.toNumber(), 0, "Wave contract holds 0 IPT, all has been redeemed")
+
+    balance = await s.USDC.balanceOf(s.Bank.address)
+    const bankSpent = s.Bank_USDC.sub(balance)
+    const bankIPT = await s.IPT.balanceOf(s.Bank.address)
+
+    const actualPrice = bankSpent.toNumber() / await toNumber(bankIPT)
+    const impliedPrice = await Wave.impliedPrice()
+    expect(actualPrice).to.be.closeTo(impliedPrice.toNumber(), 1)//not exact due to rounding error
+
   })
+
   it("try admin withdraw", async () => {
     await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("Saturation reached")
-    await mineBlock()
-
   })
-
 })

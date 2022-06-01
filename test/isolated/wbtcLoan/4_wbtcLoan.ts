@@ -7,7 +7,6 @@ import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { advanceBlockHeight, reset, mineBlock, fastForward, OneWeek } from "../../../util/block";
 import { IVault__factory } from "../../../typechain-types";
-//import { assert } from "console";
 import { utils } from "ethers";
 
 
@@ -82,8 +81,7 @@ describe("Borrow against wBTC, liquidate, and repay", () => {
 
     it("Make a vault and transfer wBTC", async () => {
 
-        //mint vault
-        //Bob mints vault
+        //Gus mints vault
         await expect(s.VaultController.connect(s.Gus).mintVault()).to.not.reverted;
         await mineBlock();
         vaultID = await (await s.VaultController.vaultsMinted()).toNumber()
@@ -95,15 +93,15 @@ describe("Borrow against wBTC, liquidate, and repay", () => {
         expect(await s.GusVault.minter()).to.eq(s.Gus.address)
         await mineBlock()
 
-        //Bob transfers wETH collateral
+        //Gus transfers wETH collateral
         let balance = await s.WBTC.balanceOf(s.Gus.address)
         expect(balance).to.eq(s.Gus_WBTC)
 
-        //Bob transfers 3 WBTC
+        //Gus transfers 3 WBTC
         await s.WBTC.connect(s.Gus).transfer(s.GusVault.address, s.ONE_BTC)
         await mineBlock()
-
     })
+    
     it("Check borrowing power and borrow USDi", async () => {
         let borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
 
@@ -116,7 +114,6 @@ describe("Borrow against wBTC, liquidate, and repay", () => {
         expect(await toNumber(borrowAmount)).to.be.closeTo(await toNumber(borrowPower), 0.01)
         let balance = await s.USDI.balanceOf(s.Gus.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(borrowPower), 0.01)
-
     })
 
     it("Pass time, vault underwater", async () => {
@@ -127,7 +124,6 @@ describe("Borrow against wBTC, liquidate, and repay", () => {
 
         let solvency = await s.VaultController.checkVault(vaultID)
         expect(solvency).to.eq(false)
-
     })
 
     it("Liquidate", async () => {
@@ -141,13 +137,12 @@ describe("Borrow against wBTC, liquidate, and repay", () => {
         //liquidate
         await s.USDI.connect(s.Dave).approve(s.VaultController.address, balance)
         await mineBlock()
-        await s.VaultController.connect(s.Dave).liquidateVault(vaultID, s.WBTC.address, tokensToLiq) //7748524 - true amount? 5167172 - off by 1 22798917 - maximum ish
+        await s.VaultController.connect(s.Dave).liquidateVault(vaultID, s.WBTC.address, tokensToLiq) 
         await mineBlock()
         await s.VaultController.calculateInterest()
         await mineBlock()
         let wbtcAmount = await s.WBTC.balanceOf(s.Dave.address)
         expect(wbtcAmount).to.be.gt(0)
-
 
         let endUSDI = await s.USDI.balanceOf(s.Dave.address) 
         let difference = balance.sub(endUSDI)

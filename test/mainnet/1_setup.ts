@@ -16,13 +16,12 @@ require("chai").should();
 // Carol: 100,000,000,000,000,000,000 (100 comp), 18dec
 // Dave: 10,000,000,000 usdc ($10,000) 6dec
 //
-// andy is a usdc holder. he wishes to deposit USDC to hold USDI
-// bob is an eth holder. He wishes to deposit his eth and borrow USDI
+// andy is a usdc holder. he wishes to deposit USDC to hold USDi
+// bob is an eth holder. He wishes to deposit his eth and borrow USDi
 // carol is a comp holder. she wishes to deposit her comp and then vote
 // dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
 
 // configurable variables
-
 let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 let comp_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
@@ -118,8 +117,6 @@ describe("Token Setup", () => {
         await expect(
             stealMoney(tribe_minter, s.Carol.address, s.tribeAddress, s.Carol_TRIBE)
         ).to.not.be.reverted;
-
-
         await mineBlock();
     });
 });

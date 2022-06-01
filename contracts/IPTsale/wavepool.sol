@@ -75,7 +75,6 @@ contract WavePool {
   uint256 public impliedPrice;
   bool public saturation;
   bool public calculated;
-  bool public withdrawn;
 
   event Points(address indexed from, uint256 wave, uint256 amount);
 
@@ -117,7 +116,6 @@ contract WavePool {
 
     calculated = false;
     saturation = false;
-    withdrawn = false;
   }
 
   /// @notice tells whether the wave is enabled or not
@@ -151,7 +149,8 @@ contract WavePool {
     calculated = true;
   }
 
-  /// @notice redeem points for token
+  /// @notice redeem points for reward token
+  /// @param wave if claimed on multiple waves, must redeem for each one separately 
   function redeem(uint256 wave) external {
     require(canRedeem() == true, "can't redeem yet");
     require(_data[wave][msg.sender].redeemed == false, "already redeem");
@@ -175,9 +174,9 @@ contract WavePool {
     giveTo(msg.sender, rewardAmount);
   }
 
-  /// @notice get points
+  /// @notice 1 USDC == 1 point - rewards distributed pro rata based on points
   /// @param amount amount of usdc
-  /// @param key the total amount the points the user may claim - ammount allocated
+  /// @param key the total amount the points the user may claim - ammount allocated in whitelist 
   /// @param merkleProof a proof proving that the caller may redeem up to `key` points
   function getPoints(
     uint256 wave,
@@ -249,8 +248,11 @@ contract WavePool {
     require(check, "erc20 transfer failed");
   }
 
-  /// @notice function which sends the reward token
+  /// @notice function which sends the reward token 
   function giveTo(address target, uint256 amount) internal {
+    if(_rewardToken.balanceOf(address(this)) < amount){
+      amount = _rewardToken.balanceOf(address(this));
+    }
     bool check = _rewardToken.transfer(target, amount);
     require(check, "erc20 transfer failed");
   }
@@ -260,7 +262,6 @@ contract WavePool {
     require(msg.sender == _receiver, "Only Receiver");
     //require(block.timestamp > (_claimTime + (7 days)), "wait for claim time");
     require(calculated, "calculatePricing() first");
-    require(!withdrawn, "Withdrawn already");
 
     uint256 rewardAmount;
     if (!saturation) {
@@ -268,7 +269,6 @@ contract WavePool {
     } else {
       revert("Saturation reached");
     }
-    withdrawn = true;
     rewardAmount = _totalReward - rewardAmount;
 
     giveTo(_receiver, rewardAmount);

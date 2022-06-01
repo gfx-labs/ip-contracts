@@ -7,9 +7,7 @@ import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { advanceBlockHeight, reset, mineBlock, fastForward, OneYear, OneWeek } from "../../../util/block";
 import { IVault__factory } from "../../../typechain-types";
-//import { assert } from "console";
 import { utils } from "ethers";
-//simport { truncate } from "fs";
 
 
 describe("What happens when there is no reserve?", () => {
@@ -89,7 +87,6 @@ describe("What happens when there is no reserve?", () => {
         expect(await s.BobVault.minter()).to.eq(s.Bob.address)
         await mineBlock()
 
-
         //Bob transfers wETH collateral
         let balance = await s.WETH.balanceOf(s.Bob.address)
         expect(balance).to.eq(s.Bob_WETH)
@@ -108,7 +105,6 @@ describe("What happens when there is no reserve?", () => {
         const borrowAmount = borrowArgs.borrowAmount
 
         expect(await toNumber(borrowAmount)).to.be.closeTo(await toNumber(borrowPower), 0.01)
-
     })
 
     it("Borrow again to push up the total base liability", async () => {
@@ -128,7 +124,6 @@ describe("What happens when there is no reserve?", () => {
         );
         expect(await s.BobVault.minter()).to.eq(s.Bob.address)
         await mineBlock()
-
 
         //Carol transfers UNI collateral
         let balance = await s.UNI.balanceOf(s.Carol.address)
@@ -195,6 +190,13 @@ describe("What happens when there is no reserve?", () => {
 
     })
 
+    /**
+     * NOTE: once governance calls donateReserve(), there is no longer a possibility of a 
+     * refund for any USDC accidently sent to the USDi contract so far, unless governance decides to 
+     * issue a refund from its treasury
+     * 
+     * Once donateReserve() is called, all excess USDC held by the USDi contract will be rebased to all USDi holders irreversibly 
+     */
     it("test donateReserve", async () => {
         const eroniousAmount = 500e6
 
@@ -228,14 +230,12 @@ describe("What happens when there is no reserve?", () => {
         let totalSupply = await s.USDI.totalSupply()
         let difference = trueTotal.sub(totalSupply)
 
-
         //do a normal donate
         await s.USDC.connect(s.Dave).approve(s.USDI.address, eroniousAmount)
         await mineBlock()
 
         await s.USDI.connect(s.Dave).donate(eroniousAmount)
         await mineBlock()
-
 
         //donateReserve
         const result = await s.USDI.connect(s.Frank).donateReserve()
@@ -249,9 +249,6 @@ describe("What happens when there is no reserve?", () => {
 
         //donateReserve still only donated the eronious amount, and there is no reserve left to donate now 
         await expect(s.USDI.donateReserve()).to.be.revertedWith("No extra reserve")
-
-
-
 
     })
 })

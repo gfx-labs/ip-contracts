@@ -46,8 +46,8 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _reserve = IERC20(reserveAddr);
   }
 
-  /// @notice pause contract, pauser only
-  /// @param pauser_ new pauser for the contract
+  ///@notice sets the pauser for both USDI and VaultController
+  ///@notice the pauser is a separate role from the owner
   function setPauser(address pauser_) external override onlyOwner {
     _pauser = pauser_;
   }
@@ -62,12 +62,12 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _unpause();
   }
 
-  /// @notice get current pauser of contract
+  ///@notice gets the pauser for both USDI and VaultController
   function pauser() public view returns (address) {
     return _pauser;
   }
 
-  /// @notice get current owner of contract
+  ///@notice gets the owner of the USDI contract
   function owner() public view override(IUSDI, OwnableUpgradeable) returns (address) {
     return super.owner();
   }
@@ -111,7 +111,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice deposit USDC to mint USDi
   /// @dev caller should obtain 1e12 USDi for each USDC
   /// the calculations for deposit mimic the calculations done by mint in the ampleforth contract, simply with the usdc transfer
-  /// "fragments" are the units that we see, so 1000 fragments == 1000 usdi
+  /// "fragments" are the units that we see, so 1000 fragments == 1000 USDi
   /// "gons" are the internal accounting unit, used to keep scale.
   /// we use the variable _gonsPerFragment in order to convert between the two
   /// try dimensional analysis when doing the math in order to verify units are correct
@@ -139,7 +139,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// caller should obtain 1 USDC for every 1e12 USDi
   /// @param usdc_amount amount of USDC to withdraw
   function withdraw(uint256 usdc_amount) external override paysInterest whenNotPaused {
-    // scale the usdc_amount to the usdi decimal amount, aka 1e18
+    // scale the usdc_amount to the USDi decimal amount, aka 1e18
     uint256 amount = usdc_amount * 1e12;
     // check balances all around
     require(amount <= this.balanceOf(_msgSender()), "insufficient funds");
@@ -219,7 +219,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _donation(amount);
   }
 
-  /// @notice donates any USDC held by this contract to the USDI holders
+  /// @notice donates any USDC held by this contract to the USDi holders
   /// @notice accounts for any USDC that may have been sent here accidently
   /// @notice without this, any USDC sent to the contract could mess up the reserve ratio
   function donateReserve() external override onlyOwner whenNotPaused {
@@ -261,7 +261,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _donation(amount);
   }
 
-  /// @notice function for distributing the donation to all usdi holders
+  /// @notice function for distributing the donation to all USDi holders
   /// @param amount amount of USDi to donate
   function _donation(uint256 amount) internal {
     _totalSupply = _totalSupply + amount;
