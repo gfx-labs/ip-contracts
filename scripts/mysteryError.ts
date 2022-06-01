@@ -4,102 +4,28 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
     CurveMaster__factory,
     ThreeLines0_100__factory,
+    OracleMaster__factory,
+    OracleMaster
 } from "../typechain-types";
-import * as dotenv from "dotenv";
-import { Pool } from '@uniswap/v3-sdk'
-import { Token } from '@uniswap/sdk-core'
-import { abi as IUniswapV3PoolABI } from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
-dotenv.config();
-
 
 const { ethers, network, upgrades } = require("hardhat");
 
 const pool = "0xDE31F8bFBD8c84b5360CFACCa3539B938dd78ae6"
+const omAddr = "0x90a972d9b53659150F1412E885E27fb7c2E49110"
 
-const provider = new ethers.providers.JsonRpcProvider(process.env.POLYGON_URL)
-
-const poolAddress = '0xDE31F8bFBD8c84b5360CFACCa3539B938dd78ae6'
-//const poolAddress = '0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8'
-
-
-const poolContract = new ethers.Contract(poolAddress, IUniswapV3PoolABI, provider)
-
-interface Immutables {
-    factory: string
-    token0: string
-    token1: string
-    fee: number
-    tickSpacing: number
-    maxLiquidityPerTick: ethers.BigNumber
-}
-
-interface State {
-    liquidity: ethers.BigNumber
-    sqrtPriceX96: ethers.BigNumber
-    tick: number
-    observationIndex: number
-    observationCardinality: number
-    observationCardinalityNext: number
-    feeProtocol: number
-    unlocked: boolean
-}
-
-async function getPoolImmutables() {
-    const [factory, token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
-        poolContract.factory(),
-        poolContract.token0(),
-        poolContract.token1(),
-        poolContract.fee(),
-        poolContract.tickSpacing(),
-        poolContract.maxLiquidityPerTick(),
-    ])
-
-    const immutables: Immutables = {
-        factory,
-        token0,
-        token1,
-        fee,
-        tickSpacing,
-        maxLiquidityPerTick,
-    }
-    return immutables
-}
-
-async function getPoolState() {
-    const [liquidity, slot] = await Promise.all([poolContract.liquidity(), poolContract.slot0()])
-
-    const PoolState: State = {
-        liquidity,
-        sqrtPriceX96: slot[0],
-        tick: slot[1],
-        observationIndex: slot[2],
-        observationCardinality: slot[3],
-        observationCardinalityNext: slot[4],
-        feeProtocol: slot[5],
-        unlocked: slot[6],
-    }
-
-    return PoolState
-}
 
 async function main() {
-    const [immutables, state] = await Promise.all([getPoolImmutables(), getPoolState()])
+    const accounts = await ethers.getSigners();
+    const deployer = accounts[0];
 
-    /**
-     const TokenA = new Token(3, immutables.token0, 6, 'USDC', 'USD Coin')
-  
-    const TokenB = new Token(3, immutables.token1, 18, 'WETH', 'Wrapped Ether')
-  
-    const poolExample = new Pool(
-      TokenA,
-      TokenB,
-      immutables.fee,
-      state.sqrtPriceX96.toString(),
-      state.liquidity.toString(),
-      state.tick
-    )
-    console.log(poolExample)
-     */
+    const oracle = new OracleMaster__factory(deployer).attach(omAddr)
+    console.log(`found OracleMaster at ${omAddr}`);
+    
+    
+
+
+
+
 }
 
 main()
