@@ -25,6 +25,7 @@
         "@tenderly/hardhat-tenderly": "1.1.0-beta.8",
         "@typechain/truffle-v5": "^8.0.0",
         "@typechain/web3-v1": "^6.0.0",
+        "@uniswap/v3-core": "^1.0.1",
         "big-number": "^2.0.0",
         "dotenv": "^16.0.0",
         "hardhat-console": "^1.0.0",
