@@ -1,10 +1,10 @@
-import { s } from "./scope";
+import { s } from ".././scope";
 import { ethers, network, tenderly } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody } from "../../util/format";
-import { BN } from "../../util/number";
-import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear, reset } from "../../util/block";
-import { stealMoney } from "../../util/money";
+import { showBody } from "../../../util/format";
+import { BN } from "../../../util/number";
+import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear, reset } from "../../../util/block";
+import { stealMoney } from "../../../util/money";
 
 import {
     InterestProtocolTokenDelegate,
@@ -16,7 +16,7 @@ import {
     GovernorCharlieDelegator,
     GovernorCharlieDelegator__factory,
     IERC20__factory
-} from "../../typechain-types";
+} from "../../../typechain-types";
 
 describe("hardhat settings", () => {
     it("reset hardhat network each run", async () => {
@@ -51,8 +51,8 @@ describe("Token Setup", () => {
     });
 });
 
-import { DeployContract, DeployContractWithProxy } from "../../util/deploy";
-import { toNumber } from "../../util/math";
+import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
+import { toNumber } from "../../../util/math";
 
 const deployGovAndToken = async () => {
     let txCount = await s.Frank.getTransactionCount()

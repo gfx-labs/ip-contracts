@@ -1,2 +1,2 @@
-export * from "./1_setup"
+export * from "./govSetup/index"
 
