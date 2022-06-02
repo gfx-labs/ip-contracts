@@ -166,8 +166,8 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
             s.USDI.address,
             s.WETH.address,
             "10000", //Fee
-            "-887272", //tickLower
-            "887272", //tickUpper
+            "-259200", //tickLower
+            "-257600", //tickUpper
             usdiAmount,
             wETHamount,
             usdiAmount.div(2),
