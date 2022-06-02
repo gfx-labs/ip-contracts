@@ -13,7 +13,9 @@
         "noImplicitAny": true, /* Enable error reporting for expressions and declarations with an implied `any` type.. */
         "allowUnreachableCode": false,
         "alwaysStrict": true, /* Ensure 'use strict' is always emitted. */
-        "skipLibCheck": true /* Skip type checking all .d.ts files. */
+        "skipLibCheck": true, /* Skip type checking all .d.ts files. */
+        "resolveJsonModule": true /* Allow import of JSON ABI files */
+
     },
     "include": [
         "./scripts/**/*",
