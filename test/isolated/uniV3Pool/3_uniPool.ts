@@ -25,6 +25,9 @@ import { webcrypto } from "crypto";
 describe("Test Uniswap V3 pool with rebasing USDi token", () => {
     //get router for uniV3
     const v3RouterAddress = "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+    const v2RouterAddress = "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45" //V2 compatible router
+    const ROUTER02_ABI = require("./util/ISwapRouter02.json")
+    const router02 = new ethers.Contract(v2RouterAddress, ROUTER02_ABI, ethers.provider)
 
 
     const nfpManagerAddress = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
@@ -222,7 +225,7 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
         poolV3 = await new ethers.Contract(poolAddress, POOL_ABI, ethers.provider)
 
-        const sqrtPriceX96 = utils.parseEther("45")//eth price ~2k -> sqrt = ~45
+        const sqrtPriceX96 = BN("1893862710253677737936450510")//eth price ~2k -> sqrt = ~45
 
         await poolV3.connect(s.Bob).initialize(sqrtPriceX96)
         await mineBlock()
@@ -256,8 +259,6 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
         * pool.mint params
         * liquidity: BN("3270355854394780560229")
         * data: "0x000000000000000000000000203c05acb6fc02f5fa31bd7be371e7b213e59ff70000000000000000000000008afbfe06da3d035c82c5bc55c82eb3ff05506a2000000000000000000000000000000000000000000000000000000000000027100000000000000000000000002243b90ccaf4a03f7289502722d8665e3d4f2972"
-        */
-
         await poolV3.connect(s.Bob).mint(
             s.Bob.address,
             "-76000", //tickLower
@@ -267,6 +268,9 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
         )
         await mineBlock()
 
+        */
+
+        
 
 
 
@@ -274,8 +278,8 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
 
 
-        //const mintResult = await NFPM.connect(s.Bob).mint(mintParams)
-        //await mineBlock()
+        const mintResult = await NFPM.connect(s.Bob).mint(mintParams)
+        await mineBlock()
         //const mintReceipt = await mintResult.wait()
         //showBody(mintReceipt)
         //const args = await getArgs(mintResult)
@@ -283,7 +287,7 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
         let difference = startUSDI.sub(balance)
-        expect(await toNumber(difference)).to.be.closeTo(await toNumber(usdiAmount), 0.001)
+        //expect(await toNumber(difference)).to.be.closeTo(await toNumber(usdiAmount), 0.001)
 
         balance = await s.WETH.balanceOf(s.Bob.address)
         showBody("Current wETH: ", await toNumber(balance))
