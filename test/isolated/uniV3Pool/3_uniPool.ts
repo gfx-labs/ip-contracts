@@ -199,11 +199,7 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
      */
 
     it("Use borrowed USDi to make a uni v3 pool", async () => {
-
-
-
         const startWETH = await s.WETH.balanceOf(s.Bob.address)
-        showBodyCyan("START WETH: ", await toNumber(startWETH))
         expect(await toNumber(startWETH)).to.eq(await toNumber(s.Bob_WETH.div(2)))
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)
         expect(await toNumber(startUSDI)).to.be.gt(await toNumber(usdiAmount))
@@ -225,7 +221,7 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
         poolV3 = await new ethers.Contract(poolAddress, POOL_ABI, ethers.provider)
 
-        const sqrtPriceX96 = BN("1893862710253677737936450510")//eth price ~2k -> sqrt = ~45
+        const sqrtPriceX96 = BN("1893862710253677737936450510")//shamelessly stolen from tenderly 
 
         await poolV3.connect(s.Bob).initialize(sqrtPriceX96)
         await mineBlock()
@@ -236,88 +232,62 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
         await s.WETH.connect(s.Bob).approve(nfpManagerAddress, startWETH)
         await mineBlock()
 
-        showBody("wETH amount: ", await toNumber(wETHamount))
-        showBody("USDI amount: ", await toNumber(usdiAmount))
-
-
         let mintParams = [
             s.USDI.address,
             s.WETH.address,
             "10000", //Fee
-            "-76000", //tickLower
-            "-73200", //tickUpper
+            "-76000", //tickLower //shamelessly stolen from tenderly 
+            "-73200", //tickUpper //shamelessly stolen from tenderly 
             usdiAmount,
-            BN("4999999999999999999"),
-            0,//usdiAmount.sub(utils.parseEther("5000")),
-            0,//wETHamount.sub(utils.parseEther("2")),
+            wETHamount,
+            usdiAmount.sub(utils.parseEther("5000")),
+            wETHamount.sub(utils.parseEther("2")),
             s.Bob.address,
             deadline
         ]
 
 
-        /**
-        * pool.mint params
-        * liquidity: BN("3270355854394780560229")
-        * data: "0x000000000000000000000000203c05acb6fc02f5fa31bd7be371e7b213e59ff70000000000000000000000008afbfe06da3d035c82c5bc55c82eb3ff05506a2000000000000000000000000000000000000000000000000000000000000027100000000000000000000000002243b90ccaf4a03f7289502722d8665e3d4f2972"
-        await poolV3.connect(s.Bob).mint(
-            s.Bob.address,
-            "-76000", //tickLower
-            "-73200", //tickUpper
-            BN("3270355854394780560229"),
-            "0x000000000000000000000000203c05acb6fc02f5fa31bd7be371e7b213e59ff70000000000000000000000008afbfe06da3d035c82c5bc55c82eb3ff05506a2000000000000000000000000000000000000000000000000000000000000027100000000000000000000000002243b90ccaf4a03f7289502722d8665e3d4f2972"
-        )
-        await mineBlock()
-
-        */
-
-        
-
-
-
-
-
-
-
         const mintResult = await NFPM.connect(s.Bob).mint(mintParams)
         await mineBlock()
-        //const mintReceipt = await mintResult.wait()
-        //showBody(mintReceipt)
-        //const args = await getArgs(mintResult)
-        //showBody(args)
+       
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
         let difference = startUSDI.sub(balance)
-        //expect(await toNumber(difference)).to.be.closeTo(await toNumber(usdiAmount), 0.001)
+        expect(await toNumber(difference)).to.be.closeTo(await toNumber(usdiAmount), 0.001)
 
-        balance = await s.WETH.balanceOf(s.Bob.address)
-        showBody("Current wETH: ", await toNumber(balance))
-        showBody("start wETH: ", await toNumber(startWETH))
-
-        //expect(await toNumber(balance)).to.be.closeTo(await toNumber(wETHamount), 0.001)
-
-
-        /**
-         * pool.mint params
-         * liquidity: BN("3270355854394780560229")
-         * data: "0x000000000000000000000000203c05acb6fc02f5fa31bd7be371e7b213e59ff70000000000000000000000008afbfe06da3d035c82c5bc55c82eb3ff05506a2000000000000000000000000000000000000000000000000000000000000027100000000000000000000000002243b90ccaf4a03f7289502722d8665e3d4f2972"
-         */
-
-
+        balance = await s.WETH.balanceOf(poolV3.address)
+        expect(await toNumber(balance)).to.eq(await toNumber(wETHamount))
 
     })
 
-    it("check that the pair has been created correctly", async () => {
+    it("Advance time", async () => {
+        const liab = await s.VaultController.totalBaseLiability()
+        expect(await toNumber(liab)).to.be.gt(0)//there is liability on the protocol, so interest will accrue 
+        //pass time
+        await fastForward(OneYear)
+        await mineBlock()
+        await s.VaultController.calculateInterest()
+        await mineBlock()
 
+        const startUSDIpool = await s.USDI.balanceOf(poolV3.address)
+        expect(await toNumber(startUSDIpool)).to.be.gt(await toNumber(usdiAmount))//interest accrued while in the pool
 
     })
 
+    /**
+     * tenderly TX 0x527383fa57675b25e47bb1eacfbb691ffb5e8c95d53747f8b3f7f4549d2407e7
+     * amountIn: 100000000000000000000 //100 USDI
+     * amountOutMInimum: 56246150143478975 //0.056246150143478975 wETH
+     * sqrtPriceLimitX96: 0
+     */
+    it("Dave does a small swap", async () => {
 
-    it("check what happens when USDi rebases while in the pool", async () => {
+        const startUSDIpool = await s.USDI.balanceOf(poolV3.address)
+        expect(await toNumber(startUSDIpool)).to.be.gt(await toNumber(usdiAmount))//interest accrued while in the pool
 
+        const startUSDIdave = await s.USDI.balanceOf(s.Dave.address)
+        expect(await toNumber(startUSDIdave)).to.be.gt(500)//Dave has some USDI
 
-    })
-
-    it("do a small swap", async () => {
 
 
     })
