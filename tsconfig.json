@@ -17,6 +17,7 @@
     },
     "include": [
         "./scripts/**/*",
+        "./scripts/liquidity_mining/*",
         "./test/**/*",
         "./typechain-types/**/*",
         "./util/**/*"
