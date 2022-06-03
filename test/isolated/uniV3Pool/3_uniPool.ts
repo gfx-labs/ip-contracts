@@ -46,7 +46,9 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
     //1 quarter of Dave's USDC
     const usdcDepositAmount = s.Dave_USDC.div(4)
 
-    let usdiAmount: BigNumber
+    //0x19fdfff24c5dda5d2fcb032bda8cc4482270a8d17452a7478be427b595fe5408
+    const wETHamount = utils.parseEther("5")
+    const usdiAmount = BN("9745435642333408348323")
 
     //1 half of Bob's wETH
     const collateralAmount = s.Bob_WETH.div(2)
@@ -138,17 +140,75 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
     })
 
 
+    /**
+     * try to make the exact WETH/USDI pool on v3 and steal the args from tenderly? 
+     * use the exact same amount of USDi vs wETH that I can get on polygon, and match the TX 1:1
+     * 
+     * wallet: 0x2243b90CCaF4a03F7289502722D8665E3d4f2972
+     * USDC: 0xbEed11d5c8c87FaCbf3f81728543eb8cB6CBa939
+     * USDi: 0x203c05ACb6FC02F5fA31bd7bE371E7B213e59Ff7
+     * wETH: 0x8afBfe06dA3D035c82C5bc55C82EB3FF05506a20
+     * 
+     * POOL PARAMS USDi - wETH - wETH price 1750 USDi - 0.0005714 wETH per USDI
+     * 1% fee tier 
+     * Min price: 1509.7 - 0.00050065 wETH per USDI
+     * max price: 1997.4 - 0.0006624 wETH per USDI
+     * 
+     * DEPOSIT AMOUNTS
+     * wETH: 5 - 4.999
+     * USDI: 9,745.435642333408348323
+     * 
+     * Approve USDI TX: 0x9774719f616dae952e35b9a31efa69ad2eb29ab89f7d345002860022ebcee739
+     * https://polygonscan.com/tx/0x9774719f616dae952e35b9a31efa69ad2eb29ab89f7d345002860022ebcee739
+     * 
+     * TX ID: 0x19fdfff24c5dda5d2fcb032bda8cc4482270a8d17452a7478be427b595fe5408
+     * https://polygonscan.com/tx/0x19fdfff24c5dda5d2fcb032bda8cc4482270a8d17452a7478be427b595fe5408
+     * 
+     * 
+     * Tenderly data of note: 
+     * deploy() in createPool() - tickSpacing: 200
+     * 
+     * Initialize: sqrtPricex96: 1893862710253677737936450510
+     * 
+     * Mint Params: 
+     * "token0":"0x203c05acb6fc02f5fa31bd7be371e7b213e59ff7"
+        "token1":"0x8afbfe06da3d035c82c5bc55c82eb3ff05506a20"
+        "fee":"10000"
+        "tickLower":"-76000"
+        "tickUpper":"-73200"
+        "amount0Desired":"9745435642333408348323"
+        "amount1Desired":"5000000000000000000"
+        "amount0Min":"9404681434654713997304"
+        "amount1Min":"4804319378770569775"
+        "recipient":"0x2243b90ccaf4a03f7289502722d8665e3d4f2972"
+        "deadline":"1654278867"
+     * 
+        Output: 
+        "tokenId":"127253"
+        "liquidity":"3270355854394780560229"
+        "amount0":"9745435642333408348323"
+        "amount1":"5000000000000000000"
+
+     */
+
     it("Use borrowed USDi to make a uni v3 pool", async () => {
-        const wETHamount = await s.WETH.balanceOf(s.Bob.address)
-        expect(await toNumber(wETHamount)).to.eq(await toNumber(s.Bob_WETH.div(2)))
-        usdiAmount = await s.USDI.balanceOf(s.Bob.address)
+
+
+
+        let balance = await s.WETH.balanceOf(s.Bob.address)
+        expect(await toNumber(balance)).to.eq(await toNumber(s.Bob_WETH.div(2)))
+        balance = await s.USDI.balanceOf(s.Bob.address)
+        expect(await toNumber(balance)).to.be.gt(await toNumber(usdiAmount))
+
+
         const block = await currentBlock()
         const deadline = block.timestamp + 500
 
-        const createPoolResult = await factoryV3.connect(s.Frank).createPool(
+
+        const createPoolResult = await factoryV3.connect(s.Bob).createPool(
             s.USDI.address,
             s.WETH.address,
-            3000
+            10000
         )
         await mineBlock()
         const receipt = await createPoolResult.wait()
@@ -159,44 +219,47 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
         const sqrtPriceX96 = utils.parseEther("45")//eth price ~2k -> sqrt = ~45
 
-        await poolV3.connect(s.Frank).initialize(sqrtPriceX96)
+        await poolV3.connect(s.Bob).initialize(sqrtPriceX96)
         await mineBlock()
+
+        //approvals
+        await s.USDI.connect(s.Bob).approve(nfpManagerAddress, usdiAmount)
+        await mineBlock()
+        await s.WETH.connect(s.Bob).approve(nfpManagerAddress, wETHamount)
+        await mineBlock()
+
+        showBody("wETH amount: ", await toNumber(wETHamount))
+        showBody("USDI amount: ", await toNumber(usdiAmount))
+
 
         let mintParams = [
             s.USDI.address,
             s.WETH.address,
             "10000", //Fee
-            "-259200", //tickLower
-            "-257600", //tickUpper
+            "-76000", //tickLower
+            "-73200", //tickUpper
             usdiAmount,
             wETHamount,
-            usdiAmount.div(2),
-            wETHamount.div(2),
-            s.Frank.address,
+            0,//usdiAmount.sub(utils.parseEther("5000")),
+            0,//wETHamount.sub(utils.parseEther("2")),
+            s.Bob.address,
             deadline
         ]
 
-        const mintResult = await NFPM.connect(s.Frank).mint(mintParams)
+        const mintResult = await NFPM.connect(s.Bob).mint(mintParams)
         await mineBlock()
 
-      
 
-        showBody(mintParams)
-
-
-
-
-        //await poolV3.connect(s.Frank).addLiquidity()
-        //await mineBlock()
+    
 
 
 
         /**
-          await poolV3.connect(s.Frank).mint(
-             s.Frank.address,
+          await poolV3.connect(s.Bob).mint(
+             s.Bob.address,
              -259200,
              -257600,
-             5999999853934643922,
+             BN("9404681434654713997304"),
              0x0
          )
          await mineBlock()
@@ -204,12 +267,12 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
 
 
-        //const observe = await poolV3.connect(s.Frank).observe([30])
+        //const observe = await poolV3.connect(s.Bob).observe([30])
         //await mineBlock()
         //showBody(observe)
 
-        let slot0 = await poolV3.slot0()
-        showBody(slot0)
+        //let slot0 = await poolV3.slot0()
+        //showBody(slot0)
 
 
 
