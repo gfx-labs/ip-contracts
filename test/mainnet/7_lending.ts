@@ -4,7 +4,7 @@ import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
 import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../util/block";
 import { utils, BigNumber } from "ethers";
-import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculatetokensToLiquidate, calculateUSDI2repurchase, changeInBalance } from "../../util/math";
+import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculatetokensToLiquidate, calculateUSDI2repurchase, changeInBalance, toNumber } from "../../util/math";
 import { IVault__factory } from "../../typechain-types";
 
 let firstBorrowIF: BigNumber
@@ -807,6 +807,46 @@ describe("Checking getters", () => {
     it("checks _tokensRegistered", async () => {
         let _tokensRegistered = await s.VaultController.tokensRegistered()
         expect(_tokensRegistered).to.not.eq(0)
+    })
+
+})
+describe("Checking vaultSummaries", async () => {
+    let vaultSummaries: any
+    let vaultsMinted: number
+    it("Gets the vault summaries", async () => {
+        vaultsMinted = await (await s.VaultController.vaultsMinted()).toNumber()
+
+        vaultSummaries = await s.VaultController.vaultSummaries(1, vaultsMinted)
+
+        //the correct number of summaries
+        expect(vaultSummaries.length).to.eq(vaultsMinted)
+
+    })
+    it("checks data", async () => {
+        //summary[0] is correct
+        let vaultLiability = await s.VaultController.vaultLiability(vaultSummaries[0].id)
+        expect(await toNumber(vaultLiability)).to.eq(await toNumber(vaultSummaries[0].vaultLiability))
+
+        //check summary[1], token[1] and balance[1] should match 
+        let tokenBalance = await toNumber(vaultSummaries[1].tokenBalances[1])
+        expect(tokenBalance).to.not.eq(0)
+        let expectedToken = vaultSummaries[1].tokenAddresses[1]
+        expect(expectedToken).to.eq(s.UNI.address)
+
+        let vaultAddress = await s.VaultController.vaultAddress(vaultSummaries[1].id)
+        let balance = await s.UNI.balanceOf(vaultAddress)
+
+        expect(tokenBalance).to.eq(await toNumber(balance))
+    })
+    it("checks for errors", async () => {
+        //start > stop
+        await expect(s.VaultController.vaultSummaries(5, 3)).to.be.reverted
+
+        //start from 0
+        await expect(s.VaultController.vaultSummaries(0, 6)).to.be.reverted
+
+        //include vaults that don't exist yet
+        await expect(s.VaultController.vaultSummaries(1, 25)).to.be.reverted
     })
 })
 

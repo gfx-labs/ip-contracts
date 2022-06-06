@@ -55,6 +55,15 @@ interface IVaultController is VaultControllerEvents {
 
   function checkVault(uint96 id) external view returns (bool);
 
+  struct VaultSummary {
+    uint96 id;
+    uint192 borrowingPower;
+    uint192 vaultLiability;
+    address[] tokenAddresses;
+    uint256[] tokenBalances;
+  }
+  function vaultSummaries(uint96 start, uint96 stop) external view returns (VaultSummary[] memory);
+
   // interest calculations
   function calculateInterest() external returns (uint256);
 

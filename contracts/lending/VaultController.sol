@@ -18,6 +18,8 @@ import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 import "../_external/openzeppelin/PausableUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 /// @title Controller of all vaults in the USDi borrow/lend system
 /// @notice VaultController contains all business logic for borrowing and lending through the protocol.
 /// It is also in charge of accruing interest.
@@ -69,7 +71,7 @@ contract VaultController is
     _;
   }
 
-  ///@notice any function with this modifier can be paused by USDI._pauser() in the case of an emergency 
+  ///@notice any function with this modifier can be paused by USDI._pauser() in the case of an emergency
   modifier onlyPauser() {
     require(_msgSender() == _usdi.pauser(), "only pauser");
     _;
@@ -348,7 +350,7 @@ contract VaultController is
   /// @param id the vault liquidate
   /// @param asset_address the token the liquidator wishes to liquidate
   /// @param tokens_to_liquidate  number of tokens to liquidate
-  /// @dev pays interest before liquidation 
+  /// @dev pays interest before liquidation
   function liquidateVault(
     uint96 id,
     address asset_address,
@@ -393,7 +395,7 @@ contract VaultController is
   /// @param id the vault to get info for
   /// @param asset_address the token to calculate how many tokens to liquidate
   /// @return - amount of tokens liquidatable
-  /// @notice the amount of tokens owed is a moving target and changes with each block as pay_interest is called 
+  /// @notice the amount of tokens owed is a moving target and changes with each block as pay_interest is called
   /// @notice this function can serve to give an indication of how many tokens can be liquidated
   /// @dev all this function does is call _liquidationMath with 2**256-1 as the amount
   function tokensToLiquidate(uint96 id, address asset_address) external view override returns (uint256) {
@@ -415,7 +417,6 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) internal view returns (uint256, uint256) {
-
     //require that the vault is solvent
     require(!checkVault(id), "Vault is solvent");
 
@@ -462,7 +463,7 @@ contract VaultController is
   }
 
   ///@notice amount of USDi needed to reach even solvency
-  ///@notice this amount is a moving target and changes with each block as pay_interest is called 
+  ///@notice this amount is a moving target and changes with each block as pay_interest is called
   /// @param id id of vault
   function amountToSolvency(uint96 id) public view override returns (uint256) {
     require(!checkVault(id), "Vault is solvent");
@@ -588,5 +589,31 @@ contract VaultController is
     emit InterestEvent(uint64(block.timestamp), e18_factor_increase, curve_val);
     // return the interest factor increase
     return e18_factor_increase;
+  }
+
+  /// special view only function to help liquidators
+
+  /// @notice helper function to view the status of a range of vaults
+  /// @param start the vault to start looping
+  /// @param stop the vault to stop looping
+  /// @return VaultSummary[] a collection of vault information
+  function vaultSummaries(uint96 start, uint96 stop) public view override returns (VaultSummary[] memory) {
+    VaultSummary[] memory summaries = new VaultSummary[](stop - start + 1);
+    for (uint96 i = start; i <= stop; i++) {
+      IVault vault = getVault(i);
+      uint256[] memory tokenBalances = new uint256[](_enabledTokens.length);
+
+      for (uint256 j = 0; j < _enabledTokens.length; j++) {
+        tokenBalances[j] = vault.tokenBalance(_enabledTokens[j]);
+      }
+      summaries[i - start] = VaultSummary(
+        i,
+        this.vaultBorrowingPower(i),
+        this.vaultLiability(i),
+        _enabledTokens,
+        tokenBalances
+      );
+    }
+    return summaries;
   }
 }

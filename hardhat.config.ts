@@ -14,12 +14,14 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
+
+const zaddr = "0000000000000000000000000000000000000000000000000000000000000000"
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
       forking: {
-        url: process.env.MAINNET_URL!,
+        url: process.env.MAINNET_URL ? process.env.MAINNET_URL : zaddr,
         blockNumber: 14546835,
       },
       mining: {
@@ -27,21 +29,21 @@ const config: HardhatUserConfig = {
       },
     },
     ropsten: {
-      url: process.env.ROPSTEN_URL!,
-      accounts: [process.env.ROPSTEN_PRIVATE_KEY!],
+      url: process.env.ROPSTEN_URL ? process.env.ROPSTEN_URL : zaddr,
+      accounts: [process.env.ROPSTEN_PRIVATE_KEY ? process.env.ROPSTEN_PRIVATE_KEY : zaddr],
       chainId: 3, // Ropsten's id
       gas: 8000000, // Ropsten has a lower block limit than mainnet
       gasPrice: 53000000000,
       //gasPrice: 2000000000,
     },
     rinkeby: {
-      url: process.env.RINKEBY_URL!,
-      accounts: [process.env.RINKEBY_PRIVATE_KEY!],
+      url: process.env.RINKEBY_URL ? process.env.RINKEBY_URL : zaddr,
+      accounts: [process.env.RINKEBY_PRIVATE_KEY ? process.env.RINKEBY_PRIVATE_KEY : zaddr],
       chainId: 4, // Ropsten's id
     },
     polygon: {
-      url: process.env.POLYGON_URL!,
-      accounts: [process.env.POLYGON_PRIVATE_KEY!],
+      url: process.env.POLYGON_URL ? process.env.POLYGON_URL : zaddr,
+      accounts: [process.env.POLYGON_PRIVATE_KEY ? process.env.POLYGON_PRIVATE_KEY : zaddr],
       chainId: 137, // Polygon's id
     },
     localhost: {
