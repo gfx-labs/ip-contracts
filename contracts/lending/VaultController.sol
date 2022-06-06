@@ -614,6 +614,4 @@ contract VaultController is
     }
     return summaries;
   }
-
-
 }
