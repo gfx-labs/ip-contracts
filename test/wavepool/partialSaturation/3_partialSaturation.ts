@@ -77,14 +77,14 @@ let root2: string
 let merkleTree1: MerkleTree
 let merkleTree2: MerkleTree
 const keyAmount = BN("200e6") //200 USDC
-const floor = BN("5e5") //500,000 - .5 USDC
+const floor = BN("250000") //500,000 - .5 USDC
 const amount = BN("100e6") //100 USDC
 const totalReward = utils.parseEther("30000000")//30,000,000 IPT 
 
 let Wave: WavePool
 
 require("chai").should()
-describe("Deploy wave - OVERSATURATION", () => {
+describe("Deploy wave - PARTIAL SATURATION", () => {
   before(async () => {
     await initMerkle()
   })
@@ -122,8 +122,8 @@ describe("Deploy wave - OVERSATURATION", () => {
     const claimedTotal = await Wave._totalClaimed()
     assert.equal(claimedTotal.toString(), "0", "Total claimed is 0 (correct)")
 
-    const floor = await Wave._floor()
-    assert.equal(floor.toNumber(), BN("5e5").toNumber(), "Floor is correct")
+    const Readfloor = await Wave._floor()
+    assert.equal(floor.toNumber(), Readfloor.toNumber(), "Floor is correct")
 
     const receiver = await Wave._receiver()
     assert.equal(receiver, s.Carol.address, "receiver is correct")
