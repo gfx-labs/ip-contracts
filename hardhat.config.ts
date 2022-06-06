@@ -42,7 +42,7 @@ const config: HardhatUserConfig = {
     polygon: {
       url: process.env.POLYGON_URL!,
       accounts: [process.env.POLYGON_PRIVATE_KEY!],
-      chainId: 137, // Ropsten's id
+      chainId: 137, // Polygon's id
     },
     localhost: {
       url: "http://localhost:8545",

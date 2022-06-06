@@ -9,7 +9,10 @@ import {
     CurveMaster__factory,
     ThreeLines0_100__factory,
     OracleMaster__factory,
-    OracleMaster
+    OracleMaster,
+    ProxyAdmin__factory,
+    USDI__factory,
+    VaultController__factory
 } from "../typechain-types";
 
 const { ethers, network, upgrades } = require("hardhat");
@@ -54,7 +57,7 @@ async function main() {
     console.log(`found chainlinkRelay at ${chainlinkRelay.address}`);
     let currentValue = await chainlinkRelay.currentValue()
     console.log("Chainlink value: ", currentValue.toString())
-     */
+    
 
     //anchor addr - uni
 
@@ -76,6 +79,28 @@ async function main() {
 
     let currentValue = await uniV3Relay.currentValue()
     console.log("Univ3 value: ", currentValue.toString())
+ */
+
+    const CharlieDelegator = "0x3389d29e457345e4f22731292d9c10ddfc78088f"
+
+    const VaultController = await new VaultController__factory(deployer).attach("0x385E2C6b5777Bc5ED960508E774E4807DDe6618c")
+    const USDi = await new USDI__factory(deployer).attach("0x203c05ACb6FC02F5fA31bd7bE371E7B213e59Ff7")
+    const ProxyAdmin = await new ProxyAdmin__factory(deployer).attach("0xafDBA0899A00ca07D36d019eF7649803b70a9c08")
+    const Curve = await new CurveMaster__factory(deployer).attach("0x52b2De5e0b5A9B2aF71FF61F1ef2EFB89d2138Af")
+
+    console.log("Got contracts")
+
+    await VaultController.transferOwnership(CharlieDelegator)
+    console.log("Transfered VC")
+    
+    await USDi.transferOwnership(CharlieDelegator)
+    console.log("Transfered USDI")
+
+    await ProxyAdmin.transferOwnership(CharlieDelegator)
+    console.log("Transfered PA")
+
+    await Curve.transferOwnership(CharlieDelegator)
+    console.log("Transfered Curve")
 
 
 }
