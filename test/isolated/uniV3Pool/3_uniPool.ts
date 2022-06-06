@@ -436,4 +436,22 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
     })
 
+    it("confirm liquidity is now 0", async () => {
+
+        //get position
+        const position = await NFPM.connect(s.Bob).positions(tokenId)
+        const liquidity = position.liquidity
+
+        expect(liquidity).to.eq(0)
+    })
+
+    it("any way to redeem the interest on USDi that is still in the pool?", async () => {
+        const poolUSDi = await s.USDI.balanceOf(poolV3.address)
+        showBodyCyan(await toNumber(poolUSDi))
+
+
+        
+        
+    })
+
 })
