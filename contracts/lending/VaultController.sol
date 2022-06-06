@@ -274,7 +274,6 @@ contract VaultController is
     // if the LTV >= liability, the vault is solvent
     return (total_liquidity_value >= usdi_liability);
   }
-
   /// @notice borrow USDi from a vault. only vault minter may borrow from their vault
   /// @param id vault to borrow from
   /// @param amount amount of USDi to borrow
@@ -589,4 +588,32 @@ contract VaultController is
     // return the interest factor increase
     return e18_factor_increase;
   }
+
+
+  /// special view only function to help liquidators
+ 
+  /// @notice helper function to view the status of a range of vaults
+  /// @param start the vault to start looping
+  /// @param stop the vault to stop looping
+  /// @return VaultSummary[] a collection of vault information
+  function vaultSummaries(uint96 start, uint96 stop) public view override returns (VaultSummary[] memory) {
+    VaultSummary[] memory summaries;
+    for(uint96 i = start; i <= stop; i++) {
+    IVault vault = getVault(i);
+      uint256[] memory tokenBalances;
+      for(uint256 j = 0; j < _enabledTokens.length; j++) {
+        tokenBalances[j] = vault.tokenBalance(_enabledTokens[i]);
+      }
+      summaries[i-start] = VaultSummary(
+        i,
+        this.vaultBorrowingPower(i),
+        this.vaultLiability(i),
+        _enabledTokens,
+        tokenBalances
+      );
+    }
+    return summaries;
+  }
+
+
 }
