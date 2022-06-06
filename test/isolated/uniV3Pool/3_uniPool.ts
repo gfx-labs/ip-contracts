@@ -372,18 +372,50 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
     it("remove all liquidity from pool and receive USDi + interest ", async () => {
 
+        //get position
+        const position = await NFPM.connect(s.Bob).positions(tokenId)
+        const liquidity = position.liquidity
+
+        const poolUSDi = await s.USDI.balanceOf(poolV3.address)
+        const poolWETH = await s.WETH.balanceOf(poolV3.address)
+
+        const bobUSDI = await s.USDI.balanceOf(s.Bob.address)
+        const bobWETH = await s.WETH.balanceOf(s.Bob.address)
+
+
 
         const block = await currentBlock()
         const deadline = block.timestamp + 500
 
         const DecreaseLiquidityParams = [
             tokenId,
-            "3270355854394780560229",//liquidity? 
-            utils.parseEther("500000"),//amount0max - arbitrary large number
-            utils.parseEther("500000"),//amount1max - arbitrary large number
+            liquidity.toString(),//liquidity? 
+            "6544876023022433160895",//amount0min
+            "2965486804570273648",//amount1min
             deadline
         ]
 
+        let dlResult = await NFPM.connect(s.Bob).decreaseLiquidity(DecreaseLiquidityParams)
+        await mineBlock()
+        let args = await getArgs(dlResult)
+        expect(args.tokenId.toNumber()).to.eq(tokenId)
+
+        
+        let balance = await s.USDI.balanceOf(s.Bob.address)
+        showBody("Starting Bob USDI: ", await toNumber(bobUSDI))
+        showBody("Ending Bob USDI  : ", await toNumber(balance))
+
+        balance = await s.WETH.balanceOf(s.Bob.address)
+        showBody("Starting Bob weth: ", await toNumber(bobWETH))
+        showBody("Ending Bob weth  : ", await toNumber(balance))
+
+        balance = await s.USDI.balanceOf(poolV3.address)
+        showBody("Starting pool USDI: ", await toNumber(poolUSDi))
+        showBody("Ending pool USDI  : ", await toNumber(balance))
+
+        balance = await s.WETH.balanceOf(poolV3.address)
+        showBody("Starting pool weth: ", await toNumber(poolWETH))
+        showBody("Ending pool weth  : ", await toNumber(balance))
 
     })
 
