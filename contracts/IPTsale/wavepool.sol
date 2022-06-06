@@ -92,7 +92,7 @@ contract WavePool {
   ) {
     // price information
     _floor = 250_000;
-    _cap = 500_000 * 30_000_000 * 4;
+    _cap = 500_000 * 35_000_000 * 4;
     _claimTime = claimTime;
     // reward information
     _rewardToken = IERC20(rewardToken);
