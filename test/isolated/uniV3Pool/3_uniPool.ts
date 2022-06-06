@@ -342,9 +342,9 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
         await s.VaultController.calculateInterest()
         await mineBlock()
 
-        const startUSDIpool = await s.USDI.balanceOf(poolV3.address)
-        expect(await toNumber(startUSDIpool)).to.be.gt(await toNumber(usdiAmount))//interest accrued while in the pool
-
+        const poolUSDI = await s.USDI.balanceOf(poolV3.address)
+        expect(await toNumber(poolUSDI)).to.be.gt(await toNumber(usdiAmount))//interest accrued while in the pool
+        showBodyCyan(await toNumber(poolUSDI))
     })
 
     it("Collect fee from pool, unclaimed USDi rewards do not accrue interest", async () => {
@@ -372,6 +372,9 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
     it("remove all liquidity from pool and receive USDi + interest ", async () => {
 
+        await s.VaultController.calculateInterest()
+        await mineBlock()
+
         //get position
         const position = await NFPM.connect(s.Bob).positions(tokenId)
         const liquidity = position.liquidity
@@ -381,8 +384,6 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
         const bobUSDI = await s.USDI.balanceOf(s.Bob.address)
         const bobWETH = await s.WETH.balanceOf(s.Bob.address)
-
-
 
         const block = await currentBlock()
         const deadline = block.timestamp + 500
@@ -398,9 +399,25 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
         let dlResult = await NFPM.connect(s.Bob).decreaseLiquidity(DecreaseLiquidityParams)
         await mineBlock()
         let args = await getArgs(dlResult)
+        //showBody(args)
         expect(args.tokenId.toNumber()).to.eq(tokenId)
 
         
+        await s.VaultController.calculateInterest()
+        await mineBlock()
+
+
+        const collectParams = [
+            tokenId,        //tokenId
+            s.Bob.address, //recipient bob
+            utils.parseEther("500000"),//amount0max - arbitrary large number
+            utils.parseEther("500000")//amount1max - arbitrary large number
+        ]
+
+        await NFPM.connect(s.Bob).collect(collectParams)
+        await mineBlock()
+
+
         let balance = await s.USDI.balanceOf(s.Bob.address)
         showBody("Starting Bob USDI: ", await toNumber(bobUSDI))
         showBody("Ending Bob USDI  : ", await toNumber(balance))
