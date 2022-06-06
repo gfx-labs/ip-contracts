@@ -24,18 +24,17 @@ import { webcrypto } from "crypto";
 
 describe("Test Uniswap V3 pool with rebasing USDi token", () => {
     //get router for uniV3
-    const v3RouterAddress = "0xE592427A0AEce92De3Edee1F18E0157C05861564"
     const v2RouterAddress = "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45" //V2 compatible router
     const ROUTER02_ABI = require("./util/ISwapRouter02.json")
     const router02 = new ethers.Contract(v2RouterAddress, ROUTER02_ABI, ethers.provider)
 
+    const v3RouterAddress = "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+    const ROUTER_ABI = require("./util/ISwapRouter.json")
+    const router = new ethers.Contract(v3RouterAddress, ROUTER_ABI, ethers.provider)
 
     const nfpManagerAddress = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
     const NFPM_ABI = require("./util/INonfungiblePositionManager.json")
     const NFPM = new ethers.Contract(nfpManagerAddress, NFPM_ABI, ethers.provider)
-
-
-
 
     //get factory for uniV3
     const v3FactoryAddress = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
@@ -43,6 +42,7 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
     let poolAddress: string
     let poolV3: any
+    let tokenId: number
 
 
     const depositAmount = s.Dave_USDC.sub(BN("500e6"))
@@ -197,17 +197,7 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
         "amount1":"5000000000000000000"
 
      */
-
     it("Use borrowed USDi to make a uni v3 pool", async () => {
-        const startWETH = await s.WETH.balanceOf(s.Bob.address)
-        expect(await toNumber(startWETH)).to.eq(await toNumber(s.Bob_WETH.div(2)))
-        const startUSDI = await s.USDI.balanceOf(s.Bob.address)
-        expect(await toNumber(startUSDI)).to.be.gt(await toNumber(usdiAmount))
-
-
-        const block = await currentBlock()
-        const deadline = block.timestamp + 500
-
 
         const createPoolResult = await factoryV3.connect(s.Bob).createPool(
             s.USDI.address,
@@ -220,11 +210,23 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
         poolAddress = receipt!.events![0].args.pool
 
         poolV3 = await new ethers.Contract(poolAddress, POOL_ABI, ethers.provider)
+    })
+
+    it("mint a position on the new pool", async () => {
+        const startUSDI = await s.USDI.balanceOf(s.Bob.address)
+        expect(await toNumber(startUSDI)).to.be.gt(await toNumber(usdiAmount))
+        const startWETH = await s.WETH.balanceOf(s.Bob.address)
+        expect(await toNumber(startWETH)).to.eq(await toNumber(s.Bob_WETH.div(2)))
+
 
         const sqrtPriceX96 = BN("1893862710253677737936450510")//shamelessly stolen from tenderly 
 
         await poolV3.connect(s.Bob).initialize(sqrtPriceX96)
         await mineBlock()
+
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
 
         //approvals
         await s.USDI.connect(s.Bob).approve(nfpManagerAddress, usdiAmount)
@@ -246,10 +248,10 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
             deadline
         ]
 
-
         const mintResult = await NFPM.connect(s.Bob).mint(mintParams)
         await mineBlock()
-       
+        const args = await getArgs(mintResult)
+        tokenId = args.tokenId.toNumber()
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
         let difference = startUSDI.sub(balance)
@@ -257,7 +259,6 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
 
         balance = await s.WETH.balanceOf(poolV3.address)
         expect(await toNumber(balance)).to.eq(await toNumber(wETHamount))
-
     })
 
     it("Advance time", async () => {
@@ -279,20 +280,110 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
      * amountIn: 100000000000000000000 //100 USDI
      * amountOutMInimum: 56246150143478975 //0.056246150143478975 wETH
      * sqrtPriceLimitX96: 0
+     * 
+     * USDi: 0x203c05ACb6FC02F5fA31bd7bE371E7B213e59Ff7
+     * wETH: 0x8afBfe06dA3D035c82C5bc55C82EB3FF05506a20
      */
     it("Dave does a small swap", async () => {
+
+        const swapUSDIamount = utils.parseEther("100")
 
         const startUSDIpool = await s.USDI.balanceOf(poolV3.address)
         expect(await toNumber(startUSDIpool)).to.be.gt(await toNumber(usdiAmount))//interest accrued while in the pool
 
         const startUSDIdave = await s.USDI.balanceOf(s.Dave.address)
-        expect(await toNumber(startUSDIdave)).to.be.gt(500)//Dave has some USDI
+        expect(await toNumber(startUSDIdave)).to.be.gt(100)//Dave has enough USDi
 
+        let balance = await s.USDI.balanceOf(poolV3.address)
+        showBody("pool USDI: ", await toNumber(balance))
+        balance = await s.WETH.balanceOf(poolV3.address)
+        showBody("pool wETH: ", await toNumber(balance))
+
+        const daveWeth = await s.WETH.balanceOf(s.Dave.address)
+        expect(daveWeth).to.eq(0)//dave has no weth
+
+        balance = await s.USDI.balanceOf(s.Dave.address)
+        showBody("Dave USDI: ", await toNumber(balance))
+
+        //approve router for 100 USDi
+        await s.USDI.connect(s.Dave).approve(router.address, swapUSDIamount)
+        await mineBlock()
+
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+
+        const swapParams = [
+            s.USDI.address.toString(), //tokenIn
+            s.WETH.address.toString(), //tokenOut
+            "10000", //fee
+            s.Dave.address.toString(), //recipient
+            deadline.toString(),
+            swapUSDIamount.toString(), //amountIn
+            "0", //amountOutMinimum
+            "0", //sqrtPriceLimitX96
+        ]
+        //do the swap router
+        await router.connect(s.Dave).exactInputSingle(swapParams)
+        await mineBlock()
+
+        //dave received the correct amount of weth
+        balance = await s.WETH.balanceOf(s.Dave.address)
+        expect(await toNumber(balance)).to.be.closeTo(0.05, 0.01)
+    })
+
+    it("Advance time again", async () => {
+        const liab = await s.VaultController.totalBaseLiability()
+        expect(await toNumber(liab)).to.be.gt(0)//there is liability on the protocol, so interest will accrue 
+        //pass time
+        await fastForward(OneYear)
+        await mineBlock()
+        await s.VaultController.calculateInterest()
+        await mineBlock()
+
+        const startUSDIpool = await s.USDI.balanceOf(poolV3.address)
+        expect(await toNumber(startUSDIpool)).to.be.gt(await toNumber(usdiAmount))//interest accrued while in the pool
+
+    })
+
+    it("Collect fee from pool, unclaimed USDi rewards do not accrue interest", async () => {
+
+        let startUSDI = await s.USDI.balanceOf(s.Bob.address)
+
+        const collectParams = [
+            tokenId,        //tokenId
+            s.Bob.address, //recipient bob
+            utils.parseEther("500000"),//amount0max - arbitrary large number
+            utils.parseEther("500000")//amount1max - arbitrary large number
+        ]
+
+        await NFPM.connect(s.Bob).collect(collectParams)
+        await mineBlock()
+
+        let balance = await s.USDI.balanceOf(s.Bob.address)
+        let difference = await balance.sub(startUSDI)
+
+        //100 USDI swapped, swap fee is 1%, Bob should profit 1 USDI from swap
+        expect(await toNumber(difference)).to.eq(1)
 
 
     })
 
     it("remove all liquidity from pool and receive USDi + interest ", async () => {
+
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+        const DecreaseLiquidityParams = [
+            tokenId,
+            "3270355854394780560229",//liquidity? 
+            utils.parseEther("500000"),//amount0max - arbitrary large number
+            utils.parseEther("500000"),//amount1max - arbitrary large number
+            deadline
+        ]
+
 
     })
 
