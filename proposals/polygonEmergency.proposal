@@ -1,8 +1,8 @@
 {
-    "proposal": {
-        "proposeTxn": "0x70113269e74b3e265ddfb8377f11a289ff5e657eb8a99026cf1fb6651e3cb27f"
-    },
     "deploys": {
-        "waves": "0xC02266Fb401a0c52E68fA4cd63b27D84BDb10BcC"
+        "waves": "0x10268faB7A00cBfe1D827f14463c217F46CcC673"
+    },
+    "proposal": {
+        "proposeTxn": "0xdad89184c21735741b51b026c0149ef6b3d4dd77fab0732393d04322c5f7dd79"
     }
 }

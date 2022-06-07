@@ -8,12 +8,7 @@ export const treeFromObject = (obj: any): MerkleTree => {
   const elements = Object.entries(obj).map(([account, balance]) =>
     solidityKeccak256(
       ["address", "uint256"],
-      [
-        account,
-        BN(balance as any)
-          .div(BN("1e9"))
-          .toString(),
-      ]
+      [account, BN(balance as any).toString()]
     )
   );
   const tree = new MerkleTree(elements, hashFn, { sort: true });

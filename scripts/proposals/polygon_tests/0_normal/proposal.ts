@@ -65,7 +65,7 @@ const main = async () => {
 
   // set the new curve
   const newCurve = await new CurveMaster__factory(x)
-    .attach("0x385E2C6b5777Bc5ED960508E774E4807DDe6618c")
+    .attach("0x52b2de5e0b5a9b2af71ff61f1ef2efb89d2138af")
     .populateTransaction.setCurve(
       "0x0000000000000000000000000000000000000000",
       p.db.getData(".deploys.curve")
