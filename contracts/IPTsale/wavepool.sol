@@ -56,6 +56,7 @@ contract WavePool {
 
   // the token used to claim points, USDC
   IERC20 public constant _pointsToken = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // usdc
+  // IERC20 public constant _pointsToken = IERC20(0xbEed11d5c8c87FaCbf3f81728543eb8cB6CBa939);
   // the token to be rewarded, IPT
   IERC20 public _rewardToken;
 
@@ -94,8 +95,7 @@ contract WavePool {
     _claimTime = claimTime;
     // reward information
     _rewardToken = IERC20(rewardToken);
-    _totalReward = totalReward;
-
+    _totalReward = 35 * 1e6 * 1e18;
     // set receiver of IPT
     _receiver = receiver;
 
