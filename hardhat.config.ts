@@ -115,17 +115,6 @@ const config: HardhatUserConfig = {
   },
 };
 
-if (process.env.TENDERLY_KEY) {
-  if (process.env.TENDERLY_ENABLE == "true") {
-    import("@tenderly/hardhat-tenderly").then(() => {
-      console.log("enabling tenderly");
-      config.tenderly = {
-        project: "ip",
-        username: "getty",
-        forkNetwork: "1", //Network id of the network we want to fork
-      };
-    });
-  }
-}
+
 
 export default config;

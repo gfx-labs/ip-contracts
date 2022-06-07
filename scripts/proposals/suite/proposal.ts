@@ -1,10 +1,26 @@
-import { BaseContract, Signer } from "ethers";
+import {
+  BaseContract,
+  BigNumber,
+  BigNumberish,
+  BytesLike,
+  PopulatedTransaction,
+  Signer,
+} from "ethers";
 
-import { Low, JSONFile } from "lowdb";
+import { JsonDB } from "node-json-db";
+import { Config } from "node-json-db/dist/lib/JsonDBConfig";
+import { GovernorCharlieDelegate } from "../../../typechain-types";
 
 export interface ProposalContext {
   PreProposal: (x: Signer) => PromiseLike<any>;
   Proposal: (x: Signer) => PromiseLike<any>;
+}
+
+interface ProposalData {
+  targets: string[];
+  values: BigNumberish[];
+  signatures: string[];
+  calldatas: BytesLike[];
 }
 
 type Data = {
@@ -14,35 +30,86 @@ type Data = {
 export class ProposalContext {
   name: string;
 
-  db: Low<Data>;
+  db: JsonDB;
   deploys: Map<string, () => Promise<BaseContract>>;
+
+  steps: PopulatedTransaction[];
 
   constructor(name: string) {
     this.deploys = new Map();
+    this.steps = [];
     this.name = name;
-    const adapter = new JSONFile<Data>("./proposals/" + name + ".proposal");
-    this.db = new Low<Data>(adapter);
+    this.db = new JsonDB(
+      new Config("./proposals/" + name + ".proposal", true, true, ".")
+    );
+  }
+
+  addStep(p: PopulatedTransaction) {
+    this.steps.push(p);
+  }
+
+  populateProposal(): ProposalData {
+    const out: ProposalData = {
+      targets: [],
+      values: [],
+      signatures: [],
+      calldatas: [],
+    };
+    for (const v of this.steps) {
+      out.calldatas.push(v.data ? "0x" + v.data.substring(10) : "");
+      out.signatures.push(v.data ? v.data.substring(0, 10) : "");
+      out.values.push(v.value ? v.value : 0);
+      out.targets.push(
+        v.to ? v.to : "0x0000000000000000000000000000000000000000"
+      );
+    }
+    return out;
+  }
+
+  async sendProposal(
+    charlie: GovernorCharlieDelegate,
+    description: string,
+    emergency?: boolean
+  ) {
+    const out = this.populateProposal();
+    const txn = await charlie
+      .propose(
+        out.targets,
+        out.values,
+        out.signatures,
+        out.calldatas,
+        description,
+        emergency ? true : false
+      )
+      .then(async (res) => {
+        this.db.push(".proposal.proposeTxn", res.hash);
+      });
   }
 
   AddDeploy(name: string, deployment: () => Promise<BaseContract>) {
     this.deploys.set(name, deployment);
   }
 
+  DeployAddress(n: string): string {
+    const x = this.db.getData(".deploys." + n);
+    return x ? x : "";
+  }
+
   async DeployAll() {
-    await this.db.read();
-    this.db.data ||= { deploys: {} };
-    this.deploys.forEach(async (v, k) => {
-      const dbv = this.db.data!.deploys[k];
-      if (dbv === undefined) {
+    for (const [k, v] of this.deploys.entries()) {
+      const dbv = this.db.exists(".deploys." + k);
+      if (!dbv) {
+        console.log("deploying:", k);
         await v()
-          .then((x) => {
-            this.db.data!.deploys[k] = x.address;
+          .then(async (x: any) => {
+            return x.deployed().then(() => {
+              this.db.push(".deploys." + k, x.address);
+            });
           })
-          .catch((e) => {
+          .catch((e: any) => {
             console.log(`failed to deploy ${k}, ${e}`);
           });
-        await this.db.read();
       }
-    });
+    }
   }
 }
