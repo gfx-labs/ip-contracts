@@ -94,8 +94,7 @@ contract WavePool {
     _claimTime = claimTime;
     // reward information
     _rewardToken = IERC20(rewardToken);
-    _totalReward = totalReward;
-
+    _totalReward = 35 * 1e6 * 1e18;
     // set receiver of IPT
     _receiver = receiver;
 
