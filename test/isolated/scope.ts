@@ -1,11 +1,33 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { USDI, IERC20, IVOTE, VaultController, OracleMaster, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../typechain-types";
+import {
+    USDI,
+    IERC20, 
+    IVOTE, 
+    VaultController, 
+    OracleMaster, 
+    AnchoredViewRelay, 
+    ChainlinkOracleRelay, 
+    IOracleRelay, 
+    CurveMaster, 
+    ThreeLines0_100, 
+    IVault, 
+    IOracleMaster, 
+    IVaultController, 
+    ProxyAdmin, 
+    IUSDI, 
+    ICurveMaster,
+    IWUSDI,
+    WUSDI__factory,
+} from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
 export class TestScope extends MainnetAddresses {
+
+    WUSDI!: IWUSDI;
+
     USDI!: USDI;
     USDC!: IERC20;
     COMP!: IVOTE;
@@ -53,7 +75,7 @@ export class TestScope extends MainnetAddresses {
     Eric!: SignerWithAddress   // eric only holds ETH and generally does not use IP unless a clean slate is needed
     Gus!: SignerWithAddress    // gus is a wBTC holder. He wishes to deposit wBTC and borrow USDI
     Hector!: SignerWithAddress // hector is also here
-    
+
     BobVault!: IVault
     CarolVault!: IVault
     GusVault!: IVault
