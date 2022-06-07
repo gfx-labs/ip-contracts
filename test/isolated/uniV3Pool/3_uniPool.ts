@@ -445,13 +445,6 @@ describe("Test Uniswap V3 pool with rebasing USDi token", () => {
         expect(liquidity).to.eq(0)
     })
 
-    it("any way to redeem the interest on USDi that is still in the pool?", async () => {
-        const poolUSDi = await s.USDI.balanceOf(poolV3.address)
-        showBodyCyan(await toNumber(poolUSDi))
-
-
-        
-        
-    })
+    
 
 })

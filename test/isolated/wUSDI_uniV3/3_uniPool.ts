@@ -55,9 +55,11 @@ describe("Test Uniswap V3 pool with wrapped USDi token", () => {
     const wETHamount = utils.parseEther("5")
     //const usdiAmount = BN("9745435642333408348323")
     const usdiAmount = utils.parseEther("1000")
+    let wUSDIamount: BigNumber
+    let poolWUSDI: BigNumber
 
     //1 half of Bob's wETH
-    const collateralAmount = s.Bob_WETH.div(2)
+    const collateralAmount = utils.parseEther("4")
 
     let borrowAmount: BigNumber
     let balance: BigNumber
@@ -146,11 +148,7 @@ describe("Test Uniswap V3 pool with wrapped USDi token", () => {
         expect(await toNumber(borrowAmount)).to.equal(await toNumber(borrowArgs.borrowAmount))
 
     })
-
-    it("wrap some USDI and receive wUSDI", async () => {
-
-
-
+    it("Initialize test and control balances", async () => {
 
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)
         //showBody(await toNumber(usdiAmount))
@@ -171,22 +169,17 @@ describe("Test Uniswap V3 pool with wrapped USDi token", () => {
 
         balance = await s.WUSDI.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.eq(0) //Bob has 0 WUSDI
+    })
 
+    it("wrap some USDI and receive wUSDI", async () => {
         await s.USDI.connect(s.Gus).approve(s.WUSDI.address, usdiAmount)
         await mineBlock()
 
         await s.WUSDI.connect(s.Gus).deposit(usdiAmount)
         await mineBlock()
 
-        balance = await s.WUSDI.balanceOf(s.Gus.address)
-        //showBody("WUSDI received: ", await toNumber(balance))
-        //expect(await toNumber(balance)).to.eq(await toNumber(usdiAmount)) //Bob has the correct amount of WUSDI
-
         balance = await s.USDI.balanceOf(s.Gus.address)
         expect(await toNumber(balance)).to.eq(0)
-
-
-
     })
 
     it("Advance time, unwrap, compare balances", async () => {
@@ -210,13 +203,47 @@ describe("Test Uniswap V3 pool with wrapped USDi token", () => {
         //showBody("Gus WUSDI: ", await toNumber(balance))
 
         balance = await s.USDI.balanceOf(s.Gus.address)
-        expect(await toNumber(balance)).to.be.closeTo(await toNumber(controlBalance), 1)    
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(controlBalance), 1)
 
     })
-    it("Use wUSDi to make a uni v3 pool", async () => {
 
-        const createPoolResult = await factoryV3.connect(s.Bob).createPool(
-            s.USDI.address,
+    it("Reset balances", async () => {
+        balance = await s.USDI.balanceOf(s.Gus.address)
+        let amount = balance.sub(usdiAmount)
+        await s.USDI.connect(s.Gus).transfer(s.Bob.address, amount)//reset test balance
+
+        balance = await s.USDI.balanceOf(s.Eric.address)
+        amount = balance.sub(usdiAmount)
+        await s.USDI.connect(s.Eric).transfer(s.Bob.address, amount)//reset control balance
+
+        await mineBlock()
+
+        balance = await s.USDI.balanceOf(s.Gus.address)
+        expect(await toNumber(balance)).to.eq(await toNumber(usdiAmount)) //Gus has the right amount of USDi
+
+        balance = await s.USDI.balanceOf(s.Eric.address)
+        expect(await toNumber(balance)).to.eq(await toNumber(usdiAmount)) //Eric has the right amount of USDi
+
+    })
+
+    it("wrap some USDI and receive wUSDI", async () => {
+        await s.USDI.connect(s.Gus).approve(s.WUSDI.address, usdiAmount)
+        await mineBlock()
+
+        await s.WUSDI.connect(s.Gus).deposit(usdiAmount)
+        await mineBlock()
+
+        balance = await s.USDI.balanceOf(s.Gus.address)
+        expect(await toNumber(balance)).to.eq(0)
+
+        wUSDIamount = await s.WUSDI.balanceOf(s.Gus.address)
+
+    })
+
+    it("Use WUSDI to make a uni v3 pool", async () => {
+        //create pool
+        const createPoolResult = await factoryV3.connect(s.Gus).createPool(
+            s.WUSDI.address,
             s.WETH.address,
             10000
         )
@@ -229,6 +256,52 @@ describe("Test Uniswap V3 pool with wrapped USDi token", () => {
     })
     it("mint a position on the new pool", async () => {
 
+        //give Gus enough weth to start the pool
+        await s.WETH.connect(s.Bob).transfer(s.Gus.address, wETHamount)
+        await mineBlock()
+        balance = await s.WETH.balanceOf(s.Gus.address)
+        expect(balance).to.eq(wETHamount)
+
+        const sqrtPriceX96 = BN("1893862710253677737936450510")//shamelessly stolen from tenderly 
+
+        await poolV3.connect(s.Gus).initialize(sqrtPriceX96)
+        await mineBlock()
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+        //approvals
+        await s.WUSDI.connect(s.Gus).approve(nfpManagerAddress, wUSDIamount)
+        await mineBlock()
+        await s.WETH.connect(s.Gus).approve(nfpManagerAddress, wETHamount)
+        await mineBlock()
+
+        let mintParams = [
+            s.WUSDI.address,
+            s.WETH.address,
+            "10000", //Fee
+            "-76000", //tickLower //shamelessly stolen from tenderly 
+            "-73200", //tickUpper //shamelessly stolen from tenderly 
+            wUSDIamount,
+            wETHamount,
+            0,//wUSDIamount.sub(utils.parseEther("5000")),
+            0,//wETHamount.sub(utils.parseEther("2")),
+            s.Gus.address,
+            deadline
+        ]
+
+        //only uses some of the wUSDI against wETH
+        const mintResult = await NFPM.connect(s.Gus).mint(mintParams)
+        await mineBlock()
+        const args = await getArgs(mintResult)
+        tokenId = args.tokenId.toNumber()
+
+        poolWUSDI = await s.WUSDI.balanceOf(poolV3.address)
+        //showBody(await toNumber(balance))
+
+        balance = await s.WETH.balanceOf(s.Gus.address)
+        expect(balance).to.eq(0)//all wETH was comitted to the pool
+
     })
 
     it("Advance time", async () => {
@@ -240,10 +313,41 @@ describe("Test Uniswap V3 pool with wrapped USDi token", () => {
         await s.VaultController.calculateInterest()
         await mineBlock()
 
-
     })
 
-    it("Dave does a small swap", async () => {
+    it("Bob does a small swap", async () => {
+
+
+        const bobWETH = await s.WETH.balanceOf(s.Bob.address)
+        const swapAmount = await utils.parseEther("0.001")
+
+        //approve router for 100 USDi
+        await s.WETH.connect(s.Bob).approve(router.address, swapAmount)
+        await mineBlock()
+
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+
+        const swapParams = [
+            s.WETH.address.toString(), //tokenin
+            s.WUSDI.address.toString(), //tokenout
+            "10000", //fee
+            s.Bob.address.toString(), //recipient
+            deadline.toString(),
+            swapAmount.toString(), //amountIn
+            "0", //amountOutMinimum
+            "0", //sqrtPriceLimitX96
+        ]
+        //do the swap router
+        await router.connect(s.Bob).exactInputSingle(swapParams)
+        await mineBlock()
+
+        //dave received the correct amount of weth
+        balance = await s.WETH.balanceOf(s.Bob.address)
+        let difference = await toNumber(bobWETH.sub(balance))
+        expect(difference).to.eq(await toNumber(swapAmount))//dave spent wETH
 
     })
 
@@ -255,26 +359,108 @@ describe("Test Uniswap V3 pool with wrapped USDi token", () => {
         await mineBlock()
         await s.VaultController.calculateInterest()
         await mineBlock()
-
-
     })
 
     it("Collect fee from pool, unclaimed USDi rewards do not accrue interest", async () => {
 
+        let startWUSDI = await s.USDI.balanceOf(s.Gus.address)
+
+        const collectParams = [
+            tokenId,        //tokenId
+            s.Gus.address, //recipient bob
+            utils.parseEther("500000"),//amount0max - arbitrary large number
+            utils.parseEther("500000")//amount1max - arbitrary large number
+        ]
+
+        await NFPM.connect(s.Gus).collect(collectParams)
+        await mineBlock()
+
+        let balance = await s.WUSDI.balanceOf(s.Gus.address)
+        let difference = await balance.sub(startWUSDI)
+
+        expect(await toNumber(difference)).to.be.gt(0)
+
     })
 
     it("remove all liquidity from pool and receive USDi + interest ", async () => {
+        //get position
+        const position = await NFPM.connect(s.Gus).positions(tokenId)
+        const liquidity = position.liquidity
 
+        const poolWUSDi = await s.WUSDI.balanceOf(poolV3.address)
+        const poolWETH = await s.WETH.balanceOf(poolV3.address)
+
+        const gusWUSDI = await s.WUSDI.balanceOf(s.Gus.address)
+        const gusWETH = await s.WETH.balanceOf(s.Gus.address)
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+        const DecreaseLiquidityParams = [
+            tokenId,
+            liquidity.toString(),//liquidity? 
+            "6544876023022433160895",//amount0min
+            "2965486804570273648",//amount1min
+            deadline
+        ]
+
+        let dlResult = await NFPM.connect(s.Gus).decreaseLiquidity(DecreaseLiquidityParams)
+        await mineBlock()
+        let args = await getArgs(dlResult)
+        //showBody(args)
+        expect(args.tokenId.toNumber()).to.eq(tokenId)
+
+
+        const collectParams = [
+            tokenId,        //tokenId
+            s.Gus.address, //recipient bob
+            utils.parseEther("500000"),//amount0max - arbitrary large number
+            utils.parseEther("500000")//amount1max - arbitrary large number
+        ]
+
+        await NFPM.connect(s.Gus).collect(collectParams)
+        await mineBlock()
+
+
+        let balance = await s.WUSDI.balanceOf(s.Gus.address)
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(wUSDIamount), 10)//Gus received back the correct amount of wusdi
+
+        balance = await s.WETH.balanceOf(s.Gus.address)
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(wETHamount), 0.1)//Gus received back the correct amount of weth
+
+        balance = await s.USDI.balanceOf(poolV3.address)
+        expect(await toNumber(balance)).to.be.closeTo(0, 0.000001)
+
+        balance = await s.WETH.balanceOf(poolV3.address)
+        expect(await toNumber(balance)).to.be.closeTo(0, 0.000001)
 
 
     })
 
     it("confirm liquidity is now 0", async () => {
+        //get position
+        const position = await NFPM.connect(s.Gus).positions(tokenId)
+        const liquidity = position.liquidity
 
+        expect(liquidity).to.eq(0)
     })
 
-    it("any way to redeem the interest on USDi that is still in the pool?", async () => {
+    it("unwrap and compare to control", async () => {
+        const controlBalance = await s.USDI.balanceOf(s.Eric.address)
+        expect(await toNumber(controlBalance)).to.be.gt(await toNumber(usdiAmount))//interest has accrued
 
+        let underlying = await s.WUSDI.balanceOfUnderlying(s.Gus.address)
+        let wrapperBalance = await s.USDI.balanceOf(s.WUSDI.address)
+        
+        //slight error means WUSDI contract does not quite hold enough USDI to withdraw all
+        await s.WUSDI.connect(s.Gus).withdraw(wrapperBalance)
+        await mineBlock()
+
+
+        balance = await s.USDI.balanceOf(s.Gus.address)
+        //new balance is slightly higher due to the small swap
+        expect(await toNumber(balance)).to.be.gt(await toNumber(controlBalance))
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(controlBalance), 6)
     })
 
 })

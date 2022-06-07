@@ -236,11 +236,7 @@ describe("Deploy WUSDI wrapper", () => {
             "Wrapped USDi", //name
             "WUSDI"         //symbol
         );
-        await mineBlock()
-
-        showBodyCyan("WUSDI deployed: ", s.WUSDI.address)
-
-        
+        await mineBlock()        
     })
 })
 
