@@ -34,6 +34,7 @@
         "hardhat-gas-reporter": "^1.0.8",
         "hardhat-watcher": "^2.1.1",
         "js-sha256": "^0.9.0",
+        "lowdb": "^3.0.0",
         "merkletreejs": "^0.2.31",
         "typescript": "^4.6.3"
     },
