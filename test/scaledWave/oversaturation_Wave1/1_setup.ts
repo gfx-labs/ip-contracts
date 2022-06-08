@@ -6,6 +6,9 @@ import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
 import { IERC20__factory, IVOTE__factory } from "../../../typechain-types";
+import {JsonRpcSigner} from "@ethersproject/providers"
+import { utils, BigNumber } from "ethers"
+
 //import { assert } from "console";
 
 require("chai").should();
@@ -68,6 +71,13 @@ describe("Token Setup", () => {
         s.Hector =  s.accounts[7];
         s.Igor =  s.accounts[8];
         s.Bank = s.accounts[9];
+
+     
+        
+
+
+
+
     });
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
@@ -134,4 +144,27 @@ describe("Token Setup", () => {
 
 
     });
+
+    it("initialize RPC signers", async () => {
+        let signers:JsonRpcSigner[] = new Array(s.whitelist1.length)        
+        for(let i = 0; i < s.whitelist1.length; i++){
+            let signer = ethers.provider.getSigner(s.whitelist1[i])
+
+            await s.Bank.sendTransaction({to: s.whitelist1[i], value: utils.parseEther("0.5")})
+            await mineBlock()
+            
+
+            signers[i] = signer
+        }
+        s.accounts1 = signers
+
+        let signers2:JsonRpcSigner[] = new Array(s.whitelist2.length)        
+        for(let i = 0; i < s.whitelist2.length; i++){
+            let signer = ethers.provider.getSigner(s.whitelist2[i])
+            signers2[i] = signer
+        }
+        s.accounts2 = signers2
+
+
+    })
 });

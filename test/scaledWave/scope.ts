@@ -1,4 +1,5 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import {JsonRpcSigner} from "@ethersproject/providers"
 import { Signer } from "ethers";
 import { ethers } from "hardhat";
 import {
@@ -12,9 +13,19 @@ import {
 } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
+import { wave1 } from "./data/wave1"
+import { wave2 } from "./data/wave2"
 
 export class TestScope extends MainnetAddresses {
   USDC!: IERC20;
+
+  whitelist1 = Array.from(wave1)
+  whitelist2 = Array.from(wave2)
+
+  accounts!: SignerWithAddress[]
+
+  accounts1!: JsonRpcSigner[]
+  accounts2!: JsonRpcSigner[]
 
   usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 
@@ -41,8 +52,6 @@ export class TestScope extends MainnetAddresses {
 
   GOV!: GovernorCharlieDelegate;
 
-  accounts!:SignerWithAddress[]
-
   Frank!: SignerWithAddress; // frank holds all IPT from the mint
   Andy!: SignerWithAddress; // frank sends andy some ipt
   Bob!: SignerWithAddress; // whitelisted
@@ -52,9 +61,9 @@ export class TestScope extends MainnetAddresses {
   Gus!: SignerWithAddress; // Gus
   Hector!: SignerWithAddress; // Hector
 
-  Igor!:SignerWithAddress; //Igor is not on any whitelist 
+  Igor!: SignerWithAddress; //Igor is not on any whitelist 
 
-  Bank!:SignerWithAddress; //holds a ton of USDC and is not on any whitelist
+  Bank!: SignerWithAddress; //holds a ton of USDC and is not on any whitelist
 
   constructor() {
     super();
