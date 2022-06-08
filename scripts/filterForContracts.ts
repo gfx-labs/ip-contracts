@@ -101,16 +101,20 @@ async function main() {
 
 
 
-    showBodyCyan("Scaning wave 1 whitelist for contracts")
+    /**
+     showBodyCyan("Scaning wave 1 whitelist for contracts")
     for (let i = 0; i < whitelist1.length; i++) {
+        showBody(`checking ${i} of ${whitelist1.length}`, whitelist1[i])
+
         let contract = await isContract(whitelist1[i])
         if (contract) {
-            showBody(whitelist1[i], "is a contract, index: ", i)
+            showBodyCyan(whitelist1[i], "is a contract, index: ", i)
             delete (whitelist1[i])
         }
 
     }
     await write1()
+     */
 
 
     showBodyCyan("Scaning wave 2 whitelist for contracts")
@@ -118,8 +122,7 @@ async function main() {
         showBody(`checking ${i} of ${whitelist2.length}`, whitelist2[i])
         let contract = await isContract(whitelist2[i])
         if (contract) {
-            showBody(whitelist2[i], "is a contract, index: ", i)
-
+            showBodyCyan(whitelist2[i], "is a contract, index: ", i)
             delete (whitelist2[i])
         }
 

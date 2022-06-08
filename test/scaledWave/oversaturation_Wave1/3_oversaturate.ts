@@ -1,6 +1,7 @@
 import { s } from "../scope"
 import { expect, assert } from "chai"
 import { showBody, showBodyCyan } from "../../../util/format"
+import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
 import { BN } from "../../../util/number"
 import {
   advanceBlockHeight,
@@ -168,30 +169,17 @@ describe("Wave 1 claims and reach oversaturation", () => {
 
   //set up temp signer
   before(async () => {
-    await network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [tempAddr],
-    });
     signer = ethers.provider.getSigner(tempAddr)
   })
 
-  after(async () => {
-    await network.provider.request({
-      method: "hardhat_stopImpersonatingAccount",
-      params: [tempAddr],
-    });
-  })
 
-  it("Wave 1 claims up to cap", async () => {
+
+  /**
+   it("Wave 1 claims up to cap", async () => {
     const cap = await Wave._cap()
     const formatCap = cap.div(BN("1e6"))
     const FormatUsdcAmount = Math.floor(formatCap.toNumber() / s.whitelist1.length)//everyone claims this much to reach cap
     const rawUSDCamount = FormatUsdcAmount * 1000000
-
-
-
-    //let wallet = ethers.Wallet.createRandom();
-
 
     //merkle things
     leaf = solidityKeccak256(["address", "uint256"], [signer._address, key1])
@@ -203,52 +191,75 @@ describe("Wave 1 claims and reach oversaturation", () => {
     await s.Bank.sendTransaction({ to: signer._address, value: utils.parseEther("0.5") })//send some eth for gas
     await advanceBlockHeight(1)
 
-    let balance = await s.USDC.balanceOf(signer._address)
-   
 
+    await impersonateAccount(signer._address)
     await s.USDC.connect(signer).approve(Wave.address, BN("500e6"))
     await mineBlock()
 
     await Wave.connect(signer).getPoints(
-      1, 
+      1,
       BN("500e6"),
       key1,
       merkleProof
     )
     await mineBlock()
 
+    await ceaseImpersonation(signer._address)
+
+  })
+   */
+
+  it("Wave 1 claims up to cap", async () => {
+    const cap = await Wave._cap()
+    const formatCap = cap.div(BN("1e6"))
+    const FormatUsdcAmount = Math.floor(formatCap.toNumber() / s.randomWhitelist1.length)//everyone claims this much to reach cap
+    const rawUSDCamount = FormatUsdcAmount * 1000000
+
+    for (let i = 0; i < s.randomWhitelist1.length; i++) {
+      showBody(`claiming ${i} of ${s.randomWhitelist1.length}`)
+
+      //merkle things
+      let leaf = solidityKeccak256(["address", "uint256"], [s.randomWhitelist1[i], key1])
+      let merkleProof = merkleTree1.getHexProof(leaf)
+
+      await s.Bank.sendTransaction({ to: s.randomWhitelist1[i], value: utils.parseEther("0.5") })
+      await advanceBlockHeight(1)
+
+      await s.USDC.connect(s.Bank).transfer(s.randomWhitelist1[i], rawUSDCamount)
+      await advanceBlockHeight(1)
+
+      await impersonateAccount(s.randomWhitelist1[i])
+      signer = ethers.provider.getSigner(s.randomWhitelist1[i])
+
+      await s.USDC.connect(signer).approve(Wave.address, rawUSDCamount)
+      await mineBlock()
+
+      await Wave.connect(signer).getPoints(
+        1,
+        rawUSDCamount,
+        key1,
+        merkleProof
+      )
+      await mineBlock()
+
+      await ceaseImpersonation(s.randomWhitelist1[i])
 
 
+    }
+
+  })
+
+  it("1 more claim to reach cap", async () => {
+    const cap = await Wave._cap()
+    let totalClaimed = await Wave._totalClaimed()
+    expect(totalClaimed).to.be.lt(cap) //cap has not been reached
+    const claimableAmount = cap.sub(totalClaimed)
+
+    showBody(claimableAmount)
 
 
   })
 
-  it("Dave tries to getPoints after you having already claimed maximum", async () => {
-
-  })
-
-  it("Bob claims some, but less than maximum", async () => {
-
-
-  })
-
-  it("try to make a claim that would exceed cap", async () => {
-
-  })
-
-  it("try to claim the wrong wave", async () => {
-
-
-  })
-
-  it("try to claim more than key amount", async () => {
-
-  })
-
-  it("Bob claims exactly up to maximum", async () => {
-
-
-  })
 
 })
 

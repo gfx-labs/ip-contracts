@@ -24,17 +24,16 @@ export class TestScope extends MainnetAddresses {
   whitelist1 = Array.from(wave1)
   whitelist2 = Array.from(wave2)
 
+  randomWhitelist1!: string[]
+  randomWhitelist2!: string[]
+
   accounts!: SignerWithAddress[]
-
-  accounts1!: JsonRpcSigner[]
-  accounts2!: JsonRpcSigner[]
-
-  wallets1!: Wallet[]
-  wallets2!: Wallet[]
 
   usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 
   baseUSDC = BN("1000e6")
+
+  tenkUSDC = BN("10000e6")
 
   Frank_USDC = BN("1e11");
   Bob_USDC = BN("40000000e6");
@@ -45,7 +44,7 @@ export class TestScope extends MainnetAddresses {
   Gus_USDC = BN("1000e6");
   Hector_USDC = BN("1000e6");
 
-  Bank_USDC = BN("100e12")
+  Bank_USDC = BN("100e13")// 1BB USDC
 
   IPT!: InterestProtocolTokenDelegate;
 

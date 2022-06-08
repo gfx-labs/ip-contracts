@@ -10,6 +10,7 @@ import { JsonRpcSigner } from "@ethersproject/providers"
 import { Wallet } from "@ethersproject/wallet"
 
 import { utils, BigNumber } from "ethers"
+import { random } from "underscore";
 //import { assert } from "console";
 
 require("chai").should();
@@ -151,117 +152,35 @@ describe("Token Setup", () => {
      * filter for contracts first, use ./scripts/filterForContracts.ts
      * otherwise, sending ether will fail, these contracts need some ether to claim points
      */
-    it("initialize signers", async () => {
+    it("Randomly select accounts", async () => {
+        let bankUSDC = await s.USDC.balanceOf(s.Bank.address)
+        showBody("Bank USDC: ", bankUSDC)
+        const length1 = 300
+        //let randomList1: string[] = new Array(length1)
+        let rl1 = []
+        for (let i = 0; i < length1; i++) {
+            const random = Math.floor(Math.random() * s.whitelist1.length);
 
-/**
- 
-
-
-
-        let wallets: Wallet[] = new Array(s.whitelist1.length)
-        for (let i = 0; i < s.whitelist1.length; i++) {
-            showBody("Setting up wallet: ", i)
-            wallets[i] = ethers.Wallet.createRandom();
-            wallets[i] = wallets[i].connect(ethers.provider)
-
-            await s.Bank.sendTransaction({ to: s.whitelist1[i], value: utils.parseEther("0.5") })
-            await advanceBlockHeight(1)
-            
-            await s.USDC.connect(s.Bank).transfer(wallets[i].address, BN("500e6"))
-            await advanceBlockHeight(1)
-
+            let contract = await isContract(s.whitelist1[random])
+            if (!contract) {
+                rl1.push(s.whitelist1[random]) 
+            }
         }
-        await mineBlock()
-        s.wallets1 = wallets
-
-        showBodyCyan("WALLETS 1 DONE")
-
-        let wallets2: Wallet[] = new Array(s.whitelist2.length)
-        for (let i = 0; i < s.whitelist2.length; i++) {
-            showBody("Setting up wallet: ", i, `of ${s.whitelist2.length}`)
-            wallets2[i] = ethers.Wallet.createRandom();
-            wallets2[i] = wallets2[i].connect(ethers.provider)
-
-            await s.Bank.sendTransaction({ to: s.whitelist2[i], value: utils.parseEther("0.5") })
-            await advanceBlockHeight(1)
-            
-            await s.USDC.connect(s.Bank).transfer(wallets2[i].address, BN("500e6"))
-            await advanceBlockHeight(1)
-
-        }
-        await mineBlock()
-        s.wallets2 = wallets2
-
-        showBodyCyan("WALLETS 2 DONE")
-
-
- */
-
-
-
-
-
+        s.randomWhitelist1 = rl1
 
         /**
-         let wallets: any[] = new Array(s.whitelist1.length)
-
-        for( let i=0; i < s.whitelist1.length; i++){
-            // Get a new wallet
-            let wallet = ethers.Wallet.createRandom();
-            // add the provider from Hardhat
-            wallet =  wallet.connect(ethers.provider);
-            // send ETH to the new wallet so it can perform a tx
-            await s.Bank.sendTransaction({to: wallet.address, value: ethers.utils.parseEther("1")});
-            
-            wallets[i] = wallet
+         const length2 = 700
+        let rl2 = []
+        for (let i = 0; i < length2; i++) {
+            const random = Math.floor(Math.random() * s.whitelist2.length);
+            let contract = await isContract(s.whitelist2[random])
+            if (!contract) {
+                rl2.push(s.whitelist2[random]) 
+            }
         }
+        s.randomWhitelist2 = rl2
+
          */
-
-
-
-
-
-
-
-
-
-        /**
-         
-                let signers: JsonRpcSigner[] = new Array(s.whitelist1.length)
-                for (let i = 0; i < s.whitelist1.length; i++) {
-        
-                    let contract = await isContract(s.whitelist1[i])
-        
-                    if (!contract) {
-                        let signer = ethers.provider.getSigner(s.whitelist1[i])
-                        showBody(`sending tx ${i} ${s.whitelist1[i]} `)
-        
-                        await s.Bank.sendTransaction({ to: s.whitelist1[i], value: utils.parseEther("0.5") })
-                        await advanceBlockHeight(1)
-        
-        
-                        signers[i] = signer
-                    }
-                    else {
-                        showBodyCyan(s.whitelist1[i], "is a contract")
-                    }
-        
-        
-                }
-                await mineBlock()
-        
-                s.accounts1 = signers
-        
-                let signers2: JsonRpcSigner[] = new Array(s.whitelist2.length)
-                for (let i = 0; i < s.whitelist2.length; i++) {
-                    let signer = ethers.provider.getSigner(s.whitelist2[i])
-                    signers2[i] = signer
-                }
-                s.accounts2 = signers2
-        
-        
-         */
-
 
     })
 });
