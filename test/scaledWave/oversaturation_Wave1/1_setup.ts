@@ -7,6 +7,8 @@ import { s } from "../scope";
 import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
 import { IERC20__factory, IVOTE__factory } from "../../../typechain-types";
 import { JsonRpcSigner } from "@ethersproject/providers"
+import { Wallet } from "@ethersproject/wallet"
+
 import { utils, BigNumber } from "ethers"
 //import { assert } from "console";
 
@@ -149,7 +151,56 @@ describe("Token Setup", () => {
      * filter for contracts first, use ./scripts/filterForContracts.ts
      * otherwise, sending ether will fail, these contracts need some ether to claim points
      */
-    it("initialize RPC signers", async () => {
+    it("initialize signers", async () => {
+
+/**
+ 
+
+
+
+        let wallets: Wallet[] = new Array(s.whitelist1.length)
+        for (let i = 0; i < s.whitelist1.length; i++) {
+            showBody("Setting up wallet: ", i)
+            wallets[i] = ethers.Wallet.createRandom();
+            wallets[i] = wallets[i].connect(ethers.provider)
+
+            await s.Bank.sendTransaction({ to: s.whitelist1[i], value: utils.parseEther("0.5") })
+            await advanceBlockHeight(1)
+            
+            await s.USDC.connect(s.Bank).transfer(wallets[i].address, BN("500e6"))
+            await advanceBlockHeight(1)
+
+        }
+        await mineBlock()
+        s.wallets1 = wallets
+
+        showBodyCyan("WALLETS 1 DONE")
+
+        let wallets2: Wallet[] = new Array(s.whitelist2.length)
+        for (let i = 0; i < s.whitelist2.length; i++) {
+            showBody("Setting up wallet: ", i, `of ${s.whitelist2.length}`)
+            wallets2[i] = ethers.Wallet.createRandom();
+            wallets2[i] = wallets2[i].connect(ethers.provider)
+
+            await s.Bank.sendTransaction({ to: s.whitelist2[i], value: utils.parseEther("0.5") })
+            await advanceBlockHeight(1)
+            
+            await s.USDC.connect(s.Bank).transfer(wallets2[i].address, BN("500e6"))
+            await advanceBlockHeight(1)
+
+        }
+        await mineBlock()
+        s.wallets2 = wallets2
+
+        showBodyCyan("WALLETS 2 DONE")
+
+
+ */
+
+
+
+
+
 
         /**
          let wallets: any[] = new Array(s.whitelist1.length)

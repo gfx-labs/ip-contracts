@@ -1,5 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {JsonRpcSigner} from "@ethersproject/providers"
+import {Wallet} from "@ethersproject/wallet"
+
 import { Signer } from "ethers";
 import { ethers } from "hardhat";
 import {
@@ -26,6 +28,9 @@ export class TestScope extends MainnetAddresses {
 
   accounts1!: JsonRpcSigner[]
   accounts2!: JsonRpcSigner[]
+
+  wallets1!: Wallet[]
+  wallets2!: Wallet[]
 
   usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 

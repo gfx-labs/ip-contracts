@@ -38,6 +38,7 @@ import { red } from "bn.js"
 import exp from "constants"
 import { start } from "repl"
 import { JsonRpcSigner } from "@ethersproject/providers"
+import { Wallet } from "@ethersproject/wallet"
 
 const { solidity } = require("ethereum-waffle")
 
@@ -146,9 +147,39 @@ describe("Wave 1 claims and reach oversaturation", () => {
   const tempAddr = "0xac35b645b14d8252d49df77948ef3c215f2ec13f"
   let signer: JsonRpcSigner
 
+  /**
+   await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [addr],
+      });
+      const claimer = await ethers.getSigner(addr);
+      const proof = getAccountProof(merkletree, addr, key);
+      await expect(
+        contracts.tribeRagequit
+          ?.connect(claimer)
+          .ngmi(convertMultiplier, key, proof)
+      ).to.not.be.reverted.and.to.not.be.revertedWith("invalid proof");
+
+      await network.provider.request({
+        method: "hardhat_stopImpersonatingAccount",
+        params: [addr],
+      });
+   */
+
   //set up temp signer
   before(async () => {
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [tempAddr],
+    });
     signer = ethers.provider.getSigner(tempAddr)
+  })
+
+  after(async () => {
+    await network.provider.request({
+      method: "hardhat_stopImpersonatingAccount",
+      params: [tempAddr],
+    });
   })
 
   it("Wave 1 claims up to cap", async () => {
@@ -157,11 +188,13 @@ describe("Wave 1 claims and reach oversaturation", () => {
     const FormatUsdcAmount = Math.floor(formatCap.toNumber() / s.whitelist1.length)//everyone claims this much to reach cap
     const rawUSDCamount = FormatUsdcAmount * 1000000
 
-    let wallet = ethers.Wallet.createRandom();
+
+
+    //let wallet = ethers.Wallet.createRandom();
 
 
     //merkle things
-    leaf = solidityKeccak256(["address", "uint256"], [wallet.address, key1])
+    leaf = solidityKeccak256(["address", "uint256"], [signer._address, key1])
     merkleProof = merkleTree1.getHexProof(leaf)
 
     await s.USDC.connect(s.Bank).transfer(signer._address, BN("500e6"))//send USDC funds
@@ -170,10 +203,21 @@ describe("Wave 1 claims and reach oversaturation", () => {
     await s.Bank.sendTransaction({ to: signer._address, value: utils.parseEther("0.5") })//send some eth for gas
     await advanceBlockHeight(1)
 
-    //await s.USDC.connect(signer).approve(Wave.address, BN("500e6"))
-    //await mineBlock()
+    let balance = await s.USDC.balanceOf(signer._address)
+   
 
-    
+    await s.USDC.connect(signer).approve(Wave.address, BN("500e6"))
+    await mineBlock()
+
+    await Wave.connect(signer).getPoints(
+      1, 
+      BN("500e6"),
+      key1,
+      merkleProof
+    )
+    await mineBlock()
+
+
 
 
 

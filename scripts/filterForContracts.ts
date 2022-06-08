@@ -115,7 +115,7 @@ async function main() {
 
     showBodyCyan("Scaning wave 2 whitelist for contracts")
     for (let i = 0; i < whitelist2.length; i++) {
-        showBody("checking ", i)
+        showBody(`checking ${i} of ${whitelist2.length}`, whitelist2[i])
         let contract = await isContract(whitelist2[i])
         if (contract) {
             showBody(whitelist2[i], "is a contract, index: ", i)
