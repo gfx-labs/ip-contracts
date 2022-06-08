@@ -71,18 +71,16 @@ const main = async () => {
       p.db.getData(".deploys.curve")
     );
   //set uni parameters
-
   const setUni = await new VaultController__factory(x)
     .attach("0x385E2C6b5777Bc5ED960508E774E4807DDe6618c")
     .populateTransaction.updateRegisteredErc20(
       "0xBAB395136FaEa31F33f32737218D79E2e92b32C1",
       BN("55e16"),
-      "0xd8Cd58D478c5BEb57e316F3C5D60D4BC3d921293",
+      "0xBAB395136FaEa31F33f32737218D79E2e92b32C1",
       BN("15e16")
     );
 
   // then do the upgrades
-
   const upgradeVaultController = await new ProxyAdmin__factory(x)
     .attach("0xafDBA0899A00ca07D36d019eF7649803b70a9c08")
     .populateTransaction.upgrade(
@@ -93,7 +91,7 @@ const main = async () => {
   const upgradeUSDI = await new ProxyAdmin__factory(x)
     .attach("0xafDBA0899A00ca07D36d019eF7649803b70a9c08")
     .populateTransaction.upgrade(
-      "0x385E2C6b5777Bc5ED960508E774E4807DDe6618c",
+      "0x203c05ACb6FC02F5fA31bd7bE371E7B213e59Ff7",
       p.db.getData(".deploys.USDI")
     );
 
@@ -101,11 +99,11 @@ const main = async () => {
     .attach("0x3389d29e457345E4f22731292D9C10ddFc78088f")
     .populateTransaction._setImplementation(p.db.getData(".deploys.governor"));
 
-  p.addStep(newCurve);
-  p.addStep(setUni);
-  p.addStep(upgradeVaultController);
-  p.addStep(upgradeUSDI);
-  p.addStep(upgradeGovernor);
+  //p.addStep(newCurve, "setCurve(address,address)");
+  //p.addStep(setUni, "updateRegisteredErc20(address,uint256,address,uint256)");
+  p.addStep(upgradeVaultController, "upgrade(address,address)");
+  p.addStep(upgradeUSDI, "upgrade(address,address)");
+  //p.addStep(upgradeGovernor, "_setImplementation(address)");
 
   const out = p.populateProposal();
   console.log(out);
@@ -113,7 +111,7 @@ const main = async () => {
   const charlie = new GovernorCharlieDelegate__factory(x).attach(
     "0x3389d29e457345E4f22731292D9C10ddFc78088f"
   );
-  await p.sendProposal(charlie, description, false);
+  await p.sendProposal(charlie, description, true);
 
   return "success";
 };

@@ -23,6 +23,11 @@ interface ProposalData {
   calldatas: BytesLike[];
 }
 
+interface ExtraPopulatedTransaction {
+  p: PopulatedTransaction;
+  sig: string;
+}
+
 type Data = {
   deploys: any;
 };
@@ -33,7 +38,7 @@ export class ProposalContext {
   db: JsonDB;
   deploys: Map<string, () => Promise<BaseContract>>;
 
-  steps: PopulatedTransaction[];
+  steps: ExtraPopulatedTransaction[];
 
   constructor(name: string) {
     this.deploys = new Map();
@@ -44,8 +49,8 @@ export class ProposalContext {
     );
   }
 
-  addStep(p: PopulatedTransaction) {
-    this.steps.push(p);
+  addStep(p: PopulatedTransaction, sig: string) {
+    this.steps.push({ p, sig });
   }
 
   populateProposal(): ProposalData {
@@ -55,9 +60,10 @@ export class ProposalContext {
       signatures: [],
       calldatas: [],
     };
-    for (const v of this.steps) {
+    for (const av of this.steps) {
+      const v = av.p;
       out.calldatas.push(v.data ? "0x" + v.data.substring(10) : "");
-      out.signatures.push(v.data ? v.data.substring(0, 10) : "");
+      out.signatures.push(av.sig);
       out.values.push(v.value ? v.value : 0);
       out.targets.push(
         v.to ? v.to : "0x0000000000000000000000000000000000000000"
@@ -83,6 +89,7 @@ export class ProposalContext {
       )
       .then(async (res) => {
         this.db.push(".proposal.proposeTxn", res.hash);
+        await res.wait();
       });
   }
 
