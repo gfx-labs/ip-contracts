@@ -1,14 +1,13 @@
 import { expect, assert } from "chai";
 import { ethers, network, tenderly } from "hardhat";
 import { stealMoney } from "../../../util/money";
-import { showBody } from "../../../util/format";
+import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
 import { IERC20__factory, IVOTE__factory } from "../../../typechain-types";
-import {JsonRpcSigner} from "@ethersproject/providers"
+import { JsonRpcSigner } from "@ethersproject/providers"
 import { utils, BigNumber } from "ethers"
-
 //import { assert } from "console";
 
 require("chai").should();
@@ -47,6 +46,14 @@ if (process.env.TENDERLY_KEY) {
 }
 
 
+const Web3 = require('web3')
+const web3 = new Web3(new Web3.providers.HttpProvider("https://mainnet.rpc.gfx.xyz/"))
+const isContract = async (address: string) => {
+    const res = await web3.eth.getCode(address)
+    return res.length > 5
+}
+
+
 describe("hardhat settings", () => {
     it("reset hardhat network each run", async () => {
         expect(await reset(0)).to.not.throw;
@@ -61,23 +68,16 @@ describe("hardhat settings", () => {
 describe("Token Setup", () => {
     it("connect to signers", async () => {
         s.accounts = await ethers.getSigners();
-        s.Frank =  s.accounts[0];
-        s.Andy =  s.accounts[1];
-        s.Bob =  s.accounts[2];
-        s.Carol =  s.accounts[3];
-        s.Dave =  s.accounts[4];
-        s.Eric =  s.accounts[5];
-        s.Gus =  s.accounts[6];
-        s.Hector =  s.accounts[7];
-        s.Igor =  s.accounts[8];
+        s.Frank = s.accounts[0];
+        s.Andy = s.accounts[1];
+        s.Bob = s.accounts[2];
+        s.Carol = s.accounts[3];
+        s.Dave = s.accounts[4];
+        s.Eric = s.accounts[5];
+        s.Gus = s.accounts[6];
+        s.Hector = s.accounts[7];
+        s.Igor = s.accounts[8];
         s.Bank = s.accounts[9];
-
-     
-        
-
-
-
-
     });
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
@@ -145,25 +145,71 @@ describe("Token Setup", () => {
 
     });
 
+    /**
+     * filter for contracts first, use ./scripts/filterForContracts.ts
+     * otherwise, sending ether will fail, these contracts need some ether to claim points
+     */
     it("initialize RPC signers", async () => {
-        let signers:JsonRpcSigner[] = new Array(s.whitelist1.length)        
-        for(let i = 0; i < s.whitelist1.length; i++){
-            let signer = ethers.provider.getSigner(s.whitelist1[i])
 
-            await s.Bank.sendTransaction({to: s.whitelist1[i], value: utils.parseEther("0.5")})
-            await mineBlock()
+        /**
+         let wallets: any[] = new Array(s.whitelist1.length)
+
+        for( let i=0; i < s.whitelist1.length; i++){
+            // Get a new wallet
+            let wallet = ethers.Wallet.createRandom();
+            // add the provider from Hardhat
+            wallet =  wallet.connect(ethers.provider);
+            // send ETH to the new wallet so it can perform a tx
+            await s.Bank.sendTransaction({to: wallet.address, value: ethers.utils.parseEther("1")});
             
-
-            signers[i] = signer
+            wallets[i] = wallet
         }
-        s.accounts1 = signers
+         */
 
-        let signers2:JsonRpcSigner[] = new Array(s.whitelist2.length)        
-        for(let i = 0; i < s.whitelist2.length; i++){
-            let signer = ethers.provider.getSigner(s.whitelist2[i])
-            signers2[i] = signer
-        }
-        s.accounts2 = signers2
+
+
+
+
+
+
+
+
+        /**
+         
+                let signers: JsonRpcSigner[] = new Array(s.whitelist1.length)
+                for (let i = 0; i < s.whitelist1.length; i++) {
+        
+                    let contract = await isContract(s.whitelist1[i])
+        
+                    if (!contract) {
+                        let signer = ethers.provider.getSigner(s.whitelist1[i])
+                        showBody(`sending tx ${i} ${s.whitelist1[i]} `)
+        
+                        await s.Bank.sendTransaction({ to: s.whitelist1[i], value: utils.parseEther("0.5") })
+                        await advanceBlockHeight(1)
+        
+        
+                        signers[i] = signer
+                    }
+                    else {
+                        showBodyCyan(s.whitelist1[i], "is a contract")
+                    }
+        
+        
+                }
+                await mineBlock()
+        
+                s.accounts1 = signers
+        
+                let signers2: JsonRpcSigner[] = new Array(s.whitelist2.length)
+                for (let i = 0; i < s.whitelist2.length; i++) {
+                    let signer = ethers.provider.getSigner(s.whitelist2[i])
+                    signers2[i] = signer
+                }
+                s.accounts2 = signers2
+        
+        
+         */
 
 
     })

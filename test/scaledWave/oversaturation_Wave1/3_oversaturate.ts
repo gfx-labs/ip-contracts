@@ -11,6 +11,8 @@ import {
   OneYear,
 } from "../../../util/block"
 import { utils, BigNumber } from "ethers"
+import { ethers, network, tenderly } from "hardhat";
+
 import {
   calculateAccountLiability,
   payInterestMath,
@@ -35,6 +37,7 @@ import {
 import { red } from "bn.js"
 import exp from "constants"
 import { start } from "repl"
+import { JsonRpcSigner } from "@ethersproject/providers"
 
 const { solidity } = require("ethereum-waffle")
 
@@ -139,21 +142,39 @@ describe("Wave 1 claims and reach oversaturation", () => {
   let leaf: string
   let merkleProof: string[]
   let claimer: string
+
+  const tempAddr = "0xac35b645b14d8252d49df77948ef3c215f2ec13f"
+  let signer: JsonRpcSigner
+
+  //set up temp signer
+  before(async () => {
+    signer = ethers.provider.getSigner(tempAddr)
+  })
+
   it("Wave 1 claims up to cap", async () => {
     const cap = await Wave._cap()
     const formatCap = cap.div(BN("1e6"))
     const FormatUsdcAmount = Math.floor(formatCap.toNumber() / s.whitelist1.length)//everyone claims this much to reach cap
     const rawUSDCamount = FormatUsdcAmount * 1000000
 
-    for (let i = 0; i < s.whitelist1.length; i++) {
-      //merkle things
-      let leaf = solidityKeccak256(["address", "uint256"], [s.whitelist1[i], key1])
-      let merkleProof = merkleTree1.getHexProof(leaf)
+    let wallet = ethers.Wallet.createRandom();
 
 
-    }
+    //merkle things
+    leaf = solidityKeccak256(["address", "uint256"], [wallet.address, key1])
+    merkleProof = merkleTree1.getHexProof(leaf)
 
-    //showBody(s.accounts1[24])
+    await s.USDC.connect(s.Bank).transfer(signer._address, BN("500e6"))//send USDC funds
+    await mineBlock()
+
+    await s.Bank.sendTransaction({ to: signer._address, value: utils.parseEther("0.5") })//send some eth for gas
+    await advanceBlockHeight(1)
+
+    //await s.USDC.connect(signer).approve(Wave.address, BN("500e6"))
+    //await mineBlock()
+
+    
+
 
 
   })

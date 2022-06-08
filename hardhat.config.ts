@@ -14,7 +14,6 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-
 const zaddr = "0000000000000000000000000000000000000000000000000000000000000000"
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
