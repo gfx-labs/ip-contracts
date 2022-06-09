@@ -14,6 +14,8 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
+console.log(process.env.ETHERSCAN_POLYGON_KEY)
+
 const zaddr = "0000000000000000000000000000000000000000000000000000000000000000"
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",

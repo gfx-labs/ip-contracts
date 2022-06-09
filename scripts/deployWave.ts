@@ -215,8 +215,8 @@ const deployWave = async (deployer: SignerWithAddress) => {
     Wave = (await new WavePool__factory(deployer).deploy(
         receiver,
         totalReward,
-        "0xe8504e3B854940818c8F3D61DC155FA9919dd10F", //IPT.address, //reward token
-        "0xbEed11d5c8c87FaCbf3f81728543eb8cB6CBa939", //points token
+        "0xe8504e3B854940818c8F3D61DC155FA9919dd10F", //IPT.address, //reward token POLYGON
+        "0xbEed11d5c8c87FaCbf3f81728543eb8cB6CBa939", //points token POLYGON
         disableTime, //time when claiming points for all is disabled
         root1,
         enableTime,//time when claiming points for wave 1 is enabled
@@ -227,6 +227,18 @@ const deployWave = async (deployer: SignerWithAddress) => {
       )) as any;
     await Wave.deployed()
 
+    console.log(receiver)
+    console.log(totalReward)
+    console.log("0xe8504e3B854940818c8F3D61DC155FA9919dd10F")
+    console.log("0xbEed11d5c8c87FaCbf3f81728543eb8cB6CBa939")
+    console.log(disableTime)
+    console.log(root1)
+    console.log(enableTime)
+    console.log(root2)
+    console.log(enableTime)
+    console.log(Array(32).fill(0))
+    console.log(enableTime)
+
     console.log("Wave deployed: ", Wave.address)
 
 };
@@ -234,6 +246,8 @@ const deployWave = async (deployer: SignerWithAddress) => {
 //0xA9a4292a99A1DE8952A3e62e3c7Bf33463b412A7
 
 //0x786cb85de17ad952B9b4b888A0e5187a05EF1FD2 -- GOOD DEPLOYMENT
+
+//hh verify --network polygon --constructor-args ./scripts/arguments.js 0x0078f8795Ba94FCc90c6553E6Cb4674F48DD3a5A
 
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy

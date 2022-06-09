@@ -74,11 +74,18 @@ const totalReward = utils.parseEther("30000000")//30,000,000 IPT
 
 let Wave: WavePool
 
+let startingUSDC: BigNumber
+let receiver: string
+
 //todo - what happens if not all is redeemed, IPT stuck on Wave? Redeem deadline?
 require("chai").should()
 describe("Deploy wave - OVERSATURATION IN WAVE 1", () => {
   before(async () => {
     await initMerkle()
+    receiver = s.Carol.address
+
+    startingUSDC = await s.USDC.balanceOf(receiver)
+    expect(startingUSDC).to.eq(0)//Carol starts with 0 USDC
   })
 
   it("deploys wave", async () => {
@@ -87,13 +94,13 @@ describe("Deploy wave - OVERSATURATION IN WAVE 1", () => {
     const block = await currentBlock()
     const enableTime = block.timestamp
     disableTime = enableTime + (OneWeek * 3)
-    const receiver = s.Carol.address
 
     const waveFactory = new WavePool__factory(s.Frank)
     Wave = await waveFactory.deploy(
       receiver,
       totalReward,
       s.IPT.address,
+      s.USDC.address,
       disableTime, //time when claiming points for all is disabled
       root1,
       enableTime,//time when claiming points for wave 1 is enabled
@@ -176,7 +183,6 @@ describe("Wave 1 claims do not reach oversaturation", () => {
 
       await ceaseImpersonation(s.whitelist1[i])
     }
-
   })
 
   it("Confirm wave 1 claimed the correct amount", async () => {
@@ -299,6 +305,14 @@ describe("Wave 2 claims", () => {
     await ceaseImpersonation(finalClaimer._address)
 
   })
+
+  it("Check the receiver received the USDC", async () => {
+    const cap = await Wave._cap()
+    const received = await s.USDC.balanceOf(receiver)
+    showBody("Cap     : ", cap)
+    showBody("received: ", received)
+    expect(cap).to.eq(received)
+  })
 })
 
 
@@ -345,8 +359,6 @@ describe("Wave 3 claims", () => {
     await mineBlock()
 
     await ceaseImpersonation(finalClaimer._address)
-
-
   })
 })
 
@@ -419,9 +431,6 @@ describe("Redemptions", () => {
         await ceaseImpersonation(s.randomWhitelist2[i])
       }
     }
-    let remainingIPT = await s.IPT.balanceOf(Wave.address)
-    expect(remainingIPT).to.eq(0)//All IPT has been claimed
-
   })
 
   it("Try to redeem again", async () => {
@@ -433,7 +442,6 @@ describe("Redemptions", () => {
     await mineBlock()
 
     await ceaseImpersonation(s.whitelist1[0])
-
 
   })
 
@@ -454,10 +462,7 @@ describe("Redemptions", () => {
     let remainingIPT = await s.IPT.balanceOf(Wave.address)
     expect(remainingIPT).to.eq(0)//All IPT has been claimed
 
-
   })
-
-
 
   it("try admin withdraw", async () => {
     await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("Saturation reached")

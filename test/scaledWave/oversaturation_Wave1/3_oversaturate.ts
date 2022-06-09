@@ -94,6 +94,7 @@ describe("Deploy wave - OVERSATURATION IN WAVE 1", () => {
       receiver,
       totalReward,
       s.IPT.address,
+      s.USDC.address,
       disableTime, //time when claiming points for all is disabled
       root1,
       enableTime,//time when claiming points for wave 1 is enabled
