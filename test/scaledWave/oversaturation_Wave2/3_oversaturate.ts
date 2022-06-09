@@ -418,12 +418,9 @@ describe("Redemptions", () => {
 
         await ceaseImpersonation(s.randomWhitelist2[i])
       }
-
-
-      let remainingIPT = await s.IPT.balanceOf(Wave.address)
-      expect(remainingIPT).to.eq(0)//All IPT has been claimed
-
     }
+    let remainingIPT = await s.IPT.balanceOf(Wave.address)
+    expect(remainingIPT).to.eq(0)//All IPT has been claimed
 
   })
 
