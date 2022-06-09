@@ -14,8 +14,12 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
+<<<<<<< HEAD
 const zaddr =
   "0000000000000000000000000000000000000000000000000000000000000000";
+=======
+const zaddr = "0000000000000000000000000000000000000000000000000000000000000000"
+>>>>>>> scaledWave
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {

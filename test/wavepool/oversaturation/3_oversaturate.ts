@@ -674,13 +674,6 @@ describe("Redemptions", () => {
     await mineBlock()
   })
 
-  it("try admin withdraw during redemption time but before admin withdraw time", async () => {
-    await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("Saturation reached")
-  })
-  it("advance time to enable admin withdraw", async () => {
-    await fastForward(OneWeek)
-    await mineBlock()
-  })
   it("try admin withdraw", async () => {
     await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("Saturation reached")
     await mineBlock()

@@ -55,8 +55,7 @@ contract WavePool {
   address public _receiver;
 
   // the token used to claim points, USDC
-  IERC20 public constant _pointsToken = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // usdc
-  // IERC20 public constant _pointsToken = IERC20(0xbEed11d5c8c87FaCbf3f81728543eb8cB6CBa939);
+  IERC20 public _pointsToken; // = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // usdc
   // the token to be rewarded, IPT
   IERC20 public _rewardToken;
 
@@ -81,6 +80,7 @@ contract WavePool {
     address receiver,
     uint256 totalReward,
     address rewardToken,
+    address pointsToken,
     uint256 claimTime,
     bytes32 merkle1,
     uint256 enable1,
@@ -95,7 +95,9 @@ contract WavePool {
     _claimTime = claimTime;
     // reward information
     _rewardToken = IERC20(rewardToken);
-    _totalReward = 35 * 1e6 * 1e18;
+    _pointsToken = IERC20(pointsToken);
+    _totalReward = totalReward;
+
     // set receiver of IPT
     _receiver = receiver;
 
@@ -251,6 +253,7 @@ contract WavePool {
     if (_rewardToken.balanceOf(address(this)) < amount) {
       amount = _rewardToken.balanceOf(address(this));
     }
+    require(amount > 0, "cant redeem zero");
     bool check = _rewardToken.transfer(target, amount);
     require(check, "erc20 transfer failed");
   }
