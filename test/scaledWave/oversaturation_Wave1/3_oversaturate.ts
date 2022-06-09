@@ -70,7 +70,7 @@ const key1 = BN("1000000e6") //1,000,000 USDC
 const key2 = BN("500000e6") //500,000 USDC
 const floor = BN("250000") //0.5 USDC
 const amount = BN("100e6") //100 USDC
-const totalReward = utils.parseEther("30000000")//30,000,000 IPT 
+const totalReward = utils.parseEther("35000000")//30,000,000 IPT 
 
 let Wave: WavePool
 
