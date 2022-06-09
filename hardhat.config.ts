@@ -38,7 +38,7 @@ const config: HardhatUserConfig = {
       chainId: 3, // Ropsten's id
       gas: 8000000, // Ropsten has a lower block limit than mainnet
       gasPrice: 53000000000,
-      //gasPrice: 2000000000,
+      //gasPrice: 2000000000
     },
     rinkeby: {
       url: process.env.RINKEBY_URL ? process.env.RINKEBY_URL : zaddr,

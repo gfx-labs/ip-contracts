@@ -11,6 +11,7 @@ import { Vault__factory } from "../../typechain-types";
 import { BigNumber } from "ethers";
 import { BN } from "../../util/number";
 import Decimal from "decimal.js";
+import { BlockRounds } from "./q1_data";
 dotenv.config();
 
 const rpc_url = process.env.POLYGON_URL;
@@ -27,9 +28,9 @@ const main = async () => {
   const totalLiabilities = new Map<string, Decimal>();
   let totalLiability = new Decimal(0);
   const vaultCount = await vc.vaultsMinted();
-
   const mc = new Multicall({ ethersProvider: cl });
 
+  let blocks = 0;
   for (let b = blockStart; b <= blockEnd; b++) {
     const addrCalls: CallContext[] = [];
     const liabilityCalls: CallContext[] = [];
@@ -89,6 +90,13 @@ const main = async () => {
     ).map(([k, v]) => {
       return v.callsReturnContext[0].returnValues[0];
     });
+
+    let totalMinted = new Decimal(0);
+    addrs.forEach((v, i) => {
+      let val = vals[i];
+      totalMinted = totalMinted.add(val);
+    });
+
     addrs.forEach((v, i) => {
       let minter = minters[i];
       let val = vals[i];
@@ -97,22 +105,29 @@ const main = async () => {
       }
       totalLiabilities.set(
         minter,
-        totalLiabilities.get(minter)!.add(val.toString())
+        totalLiabilities.get(minter)!.add(val.div(totalMinted))
       );
-      totalLiability = totalLiability.add(val);
     });
+    blocks = blocks + 1;
     console.log(`block ${b} done, ${blockEnd - b} to go`);
   }
   const totals = Array.from(totalLiabilities.entries()).map(([k, v]) => {
     return {
       minter: k,
-      share: v.div(totalLiability),
+      share: v.div(blocks),
     };
   });
   console.log(
-    totals.filter((x) => {
-      return x.share.gt(0);
-    })
+    totals
+      .filter((x) => {
+        return x.share.gt(0);
+      })
+      .map((v) => {
+        return {
+          minter: v.minter,
+          amount: v.share.mul(BlockRounds.rewardForLM),
+        };
+      })
   );
 };
 

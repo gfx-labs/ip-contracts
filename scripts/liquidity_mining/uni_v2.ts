@@ -11,6 +11,7 @@ import { ERC20Detailed__factory, Vault__factory } from "../../typechain-types";
 import { BigNumber } from "ethers";
 import { BN } from "../../util/number";
 import Decimal from "decimal.js";
+import { BlockRounds } from "./q1_data";
 dotenv.config();
 
 const POLYGON_POOL = "0x203c05ACb6FC02F5fA31bd7bE371E7B213e59Ff7";
@@ -41,10 +42,12 @@ const main = async () => {
     }
   });
 
+  let blocks = 0;
   for (let b = blockStart; b <= blockEnd; b++) {
     const addrCalls: CallContext[] = [];
     const liabilityCalls: CallContext[] = [];
     const addrCallContext: ContractCallContext[] = [];
+    blocks = blocks + 1;
     for (let addr of addrs) {
       addrCalls.push({
         reference: addr,
@@ -67,6 +70,10 @@ const main = async () => {
         val: new Decimal(x.returnValues[0].hex),
       };
     });
+    let totalBal = new Decimal(0);
+    holderBal.forEach((x) => {
+      totalBal = totalBal.add(x.val);
+    });
 
     holderBal.forEach((x) => {
       if (!totalBalances.has(x.holder)) {
@@ -74,7 +81,7 @@ const main = async () => {
       }
       totalBalances.set(
         x.holder,
-        totalBalances.get(x.holder)!.add(x.val.toString())
+        totalBalances.get(x.holder)!.add(x.val.div(totalBal))
       );
       totalBalance = totalBalance.add(x.val);
     });
@@ -83,13 +90,20 @@ const main = async () => {
   const totals = Array.from(totalBalances.entries()).map(([k, v]) => {
     return {
       minter: k,
-      share: v.div(totalBalance),
+      share: v.div(blocks),
     };
   });
   console.log(
-    totals.filter((x) => {
-      return x.share.gt(0);
-    })
+    totals
+      .filter((x) => {
+        return x.share.gt(0);
+      })
+      .map((v) => {
+        return {
+          minter: v.minter,
+          amount: v.share.mul(BlockRounds.rewardForBorrower),
+        };
+      })
   );
 };
 
