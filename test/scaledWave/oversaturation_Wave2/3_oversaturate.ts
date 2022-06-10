@@ -215,6 +215,7 @@ describe("Wave 2 claims", () => {
     const FormatUsdcAmount = Math.floor(formatClaimable.toNumber() / s.randomWhitelist2.length)//everyone claims this much to reach cap
     const rawUSDCamount = FormatUsdcAmount * 1000000
 
+
     for (let i = 0; i < s.randomWhitelist2.length; i++) {
       showBody(`claiming ${i} of ${s.randomWhitelist2.length}`)
 
@@ -307,14 +308,6 @@ describe("Wave 2 claims", () => {
     await ceaseImpersonation(finalClaimer._address)
 
   })
-
-  it("Check the s.Carol.address received the USDC", async () => {
-    const cap = await Wave._cap()
-    const received = await s.USDC.balanceOf(s.Carol.address)
-    showBody("Cap     : ", cap)
-    showBody("received: ", received)
-    expect(cap).to.eq(received)
-  })
 })
 
 
@@ -403,6 +396,7 @@ describe("Redemptions", () => {
   })
   it("All redemptions done", async () => {
 
+    //wave 1
     for (let i = 0; i < 4; i++) {
       showBody(`redeeming wave 1: ${i} of 4`)
       let redeemed = (await Wave._data(1, s.whitelist1[i])).redeemed
@@ -418,7 +412,7 @@ describe("Redemptions", () => {
       }
     }
 
-
+    //wave 2
     for (let i = 0; i < s.randomWhitelist2.length; i++) {
       showBody(`redeeming wave 2:  ${i} of ${s.randomWhitelist2.length}`)
       let redeemed = (await Wave._data(2, s.randomWhitelist2[i])).redeemed
@@ -433,6 +427,18 @@ describe("Redemptions", () => {
         await ceaseImpersonation(s.randomWhitelist2[i])
       }
     }
+
+    //final claimer to reach cap
+    await impersonateAccount(s.whitelist2[0])
+    let signer = ethers.provider.getSigner(s.whitelist2[0])
+
+    await Wave.connect(signer).redeem(2)
+    await mineBlock()
+
+    await ceaseImpersonation(s.whitelist2[0])
+
+    let remainingIPT = await s.IPT.balanceOf(Wave.address)
+    expect(remainingIPT).to.eq(0)//All IPT has been claimed
   })
 
   it("Try to redeem again", async () => {
@@ -447,29 +453,17 @@ describe("Redemptions", () => {
 
   })
 
-  it("All redemptions done: ", async () => {
-
-    const finalRedeemer = ethers.provider.getSigner(s.whitelist1[0])
-    let redeemed = (await Wave._data(1, finalRedeemer._address)).redeemed
-
-
-    if (!redeemed) {
-      await impersonateAccount(finalRedeemer._address)
-      await Wave.connect(finalRedeemer).redeem(1)
-      await mineBlock()
-
-      await ceaseImpersonation(finalRedeemer._address)
-    }
-
-    let remainingIPT = await s.IPT.balanceOf(Wave.address)
-    showBody("Remaining IPT: ", remainingIPT)
-    //expect(remainingIPT).to.eq(0)//All IPT has been claimed
-
+  it("try admin withdraw", async () => {
+    await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("Saturation reached")
+    await mineBlock()
   })
 
-  it("try admin withdraw", async () => {
-    //await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("Saturation reached")
-    //await mineBlock()
+  it("Check receiver balance", async () => {
+    let receiverBalance = await s.USDC.balanceOf(s.Carol.address)
+    const cap = await Wave._cap()
+
+    expect(receiverBalance).to.eq(cap)
+
   })
 
 })

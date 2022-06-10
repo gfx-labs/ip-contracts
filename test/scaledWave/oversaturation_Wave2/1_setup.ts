@@ -98,9 +98,11 @@ describe("Token Setup", () => {
         ).to.not.be.reverted
 
         //showBody(`stealing ${s.Carol_USDC} usdc to Carol from ${s.usdcAddress}`);
-        await expect(
+        /**
+          await expect(
             stealMoney(usdc_minter, s.Carol.address, s.usdcAddress, s.Carol_USDC)
         ).to.not.be.reverted
+         */
 
         //showBody(`stealing ${s.Dave_USDC} to Dave from ${s.usdcAddress}`);
         await expect(
