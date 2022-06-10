@@ -375,12 +375,12 @@ describe("Redemptions", () => {
 
   })
   it("All redemptions done", async () => {
-
     for (let i = 0; i < s.randomWhitelist1.length; i++) {
       showBody(`redeeming ${i} of ${s.randomWhitelist1.length}`)
       let redeemed = (await Wave._data(1, s.randomWhitelist1[i])).redeemed
+      let claimed = ((await Wave._data(1, s.randomWhitelist1[i])).claimed)
 
-      if (!redeemed) {
+      if (!redeemed && claimed.toNumber() > 0) {
         await impersonateAccount(s.randomWhitelist1[i])
         let signer = ethers.provider.getSigner(s.randomWhitelist1[i])
 

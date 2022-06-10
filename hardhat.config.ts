@@ -14,7 +14,8 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const zaddr = "0000000000000000000000000000000000000000000000000000000000000000"
+const zaddr =
+  "0000000000000000000000000000000000000000000000000000000000000000";
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
@@ -24,25 +25,46 @@ const config: HardhatUserConfig = {
         blockNumber: 14546835,
       },
       mining: {
-        auto: false,
+        auto: true,
       },
+    },
+    mainnet: {
+      url: process.env.MAINNET_URL ? process.env.MAINNET_URL : zaddr,
+      accounts: [
+        process.env.MAINNET_PRIVATE_KEY
+          ? process.env.MAINNET_PRIVATE_KEY
+          : zaddr,
+      ],
+      gasPrice: 45000000000,
     },
     ropsten: {
       url: process.env.ROPSTEN_URL ? process.env.ROPSTEN_URL : zaddr,
-      accounts: [process.env.ROPSTEN_PRIVATE_KEY ? process.env.ROPSTEN_PRIVATE_KEY : zaddr],
+      accounts: [
+        process.env.ROPSTEN_PRIVATE_KEY
+          ? process.env.ROPSTEN_PRIVATE_KEY
+          : zaddr,
+      ],
       chainId: 3, // Ropsten's id
       gas: 8000000, // Ropsten has a lower block limit than mainnet
       gasPrice: 53000000000,
-      //gasPrice: 2000000000,
+      //gasPrice: 2000000000
     },
     rinkeby: {
       url: process.env.RINKEBY_URL ? process.env.RINKEBY_URL : zaddr,
-      accounts: [process.env.RINKEBY_PRIVATE_KEY ? process.env.RINKEBY_PRIVATE_KEY : zaddr],
+      accounts: [
+        process.env.RINKEBY_PRIVATE_KEY
+          ? process.env.RINKEBY_PRIVATE_KEY
+          : zaddr,
+      ],
       chainId: 4, // Ropsten's id
     },
     polygon: {
       url: process.env.POLYGON_URL ? process.env.POLYGON_URL : zaddr,
-      accounts: [process.env.POLYGON_PRIVATE_KEY ? process.env.POLYGON_PRIVATE_KEY : zaddr],
+      accounts: [
+        process.env.POLYGON_PRIVATE_KEY
+          ? process.env.POLYGON_PRIVATE_KEY
+          : zaddr,
+      ],
       chainId: 137, // Polygon's id
     },
     localhost: {
@@ -104,6 +126,7 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
+      mainnet: "6I23UXVXWXB4RM8QTDWKSVIWZF7V1ZDMNU",
       polygon: process.env.ETHERSCAN_POLYGON_KEY!,
     },
   },
@@ -113,18 +136,5 @@ const config: HardhatUserConfig = {
     alwaysGenerateOverloads: true, // should overloads with full signatures like deposit(uint256) be generated always, even if there are no overloads?
   },
 };
-
-if (process.env.TENDERLY_KEY) {
-  if (process.env.TENDERLY_ENABLE == "true") {
-    import("@tenderly/hardhat-tenderly").then(() => {
-      console.log("enabling tenderly");
-      config.tenderly = {
-        project: "ip",
-        username: "getty",
-        forkNetwork: "1", //Network id of the network we want to fork
-      };
-    });
-  }
-}
 
 export default config;

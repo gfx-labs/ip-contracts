@@ -253,6 +253,7 @@ contract WavePool {
     if (_rewardToken.balanceOf(address(this)) < amount) {
       amount = _rewardToken.balanceOf(address(this));
     }
+    require(amount > 0, "cant redeem zero");
     bool check = _rewardToken.transfer(target, amount);
     require(check, "erc20 transfer failed");
   }

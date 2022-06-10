@@ -1,0 +1,8 @@
+{
+    "deploys": {
+        "waves": "0x10268faB7A00cBfe1D827f14463c217F46CcC673"
+    },
+    "proposal": {
+        "proposeTxn": "0xdad89184c21735741b51b026c0149ef6b3d4dd77fab0732393d04322c5f7dd79"
+    }
+}

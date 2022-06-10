@@ -9,3 +9,4 @@ docs
 .penv
 
 typechain-types
+yarn-error.log

@@ -30,10 +30,10 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @param votingDelay_ The initial voting delay
    * @param proposalThreshold_ The initial proposal threshold
    * @param proposalTimelockDelay_ The initial proposal holding period
-   * @param quorumVotes_ The number of votes needed for consent 
-   * @param emergencyQuorumVotes_ The number of votes needed for consent in an emergency 
-   * @param emergencyVotingPeriod_ The voting period in an emergency 
-   * @param emergencyTimelockDelay_ The holding period in an emergency 
+   * @param quorumVotes_ The number of votes needed for consent
+   * @param emergencyQuorumVotes_ The number of votes needed for consent in an emergency
+   * @param emergencyVotingPeriod_ The voting period in an emergency
+   * @param emergencyTimelockDelay_ The holding period in an emergency
    */
   function initialize(
     address ipt_,
@@ -48,14 +48,14 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
   ) external override {
     require(!initialized, "already been initialized");
     ipt = IIpt(ipt_);
-    votingPeriod = votingPeriod_; 
-    votingDelay = votingDelay_; 
-    proposalThreshold = proposalThreshold_; 
-    proposalTimelockDelay = proposalTimelockDelay_; 
+    votingPeriod = votingPeriod_;
+    votingDelay = votingDelay_;
+    proposalThreshold = proposalThreshold_;
+    proposalTimelockDelay = proposalTimelockDelay_;
     proposalCount = 0;
-    quorumVotes = quorumVotes_; 
-    emergencyQuorumVotes = emergencyQuorumVotes_; 
-    emergencyVotingPeriod = emergencyVotingPeriod_; 
+    quorumVotes = quorumVotes_;
+    emergencyQuorumVotes = emergencyQuorumVotes_;
+    emergencyVotingPeriod = emergencyVotingPeriod_;
     emergencyTimelockDelay = emergencyTimelockDelay_;
 
     initialized = true;
@@ -240,11 +240,13 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     }
 
     // solhint-disable-next-line avoid-low-level-calls
-    (bool success, /*bytes memory returnData*/) = target.call{value: value}(callData);
+    (
+      bool success, /*bytes memory returnData*/
+
+    ) = target.call{value: value}(callData);
     require(success, "tx execution reverted.");
 
     emit ExecuteTransaction(txHash, target, value, signature, data, eta);
-
   }
 
   /**
@@ -462,7 +464,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Used to update the emergency timelock period
    * @param emergencyTimelockDelay_ The proposal holding period
    */
-  function _setEmergencyDelay(uint256 emergencyTimelockDelay_) public override onlyGov{
+  function _setEmergencyDelay(uint256 emergencyTimelockDelay_) public override onlyGov {
     uint256 oldEmergencyTimelockDelay = emergencyTimelockDelay;
     emergencyTimelockDelay = emergencyTimelockDelay_;
 
@@ -473,7 +475,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the voting delay
    * @param newVotingDelay new voting delay, in blocks
    */
-  function _setVotingDelay(uint256 newVotingDelay) external override onlyGov{
+  function _setVotingDelay(uint256 newVotingDelay) external override onlyGov {
     uint256 oldVotingDelay = votingDelay;
     votingDelay = newVotingDelay;
 
@@ -484,7 +486,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the voting period
    * @param newVotingPeriod new voting period, in blocks
    */
-  function _setVotingPeriod(uint256 newVotingPeriod) external override onlyGov{
+  function _setVotingPeriod(uint256 newVotingPeriod) external override onlyGov {
     uint256 oldVotingPeriod = votingPeriod;
     votingPeriod = newVotingPeriod;
 
@@ -495,7 +497,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the emergency voting period
    * @param newEmergencyVotingPeriod new voting period, in blocks
    */
-  function _setEmergencyVotingPeriod(uint256 newEmergencyVotingPeriod) external override onlyGov{
+  function _setEmergencyVotingPeriod(uint256 newEmergencyVotingPeriod) external override onlyGov {
     uint256 oldEmergencyVotingPeriod = emergencyVotingPeriod;
     emergencyVotingPeriod = newEmergencyVotingPeriod;
 
@@ -506,7 +508,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the proposal threshold
    * @param newProposalThreshold new proposal threshold
    */
-  function _setProposalThreshold(uint256 newProposalThreshold) external override onlyGov{
+  function _setProposalThreshold(uint256 newProposalThreshold) external override onlyGov {
     uint256 oldProposalThreshold = proposalThreshold;
     proposalThreshold = newProposalThreshold;
 
@@ -517,7 +519,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the quorum
    * @param newQuorumVotes new proposal quorum
    */
-  function _setQuorumVotes(uint256 newQuorumVotes) external override onlyGov{
+  function _setQuorumVotes(uint256 newQuorumVotes) external override onlyGov {
     uint256 oldQuorumVotes = quorumVotes;
     quorumVotes = newQuorumVotes;
 
@@ -528,7 +530,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the emergency quorum
    * @param newEmergencyQuorumVotes new proposal quorum
    */
-  function _setEmergencyQuorumVotes(uint256 newEmergencyQuorumVotes) external override onlyGov{
+  function _setEmergencyQuorumVotes(uint256 newEmergencyQuorumVotes) external override onlyGov {
     uint256 oldEmergencyQuorumVotes = emergencyQuorumVotes;
     emergencyQuorumVotes = newEmergencyQuorumVotes;
 
@@ -541,7 +543,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @param account Account address to set whitelist expiration for
    * @param expiration Expiration for account whitelist status as timestamp (if now < expiration, whitelisted)
    */
-  function _setWhitelistAccountExpiration(address account, uint256 expiration) external override onlyGov{
+  function _setWhitelistAccountExpiration(address account, uint256 expiration) external override onlyGov {
     whitelistAccountExpirations[account] = expiration;
 
     emit WhitelistAccountExpirationSet(account, expiration);
@@ -551,7 +553,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Governance function for setting the whitelistGuardian. WhitelistGuardian can cancel proposals from whitelisted addresses
    * @param account Account to set whitelistGuardian to (0x0 to remove whitelistGuardian)
    */
-  function _setWhitelistGuardian(address account) external override onlyGov{
+  function _setWhitelistGuardian(address account) external override onlyGov {
     address oldGuardian = whitelistGuardian;
     whitelistGuardian = account;
 

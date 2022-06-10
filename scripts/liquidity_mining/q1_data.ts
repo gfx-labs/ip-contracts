@@ -5,7 +5,7 @@ interface RewardPeriod {
   end: number;
   blocks: number;
 }
-const BlockRounds = {
+export const BlockRounds = {
   rewardForLM: 47008,
   rewardForBorrower: 94017,
   blockRanges: [

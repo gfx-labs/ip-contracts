@@ -79,7 +79,7 @@ let startingUSDC: BigNumber
 
 //todo - what happens if not all is redeemed, IPT stuck on Wave? Redeem deadline?
 require("chai").should()
-describe("Deploy wave - OVERSATURATION IN WAVE 1", () => {
+describe("Deploy wave - OVERSATURATION IN WAVE 2", () => {
   before(async () => {
     await initMerkle()
 

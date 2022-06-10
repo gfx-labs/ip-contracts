@@ -9,9 +9,10 @@ import "../lending/IVaultController.sol";
 /// @title Curve Master
 /// @notice Curve master keeps a record of CurveSlave contracts and links it with an address
 /// @dev all numbers should be scaled to 1e18. for instance, number 5e17 represents 50%
-contract CurveMaster is ICurveMaster, Ownable {
+contract OldCurveMaster is ICurveMaster, Ownable {
   // mapping of token to address
   mapping(address => address) public _curves;
+  mapping(address => bool) public _paused;
 
   address public _vaultControllerAddress;
   IVaultController private _VaultController;
@@ -21,6 +22,7 @@ contract CurveMaster is ICurveMaster, Ownable {
   /// @param x_value the x value to pass to the slave
   /// @return y value of the curve
   function getValueAt(address token_address, int256 x_value) external view override returns (int256) {
+    require(_paused[token_address] == false, "curve paused");
     require(_curves[token_address] != address(0x0), "token not enabled");
     ICurveSlave curve = ICurveSlave(_curves[token_address]);
     int256 value = curve.valueAt(x_value);
@@ -39,7 +41,6 @@ contract CurveMaster is ICurveMaster, Ownable {
     return _vaultControllerAddress;
   }
 
-  ///@notice setting a new curve should pay interest
   function setCurve(address token_address, address curve_address) external override onlyOwner {
     if (address(_VaultController) != address(0)) {
       _VaultController.calculateInterest();
