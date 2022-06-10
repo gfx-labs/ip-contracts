@@ -28,6 +28,15 @@ const config: HardhatUserConfig = {
         auto: true,
       },
     },
+    mainnet: {
+      url: process.env.MAINNET_URL ? process.env.MAINNET_URL : zaddr,
+      accounts: [
+        process.env.MAINNET_PRIVATE_KEY
+          ? process.env.MAINNET_PRIVATE_KEY
+          : zaddr,
+      ],
+      gasPrice: 45000000000,
+    },
     ropsten: {
       url: process.env.ROPSTEN_URL ? process.env.ROPSTEN_URL : zaddr,
       accounts: [
@@ -117,6 +126,7 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
+      mainnet: "6I23UXVXWXB4RM8QTDWKSVIWZF7V1ZDMNU",
       polygon: process.env.ETHERSCAN_POLYGON_KEY!,
     },
   },

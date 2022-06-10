@@ -213,7 +213,8 @@ export class Deployment {
       this.VaultController = VaultControllerFactory.attach(
         VaultController.address
       );
-      await this.VaultController.initialize();
+      const txn = await this.VaultController.initialize();
+      await txn.wait();
       console.log(
         "VaultController initialized: ",
         this.VaultController.address
@@ -235,7 +236,9 @@ export class Deployment {
     }
     if ((await this.VaultController.getOracleMaster()) != this.Oracle.address) {
       console.log("Registering oracle master");
-      await this.VaultController.registerOracleMaster(this.Oracle.address);
+      await (
+        await this.VaultController.registerOracleMaster(this.Oracle.address)
+      ).wait();
       console.log("Registered oracle master");
     }
   }
@@ -253,7 +256,7 @@ export class Deployment {
       let pool = undefined;
       if (this.Info.USDC_ETH_POOL) {
         pool = await new UniswapV3OracleRelay__factory(this.deployer).deploy(
-          60 * 15, //lookback
+          60 * 60, //lookback
           this.Info.USDC_ETH_POOL, //pool_address
           true, //quote_token_is_token0
           BN("1e12"), //mul
@@ -272,7 +275,7 @@ export class Deployment {
       if (cl && pool) {
         this.EthOracle = await new AnchoredViewRelay__factory(
           this.deployer
-        ).deploy(pool.address, cl.address, 30, 100);
+        ).deploy(pool.address, cl.address, 20, 100);
         await this.EthOracle.deployed();
       } else {
         this.EthOracle = cl ? cl : pool!;
@@ -297,7 +300,7 @@ export class Deployment {
       console.log("registering eth into vault controller");
       let t = await this.VaultController.registerErc20(
         this.WETH.address,
-        BN("8e17"),
+        BN("85e16"),
         this.WETH.address,
         BN("5e16")
       );
@@ -322,22 +325,24 @@ export class Deployment {
           BN("1e20"), //mul
           BN("1") //div
         );
+        await cl.deployed();
       }
       if (this.Info.USDC_WBTC_POOL) {
         pool = await new UniswapV3OracleRelay__factory(this.deployer).deploy(
-          60 * 15, //lookback
+          60 * 60, //lookback
           this.Info.USDC_WBTC_POOL, //pool_address
           false, //quote_token_is_token0
           BN("1e12"), //mul
           BN("1") //div
         );
+        await pool.deployed();
       }
       if (cl && pool) {
         await cl.deployed();
         await pool.deployed();
         this.WBTCOracle = await new AnchoredViewRelay__factory(
           this.deployer
-        ).deploy(pool.address, cl.address, 30, 100);
+        ).deploy(pool.address, cl.address, 20, 100);
       } else {
         this.WBTCOracle = cl ? cl : pool!;
       }
@@ -384,22 +389,24 @@ export class Deployment {
           BN("1e10"), //mul
           BN("1") //div
         );
+        await cl.deployed();
       }
       if (this.Info.USDC_UNI_POOL) {
         pool = await new UniswapV3OracleRelay__factory(this.deployer).deploy(
-          60 * 15, //lookback
+          1200,
           this.Info.USDC_UNI_POOL, //pool_address
           false, //quote_token_is_token0
           BN("1e12"), //mul
           BN("1") //div
         );
+        await pool.deployed();
       }
       if (cl && pool) {
         await cl.deployed();
         await pool.deployed();
         this.UniOracle = await new AnchoredViewRelay__factory(
           this.deployer
-        ).deploy(pool.address, cl.address, 30, 100);
+        ).deploy(pool.address, cl.address, 40, 100);
       } else {
         this.UniOracle = cl ? cl : pool!;
       }
@@ -423,7 +430,7 @@ export class Deployment {
         this.UNI.address,
         BN("55e16"),
         this.UNI.address,
-        BN("5e16")
+        BN("15e16")
       );
       await t.wait();
     }
@@ -508,7 +515,7 @@ export class Deployment {
       this.ThreeLines = await new ThreeLines0_100__factory(
         this.deployer
       ).deploy(
-        BN("200e16"), //r1
+        BN("600e16"), //r1
         BN("10e16"), //r2
         BN("5e15"), //r3
         BN("40e16"), //s1
@@ -549,7 +556,6 @@ export class Deployment {
       );
     } else {
       console.log("Deploying governance stack");
-      let txCount = await this.deployer.getTransactionCount();
       this.IPTDelegate = await new InterestProtocolTokenDelegate__factory(
         this.deployer
       ).deploy();
@@ -580,7 +586,7 @@ export class Deployment {
       const votingPeriod_ = BN("40320");
       const proposalTimelockDelay_ = BN("172800");
       const proposalThreshold_ = BN("1000000e18");
-      const quorumVotes_ = BN("1000000e18");
+      const quorumVotes_ = BN("10000000e18");
       const emergencyVotingPeriod_ = BN("6570");
       const emergencyTimelockDelay_ = BN("43200");
       const emergencyQuorumVotes_ = BN("40000000e18");

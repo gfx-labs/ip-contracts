@@ -1,3 +1,4 @@
+import { Contract } from "ethers";
 import { Deployment, DeploymentInfo } from "./deployment/deployment";
 
 const { ethers } = require("hardhat");
@@ -30,20 +31,31 @@ async function main() {
     UNI: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
     // end external contracts
     // start new contracts
-    ProxyAdmin: "0x74Cf9087AD26D541930BaC724B7ab21bA8F00a27",
-    VaultController: "0xaca81583840B1bf2dDF6CDe824ada250C1936B4D",
-    USDI: "0xA56F946D6398Dd7d9D4D9B337Cf9E0F68982ca5B",
-    Curve: "0xaB7B4c595d3cE8C85e16DA86630f2fc223B05057",
-    ThreeLines: "0x045857BDEAE7C1c7252d611eB24eB55564198b4C",
-    Oracle: "0x02df3a3F960393F5B349E40A599FEda91a7cc1A7",
-    EthOracle: "0x71089Ba41e478702e1904692385Be3972B2cBf9e",
-    UniOracle: "0xaC47e91215fb80462139756f43438402998E4A3a",
-    WBTCOracle: "0x38A70c040CA5F5439ad52d0e821063b0EC0B52b6",
-    CharlieDelegator: "0xe039608E695D21aB11675EBBA00261A0e750526c",
-    CharlieDelegate: "0x56D13Eb21a625EdA8438F55DF2C31dC3632034f5",
-    IPTDelegator: "0xE8addD62feD354203d079926a8e563BC1A7FE81e",
-    IPTDelegate: "0xd9140951d8aE6E5F625a02F5908535e16e3af964",
+    ProxyAdmin: "0x3D9d8c08dC16Aa104b5B24aBDd1aD857e2c0D8C5",
+    VaultController: "0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3",
+    USDI: "0x2A54bA2964C8Cd459Dc568853F79813a60761B58",
+    Curve: "0x0029abd74B7B32e6a82Bf9f62CB9Dd4Bf8e39aAf",
+    ThreeLines: "0x8Ef82C4C48FaaD513D157a86433cd7D9397eA278",
+    Oracle: "0xf4818813045E954f5Dc55a40c9B60Def0ba3D477",
+    CharlieDelegator: "0x266d1020A84B9E8B0ed320831838152075F8C4cA",
+    CharlieDelegate: "0xdF352c2fcB3cbfdbBA619090E2A1DEB9aC534A29",
+    IPTDelegator: "0xaF239a6fab6a873c779F3F33dbd34104287b93e1",
+    IPTDelegate: "0x35Bb90c0B96DdB4B93ddF42aFEDd5204E91A1A10",
+    EthOracle: "0x8eD31D7FF5D2ffBF17Fe3118A61123F50AdB523A",
+    UniOracle: "0x93CEf8012460764D201b654fea85ABeCB28919fd",
+    WBTCOracle: "0x0f2f7aa507d153aC04431a617840d1fF28A960AC",
   };
+
+  const cc = new Contract(
+    info.USDC_UNI_POOL!,
+    ["function increaseObservationCardinalityNext(uint16)"],
+    deployer
+  );
+  const txn = await cc["increaseObservationCardinalityNext(uint16)"](1440);
+  await txn.wait();
+  if (1 > 0) {
+    return;
+  }
 
   const d = new Deployment(deployer, info);
   await d
