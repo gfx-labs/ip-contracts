@@ -169,7 +169,9 @@ describe("Token Setup", () => {
          */
 
 
-        const length2 = 700
+        const length2 = 300
+        showBodyCyan(`Sample Size: ${length2} of ${s.whitelist2.length}`)
+
         let rl2 = []
         for (let i = 0; i < length2; i++) {
             const random = Math.floor(Math.random() * s.whitelist2.length);

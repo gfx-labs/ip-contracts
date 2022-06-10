@@ -154,9 +154,10 @@ describe("Token Setup", () => {
      */
     it("Randomly select accounts", async () => {
         let bankUSDC = await s.USDC.balanceOf(s.Bank.address)
-        showBody("Bank USDC: ", bankUSDC)
-        const length1 = 300
-        //let randomList1: string[] = new Array(length1)
+        const length1 = 100//SET SAMPLE SIZE
+        showBodyCyan(`Sample Size: ${length1} of ${s.whitelist1.length}`)
+
+
         let rl1 = []
         for (let i = 0; i < length1; i++) {
             const random = Math.floor(Math.random() * s.whitelist1.length);
@@ -169,7 +170,9 @@ describe("Token Setup", () => {
         s.randomWhitelist1 = rl1
 
         /**
-         const length2 = 700
+        const length2 = 700
+        showBodyCyan(`Sample Size: ${length2} of ${s.whitelist2.length}`)
+
         let rl2 = []
         for (let i = 0; i < length2; i++) {
             const random = Math.floor(Math.random() * s.whitelist2.length);
