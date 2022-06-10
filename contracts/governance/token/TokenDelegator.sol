@@ -35,11 +35,11 @@ contract InterestProtocolToken is TokenDelegatorStorage, TokenEvents, ITokenDele
   }
 
   /**
-   * @notice Called by the admin to update the implementation of the delegator
-   * @param implementation_ The address of the new implementation for delegation
+   * @notice Called by the admin to update the owner of the delegator
+   * @param owner_ The address of the new owner
    */
   function _setOwner(address owner_) external override onlyOwner {
-    owner = owner_
+    owner = owner_;
   }
 
   /**

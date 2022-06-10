@@ -542,6 +542,11 @@ export class Deployment {
   async ensureCharlie() {
     if (this.Info.CharlieDelegator) {
       console.log("found charlie at", this.Info.CharlieDelegator);
+      console.log(
+        await new InterestProtocolToken__factory(this.deployer)
+          .attach(this.Info.IPTDelegator!)
+          ["owner()"]()
+      );
     } else {
       console.log("Deploying governance stack");
       let txCount = await this.deployer.getTransactionCount();
@@ -599,7 +604,11 @@ export class Deployment {
         this.CharlieDelegator.address
       );
 
-      await this.IPTDelegator._setOwner(this.CharlieDelegator.address);
+      const txn = await this.IPTDelegator._setOwner(
+        this.CharlieDelegator.address
+      );
+      await txn.wait();
+
       this.Info.CharlieDelegator = this.CharlieDelegator.address;
       this.Info.CharlieDelegate = this.CharlieDelegate.address;
       this.Info.IPTDelegator = this.IPTDelegator.address;
