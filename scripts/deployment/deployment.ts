@@ -604,11 +604,6 @@ export class Deployment {
         this.CharlieDelegator.address
       );
 
-      const txn = await this.IPTDelegator._setOwner(
-        this.CharlieDelegator.address
-      );
-      await txn.wait();
-
       this.Info.CharlieDelegator = this.CharlieDelegator.address;
       this.Info.CharlieDelegate = this.CharlieDelegate.address;
       this.Info.IPTDelegator = this.IPTDelegator.address;

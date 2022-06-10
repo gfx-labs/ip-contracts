@@ -62,6 +62,7 @@ async function main() {
   // USDI
   // CURVEMASTER
   // ORACLEMASTER
+  // IPT DELEGATOR
   // OTHER CONTRACTS ARE NOT OWNABLE OR HAVE THE CORRECT OWNER SET
 
   console.log(d.Info);
