@@ -6,6 +6,8 @@ pragma experimental ABIEncoderV2;
 interface ITokenDelegator {
   function _setImplementation(address implementation_) external;
 
+  function _setOwner(address owner_) external;
+
   fallback() external payable;
 
   receive() external payable;

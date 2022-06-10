@@ -389,7 +389,7 @@ export class Deployment {
         pool = await new UniswapV3OracleRelay__factory(this.deployer).deploy(
           60, //lookback
           this.Info.USDC_UNI_POOL, //pool_address
-          true, //quote_token_is_token0
+          false, //quote_token_is_token0
           BN("1e12"), //mul
           BN("1") //div
         );
@@ -560,15 +560,11 @@ export class Deployment {
       ).deploy();
       await this.CharlieDelegate.deployed();
 
-      const owner_ = ethers.utils.getContractAddress({
-        from: this.deployer.address,
-        nonce: txCount + 2,
-      });
       this.IPTDelegator = await new InterestProtocolToken__factory(
         this.deployer
       ).deploy(
         this.deployer.address,
-        owner_,
+        this.deployer.address,
         this.IPTDelegate.address,
         totalSupply_
       );
@@ -602,6 +598,8 @@ export class Deployment {
         "Charlie Delegator Deployed: ",
         this.CharlieDelegator.address
       );
+
+      await this.IPTDelegator._setOwner(this.CharlieDelegator.address);
       this.Info.CharlieDelegator = this.CharlieDelegator.address;
       this.Info.CharlieDelegate = this.CharlieDelegate.address;
       this.Info.IPTDelegator = this.IPTDelegator.address;
