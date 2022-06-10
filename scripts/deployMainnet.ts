@@ -17,6 +17,7 @@ async function main() {
 
   console.log("Deployer: ", deployer.address);
   let info: DeploymentInfo = {
+    // start external contracts
     USDC_UNI_CL: "0x553303d460EE0afB37EdFf9bE42922D8FF63220e",
     USDC_ETH_CL: "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419",
     USDC_WBTC_CL: "0xf4030086522a5beea4988f8ca5b36dbc97bee88c",
@@ -27,6 +28,8 @@ async function main() {
     WETH: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
     WBTC: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
     UNI: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+    // end external contracts
+    // start new contracts
     ProxyAdmin: "0x74Cf9087AD26D541930BaC724B7ab21bA8F00a27",
     VaultController: "0xaca81583840B1bf2dDF6CDe824ada250C1936B4D",
     USDI: "0xA56F946D6398Dd7d9D4D9B337Cf9E0F68982ca5B",
@@ -51,6 +54,15 @@ async function main() {
     .catch((e) => {
       console.log(e);
     });
+
+  // transfer ownership of
+  //
+  // PROXYADMIN
+  // VAULTCONTROLLER
+  // USDI
+  // CURVEMASTER
+  // ORACLEMASTER
+  // OTHER CONTRACTS ARE NOT OWNABLE OR HAVE THE CORRECT OWNER SET
 
   console.log(d.Info);
 }
