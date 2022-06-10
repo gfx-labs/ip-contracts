@@ -576,14 +576,14 @@ export class Deployment {
       await this.IPTDelegator.deployed();
       console.log("IPTDelegator deployed: ", this.IPTDelegator.address);
       console.log("Deploying GovernorCharlieDelegator...");
-      const votingPeriod_ = BN("19710");
       const votingDelay_ = BN("13140");
-      const proposalThreshold_ = BN("250000000000000000000000");
+      const votingPeriod_ = BN("40320");
       const proposalTimelockDelay_ = BN("172800");
-      const quorumVotes_ = BN("50000000000000000000000000");
-      const emergencyQuorumVotes_ = BN("50000000000000000000000000");
+      const proposalThreshold_ = BN("1000000e18");
+      const quorumVotes_ = BN("1000000e18");
       const emergencyVotingPeriod_ = BN("6570");
-      const emergencyTimelockDelay_ = BN("86400");
+      const emergencyTimelockDelay_ = BN("43200");
+      const emergencyQuorumVotes_ = BN("40000000e18");
       this.CharlieDelegator = await new GovernorCharlieDelegator__factory(
         this.deployer
       ).deploy(
