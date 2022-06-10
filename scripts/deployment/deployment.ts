@@ -253,7 +253,7 @@ export class Deployment {
       let pool = undefined;
       if (this.Info.USDC_ETH_POOL) {
         pool = await new UniswapV3OracleRelay__factory(this.deployer).deploy(
-          60, //lookback
+          60 * 15, //lookback
           this.Info.USDC_ETH_POOL, //pool_address
           true, //quote_token_is_token0
           BN("1e12"), //mul
@@ -325,7 +325,7 @@ export class Deployment {
       }
       if (this.Info.USDC_WBTC_POOL) {
         pool = await new UniswapV3OracleRelay__factory(this.deployer).deploy(
-          60, //lookback
+          60 * 15, //lookback
           this.Info.USDC_WBTC_POOL, //pool_address
           false, //quote_token_is_token0
           BN("1e12"), //mul
@@ -387,7 +387,7 @@ export class Deployment {
       }
       if (this.Info.USDC_UNI_POOL) {
         pool = await new UniswapV3OracleRelay__factory(this.deployer).deploy(
-          60, //lookback
+          60 * 15, //lookback
           this.Info.USDC_UNI_POOL, //pool_address
           false, //quote_token_is_token0
           BN("1e12"), //mul
