@@ -410,8 +410,9 @@ describe("Redemptions", () => {
     for (let i = 0; i < 4; i++) {
       showBody(`redeeming wave 1: ${i} of 4`)
       let redeemed = (await Wave._data(1, s.whitelist1[i])).redeemed
+      let claimed = ((await Wave._data(1, s.whitelist1[i])).claimed)
 
-      if (!redeemed) {
+      if (!redeemed && claimed.toNumber() > 0) {
         await impersonateAccount(s.whitelist1[i])
         let signer = ethers.provider.getSigner(s.whitelist1[i])
 

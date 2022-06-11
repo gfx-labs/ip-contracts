@@ -5,43 +5,22 @@ import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonat
 import { BN } from "../../../util/number"
 import {
   advanceBlockHeight,
-  nextBlockTime,
   fastForward,
   mineBlock,
   OneWeek,
-  OneYear,
 } from "../../../util/block"
 import { utils, BigNumber } from "ethers"
 import { ethers, network, tenderly } from "hardhat";
-
-import {
-  calculateAccountLiability,
-  payInterestMath,
-  calculateBalance,
-  getGas,
-  getArgs,
-  truncate,
-  getEvent,
-  calculatetokensToLiquidate,
-  calculateUSDI2repurchase,
-  changeInBalance,
-  toNumber,
-} from "../../../util/math"
+import {toNumber} from "../../../util/math"
 import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs"
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils"
 import {
-  IERC20__factory,
   WavePool__factory,
   WavePool,
 } from "../../../typechain-types"
-import { red } from "bn.js"
-import exp from "constants"
-import { start } from "repl"
-import { JsonRpcSigner } from "@ethersproject/providers"
-import { Wallet } from "@ethersproject/wallet"
 
-const { solidity } = require("ethereum-waffle")
+
 
 
 const initMerkle = async () => {
@@ -191,7 +170,6 @@ describe("Wave 1 claims and reach oversaturation", () => {
     const cap = await Wave._cap()
     let totalClaimed = await Wave._totalClaimed()
 
-
     //expect(totalClaimed).to.be.lt(cap) //cap has not been reached
     const claimableAmount = cap.sub(totalClaimed)
 
@@ -217,7 +195,6 @@ describe("Wave 1 claims and reach oversaturation", () => {
     await mineBlock()
 
     await ceaseImpersonation(finalClaimer._address)
-
   })
 
   it("Cap is reached, nobody is able to claim more", async () => {
@@ -406,9 +383,10 @@ describe("Redemptions", () => {
   it("All redemptions done: ", async () => {
     const finalRedeemer = ethers.provider.getSigner(s.whitelist1[0])
     let redeemed = (await Wave._data(1, finalRedeemer._address)).redeemed
+    let claimed = ((await Wave._data(1, finalRedeemer._address)).claimed)
 
 
-    if (!redeemed) {
+    if (!redeemed && claimed.toNumber() > 0) {
       await impersonateAccount(finalRedeemer._address)
       await Wave.connect(finalRedeemer).redeem(1)
       await mineBlock()
@@ -418,7 +396,6 @@ describe("Redemptions", () => {
 
     let remainingIPT = await s.IPT.balanceOf(Wave.address)
     expect(remainingIPT).to.eq(0)//All IPT has been claimed
-
   })
 
   it("try admin withdraw", async () => {
@@ -437,16 +414,10 @@ describe("Check IPT received: ", () => {
   it("Check IPT of wave 1 claimer", async () => {
 
     let claimed = ((await Wave._data(1, s.randomWhitelist1[5])).claimed)
-    //showBody("Points: ", claimed)
-
     balance = await s.IPT.balanceOf(s.randomWhitelist1[5])
-    //showBody("balance: ", await toNumber(balance))
 
     //ceiling price of 2.0 USDC per IPT has been reached
     expect(claimed.div(BN("1e6")).toNumber()).to.eq(await toNumber(balance.mul(2)))
-
-
-
   })
 })
 
