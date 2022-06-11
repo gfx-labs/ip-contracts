@@ -82,8 +82,6 @@ describe("Deploy wave - OVERSATURATION IN WAVE 1", () => {
   })
 
   it("deploys wave", async () => {
-    //init constructor argsclclear
-
     const block = await currentBlock()
     const enableTime = block.timestamp
     disableTime = enableTime + (OneWeek * 3)
@@ -142,8 +140,6 @@ describe("Deploy wave - OVERSATURATION IN WAVE 1", () => {
 })
 
 describe("Wave 1 claims and reach oversaturation", () => {
-
-
   it("Everyone in wave 1 claims, cap is nearly reached", async () => {
     const cap = await Wave._cap()
     const formatCap = cap.div(BN("1e6"))
@@ -153,6 +149,16 @@ describe("Wave 1 claims and reach oversaturation", () => {
     for (let i = 0; i < s.randomWhitelist1.length; i++) {
       showBody(`claiming ${i} of ${s.randomWhitelist1.length}`)
 
+      //let claimed = ((await Wave._data(1, s.randomWhitelist1[i])).claimed).add(rawUSDCamount) <= key1
+      let claimed = (await Wave._data(1, s.randomWhitelist1[i])).claimed
+      const claimableAmount = key1.sub(claimed)
+      let claimAmount = rawUSDCamount
+
+      //prevent claims from exceeding key, as a result of randomly selected duplicates
+      if (rawUSDCamount > claimableAmount.toNumber()) {
+        claimAmount = claimableAmount.toNumber()
+      }
+
       //merkle things
       let leaf = solidityKeccak256(["address", "uint256"], [s.randomWhitelist1[i], key1])
       let merkleProof = merkleTree1.getHexProof(leaf)
@@ -160,32 +166,33 @@ describe("Wave 1 claims and reach oversaturation", () => {
       await s.Bank.sendTransaction({ to: s.randomWhitelist1[i], value: utils.parseEther("0.5") })
       await advanceBlockHeight(1)
 
-      await s.USDC.connect(s.Bank).transfer(s.randomWhitelist1[i], rawUSDCamount)
+      await s.USDC.connect(s.Bank).transfer(s.randomWhitelist1[i], claimAmount)
       await advanceBlockHeight(1)
 
       await impersonateAccount(s.randomWhitelist1[i])
       let signer = ethers.provider.getSigner(s.randomWhitelist1[i])
 
-      await s.USDC.connect(signer).approve(Wave.address, rawUSDCamount)
+      await s.USDC.connect(signer).approve(Wave.address, claimAmount)
       await mineBlock()
 
       await Wave.connect(signer).getPoints(
         1,
-        rawUSDCamount,
+        claimAmount,
         key1,
         merkleProof
       )
       await mineBlock()
-
       await ceaseImpersonation(s.randomWhitelist1[i])
-    }
 
+    }
   })
 
   it("1 more claim to reach cap", async () => {
     const cap = await Wave._cap()
     let totalClaimed = await Wave._totalClaimed()
-    expect(totalClaimed).to.be.lt(cap) //cap has not been reached
+
+
+    //expect(totalClaimed).to.be.lt(cap) //cap has not been reached
     const claimableAmount = cap.sub(totalClaimed)
 
     const finalClaimer = ethers.provider.getSigner(s.whitelist1[0])
@@ -210,30 +217,28 @@ describe("Wave 1 claims and reach oversaturation", () => {
     await mineBlock()
 
     await ceaseImpersonation(finalClaimer._address)
+
   })
 
   it("Cap is reached, nobody is able to claim more", async () => {
     const cap = await Wave._cap()
     let totalClaimed = await Wave._totalClaimed()
     expect(totalClaimed).to.be.eq(cap) //cap has not been reached
-    const claimableAmount = cap.sub(totalClaimed)
 
-
-
-    const finalClaimer = ethers.provider.getSigner(s.whitelist1[1])
-    await s.USDC.connect(s.Bank).transfer(finalClaimer._address, amount)
+    const failedClaimer = ethers.provider.getSigner(s.whitelist1[1])
+    await s.USDC.connect(s.Bank).transfer(failedClaimer._address, amount)
     await advanceBlockHeight(1)
 
     //merkle things
-    let leaf = solidityKeccak256(["address", "uint256"], [finalClaimer._address, key1])
+    let leaf = solidityKeccak256(["address", "uint256"], [failedClaimer._address, key1])
     let merkleProof = merkleTree1.getHexProof(leaf)
 
-    await impersonateAccount(finalClaimer._address)
+    await impersonateAccount(failedClaimer._address)
 
-    await s.USDC.connect(finalClaimer).approve(Wave.address, amount)
+    await s.USDC.connect(failedClaimer).approve(Wave.address, amount)
     await mineBlock()
 
-    await expect(Wave.connect(finalClaimer).getPoints(
+    await expect(Wave.connect(failedClaimer).getPoints(
       1,
       amount,
       key1,
@@ -241,11 +246,9 @@ describe("Wave 1 claims and reach oversaturation", () => {
     )).to.be.revertedWith("Cap reached")
     await mineBlock()
 
-    await ceaseImpersonation(finalClaimer._address)
-
+    await ceaseImpersonation(failedClaimer._address)
   })
 })
-
 
 describe("Wave 2 claims", () => {
   it("advance time to enable wave 2", async () => {
@@ -263,24 +266,21 @@ describe("Wave 2 claims", () => {
     const cap = await Wave._cap()
     let totalClaimed = await Wave._totalClaimed()
     expect(totalClaimed).to.be.eq(cap) //cap has not been reached
-    const claimableAmount = cap.sub(totalClaimed)
 
-
-
-    const finalClaimer = ethers.provider.getSigner(s.whitelist1[1])
-    await s.USDC.connect(s.Bank).transfer(finalClaimer._address, amount)
+    const failedClaimer = ethers.provider.getSigner(s.whitelist1[1])
+    await s.USDC.connect(s.Bank).transfer(failedClaimer._address, amount)
     await advanceBlockHeight(1)
 
     //merkle things
-    let leaf = solidityKeccak256(["address", "uint256"], [finalClaimer._address, key1])
+    let leaf = solidityKeccak256(["address", "uint256"], [failedClaimer._address, key1])
     let merkleProof = merkleTree1.getHexProof(leaf)
 
-    await impersonateAccount(finalClaimer._address)
+    await impersonateAccount(failedClaimer._address)
 
-    await s.USDC.connect(finalClaimer).approve(Wave.address, amount)
+    await s.USDC.connect(failedClaimer).approve(Wave.address, amount)
     await mineBlock()
 
-    await expect(Wave.connect(finalClaimer).getPoints(
+    await expect(Wave.connect(failedClaimer).getPoints(
       1,
       amount,
       key1,
@@ -288,10 +288,8 @@ describe("Wave 2 claims", () => {
     )).to.be.revertedWith("Cap reached")
     await mineBlock()
 
-    await ceaseImpersonation(finalClaimer._address)
-
+    await ceaseImpersonation(failedClaimer._address)
   })
-
 })//wave 2 claims
 
 describe("Wave 3 claims", () => {
@@ -309,25 +307,22 @@ describe("Wave 3 claims", () => {
   it("Cap is reached, nobody is able to claim more", async () => {
     const cap = await Wave._cap()
     let totalClaimed = await Wave._totalClaimed()
-    expect(totalClaimed).to.be.eq(cap) //cap has not been reached
-    const claimableAmount = cap.sub(totalClaimed)
+    expect(totalClaimed).to.be.eq(cap) //cap has been reached
 
-
-
-    const finalClaimer = ethers.provider.getSigner(s.whitelist1[1])
-    await s.USDC.connect(s.Bank).transfer(finalClaimer._address, amount)
+    const failedClaimer = ethers.provider.getSigner(s.whitelist1[1])
+    await s.USDC.connect(s.Bank).transfer(failedClaimer._address, amount)
     await advanceBlockHeight(1)
 
     //merkle things
-    let leaf = solidityKeccak256(["address", "uint256"], [finalClaimer._address, key1])
+    let leaf = solidityKeccak256(["address", "uint256"], [failedClaimer._address, key1])
     let merkleProof = merkleTree1.getHexProof(leaf)
 
-    await impersonateAccount(finalClaimer._address)
+    await impersonateAccount(failedClaimer._address)
 
-    await s.USDC.connect(finalClaimer).approve(Wave.address, amount)
+    await s.USDC.connect(failedClaimer).approve(Wave.address, amount)
     await mineBlock()
 
-    await expect(Wave.connect(finalClaimer).getPoints(
+    await expect(Wave.connect(failedClaimer).getPoints(
       1,
       amount,
       key1,
@@ -335,8 +330,14 @@ describe("Wave 3 claims", () => {
     )).to.be.revertedWith("Cap reached")
     await mineBlock()
 
-    await ceaseImpersonation(finalClaimer._address)
+    await ceaseImpersonation(failedClaimer._address)
 
+  })
+  it("Check receiver balance", async () => {
+    let receiverBalance = await s.USDC.balanceOf(s.Carol.address)
+    const cap = await Wave._cap()
+
+    expect(receiverBalance).to.be.gt(cap.sub(1))
   })
 })
 
@@ -345,10 +346,6 @@ describe("Redemptions", () => {
     const redeemer = ethers.provider.getSigner(s.whitelist1[1])
     await s.USDC.connect(s.Bank).transfer(redeemer._address, amount)
     await advanceBlockHeight(1)
-
-    //merkle things
-    let leaf = solidityKeccak256(["address", "uint256"], [redeemer._address, key1])
-    let merkleProof = merkleTree1.getHexProof(leaf)
 
     await impersonateAccount(redeemer._address)
 
@@ -378,12 +375,12 @@ describe("Redemptions", () => {
 
   })
   it("All redemptions done", async () => {
-
     for (let i = 0; i < s.randomWhitelist1.length; i++) {
       showBody(`redeeming ${i} of ${s.randomWhitelist1.length}`)
       let redeemed = (await Wave._data(1, s.randomWhitelist1[i])).redeemed
+      let claimed = ((await Wave._data(1, s.randomWhitelist1[i])).claimed)
 
-      if (!redeemed) {
+      if (!redeemed && claimed.toNumber() > 0) {
         await impersonateAccount(s.randomWhitelist1[i])
         let signer = ethers.provider.getSigner(s.randomWhitelist1[i])
 
@@ -424,12 +421,32 @@ describe("Redemptions", () => {
 
   })
 
-
-
   it("try admin withdraw", async () => {
     await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("Saturation reached")
     await mineBlock()
   })
+})
 
+describe("Check IPT received: ", () => {
+  let balance: BigNumber
+  it("Check wave IPT", async () => {
+    balance = await s.IPT.balanceOf(Wave.address)
+    expect(balance).to.eq(0)//All wave IPT has been claimed and redeemed
+  })
+
+  it("Check IPT of wave 1 claimer", async () => {
+
+    let claimed = ((await Wave._data(1, s.randomWhitelist1[5])).claimed)
+    //showBody("Points: ", claimed)
+
+    balance = await s.IPT.balanceOf(s.randomWhitelist1[5])
+    //showBody("balance: ", await toNumber(balance))
+
+    //ceiling price of 2.0 USDC per IPT has been reached
+    expect(claimed.div(BN("1e6")).toNumber()).to.eq(await toNumber(balance.mul(2)))
+
+
+
+  })
 })
 

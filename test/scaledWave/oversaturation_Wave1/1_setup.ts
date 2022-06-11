@@ -140,39 +140,20 @@ describe("Token Setup", () => {
     let balance = await s.USDC.balanceOf(s.Bob.address);
     expect(balance).to.eq(s.Bob_USDC);
   });
-
-  /**
-   * filter for contracts first, use ./scripts/filterForContracts.ts
-   * otherwise, sending ether will fail, these contracts need some ether to claim points
-   */
-  it("Randomly select accounts", async () => {
-    let bankUSDC = await s.USDC.balanceOf(s.Bank.address);
-    showBody("Bank USDC: ", bankUSDC);
-    const length1 = 300;
-    //let randomList1: string[] = new Array(length1)
-    let rl1 = [];
-    for (let i = 0; i < length1; i++) {
+  it("Select accounts at random", async () => {
+    const length2 = 100;
+    let rl2: any[] = [];
+    const prm = [];
+    for (let i = 0; i < length2; i++) {
       const random = Math.floor(Math.random() * s.whitelist1.length);
-
-      let contract = await isContract(s.whitelist1[random]);
-      if (!contract) {
-        rl1.push(s.whitelist1[random]);
-      }
-    }
-    s.randomWhitelist1 = rl1;
-
-    /**
-         const length2 = 700
-        let rl2 = []
-        for (let i = 0; i < length2; i++) {
-            const random = Math.floor(Math.random() * s.whitelist2.length);
-            let contract = await isContract(s.whitelist2[random])
-            if (!contract) {
-                rl2.push(s.whitelist2[random])
-            }
+      const p = isContract(s.whitelist1[random]).then((x) => {
+        if (!x) {
+          rl2.push(s.whitelist1[random]);
         }
-        s.randomWhitelist2 = rl2
-
-         */
+      });
+      prm.push(p);
+    }
+    await Promise.all(prm);
+    s.randomWhitelist1 = rl2;
   });
 });

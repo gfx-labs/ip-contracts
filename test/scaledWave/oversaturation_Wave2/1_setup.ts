@@ -83,6 +83,7 @@ describe("Token Setup", () => {
   });
   it("Connect to existing contracts", async () => {
     s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
+
   });
   it("Should succesfully transfer money", async () => {
     //showBody(`stealing ${s.Andy_USDC} to Andy from ${s.usdcAddress}`);
@@ -93,12 +94,14 @@ describe("Token Setup", () => {
     //showBody(`stealing ${s.Bob_USDC} usdc to Bob from ${s.usdcAddress}`);
     await expect(
       stealMoney(usdc_minter, s.Bob.address, s.usdcAddress, s.Bob_USDC)
-    ).to.not.be.reverted;
+    ).to.not.be.reverted
 
     //showBody(`stealing ${s.Carol_USDC} usdc to Carol from ${s.usdcAddress}`);
-    await expect(
-      stealMoney(usdc_minter, s.Carol.address, s.usdcAddress, s.Carol_USDC)
-    ).to.not.be.reverted;
+    /**
+      await expect(
+        stealMoney(usdc_minter, s.Carol.address, s.usdcAddress, s.Carol_USDC)
+    ).to.not.be.reverted
+     */
 
     //showBody(`stealing ${s.Dave_USDC} to Dave from ${s.usdcAddress}`);
     await expect(
@@ -108,59 +111,46 @@ describe("Token Setup", () => {
     //showBody(`stealing ${s.Eric_USDC} usdc to Eric from ${s.usdcAddress}`);
     await expect(
       stealMoney(usdc_minter, s.Eric.address, s.usdcAddress, s.Eric_USDC)
-    ).to.not.be.reverted;
+    ).to.not.be.reverted
 
     //showBody(`stealing ${s.Frank_USDC} usdc to Frank from ${s.usdcAddress}`);
     await expect(
       stealMoney(usdc_minter, s.Frank.address, s.usdcAddress, s.Frank_USDC)
-    ).to.not.be.reverted;
+    ).to.not.be.reverted
 
     //showBody(`stealing ${s.Gus_USDC} usdc to Gus from ${s.usdcAddress}`);
     await expect(
       stealMoney(usdc_minter, s.Gus.address, s.usdcAddress, s.Gus_USDC)
-    ).to.not.be.reverted;
+    ).to.not.be.reverted
 
     //showBody(`stealing ${s.Hector_USDC} usdc to Hector from ${s.usdcAddress}`);
     await expect(
       stealMoney(usdc_minter, s.Hector.address, s.usdcAddress, s.Hector_USDC)
-    ).to.not.be.reverted;
+    ).to.not.be.reverted
 
     //showBody(`stealing ${s.baseUSDC} usdc to Igor from ${s.usdcAddress}`);
     await expect(
       stealMoney(usdc_minter, s.Igor.address, s.usdcAddress, s.baseUSDC)
-    ).to.not.be.reverted;
+    ).to.not.be.reverted
 
     //showBody(`stealing ${s.Bank_USDC} usdc to Bank from ${s.usdcAddress}`);
     await expect(
       stealMoney(usdc_minter, s.Bank.address, s.usdcAddress, s.Bank_USDC)
-    ).to.not.be.reverted;
+    ).to.not.be.reverted
+
+
+
 
     await mineBlock();
 
-    let balance = await s.USDC.balanceOf(s.Bob.address);
-    expect(balance).to.eq(s.Bob_USDC);
+    let balance = await s.USDC.balanceOf(s.Bob.address)
+    expect(balance).to.eq(s.Bob_USDC)
+
+
   });
 
-  /**
-   * filter for contracts first, use ./scripts/filterForContracts.ts
-   */
-  it("Randomly select accounts", async () => {
-    /**
-         const length1 = 300
-        let rl1 = []
-        for (let i = 0; i < length1; i++) {
-            const random = Math.floor(Math.random() * s.whitelist1.length);
-
-            let contract = await isContract(s.whitelist1[random])
-            if (!contract) {
-                rl1.push(s.whitelist1[random])
-            }
-        }
-        s.randomWhitelist1 = rl1
-         */
-
-    showBody("selecting accounts");
-    const length2 = 700;
+  it("Select accounts at random", async () => {
+    const length2 = 300;
     let rl2: any[] = [];
     const prm = [];
     for (let i = 0; i < length2; i++) {
@@ -174,6 +164,6 @@ describe("Token Setup", () => {
     }
     await Promise.all(prm);
     s.randomWhitelist2 = rl2;
-    showBody("selected accounts");
-  });
+  })
 });
+
