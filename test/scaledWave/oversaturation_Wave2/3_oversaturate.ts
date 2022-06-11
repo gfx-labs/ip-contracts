@@ -219,6 +219,16 @@ describe("Wave 2 claims", () => {
     for (let i = 0; i < s.randomWhitelist2.length; i++) {
       showBody(`claiming ${i} of ${s.randomWhitelist2.length}`)
 
+      //let claimed = ((await Wave._data(1, s.randomWhitelist1[i])).claimed).add(rawUSDCamount) <= key1
+      let claimed = (await Wave._data(2, s.randomWhitelist2[i])).claimed
+      const claimableAmount = key2.sub(claimed)
+      let claimAmount = rawUSDCamount
+
+      //prevent claims from exceeding key, as a result of randomly selected duplicates
+      if (rawUSDCamount > claimableAmount.toNumber()) {
+        claimAmount = claimableAmount.toNumber()
+      }
+
       //merkle things
       let leaf = solidityKeccak256(["address", "uint256"], [s.randomWhitelist2[i], key2])
       let merkleProof = merkleTree2.getHexProof(leaf)
@@ -226,18 +236,18 @@ describe("Wave 2 claims", () => {
       await s.Bank.sendTransaction({ to: s.randomWhitelist2[i], value: utils.parseEther("0.5") })
       await advanceBlockHeight(1)
 
-      await s.USDC.connect(s.Bank).transfer(s.randomWhitelist2[i], rawUSDCamount)
+      await s.USDC.connect(s.Bank).transfer(s.randomWhitelist2[i], claimAmount)
       await advanceBlockHeight(1)
 
       await impersonateAccount(s.randomWhitelist2[i])
       let signer = ethers.provider.getSigner(s.randomWhitelist2[i])
 
-      await s.USDC.connect(signer).approve(Wave.address, rawUSDCamount)
+      await s.USDC.connect(signer).approve(Wave.address, claimAmount)
       await mineBlock()
 
       await Wave.connect(signer).getPoints(
         2,
-        rawUSDCamount,
+        claimAmount,
         key2,
         merkleProof
       )
