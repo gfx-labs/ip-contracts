@@ -42,20 +42,9 @@ async function main() {
     IPTDelegator: "0xaF239a6fab6a873c779F3F33dbd34104287b93e1",
     IPTDelegate: "0x35Bb90c0B96DdB4B93ddF42aFEDd5204E91A1A10",
     EthOracle: "0x8eD31D7FF5D2ffBF17Fe3118A61123F50AdB523A",
-    UniOracle: "0x93CEf8012460764D201b654fea85ABeCB28919fd",
+    UniOracle: "0xCE554405b9a257eD00A4e0f114fF12ab832b4e3B",
     WBTCOracle: "0x0f2f7aa507d153aC04431a617840d1fF28A960AC",
   };
-
-  const cc = new Contract(
-    info.USDC_UNI_POOL!,
-    ["function increaseObservationCardinalityNext(uint16)"],
-    deployer
-  );
-  const txn = await cc["increaseObservationCardinalityNext(uint16)"](1440);
-  await txn.wait();
-  if (1 > 0) {
-    return;
-  }
 
   const d = new Deployment(deployer, info);
   await d

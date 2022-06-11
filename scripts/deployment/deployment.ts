@@ -393,7 +393,7 @@ export class Deployment {
       }
       if (this.Info.USDC_UNI_POOL) {
         pool = await new UniswapV3OracleRelay__factory(this.deployer).deploy(
-          1200,
+          60 * 60 * 4,
           this.Info.USDC_UNI_POOL, //pool_address
           false, //quote_token_is_token0
           BN("1e12"), //mul
