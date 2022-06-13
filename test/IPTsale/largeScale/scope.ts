@@ -12,9 +12,9 @@ import {
   GovernorCharlieDelegator,
   ITokenDelegate,
   IGovernorCharlieDelegate,
-} from "../../typechain-types";
-import { Addresser, MainnetAddresses } from "../../util/addresser";
-import { BN } from "../../util/number";
+} from "../../../typechain-types";
+import { Addresser, MainnetAddresses } from "../../../util/addresser";
+import { BN } from "../../../util/number";
 import { wave1 } from "./data/wave1"
 import { wave2 } from "./data/wave2"
 

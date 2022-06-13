@@ -1,7 +1,7 @@
 import { s } from "../scope"
 import { expect, assert } from "chai"
-import { showBody, showBodyCyan } from "../../../util/format"
-import { BN } from "../../../util/number"
+import { showBody, showBodyCyan } from "../../../../util/format"
+import { BN } from "../../../../util/number"
 import {
   advanceBlockHeight,
   nextBlockTime,
@@ -9,21 +9,22 @@ import {
   mineBlock,
   OneWeek,
   OneYear,
-} from "../../../util/block"
+} from "../../../../util/block"
 import { utils, BigNumber } from "ethers"
 import {
-  getGas,
   getArgs,
-  toNumber
-} from "../../../util/math"
-import { currentBlock, reset } from "../../../util/block"
+  truncate,
+  toNumber,
+} from "../../../../util/math"
+import { currentBlock, reset } from "../../../../util/block"
+import { getGas } from "../../../../util/math"
 import MerkleTree from "merkletreejs"
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils"
 import {
   IERC20__factory,
   WavePool__factory,
   WavePool,
-} from "../../../typechain-types"
+} from "../../../../typechain-types"
 
 const initMerkle = async () => {
   whitelist1 = [

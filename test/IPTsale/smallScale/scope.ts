@@ -1,7 +1,4 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import {JsonRpcSigner} from "@ethersproject/providers"
-import {Wallet} from "@ethersproject/wallet"
-
 import { Signer } from "ethers";
 import { ethers } from "hardhat";
 import {
@@ -12,39 +9,16 @@ import {
   GovernorCharlieDelegator,
   ITokenDelegate,
   IGovernorCharlieDelegate,
-} from "../../typechain-types";
-import { Addresser, MainnetAddresses } from "../../util/addresser";
-import { BN } from "../../util/number";
-import { wave1 } from "../../scripts//deployment/wave1"
-import { wave2 } from "../../scripts//deployment/wave2"
+} from "../../../typechain-types";
+import { Addresser, MainnetAddresses } from "../../../util/addresser";
+import { BN } from "../../../util/number";
 
 export class TestScope extends MainnetAddresses {
   USDC!: IERC20;
 
-  whitelist1 = Array.from(wave1)
-  whitelist2 = Array.from(wave2)
-
-  randomWhitelist1!: string[]
-  randomWhitelist2!: string[]
-  randomWhiteList3!: string[]
-
-  accounts!: SignerWithAddress[]
-
-  usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0"
-  iptHolder = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
-  IPTDelegator = "0xaF239a6fab6a873c779F3F33dbd34104287b93e1"
-
-  waveDeploy = "0x5a4396a2fe5fd36c6528a441d7a97c3b0f3e8aee"
-  waveReceiver!: string
-  claimTime = 1655658000
-  wave1start = 1655139600
-  wave2start = 1655312400
-  wave3start = 1655485200
-
+  usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 
   baseUSDC = BN("1000e6")
-
-  tenkUSDC = BN("10000e6")
 
   Frank_USDC = BN("1e11");
   Bob_USDC = BN("40000000e6");
@@ -55,7 +29,7 @@ export class TestScope extends MainnetAddresses {
   Gus_USDC = BN("1000e6");
   Hector_USDC = BN("1000e6");
 
-  Bank_USDC = BN("70,000,000e6")// 70MM USDC
+  Bank_USDC = BN("100e12")
 
   IPT!: InterestProtocolTokenDelegate;
 
@@ -67,6 +41,8 @@ export class TestScope extends MainnetAddresses {
 
   GOV!: GovernorCharlieDelegate;
 
+  accounts!:SignerWithAddress[]
+
   Frank!: SignerWithAddress; // frank holds all IPT from the mint
   Andy!: SignerWithAddress; // frank sends andy some ipt
   Bob!: SignerWithAddress; // whitelisted
@@ -76,9 +52,9 @@ export class TestScope extends MainnetAddresses {
   Gus!: SignerWithAddress; // Gus
   Hector!: SignerWithAddress; // Hector
 
-  Igor!: SignerWithAddress; //Igor is not on any whitelist 
+  Igor!:SignerWithAddress; //Igor is not on any whitelist 
 
-  Bank!: SignerWithAddress; //holds a ton of USDC and is not on any whitelist
+  Bank!:SignerWithAddress; //holds a ton of USDC and is not on any whitelist
 
   constructor() {
     super();

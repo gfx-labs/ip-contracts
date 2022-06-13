@@ -1,11 +1,11 @@
 import { expect, assert } from "chai";
 import { ethers, network, tenderly } from "hardhat";
-import { stealMoney } from "../../../util/money";
-import { showBody, showBodyCyan } from "../../../util/format";
-import { BN } from "../../../util/number";
+import { stealMoney } from "../../../../util/money";
+import { showBody, showBodyCyan } from "../../../../util/format";
+import { BN } from "../../../../util/number";
 import { s } from "../scope";
-import { reset, mineBlock } from "../../../util/block";
-import { IERC20__factory, IVOTE__factory } from "../../../typechain-types";
+import { reset, mineBlock } from "../../../../util/block";
+import { IERC20__factory, IVOTE__factory } from "../../../../typechain-types";
 
 
 require("chai").should();
