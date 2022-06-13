@@ -603,7 +603,6 @@ describe("Wave 3 claims", () => {
     )).to.be.revertedWith("Cap reached")
     await mineBlock()
   })
-
 })
 
 describe("Redemptions", () => {
@@ -638,18 +637,14 @@ describe("Redemptions", () => {
     await mineBlock()
     await Wave.connect(s.Bob).redeem(3)
     await mineBlock()
-
+    let saturation = await Wave.saturation()
+    expect(saturation).to.eq(true)
     let balance = await s.IPT.balanceOf(s.Bob.address)
-    let scaledClaimAmount = claimAmount.mul(BN("1e12"))
-    let scaledFloor = BN(floor).mul(BN("1e12"))
 
-    let expected = await truncate(scaledClaimAmount.mul(scaledFloor))
+    let impliedPrice = await Wave.impliedPrice()
+    let expected = ((BN("1e18").mul(claimAmount)).div(impliedPrice))
 
-    showBody("Expected: ", await toNumber(expected))
-    showBody("balance : ", await toNumber(balance))
-
-    expect(await toNumber(balance)).to.closeTo(await toNumber(expected), 50)//todo
-
+    expect(await toNumber(balance)).to.eq(await toNumber(expected))
   })
 
   it("Bob tries to redeem again", async () => {
