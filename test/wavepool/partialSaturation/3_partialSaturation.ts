@@ -12,17 +12,9 @@ import {
 } from "../../../util/block"
 import { utils, BigNumber } from "ethers"
 import {
-  calculateAccountLiability,
-  payInterestMath,
-  calculateBalance,
   getGas,
   getArgs,
-  truncate,
-  getEvent,
-  calculatetokensToLiquidate,
-  calculateUSDI2repurchase,
-  changeInBalance,
-  toNumber,
+  toNumber
 } from "../../../util/math"
 import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs"
@@ -32,13 +24,6 @@ import {
   WavePool__factory,
   WavePool,
 } from "../../../typechain-types"
-import { red } from "bn.js"
-import exp from "constants"
-import { format } from "path"
-const { solidity } = require("ethereum-waffle")
-
-
-
 
 const initMerkle = async () => {
   whitelist1 = [
@@ -357,7 +342,6 @@ describe("Wave 1 claims", () => {
       merkleProof
     )).to.be.revertedWith("max alloc claimed")
     await mineBlock()
-
   })
 
   it("someone tries to claim who is not in this wave", async () => {
@@ -397,7 +381,6 @@ describe("Wave 1 claims", () => {
       merkleProof
     )).to.be.revertedWith("invalid proof")
     await mineBlock()
-
   })
 
   it("Bob claims exactly up to maximum", async () => {
@@ -627,7 +610,6 @@ describe("Redemptions", () => {
 
     enabled = await Wave.canRedeem()
     assert.equal(enabled, true, "Redeem time now active")
-
   })
 
   it("Everyone redeems", async () => {
@@ -714,7 +696,6 @@ describe("Redemptions", () => {
     const actualPrice = bankSpent.toNumber() / await toNumber(bankIPT)
     const impliedPrice = await Wave.impliedPrice()
     expect(actualPrice).to.be.closeTo(impliedPrice.toNumber(), 1)//not exact due to rounding error
-
   })
 
   it("try admin withdraw", async () => {

@@ -14,19 +14,6 @@ import {
 import { utils, BigNumber } from "ethers"
 import { ethers, network, tenderly } from "hardhat";
 
-import {
-  calculateAccountLiability,
-  payInterestMath,
-  calculateBalance,
-  getGas,
-  getArgs,
-  truncate,
-  getEvent,
-  calculatetokensToLiquidate,
-  calculateUSDI2repurchase,
-  changeInBalance,
-  toNumber,
-} from "../../../util/math"
 import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs"
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils"
@@ -35,14 +22,6 @@ import {
   WavePool__factory,
   WavePool,
 } from "../../../typechain-types"
-import { red } from "bn.js"
-import exp from "constants"
-import { start } from "repl"
-import { JsonRpcSigner } from "@ethersproject/providers"
-import { Wallet } from "@ethersproject/wallet"
-
-const { solidity } = require("ethereum-waffle")
-
 
 const initMerkle = async () => {
 
@@ -76,8 +55,6 @@ let Wave: WavePool
 
 let startingUSDC: BigNumber
 
-
-//todo - what happens if not all is redeemed, IPT stuck on Wave? Redeem deadline?
 require("chai").should()
 describe("Deploy wave - OVERSATURATION IN WAVE 2", () => {
   before(async () => {
@@ -92,7 +69,6 @@ describe("Deploy wave - OVERSATURATION IN WAVE 2", () => {
   })
 
   it("deploys wave", async () => {
-    //init constructor argsclclear
 
     const block = await currentBlock()
     const enableTime = block.timestamp
@@ -153,7 +129,6 @@ describe("Wave 1 claims do not reach oversaturation", () => {
 
   const wave1ClaimsTotal = BN("500000e6")//500k USDC
   const claimAmount = wave1ClaimsTotal.div(4)
-
 
   it("A few claims in wave 1", async () => {
     for (let i = 0; i < 4; i++) {
@@ -320,7 +295,6 @@ describe("Wave 2 claims", () => {
   })
 })
 
-
 describe("Wave 3 claims", () => {
   it("advance time to enable wave 3", async () => {
     let enabled = await Wave.isEnabled(BN("3"))
@@ -339,8 +313,6 @@ describe("Wave 3 claims", () => {
     let totalClaimed = await Wave._totalClaimed()
     expect(totalClaimed).to.be.eq(cap) //cap has not been reached
     const claimableAmount = cap.sub(totalClaimed)
-
-
 
     const finalClaimer = ethers.provider.getSigner(s.whitelist1[1])
     await s.USDC.connect(s.Bank).transfer(finalClaimer._address, amount)
@@ -387,7 +359,6 @@ describe("Redemptions", () => {
 
     await ceaseImpersonation(redeemer._address)
 
-
   })
   it("admin withdraw before redemption time", async () => {
     await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("calculatePricing() first")
@@ -405,7 +376,6 @@ describe("Redemptions", () => {
 
   })
   it("All redemptions done", async () => {
-
     //wave 1
     for (let i = 0; i < 4; i++) {
       showBody(`redeeming wave 1: ${i} of 4`)
@@ -474,8 +444,6 @@ describe("Redemptions", () => {
     const cap = await Wave._cap()
 
     expect(receiverBalance).to.eq(cap)
-
   })
-
 })
 

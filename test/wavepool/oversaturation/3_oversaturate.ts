@@ -12,16 +12,8 @@ import {
 } from "../../../util/block"
 import { utils, BigNumber } from "ethers"
 import {
-  calculateAccountLiability,
-  payInterestMath,
-  calculateBalance,
-  getGas,
   getArgs,
   truncate,
-  getEvent,
-  calculatetokensToLiquidate,
-  calculateUSDI2repurchase,
-  changeInBalance,
   toNumber,
 } from "../../../util/math"
 import { currentBlock, reset } from "../../../util/block"
@@ -32,11 +24,6 @@ import {
   WavePool__factory,
   WavePool,
 } from "../../../typechain-types"
-import { red } from "bn.js"
-import exp from "constants"
-import { start } from "repl"
-const { solidity } = require("ethereum-waffle")
-
 
 const initMerkle = async () => {
   whitelist1 = [
@@ -423,7 +410,6 @@ describe("Wave 1 claims", () => {
     expect(await toNumber(bobClaim.claimed)).to.eq(await toNumber(keyAmount))
 
   })
-
 })
 
 describe("Wave 2 claims", () => {
@@ -678,7 +664,5 @@ describe("Redemptions", () => {
   it("try admin withdraw", async () => {
     await expect(Wave.connect(s.Carol).withdraw()).to.be.revertedWith("Saturation reached")
     await mineBlock()
-
   })
-
 })

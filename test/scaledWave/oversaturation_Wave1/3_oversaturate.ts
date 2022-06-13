@@ -36,7 +36,6 @@ const initMerkle = async () => {
   )
   merkleTree2 = new MerkleTree(leafNodes, keccak256, { sortPairs: true })
   root2 = merkleTree2.getHexRoot()
-
 }
 
 let disableTime: number

@@ -103,8 +103,6 @@ describe("TESTING USDI CONTRACT", async () => {
         expect(usdiBalance).to.be.gt(startingUSDIAmount)
     });
 
-    
-
     it("Anyone can donate USDC to the protocol", async () => {
      
         let balance = await s.USDC.balanceOf(s.Dave.address)
@@ -152,8 +150,8 @@ describe("TESTING USDI CONTRACT", async () => {
         let totalSupply = await s.USDI.totalSupply()
 
         assert.equal(startingSupply.toString(), totalSupply.toString(), "Total supply has not changed, no USDi minted")
-        expect(reserve).to.be.gt(startingReserve)//USDC received and is in the reserve
-        expect(reserveRatio).to.be.gt(startingReserveRatio)//reserve ratio increased
+        expect(reserve).to.be.gt(startingReserve.sub(1))//USDC received and is in the reserve
+        expect(reserveRatio).to.be.gt(startingReserveRatio.sub(1))//reserve ratio increased
     })
 
 });

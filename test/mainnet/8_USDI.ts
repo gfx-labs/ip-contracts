@@ -8,8 +8,6 @@ import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
 import { advanceBlockHeight, mineBlock, fastForward, OneWeek} from "../../util/block";
 
-
-
 const usdcAmount = BN("5000e6")
 
 const fundDave = async () => {

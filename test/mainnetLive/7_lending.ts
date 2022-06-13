@@ -91,13 +91,11 @@ describe("Testing repay", () => {
     });
     it("partial repay", async () => {
         const vaultId = s.BobVaultID
-        const initBalance = await s.USDI.balanceOf(s.Bob.address)
 
         let liability = await s.BobVault.connect(s.Bob).baseLiability()
         let partialLiability = liability.div(2) //half
+        const initBalance = await s.USDI.balanceOf(s.Bob.address)
 
-        liability = await s.BobVault.connect(s.Bob).baseLiability()
-        partialLiability = liability.div(2) //half
 
         const repayResult = await s.VaultController.connect(s.Bob).repayUSDi(vaultId, partialLiability)
         await advanceBlockHeight(1)
@@ -108,7 +106,8 @@ describe("Testing repay", () => {
         let updatedLiability = await s.BobVault.connect(s.Bob).baseLiability()
         let balance = await s.USDI.balanceOf(s.Bob.address)
 
-        //todo check
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(initBalance.sub(partialLiability)), 50)
+        expect(await toNumber(updatedLiability)).to.be.closeTo(await toNumber(liability.sub(partialLiability)), 50)
 
     })
     it("bob compeltely repays vault", async () => {
@@ -131,7 +130,6 @@ describe("Testing repay", () => {
 
         let updatedLiability = await s.BobVault.connect(s.Bob).baseLiability()
         expect(updatedLiability).to.eq(0)//vault has been completely repayed 
-
     })
 })
 
@@ -151,7 +149,7 @@ describe("Testing liquidations", () => {
   
         /******** CHECK withdraw BEFORE CALCULATE INTEREST ********/
         //skip time so we can put vault below liquidation threshold 
-        await fastForward(OneYear * 10);//10 year
+        await fastForward(OneYear * 100);//100 year
         await advanceBlockHeight(1)
         await nextBlockTime(0)
         await s.VaultController.calculateInterest()
@@ -242,7 +240,6 @@ describe("Testing liquidations", () => {
         const liquidateGas = await getGas(result)
         showBodyCyan("Gas cost to do a tiny liquidation: ", liquidateGas)
 
-        const usdi_to_repurchase = liquidateArgs.usdi_to_repurchase
         const tokens_to_liquidate = liquidateArgs.tokens_to_liquidate
 
         //Carol's vault's collateral has been reduced by the expected amount
@@ -313,13 +310,10 @@ describe("Checking for eronious inputs and scenarios", () => {
     })
 
     it("checks for liquidate with a vault that is solvent", async () => {
-        //solvent vault
         //carol repays some to become solvent
         AccountLiability = await s.VaultController.vaultLiability(vaultID)
         borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         amountUnderwater = AccountLiability.sub(borrowPower)
-
-
 
         //repay amount owed + 1 USDi to account for interest
         const repayResult = await s.VaultController.connect(s.Carol).repayUSDi(vaultID, amountUnderwater.add(utils.parseEther("1")))
@@ -344,8 +338,7 @@ describe("Checking for eronious inputs and scenarios", () => {
 
     it("liquidate when liquidator doesn't have any USDi", async () => {
 
-        //showBody("advance 1 week and then calculate interest")
-        await fastForward(OneYear)
+        await fastForward(OneYear * 10)
         await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
 
@@ -413,7 +406,6 @@ describe("Checking for eronious inputs and scenarios", () => {
         await expect(s.VaultController.connect(s.Carol).repayAllUSDi(vaultID)).to.be.revertedWith("USDI: not enough balance")
 
         await expect(s.VaultController.connect(s.Carol).repayUSDi(vaultID, utils.parseEther("10"))).to.be.revertedWith("USDI: not enough balance")
-
     })
 
     it("repay when there is no liability", async () => {
@@ -456,7 +448,6 @@ describe("Checking for eronious inputs and scenarios", () => {
         await expect(s.VaultController.connect(s.Eric).borrowUsdi(vaultID, utils.parseEther("500"))).to.be.revertedWith("sender not minter")
         await advanceBlockHeight(1)
     })
-
 
     it("makes vault insolvent", async () => {
         const accountBorrowingPower = await s.VaultController.vaultBorrowingPower(vaultID)
@@ -502,7 +493,6 @@ describe("Checking getters", () => {
         let _tokensRegistered = await s.VaultController.tokensRegistered()
         expect(_tokensRegistered).to.not.eq(0)
     })
-
 })
 describe("Checking vaultSummaries", async () => {
     let vaultSummaries: any
@@ -514,8 +504,8 @@ describe("Checking vaultSummaries", async () => {
 
         //the correct number of summaries
         expect(vaultSummaries.length).to.eq(vaultsMinted)
-
     })
+
     it("checks data", async () => {
         //summary[0] is correct
         let vaultLiability = await s.VaultController.vaultLiability(vaultSummaries[0].id)

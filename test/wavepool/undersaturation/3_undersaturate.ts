@@ -12,17 +12,8 @@ import {
 } from "../../../util/block"
 import { utils, BigNumber } from "ethers"
 import {
-    calculateAccountLiability,
-    payInterestMath,
-    calculateBalance,
-    getGas,
     getArgs,
-    truncate,
-    getEvent,
-    calculatetokensToLiquidate,
-    calculateUSDI2repurchase,
-    changeInBalance,
-    toNumber,
+    toNumber
 } from "../../../util/math"
 import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs"
@@ -32,10 +23,7 @@ import {
     WavePool__factory,
     WavePool,
 } from "../../../typechain-types"
-import { red } from "bn.js"
-import exp from "constants"
-import { wavepoolSol } from "../../../typechain-types/IPTsale"
-import { iTokenSol } from "../../../typechain-types/governance/token"
+
 
 
 
@@ -283,7 +271,6 @@ describe("Wave 1 claims", () => {
             keyAmount.div(2).toString(),
             "Claimed amount is correct"
         )
-
     })
 
     it("try to make a claim that would exceed cap", async () => {
@@ -356,7 +343,6 @@ describe("Wave 1 claims", () => {
             merkleProof
         )).to.be.revertedWith("max alloc claimed")
         await mineBlock()
-
     })
 
     it("someone tries to claim who is not in this wave", async () => {
@@ -395,7 +381,6 @@ describe("Wave 1 claims", () => {
             merkleProof
         )).to.be.revertedWith("invalid proof")
         await mineBlock()
-
     })
 
     it("Bob claims exactly up to maximum", async () => {
@@ -423,7 +408,6 @@ describe("Wave 1 claims", () => {
         //Bob has claimed maximum
         let bobClaim = await Wave._data(1, s.Bob.address)
         expect(await toNumber(bobClaim.claimed)).to.eq(await toNumber(keyAmount))
-
     })
 })
 
@@ -466,7 +450,6 @@ describe("Wave 2 claims", () => {
         let claimed1 = await Wave._data(1, s.Bob.address)
         let claimed2 = await Wave._data(2, s.Bob.address)
         assert.equal(claimed1.claimed.toString(), claimed2.claimed.toString(), "Bob claimed full key amount on waves 1 and 2")
-
 
         //can't claim anymore
         let leaf = solidityKeccak256(["address", "uint256"], [s.Bob.address, keyAmount])
@@ -539,7 +522,6 @@ describe("Wave 3 claims", () => {
 
         let leaf = solidityKeccak256(["address", "uint256"], [s.Bob.address, keyAmount])
         merkleProof = merkleTree2.getHexProof(leaf)
-
 
         //approve
         await s.USDC.connect(s.Bob).approve(Wave.address, keyAmount)
@@ -641,6 +623,5 @@ describe("Redemptions", () => {
 
         let waveIPT = await s.IPT.balanceOf(Wave.address)
         expect(waveIPT).to.eq(0)
-
     })
 })

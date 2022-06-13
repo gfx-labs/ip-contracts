@@ -65,7 +65,7 @@ export class TestScope extends MainnetAddresses {
     Carol_UNI = BN("100e18")
     Gus_WBTC = BN("10e8")
 
-    Dave_USDC = BN("1e10")
+    Dave_USDC = BN("1e14")
 
     Carol_ENS = BN("100e18")
     Carol_DYDX = BN("100e18")

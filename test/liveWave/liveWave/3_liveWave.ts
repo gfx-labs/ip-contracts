@@ -14,19 +14,6 @@ import {
 import { utils, BigNumber } from "ethers"
 import { ethers, network, tenderly } from "hardhat";
 
-import {
-  calculateAccountLiability,
-  payInterestMath,
-  calculateBalance,
-  getGas,
-  getArgs,
-  truncate,
-  getEvent,
-  calculatetokensToLiquidate,
-  calculateUSDI2repurchase,
-  changeInBalance,
-  toNumber,
-} from "../../../util/math"
 import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs"
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils"
@@ -37,14 +24,6 @@ import {
   WavePool__factory,
   WavePool,
 } from "../../../typechain-types"
-import { red } from "bn.js"
-import exp from "constants"
-import { start } from "repl"
-import { JsonRpcSigner } from "@ethersproject/providers"
-import { Wallet } from "@ethersproject/wallet"
-
-const { solidity } = require("ethereum-waffle")
-
 
 const initMerkle = async () => {
 
@@ -61,7 +40,6 @@ const initMerkle = async () => {
   root2 = merkleTree2.getHexRoot()
 
 }
-
 
 let root1: string
 let root2: string
@@ -97,6 +75,7 @@ describe("Test live deployment of wave contract", () => {
 
     s.waveReceiver = await Wave._receiver()
     startingUSDC = await s.USDC.balanceOf(s.waveReceiver)
+    showBodyCyan(startingUSDC)
 
 
     //transfer IPT to Wave contract
@@ -133,7 +112,6 @@ describe("Test live deployment of wave contract", () => {
       totalReward.toString(),
       "Wave has the correct amount of IPT"
     )
-
   })
 })
 
