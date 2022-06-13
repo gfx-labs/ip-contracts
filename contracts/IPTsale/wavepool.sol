@@ -261,7 +261,6 @@ contract WavePool {
   ///@notice sends all unclaimed reward tokens to the receiver
   function withdraw() external {
     require(msg.sender == _receiver, "Only Receiver");
-    //require(block.timestamp > (_claimTime + (7 days)), "wait for claim time");
     require(calculated, "calculatePricing() first");
 
     uint256 rewardAmount;
