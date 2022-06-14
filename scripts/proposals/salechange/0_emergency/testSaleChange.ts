@@ -29,11 +29,12 @@ import {
 } from "../../../../typechain-types";
 import { BN } from "../../../../util/number";
 import { ProposalContext } from "../../suite/proposal";
-import { reset } from "../../../../util/block";
+import { advanceBlockHeight, fastForward, reset } from "../../../../util/block";
 import {
   impersonateAccount,
   ceaseImpersonation,
 } from "../../../../util/impersonator";
+import { executionAsyncResource } from "async_hooks";
 
 const description = `
 #  Transfer Token
@@ -97,7 +98,7 @@ describe("Testing change of sale contract", () => {
     p.addStep(newIPT, "_setNewToken(address)");
 
     const out = p.populateProposal();
-    console.log(out);
+    //console.log(out);
 
     const charlie = new GovernorCharlieDelegate__factory(x).attach(
       governorAddress
@@ -105,6 +106,24 @@ describe("Testing change of sale contract", () => {
 
     await p.sendProposal(charlie, description, true);
 
-    //await gov.castVote(1, 1)
+    await gov.castVote(1, 1)
+
+    await advanceBlockHeight(voteBlocks)
+
+    await gov.queue(1)
+
+    await fastForward(timelockDelay)
+
+    await gov.execute(1)
+
+    let ipt = await gov.ipt()
+    console.log(ipt)
+
+
+
+
+
+
+
   });
 });
