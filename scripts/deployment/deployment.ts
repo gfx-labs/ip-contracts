@@ -549,11 +549,9 @@ export class Deployment {
   async ensureCharlie() {
     if (this.Info.CharlieDelegator) {
       console.log("found charlie at", this.Info.CharlieDelegator);
-      console.log(
-        await new InterestProtocolToken__factory(this.deployer)
-          .attach(this.Info.IPTDelegator!)
-          ["owner()"]()
-      );
+      this.IPTDelegator = new InterestProtocolToken__factory(
+        this.deployer
+      ).attach(this.Info.IPTDelegator!);
     } else {
       console.log("Deploying governance stack");
       this.IPTDelegate = await new InterestProtocolTokenDelegate__factory(

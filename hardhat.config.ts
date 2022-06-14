@@ -35,7 +35,7 @@ const config: HardhatUserConfig = {
           ? process.env.MAINNET_PRIVATE_KEY
           : zaddr,
       ],
-      gasPrice: 45000000000,
+      minGasPrice: 32000000000,
     },
     ropsten: {
       url: process.env.ROPSTEN_URL ? process.env.ROPSTEN_URL : zaddr,

@@ -3,7 +3,9 @@
         "vaultcontroller": "0x7Cf210554557a78FBcbFe2C32f764AD11C048708",
         "USDI": "0x897e02F73e148B432DbBB6013380ac3324b2D646",
         "governor": "0x79fAcac4fF02a87e6229d464b38Ae5987c41FD52",
-        "curve": "0xF2667F4C6B89810ff19614e8E826afC2555F8F04"
+        "curve": "0xF2667F4C6B89810ff19614e8E826afC2555F8F04",
+        "new_ipt": "0xd909C5862Cdb164aDB949D92622082f0092eFC3d",
+        "new_gov": "0xED6A213928DB81A3a60bCe25Aaf199DBAf01DD25"
     },
     "proposal": {
         "proposeTxn": "0xfd14fedf550d9ad5b2a6c68339b9bb463cecab3d4c6b589402de40e330b81309"

@@ -75,6 +75,28 @@ async function main() {
   // 10 mm to 0x77e30640f242349faf210598116e5a562e7be256
   // 35mm to 0x5a4396a2fe5fD36c6528a441D7A97c3B0f3e8aeE
 
+  const charlie = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
+  let a = await d.USDI.setPauser("0xBA20749D3a88a32ef87240149977bFa489C38a1B");
+  await a.wait();
+  console.log("set pauser");
+  a = await d.Curve.transferOwnership(charlie);
+  await a.wait();
+  console.log("transfer curve");
+  a = await d.Oracle.transferOwnership(charlie);
+  await a.wait();
+  console.log("transfer oracle");
+  a = await d.USDI.transferOwnership(charlie);
+  await a.wait();
+  console.log("transfer usdi");
+  a = await d.VaultController.transferOwnership(charlie);
+  await a.wait();
+  console.log("transfer vc");
+  a = await d.IPTDelegator._setOwner(charlie);
+  await a.wait();
+  console.log("transfer iptdelegator");
+  a = await d.ProxyAdmin.transferOwnership(charlie);
+  await a.wait();
+  console.log("transfer proxy admin");
   console.log(d.Info);
 }
 

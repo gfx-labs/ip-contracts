@@ -450,6 +450,14 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
   }
 
   /**
+   * @notice Governance function for setting the governance token
+   * @param  token_ new token addr
+   */
+  function _setNewToken(address token_) external onlyGov {
+    ipt = IIpt(token_);
+  }
+
+  /**
    * @notice Used to update the timelock period
    * @param proposalTimelockDelay_ The proposal holding period
    */
