@@ -20,6 +20,8 @@ import {
     IGovernorCharlieDelegate__factory,
     InterestProtocolTokenDelegate__factory,
     InterestProtocolToken__factory,
+    IGovernorCharlieDelegator__factory,
+    GovernorCharlieDelegate,
     ProxyAdmin__factory,
     ThreeLines0_100__factory,
     USDI__factory,
@@ -47,24 +49,25 @@ const makeProposal = async () => {
 
 }
 
-let gov: IGovernorCharlieDelegate__factory
+let gov: GovernorCharlieDelegate__factory
 
 const connectToContracts = async () => {
     const accounts = await ethers.getSigners();
     const x = accounts[0];
-    gov = IGovernorCharlieDelegate__factory.connect(governorAddress, x)
+    gov = GovernorCharlieDelegate__factory.connect(governorAddress, x)
 }
 
 
 describe("Testing change of sale contract", () => {
 
     before(async () => {
-        await reset(0)
-        //await connectToContracts()
-
+        await reset(14064380);
+        await connectToContracts()
     })
 
     it("Does the thing", async () => {
+
+
         const accounts = await ethers.getSigners();
         const x = accounts[0];
         const p = new ProposalContext("polygonNormal");
@@ -97,23 +100,15 @@ describe("Testing change of sale contract", () => {
         p.addStep(newIPT, "_setNewToken(address)");
 
         const out = p.populateProposal();
-        //console.log(out);
-        console.log("TEST1")
+        console.log(out);
 
         const charlie = new GovernorCharlieDelegate__factory(x).attach(
             governorAddress
         );
-        console.log("TEST2")
 
         await p.sendProposal(charlie, description, true);
 
-        console.log("TEST3")
-
-
-
-
-
-
+        //await gov.castVote(1, 1)
 
 
 
