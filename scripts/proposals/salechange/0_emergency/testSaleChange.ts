@@ -29,12 +29,21 @@ import {
 } from "../../../../typechain-types";
 import { BN } from "../../../../util/number";
 import { ProposalContext } from "../../suite/proposal";
-import { advanceBlockHeight, fastForward, reset } from "../../../../util/block";
+import {
+  advanceBlockHeight,
+  fastForward,
+  mineBlock,
+  reset,
+} from "../../../../util/block";
 import {
   impersonateAccount,
   ceaseImpersonation,
+  stopImpersonate,
+  Impersonate,
 } from "../../../../util/impersonator";
 import { executionAsyncResource } from "async_hooks";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { expect } from "chai";
 
 const description = `
 #  Transfer Token
@@ -52,24 +61,16 @@ const timelockDelay = 43200;
 const makeProposal = async () => {};
 
 let gov: GovernorCharlieDelegate;
-
-const connectToContracts = async () => {
-  const accounts = await ethers.getSigners();
-  const x = accounts[0];
-  gov = GovernorCharlieDelegate__factory.connect(governorAddress, x);
-};
+let x: SignerWithAddress;
 
 describe("Testing change of sale contract", () => {
-  before(async () => {
-    await reset(14064380);
-    await connectToContracts();
-  });
-
   it("Does the thing", async () => {
-    const accounts = await ethers.getSigners();
-    const x = accounts[0];
+    await reset(14964588);
+    const imp = await Impersonate(proposer);
+    await imp.start();
+    x = await ethers.getSigner(proposer);
+    gov = GovernorCharlieDelegate__factory.connect(governorAddress, x);
     const p = new ProposalContext("polygonNormal");
-
     const totalSupply_ = BN("1e26");
     // deploy the new vault controller
     p.AddDeploy("new_ipt", () => {
@@ -84,46 +85,39 @@ describe("Testing change of sale contract", () => {
       return new GovernorCharlieDelegate__factory(x).deploy();
     });
     await p.DeployAll();
+
+    const nl = p.db.getData(".deploys.new_gov");
     // now construct the proposal
     const newGov = await new GovernorCharlieDelegator__factory(x)
       .attach(governorAddress)
-      .populateTransaction._setImplementation(p.db.getData(".deploys.new_gov"));
+      .populateTransaction._setImplementation(nl);
+
+    const nt = p.db.getData(".deploys.new_ipt");
 
     const newIPT = await new GovernorCharlieDelegate__factory(x)
       .attach(governorAddress)
-      .populateTransaction._setNewToken(p.db.getData(".deploys.new_ipt"));
+      .populateTransaction._setNewToken(nt);
 
     p.addStep(newGov, "_setImplementation(address)");
 
     p.addStep(newIPT, "_setNewToken(address)");
 
     const out = p.populateProposal();
-    //console.log(out);
+    console.log(out);
 
     const charlie = new GovernorCharlieDelegate__factory(x).attach(
       governorAddress
     );
 
     await p.sendProposal(charlie, description, true);
+    await gov.castVote(1, 1);
+    await advanceBlockHeight(voteBlocks);
+    await gov.queue(1);
+    await fastForward(timelockDelay);
+    await gov.execute(1);
+    await mineBlock();
 
-    await gov.castVote(1, 1)
-
-    await advanceBlockHeight(voteBlocks)
-
-    await gov.queue(1)
-
-    await fastForward(timelockDelay)
-
-    await gov.execute(1)
-
-    let ipt = await gov.ipt()
-    console.log(ipt)
-
-
-
-
-
-
-
+    console.log(nt);
+    expect(await gov.ipt()).to.eq(nt);
   });
 });
