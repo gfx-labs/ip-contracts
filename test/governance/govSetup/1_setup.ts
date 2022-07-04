@@ -95,14 +95,6 @@ const deployGovAndToken = async () => {
 
   const ipt_ = futureAddressTwo;
   const Govimplementation_ = futureAddressThree;
-  const votingPeriod_ = BN("19710");
-  const votingDelay_ = BN("13140");
-  const proposalThreshold_ = BN("250000000000000000000000");
-  const proposalTimelockDelay_ = BN("172800");
-  const quorumVotes_ = BN("50000000000000000000000000");
-  const emergencyQuorumVotes_ = BN("50000000000000000000000000");
-  const emergencyVotingPeriod_ = BN("6570");
-  const emergencyTimelockDelay_ = BN("86400");
 
   s.InterestProtocolTokenDelegate = await DeployContract(
     new InterestProtocolTokenDelegate__factory(s.Frank),
@@ -125,7 +117,6 @@ const deployGovAndToken = async () => {
   );
   await mineBlock();
   let owner = await s.InterestProtocolToken.owner();
-  //showBody("OWNER: ", owner)
   s.GovernorCharlieDelegate = await DeployContract(
     new GovernorCharlieDelegate__factory(s.Frank),
     s.Frank
@@ -134,16 +125,8 @@ const deployGovAndToken = async () => {
   s.GovernorCharlieDelegator = await DeployContract(
     new GovernorCharlieDelegator__factory(s.Frank),
     s.Frank,
-    ipt_, //ipt
-    Govimplementation_,
-    votingPeriod_,
-    votingDelay_,
-    proposalThreshold_,
-    proposalTimelockDelay_,
-    quorumVotes_,
-    emergencyQuorumVotes_,
-    emergencyVotingPeriod_,
-    emergencyTimelockDelay_
+    s.InterestProtocolToken.address, //ipt
+    Govimplementation_
   );
   await mineBlock();
   s.GOV = GovernorCharlieDelegate__factory.connect(
@@ -283,7 +266,7 @@ describe("Governance & IPT Contracts", () => {
   });
   it("Verify Frank can transfer IPT to Eric", async () => {
     let startingBalance = await s.IPT.balanceOf(s.Eric.address);
-    await s.IPT.transfer(s.Eric.address, "250000000000000000000000");
+    await s.IPT.transfer(s.Eric.address, "2500000000000000000000000");
     await mineBlock();
     let endingBalance = await s.IPT.balanceOf(s.Eric.address);
     expect(endingBalance).to.be.gt(startingBalance);
@@ -426,7 +409,7 @@ describe("Governance & IPT Contracts", () => {
       "0x0000000000000000000000000000000000000000001232AE63C59C6BD6000000",
       "0x000000000000000000000000000000000000000000108B2A2C28029094000000",
       "0x0000000000000000000000009965507D1a55bcC2695C58ba16FB37d819B0A4dc",
-      "0x00000000000000000000000014dC79964da2C08b23698B3D3cc7Ca32193d9955000000000000000000000000000000000000000000000000000000006553f100",
+      "0x00000000000000000000000014dC79964da2C08b23698B3D3cc7Ca32193d99550000000000000000000000000000000000000000000000000000000062F19700",
     ];
     const description = "test proposal";
     const emergency = false;
@@ -563,12 +546,12 @@ describe("Governance & IPT Contracts", () => {
     expect(proposalId).to.be.gt(6);
     const support = 1;
     const reason = "good proposal";
-    await advanceBlockHeight((await s.GOV.votingDelay()).toNumber());
-    await s.GOV.connect(s.Andy).castVoteWithReason(proposalId, support, reason);
-    await mineBlock();
+    await advanceBlockHeight((await s.GOV.optimisticVotingDelay()).toNumber());
+    //await s.GOV.connect(s.Andy).castVoteWithReason(proposalId, support, reason);
+    //await mineBlock();
     proposalInfo = await s.GOV.proposals(proposalId);
-    await s.GOV.castVoteWithReason(proposalId, support, reason);
-    await mineBlock();
+    //await s.GOV.castVoteWithReason(proposalId, support, reason);
+    //await mineBlock();
     await advanceBlockHeight((await s.GOV.votingPeriod()).toNumber());
     await mineBlock();
     await s.GOV.connect(s.Andy).queue(proposalId);
@@ -580,6 +563,47 @@ describe("Governance & IPT Contracts", () => {
     expect(await s.IPT.name()).to.eq("Gateway Token");
     expect(await s.IPT.symbol()).to.eq("GT");
     expect(await s.IPT.balanceOf(s.Bob.address)).to.be.gt(0); //Bob has some IPT now
+  });
+  it("verify optimistic proposal fails with enough no votes", async () => {
+    const targets = [s.IPT.address, s.IPT.address, s.IPT.address];
+    const values = ["0", "0", "0"];
+    const signatures = [
+      "changeName(string)",
+      "changeSymbol(string)",
+      "mint(address,uint256)",
+    ];
+    const calldatas = [
+      "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000d4761746577617920546f6b656e00000000000000000000000000000000000000",
+      "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000024754000000000000000000000000000000000000000000000000000000000000",
+      "0x00000000000000000000000014dc79964da2c08b23698b3d3cc7ca32193d99550000000000000000000000000000000000000000000000056bc75e2d63100000",
+    ];
+    const description = "test proposal";
+    const emergency = false;
+    let proposalCount = await s.GOV.proposalCount();
+    await s.GOV.connect(s.Bob).propose(
+      targets,
+      values,
+      signatures,
+      calldatas,
+      description,
+      emergency
+    );
+    await mineBlock();
+    const proposalId = await s.GOV.proposalCount();
+    expect(proposalId).to.be.eq(proposalCount.add(1));
+    let proposalInfo = await s.GOV.proposals(proposalId);
+    expect(proposalId).to.be.gt(6);
+    const support = 0;
+    const reason = "bad proposal";
+    await advanceBlockHeight((await s.GOV.optimisticVotingDelay()).toNumber());
+    await s.GOV.connect(s.Andy).castVoteWithReason(proposalId, support, reason);
+    await mineBlock();
+    proposalInfo = await s.GOV.proposals(proposalId);
+    await s.GOV.castVoteWithReason(proposalId, support, reason);
+    await mineBlock();
+    await advanceBlockHeight((await s.GOV.votingPeriod()).toNumber());
+    await mineBlock();
+    await expect(s.GOV.connect(s.Andy).queue(proposalId)).to.be.revertedWith('can only be queued if succeeded');
   });
   it("allowance/transferFrom", async () => {
     const amount = BN("1e18");

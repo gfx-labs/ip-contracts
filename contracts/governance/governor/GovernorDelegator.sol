@@ -8,29 +8,13 @@ import "./GovernorStorage.sol";
 contract GovernorCharlieDelegator is GovernorCharlieDelegatorStorage, GovernorCharlieEvents, IGovernorCharlieDelegator {
   constructor(
     address ipt_,
-    address implementation_,
-    uint256 votingPeriod_,
-    uint256 votingDelay_,
-    uint256 proposalThreshold_,
-    uint256 proposalTimelockDelay_,
-    uint256 quorumVotes_,
-    uint256 emergencyQuorumVotes_,
-    uint256 emergencyVotingPeriod_,
-    uint256 emergencyTimelockDelay_
+    address implementation_
   ) {
     delegateTo(
       implementation_,
       abi.encodeWithSignature(
-        "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
-        ipt_,
-        votingPeriod_,
-        votingDelay_,
-        proposalThreshold_,
-        proposalTimelockDelay_,
-        quorumVotes_,
-        emergencyQuorumVotes_,
-        emergencyVotingPeriod_,
-        emergencyTimelockDelay_
+        "initialize(address)",
+        ipt_
       )
     );
     address oldImplementation = implementation;
