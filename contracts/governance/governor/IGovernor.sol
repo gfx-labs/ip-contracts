@@ -15,15 +15,7 @@ interface IGovernorCharlieDelegator {
 /// @title interface to interact with TokenDelgate
 interface IGovernorCharlieDelegate {
   function initialize(
-    address ipt_,
-    uint256 votingPeriod_,
-    uint256 votingDelay_,
-    uint256 proposalThreshold_,
-    uint256 proposalTimelockDelay_,
-    uint256 quorumVotes_,
-    uint256 emergencyQuorumVotes_,
-    uint256 emergencyVotingPeriod_,
-    uint256 emergencyTimelockDelay_
+    address ipt_
   ) external;
 
   function propose(
@@ -100,6 +92,10 @@ interface IGovernorCharlieDelegate {
   function _setWhitelistAccountExpiration(address account, uint256 expiration) external;
 
   function _setWhitelistGuardian(address account) external;
+
+  function _setOptimisticDelay(uint256 newOptimisticVotingDelay) external;
+
+  function _setOptimisticQuorumVotes(uint256 newOptimisticQuorumVotes) external;
 }
 
 /// @title interface which contains all events emitted by delegator & delegate
@@ -172,6 +168,12 @@ interface GovernorCharlieEvents {
 
   /// @notice Emitted when the emergency quorum is updated
   event NewEmergencyQuorum(uint256 oldEmergencyQuorumVotes, uint256 emergencyQuorumVotes);
+
+  /// @notice An event emitted when the optimistic voting delay is set
+  event OptimisticVotingDelaySet(uint256 oldOptimisticVotingDelay, uint256 optimisticVotingDelay);
+
+  /// @notice Emitted when the optimistic quorum is updated
+  event OptimisticQuorumVotesSet(uint256 oldOptimisticQuorumVotes, uint256 optimisticQuorumVotes);
 
   /// @notice Emitted when a transaction is canceled
   event CancelTransaction(

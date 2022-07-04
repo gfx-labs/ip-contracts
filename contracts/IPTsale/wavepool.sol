@@ -73,6 +73,7 @@ contract WavePool {
   uint256 public impliedPrice;
   bool public saturation;
   bool public calculated;
+  bool public withdrawn;
 
   event Points(address indexed from, uint256 wave, uint256 amount);
 
@@ -116,6 +117,7 @@ contract WavePool {
 
     calculated = false;
     saturation = false;
+    withdrawn = false;
   }
 
   /// @notice tells whether the wave is enabled or not
@@ -262,6 +264,7 @@ contract WavePool {
   function withdraw() external {
     require(msg.sender == _receiver, "Only Receiver");
     require(calculated, "calculatePricing() first");
+    require(!withdrawn, "Already withdrawn");
 
     uint256 rewardAmount;
     if (!saturation) {

@@ -25,38 +25,25 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
 
   /**
    * @notice Used to initialize the contract during delegator contructor
-   * @param ipt_ The address of the COMP token
-   * @param votingPeriod_ The initial voting period
-   * @param votingDelay_ The initial voting delay
-   * @param proposalThreshold_ The initial proposal threshold
-   * @param proposalTimelockDelay_ The initial proposal holding period
-   * @param quorumVotes_ The number of votes needed for consent
-   * @param emergencyQuorumVotes_ The number of votes needed for consent in an emergency
-   * @param emergencyVotingPeriod_ The voting period in an emergency
-   * @param emergencyTimelockDelay_ The holding period in an emergency
+   * @param ipt_ The address of the IPT token
    */
   function initialize(
-    address ipt_,
-    uint256 votingPeriod_,
-    uint256 votingDelay_,
-    uint256 proposalThreshold_,
-    uint256 proposalTimelockDelay_,
-    uint256 quorumVotes_,
-    uint256 emergencyQuorumVotes_,
-    uint256 emergencyVotingPeriod_,
-    uint256 emergencyTimelockDelay_
+    address ipt_
   ) external override {
     require(!initialized, "already been initialized");
     ipt = IIpt(ipt_);
-    votingPeriod = votingPeriod_;
-    votingDelay = votingDelay_;
-    proposalThreshold = proposalThreshold_;
-    proposalTimelockDelay = proposalTimelockDelay_;
+    votingPeriod = 40320;
+    votingDelay = 13140;
+    proposalThreshold = 1000000000000000000000000;
+    proposalTimelockDelay = 172800;
     proposalCount = 0;
-    quorumVotes = quorumVotes_;
-    emergencyQuorumVotes = emergencyQuorumVotes_;
-    emergencyVotingPeriod = emergencyVotingPeriod_;
-    emergencyTimelockDelay = emergencyTimelockDelay_;
+    quorumVotes = 10000000000000000000000000;
+    emergencyQuorumVotes = 40000000000000000000000000;
+    emergencyVotingPeriod = 6570;
+    emergencyTimelockDelay = 43200;
+    optimisticQuorumVotes = 2000000000000000000000000;
+    optimisticVotingDelay = 18000;
+    maxWhitelistPeriod = 31536000;
 
     initialized = true;
   }
@@ -126,11 +113,19 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
       delay: proposalTimelockDelay
     });
 
-    if (emergency) {
+    //whitelist can't make emergency
+    if (emergency && !isWhitelisted(_msgSender())) {
       newProposal.startBlock = block.number;
       newProposal.endBlock = block.number + emergencyVotingPeriod;
       newProposal.quorumVotes = emergencyQuorumVotes;
       newProposal.delay = emergencyTimelockDelay;
+    }
+
+    //whitelist can only make optimistic proposals
+    if (isWhitelisted(_msgSender())) {
+      newProposal.quorumVotes = optimisticQuorumVotes;
+      newProposal.startBlock = block.number + optimisticVotingDelay;
+      newProposal.endBlock = block.number + optimisticVotingDelay + votingPeriod;
     }
 
     proposals[newProposal.id] = newProposal;
@@ -344,13 +339,18 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
   function state(uint256 proposalId) public view override returns (ProposalState) {
     require(proposalCount >= proposalId && proposalId > initialProposalId, "state: invalid proposal id");
     Proposal storage proposal = proposals[proposalId];
+    bool whitelisted = isWhitelisted(proposal.proposer);
     if (proposal.canceled) {
       return ProposalState.Canceled;
     } else if (block.number <= proposal.startBlock) {
       return ProposalState.Pending;
     } else if (block.number <= proposal.endBlock) {
       return ProposalState.Active;
-    } else if (proposal.forVotes <= proposal.againstVotes || proposal.forVotes < proposal.quorumVotes) {
+    } else if (
+      (whitelisted && proposal.againstVotes > proposal.quorumVotes) ||
+      (!whitelisted && proposal.forVotes <= proposal.againstVotes) ||
+      (!whitelisted && proposal.forVotes < proposal.quorumVotes)
+    ) {
       return ProposalState.Defeated;
     } else if (proposal.eta == 0) {
       return ProposalState.Succeeded;
@@ -552,6 +552,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @param expiration Expiration for account whitelist status as timestamp (if now < expiration, whitelisted)
    */
   function _setWhitelistAccountExpiration(address account, uint256 expiration) external override onlyGov {
+    require (expiration < (maxWhitelistPeriod + block.timestamp), "expiration exceeds max");
     whitelistAccountExpirations[account] = expiration;
 
     emit WhitelistAccountExpirationSet(account, expiration);
@@ -566,6 +567,28 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     whitelistGuardian = account;
 
     emit WhitelistGuardianSet(oldGuardian, whitelistGuardian);
+  }
+
+  /**
+   * @notice Governance function for setting the optimistic voting delay
+   * @param newOptimisticVotingDelay new optimistic voting delay, in blocks
+   */
+  function _setOptimisticDelay(uint256 newOptimisticVotingDelay) external override onlyGov {
+    uint256 oldOptimisticVotingDelay = optimisticVotingDelay;
+    optimisticVotingDelay = newOptimisticVotingDelay;
+
+    emit OptimisticVotingDelaySet(oldOptimisticVotingDelay, optimisticVotingDelay);
+  }
+
+  /**
+   * @notice Governance function for setting the optimistic quorum
+   * @param newOptimisticQuorumVotes new optimistic quorum votes, in blocks
+   */
+  function _setOptimisticQuorumVotes(uint256 newOptimisticQuorumVotes) external override onlyGov {
+    uint256 oldOptimisticQuorumVotes = optimisticQuorumVotes;
+    optimisticQuorumVotes = newOptimisticQuorumVotes;
+
+    emit OptimisticQuorumVotesSet(oldOptimisticQuorumVotes, optimisticQuorumVotes);
   }
 
   function getChainIdInternal() internal view returns (uint256) {
