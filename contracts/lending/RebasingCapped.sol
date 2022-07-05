@@ -6,6 +6,8 @@ import "../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 
+import "hardhat/console.sol";
+
 /// @title CappedToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
@@ -65,9 +67,12 @@ contract RebasingCapped is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   /// @param underlying_amount amount of underlying to deposit
   /// @param target recipient of tokens
   function deposit(uint256 underlying_amount, address target) public {
+
+    console.log("DEPOSIT REBASE");
+
     // scale the decimals to THIS token decimals, or 1e18. see underlyingToCappedAmount
     uint256 amount = underlyingToCappedAmount(underlying_amount);
-    require(amount > 0, "Cannot deposit 0");
+    require(amount > 0, "Cannot deposit 0 rebase");
     // check cap
     checkCap(amount);
     // check allowance and ensure transfer success

@@ -6,7 +6,9 @@ import "../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 
-/// @title RebasingCappedToken
+import "hardhat/console.sol";
+
+/// @title CappedToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
 contract CappedToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
@@ -67,7 +69,13 @@ contract CappedToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     // = underlying_amount * (scalar * underlying_balance / capped_totalsupply) * underlying_amount / 1e18;
     // = underlying_amount * (scalar * ratioe18) * underlying_amount / 1e18
     // we must multiply by the underlyingScalar at the end since our answer is in CapToken amounts, not underlying amounts.
-    amount = (underlyingScalar() * underlyingRatio() * underlying_amount) / 1e18;
+    
+
+    
+    //This seems to work, underlyingRatio() is 0 at the start, so the first deposit is impossible while no underlying is on this contract
+    amount = underlying_amount * underlyingScalar();
+    //amount = (underlyingScalar() * underlyingRatio() * underlying_amount) / 1e18;
+
   }
 
   /// @notice get underlying ratio
