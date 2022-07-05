@@ -103,7 +103,7 @@ contract RebasingCapped is Initializable, OwnableUpgradeable, ERC20Upgradeable {
 
   // EIP-4626 compliance, sorry it's not the most gas efficient.
 
-  function asset() external view returns (address) {
+  function underlyingAddress() external view returns (address) {
     return address(_underlying);
   }
 

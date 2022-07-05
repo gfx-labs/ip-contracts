@@ -57,8 +57,8 @@ describe("Testing CappedToken functions", () => {
     it("Check things", async () => {
 
         const underlyingRatio = await s.CappedToken.underlyingRatio()
-        showBody("Raw Ratio: ", underlyingRatio)
-        showBody("Ratio: ", await toNumber(underlyingRatio))
+        //showBody("Raw Ratio: ", underlyingRatio)
+        //showBody("Ratio: ", await toNumber(underlyingRatio))
 
     })
 
@@ -98,7 +98,7 @@ describe("Testing CappedToken functions", () => {
         await mineBlock()
 
         expect(await s.USDC.balanceOf(s.CappedToken.address)).to.eq(ctUSDC.sub(USDCamount), "USDC held by Capped Contract has reduced by the expected amount")
-        expect(await s.USDC.balanceOf(s.Bob.address)).to.eq(startUSDC.add(USDCamount), "USDC held by Dave has increased by the expected amount")
+        expect(await s.USDC.balanceOf(s.Bob.address)).to.eq(startUSDC.add(USDCamount), "USDC held by Bob has increased by the expected amount")
         expect(await s.CappedToken.balanceOf(s.Dave.address)).to.eq(startCT.sub(e18Amount), "Capped Tokens held by Dave has decreased by the expected amount")
         expect(await s.CappedToken.totalSupply()).to.eq(startSupply.sub(e18Amount), "Capped Tokens total supply has decreased by the expected amount")
 
