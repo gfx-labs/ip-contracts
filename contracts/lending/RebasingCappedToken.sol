@@ -9,7 +9,7 @@ import "../_external/openzeppelin/Initializable.sol";
 /// @title RebasingCappedToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
-contract RebasingCappedToken is Initializable, OwnableUpgradeable,  ERC20Upgradeable {
+contract RebasingCappedToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   IERC20Metadata public _underlying;
   uint8 private _underlying_decimals;
 
@@ -19,9 +19,13 @@ contract RebasingCappedToken is Initializable, OwnableUpgradeable,  ERC20Upgrade
   /// @param name_ name of capped token
   /// @param symbol_ symbol of capped token
   /// @param underlying_ the address of underlying
-  function initialize(string memory name_, string memory symbol_, address underlying_) public initializer {
+  function initialize(
+    string memory name_,
+    string memory symbol_,
+    address underlying_
+  ) public initializer {
     __Ownable_init();
-    __ERC20_init(name_,symbol_);
+    __ERC20_init(name_, symbol_);
     _underlying = IERC20Metadata(underlying_);
     _underlying_decimals = _underlying.decimals();
   }
@@ -31,17 +35,19 @@ contract RebasingCappedToken is Initializable, OwnableUpgradeable,  ERC20Upgrade
   function underlyingAddress() public view returns (address) {
     return address(_underlying);
   }
+
   /// @notice get the Cap
   /// @return cap
   function getCap() public view returns (uint256) {
     return _cap;
   }
+
   /// @notice set the Cap
   function setCap(uint256 cap_) external onlyOwner {
     _cap = cap_;
   }
 
-  function checkCap(uint256 amount_) internal view returns (bool) {
+  function checkCap(uint256 amount_) internal view {
     require(ERC20Upgradeable.totalSupply() + amount_ <= _cap, "cap reached");
   }
 
@@ -50,7 +56,7 @@ contract RebasingCappedToken is Initializable, OwnableUpgradeable,  ERC20Upgrade
   }
 
   function underlyingScalar() public view returns (uint256) {
-    return (10 ** (18 - _underlying_decimals));
+    return (10**(18 - _underlying_decimals));
   }
 
   /// @notice get underlying ratio
@@ -61,13 +67,14 @@ contract RebasingCappedToken is Initializable, OwnableUpgradeable,  ERC20Upgrade
     // = underlying_amount * (scalar * underlying_balance / capped_totalsupply) * underlying_amount / 1e18;
     // = underlying_amount * (scalar * ratioe18) * underlying_amount / 1e18
     // we must multiply by the underlyingScalar at the end since our answer is in CapToken amounts, not underlying amounts.
-    amount = underlyingScalar() * underlyingRatio() * underlying_amount/1e18;
+    amount = (underlyingScalar() * underlyingRatio() * underlying_amount) / 1e18;
   }
 
   /// @notice get underlying ratio
   /// @return e18_underlying_ratio underlying ratio of coins
   function underlyingRatio() public view returns (uint256 e18_underlying_ratio) {
-    e18_underlying_ratio = (((_underlying.balanceOf(address(this)) * underlyingScalar()) * 1e18) / _underlying.totalSupply());
+    e18_underlying_ratio = (((_underlying.balanceOf(address(this)) * underlyingScalar()) * 1e18) /
+      _underlying.totalSupply());
   }
 
   /// @notice deposit _underlying to mint CappedToken
@@ -103,7 +110,6 @@ contract RebasingCappedToken is Initializable, OwnableUpgradeable,  ERC20Upgrade
     withdrawTo(underlying_amount, _msgSender());
   }
 
-
   /// @notice withdraw underlying by burning THIS token
   /// caller should obtain 1 underlying for every underlyingScalar() THIS token
   /// @param underlying_amount amount of underlying to withdraw
@@ -120,7 +126,4 @@ contract RebasingCappedToken is Initializable, OwnableUpgradeable,  ERC20Upgrade
     // transfer underlying to the TARGET
     require(_underlying.transfer(target, underlying_amount), "transfer failed");
   }
-
-
-
 }

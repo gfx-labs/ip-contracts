@@ -9,7 +9,7 @@ import "../_external/openzeppelin/Initializable.sol";
 /// @title CappedToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
-contract RebasingCapped is Initializable, OwnableUpgradeable,  ERC20Upgradeable {
+contract RebasingCapped is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   IERC20Metadata public _underlying;
   uint256 constant UNDERLYING_SCALAR = 1;
 
@@ -21,9 +21,13 @@ contract RebasingCapped is Initializable, OwnableUpgradeable,  ERC20Upgradeable 
   /// @param name_ name of capped token
   /// @param symbol_ symbol of capped token
   /// @param underlying_ the address of underlying
-  function initialize(string memory name_, string memory symbol_, address underlying_) public initializer {
+  function initialize(
+    string memory name_,
+    string memory symbol_,
+    address underlying_
+  ) public initializer {
     __Ownable_init();
-    __ERC20_init(name_,symbol_);
+    __ERC20_init(name_, symbol_);
     _underlying = IERC20Metadata(underlying_);
   }
 
@@ -37,21 +41,23 @@ contract RebasingCapped is Initializable, OwnableUpgradeable,  ERC20Upgradeable 
   function getCap() public view returns (uint256) {
     return _cap;
   }
+
   /// @notice set the Cap
   function setCap(uint256 cap_) external onlyOwner {
     _cap = cap_;
   }
-  function checkCap(uint256 amount_) internal view returns (bool) {
+
+  function checkCap(uint256 amount_) internal view {
     require(ERC20Upgradeable.totalSupply() + amount_ <= _cap, "cap reached");
   }
 
   /// @notice get underlying ratio
   /// @return amount amount of this CappedToken
-  function underlyingToCappedAmount(uint256 underlying_amount) internal view returns (uint256 amount) {
+  function underlyingToCappedAmount(uint256 underlying_amount) internal pure returns (uint256 amount) {
     amount = UNDERLYING_SCALAR * underlying_amount;
   }
 
-  function cappedAmountToUnderlying(uint256 underlying_amount) internal view returns (uint256 amount) {
+  function cappedAmountToUnderlying(uint256 underlying_amount) internal pure returns (uint256 amount) {
     amount = underlying_amount / UNDERLYING_SCALAR;
   }
 
@@ -95,57 +101,67 @@ contract RebasingCapped is Initializable, OwnableUpgradeable,  ERC20Upgradeable 
   function asset() external view returns (address) {
     return address(_underlying);
   }
+
   function totalAssets() public view returns (uint256) {
     return _underlying.balanceOf(address(this));
   }
 
-  function convertToShares(uint256 assets) external view returns (uint256) {
+  function convertToShares(uint256 assets) external pure returns (uint256) {
     return underlyingToCappedAmount(assets);
   }
-  function convertToAssets(uint256 shares) external view returns (uint256) {
+
+  function convertToAssets(uint256 shares) external pure returns (uint256) {
     return cappedAmountToUnderlying(shares);
   }
 
-  function maxDeposit(address receiver ) public view returns(uint256) {
-    uint256 remaining = (_cap - (totalAssets() * UNDERLYING_SCALAR))/UNDERLYING_SCALAR;
-    if(remaining < _underlying.balanceOf(receiver)){
+  function maxDeposit(address receiver) public view returns (uint256) {
+    uint256 remaining = (_cap - (totalAssets() * UNDERLYING_SCALAR)) / UNDERLYING_SCALAR;
+    if (remaining < _underlying.balanceOf(receiver)) {
       return _underlying.balanceOf(receiver);
     }
     return remaining;
   }
-  function previewDeposit(uint256 assets) public view returns (uint256) {
+
+  function previewDeposit(uint256 assets) public pure returns (uint256) {
     return underlyingToCappedAmount(assets);
   }
+
   //function deposit - already implemented
 
   function maxMint(address receiver) external view returns (uint256) {
     return cappedAmountToUnderlying(maxDeposit(receiver));
   }
-  function previewMint(uint256 shares) external view returns(uint256) {
+
+  function previewMint(uint256 shares) external pure returns (uint256) {
     return cappedAmountToUnderlying(previewDeposit(shares));
   }
+
   function mint(uint256 shares, address receiver) external {
     return deposit(cappedAmountToUnderlying(shares), receiver);
   }
 
-  function maxWithdraw(address receiver) public view returns(uint256) {
+  function maxWithdraw(address receiver) public view returns (uint256) {
     uint256 receiver_can = (ERC20Upgradeable.balanceOf(receiver) / UNDERLYING_SCALAR);
-    if(receiver_can > _underlying.balanceOf(address(this))){
+    if (receiver_can > _underlying.balanceOf(address(this))) {
       return _underlying.balanceOf(address(this));
     }
     return receiver_can;
   }
-  function previewWithdraw(uint256 assets) public view returns (uint256) {
+
+  function previewWithdraw(uint256 assets) public pure returns (uint256) {
     return underlyingToCappedAmount(assets);
   }
+
   //function withdraw - already implemented
 
   function maxRedeem(address receiver) external view returns (uint256) {
     return cappedAmountToUnderlying(maxWithdraw(receiver));
   }
-  function previewRedeem(uint256 shares) external view returns(uint256) {
+
+  function previewRedeem(uint256 shares) external pure returns (uint256) {
     return cappedAmountToUnderlying(previewWithdraw(shares));
   }
+
   function redeem(uint256 shares, address receiver) external {
     return withdraw(cappedAmountToUnderlying(shares), receiver);
   }
