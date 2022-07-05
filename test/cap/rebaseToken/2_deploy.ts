@@ -80,12 +80,12 @@ describe("Deploy cappedToken contract", () => {
     })
 
     it("Set Cap", async () => {
-        await s.RebasingCapped.connect(s.Frank).setCap(cap)//100K
+        await s.RebasingCapped.connect(s.Frank).setCap(s.CAP)//100K
         await mineBlock()
     })
 
     it("Sanity check", async () => {
-        expect(await s.RebasingCapped.getCap()).to.eq(cap)
+        expect(await s.RebasingCapped.getCap()).to.eq(s.CAP)
         expect(await s.RebasingCapped.underlyingAddress()).to.eq(s.USDI.address)
     })
 

@@ -10,12 +10,10 @@ import MerkleTree from "merkletreejs";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import { toNumber } from "../../../util/math"
-import { red } from "bn.js";
+import { max, red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { start } from "repl";
 require("chai").should();
-
-
 describe("Testing RebasingCapped functions", () => {
 
     it("Convert USDC to USDi to deposit", async () => {
@@ -29,21 +27,30 @@ describe("Testing RebasingCapped functions", () => {
         let startBalance = await s.USDI.balanceOf(s.Bob.address)
         expect(startBalance).to.eq(s.Bob_USDC.mul(BN("1e12")))
 
-        //deposit 500 USDC
+
+        //deposit 500 USDi - error - cannot deposit 0 
         const depositAmount = utils.parseEther("500")
         await s.USDI.connect(s.Bob).approve(s.RebasingCapped.address, depositAmount)
         await mineBlock()
-        await s.RebasingCapped.connect(s.Bob).deposit(depositAmount, s.Bob.address)
+        await s.RebasingCapped.connect(s.Bob).depositTo(depositAmount, s.Bob.address)
         await mineBlock()
 
         let balance = await s.RebasingCapped.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.eq(await toNumber(depositAmount), "RebasingCapped balance is correct")
 
-        expect(await s.USDI.balanceOf(s.Bob.address)).to.eq(startBalance.sub(depositAmount))
+
+
 
     })
 
+    it("elapse time and pay interest to rebase", async () => {
+        await fastForward(OneWeek)
+        await s.VaultController.calculateInterest()
+        await mineBlock()
+    })
+
     it("Check things", async () => {
+
 
     })
 
