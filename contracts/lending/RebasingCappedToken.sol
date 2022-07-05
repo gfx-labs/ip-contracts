@@ -13,30 +13,31 @@ contract RebasingCappedToken is Initializable, OwnableUpgradeable,  ERC20Upgrade
   IERC20Metadata public _underlying;
   uint8 private _underlying_decimals;
 
+  uint256 public _cap;
+
   /// @notice initializer for contract
   /// @param name_ name of capped token
   /// @param symbol_ symbol of capped token
   /// @param underlying_ the address of underlying
-  function initialize(string memory name_, string memory symbol_, address underlying_) public override initializer {
-    __OwnableUpgradeable_init();
+  function initialize(string memory name_, string memory symbol_, address underlying_) public initializer {
+    __Ownable_init();
     __ERC20_init(name_,symbol_);
     _underlying = IERC20Metadata(underlying_);
-    _underlying_decimals = _underlying.Decimals();
+    _underlying_decimals = _underlying.decimals();
   }
 
   /// @notice getter for address of the underlying currency, or underlying
   /// @return decimals for of underlying currency
-  function underlyingAddress() public view override returns (address) {
+  function underlyingAddress() public view returns (address) {
     return address(_underlying);
   }
   /// @notice get the Cap
   /// @return cap
-  function getCap() public view override returns (uint256) {
+  function getCap() public view returns (uint256) {
     return _cap;
   }
   /// @notice set the Cap
-  /// @return cap
-  function setCap(uint256 cap_) external override onlyOwner {
+  function setCap(uint256 cap_) external onlyOwner {
     _cap = cap_;
   }
 
@@ -65,21 +66,21 @@ contract RebasingCappedToken is Initializable, OwnableUpgradeable,  ERC20Upgrade
 
   /// @notice get underlying ratio
   /// @return e18_underlying_ratio underlying ratio of coins
-  function underlyingRatio() external view override returns (uint256 e18_underlying_ratio) {
-    e18_underlying_ratio = (_underlying.balanceOf(address(this)) * underlyingScalar()) * 1e18 / _totalSupply);
+  function underlyingRatio() public view returns (uint256 e18_underlying_ratio) {
+    e18_underlying_ratio = (((_underlying.balanceOf(address(this)) * underlyingScalar()) * 1e18) / _underlying.totalSupply());
   }
 
   /// @notice deposit _underlying to mint CappedToken
   /// this is just depositTo but with the second address as _msgSender;
   /// @param underlying_amount amount of underlying to deposit
-  function deposit(uint256 underlying_amount) external override   {
+  function deposit(uint256 underlying_amount) external {
     depositTo(underlying_amount, _msgSender());
   }
 
   /// @notice deposit _underlying to mint CappedToken
   /// @param underlying_amount amount of underlying to deposit
   /// @param target recipient of tokens
-  function depositTo(uint256 underlying_amount, address target) external override   {
+  function depositTo(uint256 underlying_amount, address target) public {
     // scale the decimals to THIS token decimals, or 1e18. see underlyingToCappedAmount
     uint256 amount = underlyingToCappedAmount(underlying_amount);
     require(amount > 0, "Cannot deposit 0");
@@ -98,7 +99,7 @@ contract RebasingCappedToken is Initializable, OwnableUpgradeable,  ERC20Upgrade
   /// caller should obtain 1 underlying for every underlyingScalar() THIS token
   /// this is just withdrawTo but with the second address as _msgSender;
   /// @param underlying_amount amount of underlying to withdraw
-  function withdraw(uint256 underlying_amount) external override   {
+  function withdraw(uint256 underlying_amount) external {
     withdrawTo(underlying_amount, _msgSender());
   }
 
@@ -106,7 +107,7 @@ contract RebasingCappedToken is Initializable, OwnableUpgradeable,  ERC20Upgrade
   /// @notice withdraw underlying by burning THIS token
   /// caller should obtain 1 underlying for every underlyingScalar() THIS token
   /// @param underlying_amount amount of underlying to withdraw
-  function withdrawTo(uint256 underlying_amount, address target) external override   {
+  function withdrawTo(uint256 underlying_amount, address target) public {
     // scale the underlying_amount to the THIS token decimal amount, aka 1e18
     uint256 amount = underlyingToCappedAmount(underlying_amount);
     // check balances all around
