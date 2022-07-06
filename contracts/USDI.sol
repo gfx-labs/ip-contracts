@@ -182,7 +182,21 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @notice withdraw USDC by burning USDi
   /// caller should obtain 1 USDC for every 1e12 USDi
   /// this function is effectively just withdraw, but we calculate the amount for the sender
-  function withdrawAll() external override paysInterest whenNotPaused {
+  function withdrawAll() external override {
+    _withdrawAll(_msgSender());
+  }
+
+  /// @notice withdraw USDC by burning USDi
+  /// @param target should obtain 1 USDC for every 1e12 USDi burned from caller
+  /// this function is effectively just withdraw, but we calculate the amount for the target
+  function withdrawAllTo(address target) external override {
+    _withdrawAll(target);
+  }
+
+  /// @notice business logic for withdrawAll
+  /// @param target should obtain 1 USDC for every 1e12 USDi burned from caller
+  /// this function is effectively just withdraw, but we calculate the amount for the target
+  function _withdrawAll(address target) internal paysInterest whenNotPaused {
     uint256 reserve = _reserve.balanceOf(address(this));
     require(reserve != 0, "Reserve is empty");
     uint256 usdc_amount = (this.balanceOf(_msgSender())) / 1e12;
@@ -191,14 +205,14 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
       usdc_amount = reserve;
     }
     uint256 amount = usdc_amount * 1e12;
-    require(_reserve.transfer(_msgSender(), usdc_amount), "transfer failed");
+    require(_reserve.transfer(target, usdc_amount), "transfer failed");
     // see comments in the withdraw function for an explaination of this math
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - (amount * _gonsPerFragment);
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - (amount * _gonsPerFragment);
     // emit both a Withdraw and transfer event
-    emit Transfer(_msgSender(), address(0), amount);
-    emit Withdraw(_msgSender(), amount);
+    emit Transfer(target, address(0), amount);
+    emit Withdraw(target, amount);
   }
 
   /// @notice admin function to mint USDi

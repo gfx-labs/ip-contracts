@@ -343,7 +343,7 @@ contract VaultController is
   ) external override {
     uint192 usdiAmount = usdc_amount * 1e12;
     _borrowUSDi(id, usdiAmount, address(this));
-    _usdi.withdrawTo(usdc_amount, target);
+    _usdi.withdrawAllTo(target);
   }
 
   /// @notice repay a vault's USDi loan. anyone may repay
