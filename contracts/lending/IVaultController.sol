@@ -62,6 +62,7 @@ interface IVaultController is VaultControllerEvents {
     address[] tokenAddresses;
     uint256[] tokenBalances;
   }
+
   function vaultSummaries(uint96 start, uint96 stop) external view returns (VaultSummary[] memory);
 
   // interest calculations
@@ -77,6 +78,18 @@ interface IVaultController is VaultControllerEvents {
   ) external returns (uint256);
 
   function borrowUsdi(uint96 id, uint192 amount) external;
+
+  function borrowUSDIto(
+    uint96 id,
+    uint192 amount,
+    address target
+  ) external;
+
+  function borrowUSDCto(
+    uint96 id,
+    uint192 usdc_amount,
+    address target
+  ) external;
 
   function repayUSDi(uint96 id, uint192 amount) external;
 

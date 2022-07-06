@@ -278,10 +278,35 @@ contract VaultController is
   }
 
   /// @notice borrow USDi from a vault. only vault minter may borrow from their vault
-  /// @param id vault to borrow from
+  /// @param id vault to borrow against
   /// @param amount amount of USDi to borrow
+  function borrowUsdi(uint96 id, uint192 amount) external override {
+    _borrowUSDi(id, amount, _msgSender());
+  }
+
+  /// @notice borrow USDi from a vault and send the USDi to a specific address
+  /// @notice Only vault minter may borrow from their vault
+  /// @param id vault to borrow against
+  /// @param amount amount of USDi to borrow
+  /// @param target address to receive borrowed USDi
+  function borrowUSDIto(
+    uint96 id,
+    uint192 amount,
+    address target
+  ) external override {
+    _borrowUSDi(id, amount, target);
+  }
+
+  /// @notice business logic to perform the USDi loan
+  /// @param id vault to borrow against
+  /// @param amount amount of USDi to borrow
+  /// @param target address to receive borrowed USDi
   /// @dev pays interest
-  function borrowUsdi(uint96 id, uint192 amount) external override paysInterest whenNotPaused {
+  function _borrowUSDi(
+    uint96 id,
+    uint192 amount,
+    address target
+  ) internal paysInterest whenNotPaused {
     // grab the vault by id if part of our system. revert if not
     IVault vault = getVault(id);
     // only the minter of the vault may borrow from their vault
@@ -301,9 +326,24 @@ contract VaultController is
     // the LTV must be above the newly calculated usdi_liability, else revert
     require(total_liquidity_value >= usdi_liability, "vault insolvent");
     // now send usdi to the minter, equal to the amount they are owed
-    _usdi.vaultControllerMint(_msgSender(), amount);
+    _usdi.vaultControllerMint(target, amount);
     // emit the event
     emit BorrowUSDi(id, address(vault), amount);
+  }
+
+  /// @notice borrow USDC directly from reserve
+  /// @notice liability is still in USDi, and USDi must be repaid
+  /// @param id vault to borrow against
+  /// @param usdc_amount amount of USDC to borrow
+  /// @param target address to receive borrowed USDC
+  function borrowUSDCto(
+    uint96 id,
+    uint192 usdc_amount,
+    address target
+  ) external override {
+    uint192 usdiAmount = usdc_amount * 1e12;
+    _borrowUSDi(id, usdiAmount, address(this));
+    _usdi.withdrawTo(usdc_amount, target);
   }
 
   /// @notice repay a vault's USDi loan. anyone may repay

@@ -116,29 +116,50 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// we use the variable _gonsPerFragment in order to convert between the two
   /// try dimensional analysis when doing the math in order to verify units are correct
   /// @param usdc_amount amount of USDC to deposit
-  function deposit(uint256 usdc_amount) external override paysInterest whenNotPaused {
+  function deposit(uint256 usdc_amount) external override {
+    _deposit(usdc_amount, _msgSender());
+  }
+
+  function depositTo(uint256 usdc_amount, address target) external override {
+    _deposit(usdc_amount, target);
+  }
+
+  function _deposit(uint256 usdc_amount, address target) internal paysInterest whenNotPaused {
     // scale the usdc_amount to the usdi decimal amount, aka 1e18. since usdc is 6 decimals, we multiply by 1e12
     uint256 amount = usdc_amount * 1e12;
     require(amount > 0, "Cannot deposit 0");
     // check allowance and ensure transfer success
-    uint256 allowance = _reserve.allowance(_msgSender(), address(this));
+    uint256 allowance = _reserve.allowance(target, address(this));
     require(allowance >= usdc_amount, "Insufficient Allowance");
-    require(_reserve.transferFrom(_msgSender(), address(this), usdc_amount), "transfer failed");
+    require(_reserve.transferFrom(target, address(this), usdc_amount), "transfer failed");
     // the gonbalances of the sender is in gons, therefore we must multiply the deposit amount, which is in fragments, by gonsperfragment
-    _gonBalances[_msgSender()] = _gonBalances[_msgSender()] + amount * _gonsPerFragment;
+    _gonBalances[target] = _gonBalances[target] + amount * _gonsPerFragment;
     // total supply is in fragments, and so we add amount
     _totalSupply = _totalSupply + amount;
     // and totalgons of course is in gons, and so we multiply amount by gonsperfragment to get the amount of gons we must add to totalGons
     _totalGons = _totalGons + amount * _gonsPerFragment;
 
-    emit Transfer(address(0), _msgSender(), amount);
-    emit Deposit(_msgSender(), amount);
+    emit Transfer(address(0), target, amount);
+    emit Deposit(target, amount);
   }
 
   /// @notice withdraw USDC by burning USDi
   /// caller should obtain 1 USDC for every 1e12 USDi
   /// @param usdc_amount amount of USDC to withdraw
-  function withdraw(uint256 usdc_amount) external override paysInterest whenNotPaused {
+  function withdraw(uint256 usdc_amount) external override {
+    _withdraw(usdc_amount, _msgSender());
+  }
+
+  ///@notice withdraw USDC to a specific address by burning USDi from the caller
+  /// target should obtain 1 USDC for every 1e12 USDi burned from the caller
+  /// @param usdc_amount amount of USDC to withdraw
+  /// @param target address to receive the USDC
+  function withdrawTo(uint256 usdc_amount, address target) external override {
+    _withdraw(usdc_amount, target);
+  }
+
+  ///@notice business logic to withdraw USDC and burn USDi from the caller
+  function _withdraw(uint256 usdc_amount, address target) internal paysInterest whenNotPaused {
     // scale the usdc_amount to the USDi decimal amount, aka 1e18
     uint256 amount = usdc_amount * 1e12;
     // check balances all around
@@ -147,15 +168,15 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     uint256 balance = _reserve.balanceOf(address(this));
     require(balance >= usdc_amount, "Insufficient Reserve in Bank");
     // ensure transfer success
-    require(_reserve.transfer(_msgSender(), usdc_amount), "transfer failed");
+    require(_reserve.transfer(target, usdc_amount), "transfer failed");
     // modify the gonbalances of the sender, subtracting the amount of gons, therefore amount*gonsperfragment
     _gonBalances[_msgSender()] = _gonBalances[_msgSender()] - amount * _gonsPerFragment;
     // modify totalSupply and totalGons
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - amount * _gonsPerFragment;
     // emit both a Withdraw and transfer event
-    emit Transfer(_msgSender(), address(0), amount);
-    emit Withdraw(_msgSender(), amount);
+    emit Transfer(target, address(0), amount);
+    emit Withdraw(target, amount);
   }
 
   /// @notice withdraw USDC by burning USDi

@@ -30,7 +30,11 @@ interface IUSDI is IERC20Metadata, USDIEvents {
   // business
   function deposit(uint256 usdc_amount) external;
 
+  function depositTo(uint256 usdc_amount, address target) external;
+
   function withdraw(uint256 usdc_amount) external;
+
+  function withdrawTo(uint256 usdc_amount, address target) external;
 
   function withdrawAll() external;
 
