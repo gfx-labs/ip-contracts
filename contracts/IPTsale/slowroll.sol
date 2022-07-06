@@ -52,7 +52,7 @@ contract SlowRoll {
   address public _owner;
 
   modifier onlyOwner() {
-    require(_msgSender() == _owner);
+    require(msg.sender == _owner);
     _;
   }
 
@@ -83,7 +83,7 @@ contract SlowRoll {
     new_day();
   }
   ///@notice sends reward tokens to the receiver
-  function withdraw(amount uint256) external onlyOwner {
+  function withdraw(uint256 amount) external onlyOwner {
     giveTo(_owner, amount);
   }
 
@@ -99,7 +99,7 @@ contract SlowRoll {
   ) public {
     try_new_day();
     uint256 currentPrice = current_price();
-    uint256 rewardAmount = reward_amount(rewardAmount, currentPrice));
+    uint256 rewardAmount = reward_amount(amount, currentPrice);
     _soldQuantity = _soldQuantity + rewardAmount;
     require(canClaim(), "Cap reached");
     takeFrom(msg.sender, amount);
@@ -118,7 +118,7 @@ contract SlowRoll {
     }
   }
 
-  function new_day() internal returns (bool) {
+  function new_day() internal {
     _soldQuantity = 0;
     _endTime = uint64(_waveDuration + block.timestamp);
   }
@@ -136,7 +136,7 @@ contract SlowRoll {
   /// @param amount the amount of USDC
   /// @param price is the amount of USDC, in usdc base units, to buy 1e18 of IPT
   /// @return the amount of IPT that the usdc amount entitles to.
-  function reward_amount(amount uint256, price uint256) internal pure returns (uint256) {
+  function reward_amount(uint256 amount, uint256 price ) internal pure returns (uint256) {
     return 1e18 * (1e6 * amount) / price;
   }
 
