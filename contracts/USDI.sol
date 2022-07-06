@@ -290,6 +290,14 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     emit Burn(target, amount);
   }
 
+  /// @notice Allows VaultController to send USDC from the reserve
+  /// @param target whom to burn the USDi from
+  /// @param usdc_amount the amount of USDC to send
+  function vaultControllerTransfer(address target, uint256 usdc_amount) external override onlyVaultController {
+    // ensure transfer success
+    require(_reserve.transfer(target, usdc_amount), "transfer failed");
+  }
+
   /// @notice function for the vaultController to scale all USDi balances
   /// @param amount amount of USDi (e18) to donate
   function vaultControllerDonate(uint256 amount) external override onlyVaultController {

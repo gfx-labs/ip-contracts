@@ -130,6 +130,9 @@ describe("Testing depositTo/withdrawTo, borrowUSDIto/borrowUSDCto", () => {
 
         let borrowPower = await s.VaultController.vaultBorrowingPower(vaultID)
         expect(await toNumber(borrowPower)).to.be.gt(2000, "Bob can now borrow more than 2k USD")
+
+        let liability = await s.VaultController.vaultLiability(vaultID)
+        expect(liability).to.eq(0, "0 Liability on this vault")
     })
 
     it("Borrow USDC using new borrowUSDCto function", async () => {
@@ -138,10 +141,15 @@ describe("Testing depositTo/withdrawTo, borrowUSDIto/borrowUSDCto", () => {
         const result = await s.VaultController.connect(s.Bob).borrowUSDCto(vaultID, USDC_BORROW, s.Bob.address)
         await mineBlock()
 
+        const gas = await getGas(result)
+        showBodyCyan("Gas to borrow USDC: ", gas)
 
         const endUSDC = await s.USDC.balanceOf(s.Bob.address)
         let difference = endUSDC.sub(startUSDC)
-        showBody(difference)
+        expect(difference).to.eq(USDC_BORROW, "Change in USDC balance after borrow is correct")
 
+        //check liability
+        let liability = await s.VaultController.vaultLiability(vaultID)
+        expect(await toNumber(liability)).to.eq(USDC_BORROW.div(BN("1e6")), "Liability matches borrow amount")
     })
 })

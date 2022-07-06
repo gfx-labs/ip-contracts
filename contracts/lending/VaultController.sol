@@ -325,7 +325,7 @@ contract VaultController is
     uint256 total_liquidity_value = get_vault_borrowing_power(vault);
     // the LTV must be above the newly calculated usdi_liability, else revert
     require(total_liquidity_value >= usdi_liability, "vault insolvent");
-    // now send usdi to the minter, equal to the amount they are owed
+    // now send usdi to the target, equal to the amount they are owed
     _usdi.vaultControllerMint(target, amount);
     // emit the event
     emit BorrowUSDi(id, address(vault), amount);
@@ -340,10 +340,31 @@ contract VaultController is
     uint96 id,
     uint192 usdc_amount,
     address target
-  ) external override {
-    uint192 usdiAmount = usdc_amount * 1e12;
-    _borrowUSDi(id, usdiAmount, address(this));
-    _usdi.withdrawAllTo(target);
+  ) external override paysInterest whenNotPaused {
+    uint256 amount = usdc_amount * 1e12;
+
+    // grab the vault by id if part of our system. revert if not
+    IVault vault = getVault(id);
+    // only the minter of the vault may borrow from their vault
+    require(_msgSender() == vault.minter(), "sender not minter");
+    // the base amount is the amount of USDi they wish to borrow divided by the interest factor
+    uint192 base_amount = safeu192(uint256(amount * expScale) / uint256(_interest.factor));
+    // base_liability should contain the vaults new liability, in terms of base units
+    // true indicated that we are adding to the liability
+    uint256 base_liability = vault.modifyLiability(true, base_amount);
+    // increase the total base liability by the base_amount
+    // the same amount we added to the vaults liability
+    _totalBaseLiability = _totalBaseLiability + safeu192(base_amount);
+    // now take the vaults total base liability and multiply it by the interest factor
+    uint256 usdi_liability = truncate(uint256(_interest.factor) * base_liability);
+    // now get the LTV of the vault, aka their borrowing power, in usdi
+    uint256 total_liquidity_value = get_vault_borrowing_power(vault);
+    // the LTV must be above the newly calculated usdi_liability, else revert
+    require(total_liquidity_value >= usdi_liability, "vault insolvent");
+    // emit the event
+    emit BorrowUSDi(id, address(vault), amount);
+    //send USDC to the target from reserve instead of mint
+    _usdi.vaultControllerTransfer(target, usdc_amount);
   }
 
   /// @notice repay a vault's USDi loan. anyone may repay

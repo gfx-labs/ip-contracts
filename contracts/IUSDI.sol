@@ -67,5 +67,7 @@ interface IUSDI is IERC20Metadata, USDIEvents {
 
   function vaultControllerMint(address target, uint256 amount) external;
 
+  function vaultControllerTransfer(address target, uint256 usdc_amount) external;
+
   function vaultControllerDonate(uint256 amount) external;
 }
