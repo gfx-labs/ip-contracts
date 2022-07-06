@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "hardhat/console.sol";
+
 /// @title interfact to interact with ERC20 tokens
 /// @author elee
 
@@ -32,22 +34,22 @@ interface IERC20 {
 contract SlowRoll {
 
   /// user defined variables
-  uint256 _maxQuantity; // max quantity available in wave
-  uint64 _startPrice; // start price
-  uint64 _maxPrice; // max price
-  uint64 _waveDuration; // duration, in seconds, of the next wave
+  uint256 public _maxQuantity; // max quantity available in wave
+  uint64 public _startPrice; // start price
+  uint64 public _maxPrice; // max price
+  uint64 public _waveDuration; // duration, in seconds, of the next wave
   /// end user defined variables
 
   /// contract controlled values
-  uint64 _endTime; // start time of the wave + waveDuration
-  uint256 _soldQuantity; // amount currently sold in wave
+  uint64 public _endTime; // start time of the wave + waveDuration
+  uint256 public _soldQuantity; // amount currently sold in wave
   /// end contract controlled values
 
 
   // the token used to claim points, USDC
   IERC20 public _pointsToken = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // usdc
   // the token to be rewarded, IPT
-  IERC20 public _rewardToken = IERC20(0xd909C5862Cdb164aDB949D92622082f0092eFC3d); // IPT
+  IERC20 public immutable _rewardToken; //= IERC20(0xd909C5862Cdb164aDB949D92622082f0092eFC3d); // IPT
   // light ownership
   address public _owner;
 
@@ -56,12 +58,14 @@ contract SlowRoll {
     _;
   }
 
-  constructor() {
+  constructor(address _ipt) {
     _owner = msg.sender; // creator of contracto
     _maxQuantity = 500_000 * 1e18; // 500_000 IPT, in wei
-    _startPrice = 25_000; // 25 cents
-    _maxPrice = 50_000; // 50 cents
+    _startPrice = 250_000; // 25 cents
+    _maxPrice = 500_000; // 50 cents
     _waveDuration = 86400; // one day in seconds
+
+    _rewardToken = IERC20(_ipt);
   }
 
   function setMaxQuantity(uint256 maxQuantity_) external onlyOwner {
@@ -99,7 +103,9 @@ contract SlowRoll {
   ) public {
     try_new_day();
     uint256 currentPrice = current_price();
+    console.log("CurrentPrice: ", currentPrice);
     uint256 rewardAmount = reward_amount(amount, currentPrice);
+    console.log("rewardAmount", rewardAmount);
     _soldQuantity = _soldQuantity + rewardAmount;
     require(canClaim(), "Cap reached");
     takeFrom(msg.sender, amount);
@@ -137,7 +143,7 @@ contract SlowRoll {
   /// @param price is the amount of USDC, in usdc base units, to buy 1e18 of IPT
   /// @return the amount of IPT that the usdc amount entitles to.
   function reward_amount(uint256 amount, uint256 price ) internal pure returns (uint256) {
-    return 1e18 * (1e6 * amount) / price;
+    return 1e18 * amount / price;
   }
 
   /// @notice function which transfer the point token
