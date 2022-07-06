@@ -152,4 +152,14 @@ describe("Testing depositTo/withdrawTo, borrowUSDIto/borrowUSDCto", () => {
         let liability = await s.VaultController.vaultLiability(vaultID)
         expect(await toNumber(liability)).to.eq(USDC_BORROW.div(BN("1e6")), "Liability matches borrow amount")
     })
+
+    it("Try to borrow USDC when reserve is insufficient", async () => {
+
+        await s.USDI.connect(s.Dave).withdrawAll()
+        await mineBlock()
+
+        expect(await s.USDC.balanceOf(s.USDI.address)).to.eq(0, "Reserve is empty")
+
+        await expect( s.VaultController.connect(s.Bob).borrowUSDCto(vaultID, USDC_BORROW, s.Bob.address)).to.be.revertedWith('ERC20: transfer amount exceeds balance')
+    })
 })
