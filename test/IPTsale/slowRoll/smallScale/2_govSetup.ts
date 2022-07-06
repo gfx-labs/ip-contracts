@@ -52,7 +52,6 @@ const deployGovAndToken = async () => {
     const owner_ = futureAddressFour
     const TokenImplementation_ = s.InterestProtocolTokenDelegate.address
     const totalSupply_ = BN("1e26")
-
     await mineBlock()
     s.InterestProtocolToken = await DeployContract(
         new InterestProtocolToken__factory(s.Frank),
@@ -63,25 +62,23 @@ const deployGovAndToken = async () => {
         totalSupply_
     )
     await mineBlock()
+    
     let owner = await s.InterestProtocolToken.owner()
     //showBody("OWNER: ", owner)
     s.GovernorCharlieDelegate = await DeployContract(new GovernorCharlieDelegate__factory(s.Frank), s.Frank)
     await mineBlock()
+    showBody("Deployed Gov charlie")
+   
+
     s.GovernorCharlieDelegator = await DeployContract(
         new GovernorCharlieDelegator__factory(s.Frank),
         s.Frank,
         ipt_,  //ipt
-        Govimplementation_,
-        votingPeriod_,
-        votingDelay_,
-        proposalThreshold_,
-        proposalTimelockDelay_,
-        quorumVotes_,
-        emergencyQuorumVotes_,
-        emergencyVotingPeriod_,
-        emergencyTimelockDelay_
+        Govimplementation_
     )
     await mineBlock()
+    showBody("Deployed delegator")
+
     s.GOV = GovernorCharlieDelegate__factory.connect(s.GovernorCharlieDelegator.address, s.Frank);
     s.IPT = InterestProtocolTokenDelegate__factory.connect(s.InterestProtocolToken.address, s.Frank);
     let govToken = await s.GOV.ipt()
