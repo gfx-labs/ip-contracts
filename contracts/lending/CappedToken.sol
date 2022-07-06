@@ -35,7 +35,7 @@ contract CappedToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   }
 
   /// @notice 18 decimal erc20 spec should have been written into the fucking standard
-  function decimals() public view override returns (uint8) {
+  function decimals() public pure override returns (uint8) {
     return 18;
   }
 
@@ -160,7 +160,7 @@ contract CappedToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   }
 
   //function withdraw - already implemented
-  
+
   function maxRedeem(address receiver) external view returns (uint256) {
     return cappedAmountToUnderlying(maxWithdraw(receiver));
   }
