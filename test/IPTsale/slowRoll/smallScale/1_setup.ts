@@ -101,4 +101,13 @@ describe("Token Setup", () => {
         expect(balance).to.eq(s.Bob_USDC)
 
     });
+
+    it("Steal money for the rest of the accounts", async () => {
+        for (let i = 10; i < s.accounts.length; i++) {
+            await expect(
+                stealMoney(usdc_minter, s.accounts[i].address, s.usdcAddress, s.baseUSDC)
+            ).to.not.be.reverted
+            await mineBlock()
+        }
+    })
 });

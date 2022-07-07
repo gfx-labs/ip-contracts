@@ -16,6 +16,7 @@ import {
   getArgs,
   truncate,
   toNumber,
+  getGas
 } from "../../../../util/math"
 import { currentBlock, reset } from "../../../../util/block"
 import { DeployContract } from "../../../../util/deploy"
@@ -25,6 +26,7 @@ import {
   SlowRoll,
   SlowRoll__factory
 } from "../../../../typechain-types"
+import { randomBytes } from "crypto"
 
 
 
@@ -67,34 +69,137 @@ describe("Deploy wave - OVERSATURATION", () => {
   })
 })
 
+/**
+ * Daily price resets to min each day
+ * if max price is reached, all sales will be at that price for the day until cap is reached
+ * 
+ * If admin controls are allowed, we could potentially limit the participants to a whitelist for an arbitrary time or until we switch it off
+ * 
+ */
+
 describe("Wave 1 claims", () => {
   const claimAmount1 = BN("500e6")//500 USDC
-  it("Dave claims some points", async () => {
 
-    await s.USDC.connect(s.Dave).approve(SlowRoll.address, claimAmount1)
-    await SlowRoll.connect(s.Dave).getPoints(claimAmount1)
+
+  const testMaxQ = BN("10000e18")//10k IPT
+  const testStartPrice = BN("100000")//0.10 USDC
+  const testMaxPrice = BN("250000")//0.25 USDC
+  const testWaveDuration = OneDay - 1
+
+  it("Check starting values", async () => {
+
+    let startIPT = await s.IPT.balanceOf(s.Dave.address)
+    expect(startIPT).to.eq(0, "Dave holds 0 IPT at the start")
+
+    startIPT = await s.IPT.balanceOf(SlowRoll.address)
+    expect(startIPT).to.eq(IPTamount, "Starting IPT balance is correct")
+
+    let price = await SlowRoll.getCurrentPrice()
+    expect(price).to.eq(.25 * BN("1e6").toNumber(), "Start price is correct")
+    //expect(price).to.be.lt(await SlowRoll.getCurrentPrice(), "Price has increased")
+
+
+  })
+
+  it("Admin adjusts params", async () => {
+    await SlowRoll.connect(s.Frank).setMaxQuantity(testMaxQ)
+    await SlowRoll.connect(s.Frank).setStartPrice(testStartPrice)
+    await SlowRoll.connect(s.Frank).setMaxPrice(testMaxPrice)
+    await SlowRoll.connect(s.Frank).setWaveDuration(testWaveDuration)
     await mineBlock()
 
-  })
+    expect(await SlowRoll._maxQuantity()).to.eq(testMaxQ, "Max Quantity has been set correctly")
+    expect(await SlowRoll._startPrice()).to.eq(testStartPrice, "Start price has been set correctly")
+    expect(await SlowRoll._maxPrice()).to.eq(testMaxPrice, "Max price has been set correctly")
+    expect(await SlowRoll._waveDuration()).to.eq(testWaveDuration, "Wave duration has been set correctly")
 
-
-
-
-
-  it("Dave tries to getPoints after you having already claimed maximum", async () => {
-
-  })
-
-  it("Bob claims some, but less than maximum", async () => {
 
   })
 
-  it("try to make a claim that would exceed cap", async () => {
+  it("Day 1 claims", async () => {
+    await s.USDC.connect(s.Andy).approve(SlowRoll.address, claimAmount1)
+    const result = await SlowRoll.connect(s.Andy).getPoints(claimAmount1)
+    await mineBlock()
+    const gas = await getGas(result)
+    showBodyCyan("Gas to getPoints: ", gas)
+
+    await s.USDC.connect(s.Bob).approve(SlowRoll.address, claimAmount1)
+    await SlowRoll.connect(s.Bob).getPoints(claimAmount1)
+    await mineBlock()
+
+    await s.USDC.connect(s.Carol).approve(SlowRoll.address, claimAmount1)
+    await expect(SlowRoll.connect(s.Carol).getPoints(claimAmount1)).to.be.revertedWith("Cap reached")
+  })
+
+  it("Day 2 claims", async () => {
+
+    await fastForward(OneDay)
+    await mineBlock()
+
+    //Carol can now claim, daily cap should reset
+    await s.USDC.connect(s.Carol).approve(SlowRoll.address, claimAmount1)
+    await SlowRoll.connect(s.Carol).getPoints(claimAmount1)
+    await mineBlock()
+    const remaining = await (await SlowRoll._maxQuantity()).sub(await SlowRoll._soldQuantity())
+    expect(remaining).to.eq(testMaxQ.div(2), "Carol claimed half of the daily allowance of IPT")
 
   })
 
-  it("try to claim the wrong wave", async () => {
+  it("Claim up to price maximum", async () => {
 
+    await fastForward(OneDay)
+    await mineBlock()
+
+    await SlowRoll.connect(s.Frank).forceNewDay()
+    await mineBlock()
+    expect(await SlowRoll.getCurrentPrice()).to.eq(testStartPrice, "Price reset to min after day reset")
+
+    await s.USDC.connect(s.accounts[10]).approve(SlowRoll.address, s.baseUSDC)
+    await SlowRoll.connect(s.accounts[10]).getPoints(s.baseUSDC)
+    await mineBlock()
+
+    const remaining = await (await SlowRoll._maxQuantity()).sub(await SlowRoll._soldQuantity())
+    expect(remaining).to.eq(0, "1k USDC is enough to reach daily maximum")
+
+    expect(await SlowRoll.getCurrentPrice()).to.eq(testMaxPrice, "1k USDC moves price from min to max")
+  })
+
+  it("Fast forward to next day", async () => {
+    await fastForward(OneDay)
+    await mineBlock()
+  })
+
+  it("Admin adjusts the prices, more claims on the same day", async () => {
+
+    //small claim in the begining of the day
+    const smallClaimAmount = BN("200e6")//200 USDC
+    await s.USDC.connect(s.accounts[12]).approve(SlowRoll.address, smallClaimAmount)
+    await SlowRoll.connect(s.accounts[12]).getPoints(smallClaimAmount)
+    await mineBlock()
+
+    const preAdjustRemaining = await (await SlowRoll._maxQuantity()).sub(await SlowRoll._soldQuantity())
+    const preAdjustPrice = await SlowRoll.getCurrentPrice()
+
+    //admin adjusts prices 
+    await SlowRoll.connect(s.Frank).setMaxPrice(testMaxPrice.add(testMaxPrice.sub(testStartPrice)))
+    await mineBlock()
+    await SlowRoll.connect(s.Frank).setStartPrice(testMaxPrice)
+    await mineBlock()
+
+    const newRemaining = await (await SlowRoll._maxQuantity()).sub(await SlowRoll._soldQuantity())
+    const newPrice = await SlowRoll.getCurrentPrice()
+
+    expect(newPrice).to.be.gt(preAdjustPrice, "Adjusting the price values made the price go up")
+    expect(newRemaining).to.be.eq(preAdjustRemaining, "Adjusting the price did not change the cap")
+
+    await s.USDC.connect(s.accounts[11]).approve(SlowRoll.address, s.baseUSDC)
+    await SlowRoll.connect(s.accounts[11]).getPoints(s.baseUSDC)
+    await mineBlock()
+
+    const remaining = await (await SlowRoll._maxQuantity()).sub(await SlowRoll._soldQuantity())
+    expect(remaining).to.gt(0, "1k USDC is no longer enough to reach daily maximum")
+
+    expect(await SlowRoll.getCurrentPrice()).to.be.lt(await SlowRoll._maxPrice(), "More USDC is needed to reach daily max price as less IPT are sold per USDC")
   })
 
   it("try to claim more than key amount", async () => {

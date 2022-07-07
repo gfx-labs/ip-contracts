@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "hardhat/console.sol";
-
 /// @title interfact to interact with ERC20 tokens
 /// @author elee
 
@@ -60,7 +58,7 @@ contract SlowRoll {
 
   constructor(address _ipt) {
     _owner = msg.sender; // creator of contracto
-    _maxQuantity = 500_000 * 1e18; // 500_000 IPT, in wei
+    _maxQuantity = 500_000 * 1e18; // 500_000 IPT, in wei - max IPT sold per day 
     _startPrice = 250_000; // 25 cents
     _maxPrice = 500_000; // 50 cents
     _waveDuration = 86400; // one day in seconds
@@ -103,9 +101,7 @@ contract SlowRoll {
   ) public {
     try_new_day();
     uint256 currentPrice = current_price();
-    console.log("CurrentPrice: ", currentPrice);
     uint256 rewardAmount = reward_amount(amount, currentPrice);
-    console.log("rewardAmount", rewardAmount);
     _soldQuantity = _soldQuantity + rewardAmount;
     require(canClaim(), "Cap reached");
     takeFrom(msg.sender, amount);
