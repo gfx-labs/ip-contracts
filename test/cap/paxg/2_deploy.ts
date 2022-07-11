@@ -40,9 +40,9 @@ describe("Check Interest Protocol contracts", () => {
   });
 });
 
-describe("Deploy cappedToken contract", () => {
-    it("Deploy cappedToken", async () => {
-        s.CappedToken = await DeployContractWithProxy(
+describe("Deploy FeeCapped contract", () => {
+    it("Deploy FeeCapped", async () => {
+        s.FeeCapped = await DeployContractWithProxy(
             new CappedFeeOnTransferToken__factory(s.Frank),
             s.Frank,
             s.ProxyAdmin,
@@ -51,17 +51,17 @@ describe("Deploy cappedToken contract", () => {
             s.PAXG_ADDR
         )
         await mineBlock();
-        await s.CappedToken.deployed()
+        await s.FeeCapped.deployed()
     })
 
     it("Set Cap", async () => {
-        await s.CappedToken.connect(s.Frank).setCap(s.PAXG_CAP)//100K USDC
+        await s.FeeCapped.connect(s.Frank).setCap(s.PAXG_CAP)//100K USDC
         await mineBlock()
     })
 
     it("Sanity check", async () => {
-        expect(await s.CappedToken.getCap()).to.eq(s.PAXG_CAP)
-        expect(await s.CappedToken.underlyingAddress()).to.eq(s.PAXG.address)
+        expect(await s.FeeCapped.getCap()).to.eq(s.PAXG_CAP)
+        expect(await s.FeeCapped.underlyingAddress()).to.eq(s.PAXG.address)
     })
 
    

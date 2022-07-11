@@ -72,7 +72,7 @@ contract CappedToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   function deposit(uint256 underlying_amount, address target) public {
     // scale the decimals to THIS token decimals, or 1e18. see underlyingToCappedAmount
     uint256 amount = underlyingToCappedAmount(underlying_amount);
-    require(amount > 0, "Cannot deposit 0 rebase");
+    require(amount > 0, "Cannot deposit 0");
     // check cap
     checkCap(amount);
     // check allowance and ensure transfer success

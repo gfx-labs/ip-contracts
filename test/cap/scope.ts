@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { USDI, IERC20, IVOTE, CappedToken, RebasingCapped, VaultController, OracleMaster, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../typechain-types";
+import { USDI, IERC20, IVOTE, CappedToken, RebasingCapped, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
@@ -28,6 +28,7 @@ export class TestScope extends MainnetAddresses {
 
     CappedToken!: CappedToken;
     RebasingCapped!: RebasingCapped;
+    FeeCapped!: CappedFeeOnTransferToken;
     CAP = BN("100000e18")//100k
 
     owner!: String

@@ -17,6 +17,15 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
   ///         not the underlying!!!!!!!!!
   uint256 public _cap;
 
+  /// @notice need to prevent reentrancy on deposit as calcs are done after transfer
+  bool internal locked;
+  modifier nonReentrant() {
+    require(!locked, "locked");
+    locked = true;
+    _;
+    locked = false;
+  }
+
   /// @notice initializer for contract
   /// @param name_ name of capped token
   /// @param symbol_ symbol of capped token
@@ -30,6 +39,8 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
     __ERC20_init(name_, symbol_);
     _underlying = IERC20Metadata(underlying_);
     _underlying_decimals = _underlying.decimals();
+
+    locked = false;
   }
 
   /// @notice 18 decimal erc20 spec should have been written into the fucking standard
@@ -67,23 +78,30 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
   }
 
   /// @notice deposit _underlying to mint CappedToken
+  /// @notice nonReentrant modifier needed as calculations are done after transfer
   /// @param underlying_amount amount of underlying to deposit
   /// @param target recipient of tokens
-  function deposit(uint256 underlying_amount, address target) public {
+  function deposit(uint256 underlying_amount, address target) public nonReentrant {
+    
+    // check how many underlying tokens we have before transfer
     uint256 startingUnderlying = _underlying.balanceOf(address(this));
+
     // scale the decimals to THIS token decimals, or 1e18. see underlyingToCappedAmount
     uint256 amount = underlyingToCappedAmount(underlying_amount);
-    require(amount > 0, "Cannot deposit 0 rebase");
-    // check cap
-    checkCap(amount);
+    require(amount > 0, "Cannot deposit 0");
+    
     // check allowance and ensure transfer success
     uint256 allowance = _underlying.allowance(_msgSender(), address(this));
     require(allowance >= underlying_amount, "Insufficient Allowance");
-    
+
     // transfer underlying from SENDER to THIS
     require(_underlying.transferFrom(_msgSender(), address(this), underlying_amount), "transfer failed");
 
+    // determine exact amount received to account for fee-on-transfer
     uint256 amountReceived = _underlying.balanceOf(address(this)) - startingUnderlying;
+
+    // check cap against amountReceived
+    checkCap(amountReceived);
 
     // mint the scaled amount of tokens to the TARGET
     ERC20Upgradeable._mint(target, amountReceived);
