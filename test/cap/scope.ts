@@ -58,10 +58,19 @@ export class TestScope extends MainnetAddresses {
     Eric!: SignerWithAddress   // eric only holds ETH and generally does not use IP unless a clean slate is needed
     Gus!: SignerWithAddress    // gus is a wBTC holder. He wishes to deposit wBTC and borrow USDI
 
+    accounts!:SignerWithAddress[]
+
     BobVault!: IVault
     BobVaultID!: BigNumber
     CarolVault!: IVault
     CaroLVaultID!: BigNumber
+
+    PAXG_ADDR = "0x45804880De22913dAFE09f4980848ECE6EcbAf78"
+    PAXG_WHALE = "0xFfec0067F5a79CFf07527f63D83dD5462cCf8BA4"
+    PAXG_AMOUNT = BN("10e18")//10 PAXG
+    PAXG_CAP = BN("300e18")//300 PAXG or ~500k USD
+    PAXG!: IERC20
+
 
     Andy_USDC = BN("1e8")
     Bob_USDC = BN("1000e6")
