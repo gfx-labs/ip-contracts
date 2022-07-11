@@ -11,31 +11,7 @@ import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import {toNumber}from "../../../util/math"
 import {
-  AnchoredViewRelay,
-  AnchoredViewRelay__factory,
-  ChainlinkOracleRelay,
-  ChainlinkOracleRelay__factory,
-  CurveMaster,
-  CurveMaster__factory,
-  IERC20,
-  IERC20__factory,
-  IOracleRelay,
-  OracleMaster,
-  OracleMaster__factory,
-  ProxyAdmin,
-  ProxyAdmin__factory,
-  TransparentUpgradeableProxy__factory,
-  ThreeLines0_100,
-  ThreeLines0_100__factory,
-  UniswapV3OracleRelay__factory,
-  USDI,
-  USDI__factory,
-  Vault,
-  VaultController,
-  VaultController__factory,
-  IVOTE,
-  IVOTE__factory,
-  CappedToken__factory
+  CappedFeeOnTransferToken__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
@@ -67,7 +43,7 @@ describe("Check Interest Protocol contracts", () => {
 describe("Deploy cappedToken contract", () => {
     it("Deploy cappedToken", async () => {
         s.CappedToken = await DeployContractWithProxy(
-            new CappedToken__factory(s.Frank),
+            new CappedFeeOnTransferToken__factory(s.Frank),
             s.Frank,
             s.ProxyAdmin,
             "CappedPAXG", 

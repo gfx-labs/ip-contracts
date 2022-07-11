@@ -6,10 +6,10 @@ import "../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
 
-/// @title CappedToken
+/// @title CappedFeeOnTransferToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
-contract CappedToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
+contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   IERC20Metadata public _underlying;
   uint8 private _underlying_decimals;
 
@@ -70,6 +70,7 @@ contract CappedToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   /// @param underlying_amount amount of underlying to deposit
   /// @param target recipient of tokens
   function deposit(uint256 underlying_amount, address target) public {
+    uint256 startingUnderlying = _underlying.balanceOf(address(this));
     // scale the decimals to THIS token decimals, or 1e18. see underlyingToCappedAmount
     uint256 amount = underlyingToCappedAmount(underlying_amount);
     require(amount > 0, "Cannot deposit 0 rebase");
@@ -78,10 +79,14 @@ contract CappedToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     // check allowance and ensure transfer success
     uint256 allowance = _underlying.allowance(_msgSender(), address(this));
     require(allowance >= underlying_amount, "Insufficient Allowance");
-    // mint the scaled amount of tokens to the TARGET
-    ERC20Upgradeable._mint(target, amount);
+    
     // transfer underlying from SENDER to THIS
     require(_underlying.transferFrom(_msgSender(), address(this), underlying_amount), "transfer failed");
+
+    uint256 amountReceived = _underlying.balanceOf(address(this)) - startingUnderlying;
+
+    // mint the scaled amount of tokens to the TARGET
+    ERC20Upgradeable._mint(target, amountReceived);
   }
 
   /// @notice withdraw underlying by burning THIS token

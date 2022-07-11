@@ -15,6 +15,7 @@ import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { start } from "repl";
 require("chai").should();
 
+//147 040 
 
 describe("Testing CappedToken functions", () => {
     it("Deposit underlying", async () => {
@@ -25,15 +26,17 @@ describe("Testing CappedToken functions", () => {
         const PAXGamount = BN("5e18")
         await s.PAXG.connect(s.Bob).approve(s.CappedToken.address, PAXGamount)
         await mineBlock()
-        await s.CappedToken.connect(s.Bob).deposit(PAXGamount, s.Bob.address)
+        const result = await s.CappedToken.connect(s.Bob).deposit(PAXGamount, s.Bob.address)
         await mineBlock()
+        showBodyCyan("Gas: ", await getGas(result))
 
         balance = await s.CappedToken.balanceOf(s.Bob.address)
-        expect(await toNumber(balance)).to.eq(await toNumber(PAXGamount), "CappedToken balance is correct")
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(PAXGamount), 0.002, "CappedToken balance is correct")
 
         expect(await toNumber(await s.PAXG.balanceOf(s.Bob.address))).to.be.closeTo(await toNumber(s.PAXG_AMOUNT.sub(PAXGamount)), 0.003, "PAXG balance after deposit correct")
 
     })
+
 
     it("Deposit underlying to another address", async () => {
         //Bob deposits some PAXG for Dave
@@ -43,7 +46,7 @@ describe("Testing CappedToken functions", () => {
         await mineBlock()
 
         let balance = await s.CappedToken.balanceOf(s.Dave.address)
-        expect(await toNumber(balance)).to.eq(await toNumber(PAXGamount), "CappedToken balance is correct")
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(PAXGamount), 0.002, "CappedToken balance is correct")
 
     })
 
@@ -65,8 +68,8 @@ describe("Testing CappedToken functions", () => {
         const startCT = await s.CappedToken.balanceOf(s.Bob.address)
         const startSupply = await s.CappedToken.totalSupply()
 
-        //expected deltas 
-        const PAXGamount = BN("5e18")
+        //Bob swapps all of his Capped Token for PAXG
+        const PAXGamount = await s.CappedToken.balanceOf(s.Bob.address)
 
         //Bob withdraws
         await s.CappedToken.connect(s.Bob).withdraw(PAXGamount, s.Bob.address)
@@ -79,19 +82,16 @@ describe("Testing CappedToken functions", () => {
 
     })
 
+
     it("Withdraw underlying to another address", async () => {
         const ctPAXG = await s.PAXG.balanceOf(s.CappedToken.address)
         const startPAXG = await s.PAXG.balanceOf(s.Bob.address)
         const startCT = await s.CappedToken.balanceOf(s.Dave.address)
         const startSupply = await s.CappedToken.totalSupply()
 
-        //slightly less than expected remainins on the capped contract due to PAXG fee
-        const failAmount = BN("2e18")
-        expect(s.CappedToken.connect(s.Dave).withdraw(failAmount, s.Bob.address)).to.be.revertedWith("Insufficient underlying in Bank")
 
-        //expected deltas 
-        const remaining = await s.PAXG.balanceOf(s.CappedToken.address)
-        expect(await toNumber(remaining)).to.be.closeTo(await toNumber(failAmount), 0.002, "Actual remaining is within the expected range")
+        const remaining = await s.CappedToken.balanceOf(s.Dave.address)
+        
 
         //Dave withdraws back to Bob
         await s.CappedToken.connect(s.Dave).withdraw(remaining, s.Bob.address)
@@ -105,5 +105,18 @@ describe("Testing CappedToken functions", () => {
 
 
     })
+
+    it("Check end state", async () => {
+
+        let ctRemaining = await s.PAXG.balanceOf(s.CappedToken.address)
+        expect(ctRemaining).to.eq(0, "0 PAXG remains on the contract")
+
+        let totalSupply = await s.CappedToken.totalSupply()
+        expect(totalSupply).to.equal(0, "0 Capped tokens remain in curculation")
+
+
+    })
+
+
 
 })
