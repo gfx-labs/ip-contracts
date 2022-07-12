@@ -11,7 +11,7 @@ import {ERC20} from "./_external/extensions/ERC20.sol";
 // solhint-disable-next-line max-line-length
 import {ERC20Permit} from "./_external/extensions/ERC20Permit.sol";
 
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 /**
  * @title wUSDI (Wrapped usdi).

@@ -90,18 +90,9 @@ describe("Token Setup", () => {
 
     })
     it("Should succesfully transfer money", async () => {
-        showBody("USDC AMOUNT: ", s.USDC_AMOUNT)
-
-        
-
         //for some reason at this block, account 1 has 1 USDC, need to burn so all accounts are equal
         await s.USDC.connect(s.accounts[1]).transfer(usdc_minter, await s.USDC.balanceOf(s.accounts[1].address))
         await mineBlock()
-
-        showBody(await s.USDC.balanceOf(s.accounts[1].address))
-        showBody(s.accounts[1].address)
-
-        showBodyCyan("Stealing Money")
         for (let i = 0; i < s.accounts.length; i++) {
             await expect(
                 stealMoney(usdc_minter, s.accounts[i].address, s.usdcAddress, s.USDC_AMOUNT)
@@ -109,6 +100,14 @@ describe("Token Setup", () => {
             await mineBlock()
 
             expect(await s.USDC.balanceOf(s.accounts[i].address)).to.eq(s.USDC_AMOUNT, "USDC balance correct")
+        
+            await s.USDC.connect(s.accounts[i]).approve(s.USDI.address, s.USDC_AMOUNT)
+            await s.USDI.connect(s.accounts[i]).deposit(s.USDC_AMOUNT)
+            await mineBlock()
+
+            expect(await s.USDI.balanceOf(s.accounts[i].address)).to.eq(s.USDC_AMOUNT.mul(BN("1e12")), "USDI balance correct")
+
+        
         }
     });
 });

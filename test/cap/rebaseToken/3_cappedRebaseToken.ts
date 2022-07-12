@@ -16,28 +16,36 @@ import { start } from "repl";
 require("chai").should();
 describe("Testing RebasingCapped functions", () => {
 
-    it("Convert USDC to USDi to deposit", async () => {
-        await s.USDC.connect(s.Bob).approve(s.USDI.address, await s.USDC.balanceOf(s.Bob.address))
-        await s.USDI.connect(s.Bob).deposit(await s.USDC.balanceOf(s.Bob.address))
-        await mineBlock()
-        expect(await toNumber(await s.USDI.balanceOf(s.Bob.address))).to.eq(s.Bob_USDC.div(BN("1e6")))
-    })
+  
 
     it("Deposit underlying", async () => {
         let startBalance = await s.USDI.balanceOf(s.Bob.address)
-        expect(startBalance).to.eq(s.Bob_USDC.mul(BN("1e12")))
+        expect(await toNumber(startBalance)).to.be.closeTo(await toNumber(s.Bob_USDC.mul(BN("1e12"))), 0.01, "Start balance is correct")
 
+
+
+
+        //try to transfer some USDI to the cap contract to start? 
+        await s.USDI.connect(s.Bob).transfer(s.RebasingCapped.address, BN("5e18"))
+        await mineBlock()
 
         //deposit 500 USDi - error - cannot deposit 0 
         const depositAmount = utils.parseEther("500")
         await s.USDI.connect(s.Bob).approve(s.RebasingCapped.address, depositAmount)
         await mineBlock()
-        await s.RebasingCapped.connect(s.Bob).depositTo(depositAmount, s.Bob.address)
+        await s.RebasingCapped.connect(s.Bob).depositFor( s.Bob.address, depositAmount)
         await mineBlock()
 
-        let balance = await s.RebasingCapped.balanceOf(s.Bob.address)
-        expect(await toNumber(balance)).to.eq(await toNumber(depositAmount), "RebasingCapped balance is correct")
+        let balance = await s.USDI.balanceOf(s.Bob.address)
+        showBody("start balance: ", await toNumber(startBalance))
 
+        showBody("usdi balance: ", await toNumber(balance))
+
+        //expect(await toNumber(balance)).to.eq(await toNumber(startBalance.sub(depositAmount)), "Correct amount of USDi taken from depositer")
+
+
+        balance = await s.RebasingCapped.balanceOf(s.Bob.address)
+        showBody("Cap balance: ", await toNumber(balance))
 
 
 
@@ -50,6 +58,15 @@ describe("Testing RebasingCapped functions", () => {
     })
 
     it("Check things", async () => {
+
+        let balance = await s.RebasingCapped.balanceOf(s.Bob.address)
+        showBody(balance)
+
+        await s.RebasingCapped.connect(s.Bob).approve(s.RebasingCapped.address, await s.RebasingCapped.balanceOf(s.Bob.address))
+        await mineBlock()
+        await s.RebasingCapped.connect(s.Bob).withdraw(BN("10e18"))
+        await mineBlock()
+
 
 
     })
