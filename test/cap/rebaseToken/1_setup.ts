@@ -1,13 +1,15 @@
 import { expect, assert } from "chai";
 import { ethers, network, tenderly } from "hardhat";
 import { stealMoney } from "../../../util/money";
-import { showBody } from "../../../util/format";
+import { showBody, showBodyCyan } from "../../../util/format";
+import { toNumber } from "../../../util/math"
 import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { d } from "../DeploymentInfo";
 
 import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
 import { IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory } from "../../../typechain-types";
+import _ from "lodash";
 //import { assert } from "console";
 
 require("chai").should();
@@ -55,14 +57,14 @@ describe("hardhat settings", () => {
 
 describe("Token Setup", () => {
     it("connect to signers", async () => {
-        let accounts = await ethers.getSigners();
-        s.Frank = accounts[0];
-        s.Eric = accounts[5];
-        s.Andy = accounts[6];
-        s.Bob = accounts[7];
-        s.Carol = accounts[8];
-        s.Dave = accounts[9];
-        s.Gus = accounts[10];
+        s.accounts = await ethers.getSigners();
+        s.Frank = s.accounts[0];
+        s.Eric = s.accounts[5];
+        s.Andy = s.accounts[6];
+        s.Bob = s.accounts[7];
+        s.Carol = s.accounts[8];
+        s.Dave = s.accounts[9];
+        s.Gus = s.accounts[10];
     });
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
@@ -84,50 +86,29 @@ describe("Token Setup", () => {
         s.Oracle = OracleMaster__factory.connect(d.Oracle, s.Frank)
 
         s.ProxyAdmin = ProxyAdmin__factory.connect(d.ProxyAdmin, s.Frank)
-       
+
 
     })
     it("Should succesfully transfer money", async () => {
-        //showBody(`stealing ${s.Andy_USDC} to andy from ${s.usdcAddress}`);
-        await expect(
-            stealMoney(usdc_minter, s.Andy.address, s.usdcAddress, s.Andy_USDC)
-        ).to.not.be.reverted;
-        //showBody(`stealing ${s.Dave_USDC} to dave from ${s.usdcAddress}`);
-        await expect(
-            stealMoney(usdc_minter, s.Dave.address, s.usdcAddress, s.Dave_USDC)
-        ).to.not.be.reverted;
-        //showBody(`stealing ${s.Carol_UNI} to carol from ${s.uniAddress}`);
-        await expect(
-            stealMoney(uni_minter, s.Carol.address, s.uniAddress, s.Carol_UNI)
-        ).to.not.be.reverted;
-        //showBody(`stealing ${s.Gus_WBTC} to gus from ${s.wbtcAddress}`);
-        await expect(
-            stealMoney(wbtc_minter, s.Gus.address, s.wbtcAddress, s.Gus_WBTC)
-        ).to.not.be.reverted;
-        //showBody(`stealing ${s.Bob_WETH} weth to bob from ${s.wethAddress}`);
-        await expect(
-            stealMoney(weth_minter, s.Bob.address, s.wethAddress, s.Bob_WETH)
-        ).to.not.be.reverted;
-        //showBody(`stealing`,s.Bob_USDC,`usdc to bob from ${s.usdcAddress}`);
-        await expect(
-            stealMoney(usdc_minter, s.Bob.address, s.usdcAddress, s.Bob_USDC)
-        ).to.not.be.reverted
-        //showBody(`stealing ${s.Carol_ENS} ens to carol from ${s.ensAddress}`);
-        await expect(
-            stealMoney(ens_minter, s.Carol.address, s.ensAddress, s.Carol_ENS)
-        ).to.not.be.reverted;
-        //showBody(`stealing ${s.Carol_DYDX} dydx to carol from ${s.dydxAddress}`);
-        await expect(
-            stealMoney(dydx_minter, s.Carol.address, s.dydxAddress, s.Carol_DYDX)
-        ).to.not.be.reverted;
-        //showBody(`stealing ${s.Carol_AAVE} aave to carol from ${s.aaveAddress}`);
-        await expect(
-            stealMoney(aave_minter, s.Carol.address, s.aaveAddress, s.Carol_AAVE)
-        ).to.not.be.reverted;
-        //showBody(`stealing ${s.Carol_TRIBE} to carol from ${s.tribeAddress}`);
-        await expect(
-            stealMoney(tribe_minter, s.Carol.address, s.tribeAddress, s.Carol_TRIBE)
-        ).to.not.be.reverted;
-        await mineBlock();
+        showBody("USDC AMOUNT: ", s.USDC_AMOUNT)
+
+        
+
+        //for some reason at this block, account 1 has 1 USDC, need to burn so all accounts are equal
+        await s.USDC.connect(s.accounts[1]).transfer(usdc_minter, await s.USDC.balanceOf(s.accounts[1].address))
+        await mineBlock()
+
+        showBody(await s.USDC.balanceOf(s.accounts[1].address))
+        showBody(s.accounts[1].address)
+
+        showBodyCyan("Stealing Money")
+        for (let i = 0; i < s.accounts.length; i++) {
+            await expect(
+                stealMoney(usdc_minter, s.accounts[i].address, s.usdcAddress, s.USDC_AMOUNT)
+            ).to.not.be.reverted;
+            await mineBlock()
+
+            expect(await s.USDC.balanceOf(s.accounts[i].address)).to.eq(s.USDC_AMOUNT, "USDC balance correct")
+        }
     });
 });

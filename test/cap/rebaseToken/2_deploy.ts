@@ -71,8 +71,8 @@ describe("Deploy cappedToken contract", () => {
             new RebasingCapped__factory(s.Frank),
             s.Frank,
             s.ProxyAdmin,
-            "RebasingCapped", 
-            "RCT", 
+            "CappedUSDI", 
+            "cpUSDI", 
             s.USDI.address
         )
         await mineBlock();

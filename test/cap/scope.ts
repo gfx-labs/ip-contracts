@@ -73,6 +73,8 @@ export class TestScope extends MainnetAddresses {
     PAXG!: IERC20
 
 
+    USDC_AMOUNT = BN("1000e6")
+
     Andy_USDC = BN("1e8")
     Bob_USDC = BN("1000e6")
     Bob_WETH = BN("10e18")
