@@ -16,6 +16,11 @@ import { start } from "repl";
 require("chai").should();
 describe("Testing RebasingCapped functions", () => {
 
+    //Bob wraps and later unwraps
+    //compare Bob's balance after unwrap to one of the users who did not wrap
+
+    const depositAmount = utils.parseEther("500")
+
   
 
     it("Deposit underlying", async () => {
@@ -23,14 +28,6 @@ describe("Testing RebasingCapped functions", () => {
         expect(await toNumber(startBalance)).to.be.closeTo(await toNumber(s.Bob_USDC.mul(BN("1e12"))), 0.01, "Start balance is correct")
 
 
-
-
-        //try to transfer some USDI to the cap contract to start? 
-        await s.USDI.connect(s.Bob).transfer(s.RebasingCapped.address, BN("5e18"))
-        await mineBlock()
-
-        //deposit 500 USDi - error - cannot deposit 0 
-        const depositAmount = utils.parseEther("500")
         await s.USDI.connect(s.Bob).approve(s.RebasingCapped.address, depositAmount)
         await mineBlock()
         await s.RebasingCapped.connect(s.Bob).depositFor( s.Bob.address, depositAmount)
@@ -48,7 +45,6 @@ describe("Testing RebasingCapped functions", () => {
         showBody("Cap balance: ", await toNumber(balance))
 
 
-
     })
 
     it("elapse time and pay interest to rebase", async () => {
@@ -60,13 +56,24 @@ describe("Testing RebasingCapped functions", () => {
     it("Check things", async () => {
 
         let balance = await s.RebasingCapped.balanceOf(s.Bob.address)
-        showBody(balance)
+
+        balance = await s.USDI.balanceOf(s.RebasingCapped.address)
+        showBody("Bob USDI: ", await toNumber(balance))
+
 
         await s.RebasingCapped.connect(s.Bob).approve(s.RebasingCapped.address, await s.RebasingCapped.balanceOf(s.Bob.address))
         await mineBlock()
-        await s.RebasingCapped.connect(s.Bob).withdraw(BN("10e18"))
+        await s.RebasingCapped.connect(s.Bob).withdraw(balance)
         await mineBlock()
 
+        balance = await s.USDI.balanceOf(s.RebasingCapped.address)
+        expect(balance).to.eq(0, "Remaining USDI on cap contract is 0")
+
+        balance = await s.USDI.balanceOf(s.Bob.address)
+        showBody("Bob USDI: ", await toNumber(balance))
+
+        balance = await s.USDI.balanceOf(s.Dave.address)
+        showBody("control USDI: ", await toNumber(balance))
 
 
     })

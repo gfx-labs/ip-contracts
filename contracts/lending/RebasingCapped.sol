@@ -211,6 +211,13 @@ contract RebasingCapped is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     uint256 cappedTokenAmount = balanceOf(_msgSender());
     uint256 underlyingAmount = _capped_to_underlying(cappedTokenAmount, _query_Underlying_Supply());
 
+    console.log("cappedTokenAmount: ", cappedTokenAmount);
+    console.log("underlyingAmount : ", underlyingAmount);
+    console.log("Underlying held: ", _underlying.balanceOf(address(this)));
+
+    require(underlyingAmount <= _underlying.balanceOf(address(this)), "Insufficient funds in bank");
+
+
     _withdraw(_msgSender(), _msgSender(), underlyingAmount, cappedTokenAmount);
     return cappedTokenAmount;
   }
