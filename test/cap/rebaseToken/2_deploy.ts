@@ -65,28 +65,27 @@ describe("Check Interest Protocol contracts", () => {
 });
 
 describe("Deploy cappedToken contract", () => {
-    const cap = utils.parseEther("100000")//100K 
     it("Deploy cappedToken", async () => {
         s.RebasingCapped = await DeployContractWithProxy(
             new RebasingCapped__factory(s.Frank),
             s.Frank,
             s.ProxyAdmin,
-            "CappedUSDI", 
-            "cpUSDI", 
-            s.USDI.address
+            "CappedSTETH", 
+            "cpSTETH", 
+            s.STETH.address
         )
         await mineBlock();
         await s.RebasingCapped.deployed()
     })
 
     it("Set Cap", async () => {
-        await s.RebasingCapped.connect(s.Frank).setCap(s.CAP)//100K
+        await s.RebasingCapped.connect(s.Frank).setCap(s.STETH_CAP)
         await mineBlock()
     })
 
     it("Sanity check", async () => {
-        expect(await s.RebasingCapped.getCap()).to.eq(s.CAP)
-        expect(await s.RebasingCapped.underlyingAddress()).to.eq(s.USDI.address)
+        expect(await s.RebasingCapped.getCap()).to.eq(s.STETH_CAP)
+        expect(await s.RebasingCapped.underlyingAddress()).to.eq(s.STETH.address)
     })
 
    

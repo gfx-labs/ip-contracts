@@ -8,7 +8,7 @@ import { s } from "../scope";
 import { d } from "../DeploymentInfo";
 
 import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
-import { IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory } from "../../../typechain-types";
+import { IERC20__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, ILido__factory, ILidoOracle__factory } from "../../../typechain-types";
 import _ from "lodash";
 //import { assert } from "console";
 
@@ -27,16 +27,7 @@ require("chai").should();
 
 // configurable variables
 let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
-let comp_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
-let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
-let dydx_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let ens_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let aave_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let tribe_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
-
-let carol_voting_address = "0x1F2AB8Ac759Fb0E3185630277A554Ae3110bF530";
+let stETH_whale = "0x2FAF487A4414Fe77e2327F0bf4AE2a264a776AD2"
 
 if (process.env.TENDERLY_KEY) {
     if (process.env.TENDERLY_ENABLE == "true") {
@@ -47,7 +38,8 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(15083948)).to.not.throw;//14940917
+        //https://etherscan.io/tx/0x9faf2315d32ada8a38178beba6bdc32b4b7e7f6a6bb90c42c53eeda0904deb66
+        expect(await reset(15127781)).to.not.throw;//14940917
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -69,13 +61,12 @@ describe("Token Setup", () => {
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
         s.WETH = IERC20__factory.connect(s.wethAddress, s.Frank);
-        s.UNI = IVOTE__factory.connect(s.uniAddress, s.Frank);
-        s.WBTC = IERC20__factory.connect(s.wbtcAddress, s.Frank);
-        s.COMP = IVOTE__factory.connect(s.compAddress, s.Frank);
-        s.ENS = IVOTE__factory.connect(s.ensAddress, s.Frank);
-        s.DYDX = IVOTE__factory.connect(s.dydxAddress, s.Frank);
-        s.AAVE = IVOTE__factory.connect(s.aaveAddress, s.Frank);
-        s.TRIBE = IVOTE__factory.connect(s.tribeAddress, s.Frank);
+
+        s.STETH = ILido__factory.connect(s.STETH_ADDRESS, s.Frank)
+
+        let oracle = await s.STETH.getOracle()
+
+        s.ST_ORACLE = ILidoOracle__factory.connect(oracle, s.Frank)
 
     });
 
@@ -95,19 +86,14 @@ describe("Token Setup", () => {
         await mineBlock()
         for (let i = 0; i < s.accounts.length; i++) {
             await expect(
-                stealMoney(usdc_minter, s.accounts[i].address, s.usdcAddress, s.USDC_AMOUNT)
+                stealMoney(stETH_whale, s.accounts[i].address, s.STETH.address, s.STETH_AMOUNT)
             ).to.not.be.reverted;
             await mineBlock()
 
-            expect(await s.USDC.balanceOf(s.accounts[i].address)).to.eq(s.USDC_AMOUNT, "USDC balance correct")
-        
-            await s.USDC.connect(s.accounts[i]).approve(s.USDI.address, s.USDC_AMOUNT)
-            await s.USDI.connect(s.accounts[i]).deposit(s.USDC_AMOUNT)
-            await mineBlock()
+            //1 wei corner case - https://docs.lido.fi/guides/steth-integration-guide
+            expect(await toNumber(await s.STETH.balanceOf(s.accounts[i].address))).to.be.closeTo(await toNumber(s.STETH_AMOUNT), 0.0001, "STETH balance correct, +/- 1 wei")
 
-            expect(await s.USDI.balanceOf(s.accounts[i].address)).to.eq(s.USDC_AMOUNT.mul(BN("1e12")), "USDI balance correct")
 
-        
         }
     });
 });

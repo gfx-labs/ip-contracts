@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { USDI, IERC20, IVOTE, CappedToken, RebasingCapped, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../typechain-types";
+import { USDI, IERC20, IVOTE, CappedToken, RebasingCapped, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
@@ -71,6 +71,12 @@ export class TestScope extends MainnetAddresses {
     PAXG_AMOUNT = BN("10e18")//10 PAXG
     PAXG_CAP = BN("300e18")//300 PAXG or ~500k USD
     PAXG!: IERC20
+
+    ST_ORACLE!: ILidoOracle
+    STETH!: ILido
+    STETH_AMOUNT = BN("10e18")
+    STETH_ADDRESS = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84"
+    STETH_CAP = BN("100e18")//100 STETH
 
 
     USDC_AMOUNT = BN("1000e6")
