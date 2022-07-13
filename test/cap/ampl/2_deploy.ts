@@ -63,6 +63,4 @@ describe("Deploy cappedToken contract", () => {
         expect(await s.CappedAMPL.getCap()).to.eq(s.AMPL_CAP)
         expect(await s.CappedAMPL.underlyingAddress()).to.eq(s.AMPL.address)
     })
-
-   
 })

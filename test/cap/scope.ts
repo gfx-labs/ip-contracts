@@ -68,7 +68,7 @@ export class TestScope extends MainnetAddresses {
 
     AMPL_ADDR = "0xD46bA6D942050d489DBd938a2C909A5d5039A161"
     AMPL_AMOUNT = BN("1000e9")//AMPL is e9
-    AMPL_CAP = BN("5000e9")
+    AMPL_CAP = BN("10000e9")//Max AMPL, not wrapped tokens
     AMPL!: IERC20
 
     PAXG_ADDR = "0x45804880De22913dAFE09f4980848ECE6EcbAf78"

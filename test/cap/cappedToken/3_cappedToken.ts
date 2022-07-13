@@ -112,6 +112,10 @@ describe("Testing CappedToken functions", () => {
         expect(await s.CappedToken.balanceOf(s.Dave.address)).to.eq(startCT.sub(e18Amount), "Capped Tokens held by Dave has decreased by the expected amount")
         expect(await s.CappedToken.totalSupply()).to.eq(startSupply.sub(e18Amount), "Capped Tokens total supply has decreased by the expected amount")
 
+
+        let test = await s.CappedToken.convertToShares(BN("1e6"))
+        showBody("Test: ", test)
+
     })
     
 })
