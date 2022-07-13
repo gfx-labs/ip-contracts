@@ -10,10 +10,10 @@ import {SafeERC20} from "../_external/extensions/SafeERC20.sol";
 
 import "hardhat/console.sol";
 
-/// @title CappedToken
+/// @title CappedRebaseToken - uses logic from Wrapped USDI which uses logic from WAMPL 
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
-contract RebasingCapped is Initializable, OwnableUpgradeable, ERC20Upgradeable {
+contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   using SafeERC20 for IERC20;
 
   IERC20Metadata public _underlying;
@@ -43,7 +43,6 @@ contract RebasingCapped is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   }
 
   ///////////////////////// CAP FUNCTIONS /////////////////////////
-
   /// @notice get the Cap
   /// @return cap
   function getCap() public view returns (uint256) {

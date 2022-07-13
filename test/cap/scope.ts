@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { USDI, IERC20, IVOTE, CappedToken, CappedSTETH, RebasingCapped, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido } from "../../typechain-types";
+import { USDI, IERC20, IVOTE, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
@@ -27,7 +27,7 @@ export class TestScope extends MainnetAddresses {
     VaultController!: IVaultController;
 
     CappedToken!: CappedToken;
-    RebasingCapped!: RebasingCapped;
+    CappedAMPL!: CappedRebaseToken;
     FeeCapped!: CappedFeeOnTransferToken;
     CAP = BN("100000e18")//100k
 
@@ -65,6 +65,11 @@ export class TestScope extends MainnetAddresses {
     BobVaultID!: BigNumber
     CarolVault!: IVault
     CaroLVaultID!: BigNumber
+
+    AMPL_ADDR = "0xD46bA6D942050d489DBd938a2C909A5d5039A161"
+    AMPL_AMOUNT = BN("1000e9")//AMPL is e9
+    AMPL_CAP = BN("5000e9")
+    AMPL!: IERC20
 
     PAXG_ADDR = "0x45804880De22913dAFE09f4980848ECE6EcbAf78"
     PAXG_WHALE = "0xFfec0067F5a79CFf07527f63D83dD5462cCf8BA4"

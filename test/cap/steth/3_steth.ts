@@ -36,15 +36,12 @@ describe("Testing CappedSTETH functions", () => {
 
         await ceaseImpersonation(callerAddr)
         await mineBlock()
-
     }
-
 
     it("Deposit underlying", async () => {
 
         let startBalance = await s.STETH.balanceOf(s.Bob.address)
         expect(await toNumber(startBalance)).to.be.closeTo(await toNumber(s.STETH_AMOUNT), 0.01, "Start balance is correct")
-
 
         await s.STETH.connect(s.Bob).approve(s.CappedSTETH.address, depositAmount)
         await mineBlock()
@@ -137,7 +134,6 @@ describe("Checking the cap", () => {
         let balance = await s.STETH.balanceOf(s.CappedSTETH.address)
         expect(balance.toNumber()).to.be.closeTo(0, 5, "Cap contract returned all STETH")
 
-
         //control
         let expectedBalance = await s.STETH.balanceOf(s.Gus.address)
 
@@ -152,9 +148,10 @@ describe("Checking the cap", () => {
 /**
  * NOTE ETHER deposited this way can not be redeemed for ETHER, only for STETH using the unwrap function
  */
-describe("Test naitive eth fallback", () => {
+/**
+ describe("Test native eth fallback", () => {
     const ethAmount = BN("1e18")
-    it("Send naitive eth", async () => {
+    it("Send native eth", async () => {
 
         const startBalance = await ethers.provider.getBalance(s.Eric.address)
         const startSTETH = await s.STETH.balanceOf(s.Eric.address)
@@ -180,3 +177,4 @@ describe("Test naitive eth fallback", () => {
        
     })
 })
+ */

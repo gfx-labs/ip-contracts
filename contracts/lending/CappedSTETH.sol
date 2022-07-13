@@ -121,11 +121,11 @@ contract CappedSTETH is Initializable, OwnableUpgradeable, ERC20Upgradeable {
 
   /**
    * @notice Shortcut to stake ETH and auto-wrap returned stETH
-   */
-  receive() external payable {
+   receive() external payable {
     uint256 shares = stETH.submit{value: msg.value}(address(0));
     _mint(msg.sender, shares);
   }
+   */
 
   /**
    * @notice Get amount of wstETH for a given amount of stETH
