@@ -51,18 +51,12 @@ describe("Testing CappedSTETH functions", () => {
         await s.CappedSTETH.connect(s.Bob).wrap(depositAmount)
         await mineBlock()
 
-        showBody("start balance: ", await toNumber(startBalance))
-
+        //balance is off by 1 wei due to 1 wei corner case - https://docs.lido.fi/guides/steth-integration-guide
         let balance = await s.STETH.balanceOf(s.Bob.address)
-        showBody("STETH balance: ", await toNumber(balance))
-
-        //expect(await toNumber(balance)).to.eq(await toNumber(startBalance.sub(depositAmount)), "Correct amount of STETH taken from depositer")
-
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(startBalance.sub(depositAmount)), 0.0001, "Balance decremented by the correct amount")
 
         balance = await s.CappedSTETH.balanceOf(s.Bob.address)
-        showBody("Bob's cap token balance: ", await toNumber(balance))
-
-
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(startBalance.div(2)), 0.5, "Correct amount of capped tokens received")
 
     })
 
@@ -78,7 +72,7 @@ describe("Testing CappedSTETH functions", () => {
 
     })
 
-    it("Check things", async () => {
+    it("Check end state", async () => {
         let balance = await s.CappedSTETH.balanceOf(s.Bob.address)
 
         //unwrap
@@ -153,5 +147,36 @@ describe("Checking the cap", () => {
         expect(await toNumber(bobBalance)).to.eq(await toNumber(carolBalance)).to.eq(await toNumber(expectedBalance), "All balances correct")
 
     })
+})
 
+/**
+ * NOTE ETHER deposited this way can not be redeemed for ETHER, only for STETH using the unwrap function
+ */
+describe("Test naitive eth fallback", () => {
+    const ethAmount = BN("1e18")
+    it("Send naitive eth", async () => {
+
+        const startBalance = await ethers.provider.getBalance(s.Eric.address)
+        const startSTETH = await s.STETH.balanceOf(s.Eric.address)
+        const startCapToken = await s.CappedSTETH.balanceOf(s.Eric.address)
+        expect(startCapToken).to.eq(0, "Eric holds 0 cap tokens")
+
+        let tx = {
+            to: s.CappedSTETH.address,
+            value: ethAmount
+        }
+
+        await s.Eric.sendTransaction(tx)
+        await mineBlock()
+
+        let newBalance = await ethers.provider.getBalance(s.Eric.address)
+        expect(await toNumber(newBalance)).to.be.closeTo(await toNumber(startBalance) - 1, 0.01, "Ether has been sent")
+
+        let newSTETH = await s.STETH.balanceOf(s.Eric.address)
+        expect(startSTETH).to.eq(newSTETH, "No change in STETH balance")
+
+        let capBal = await s.CappedSTETH.balanceOf(s.Eric.address)
+        expect(await toNumber(capBal)).to.be.closeTo(1, 0.1, "Eric received cap tokens in exchange for ether")
+       
+    })
 })

@@ -10,8 +10,6 @@ import "./IStETH.sol";
 
 import {SafeERC20} from "../_external/extensions/SafeERC20.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title StETH token wrapper with static balances.
  * @dev It's an ERC20 token that represents the account's share of the total
@@ -56,7 +54,7 @@ contract CappedSTETH is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     stETH = IStETH(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84);
   }
 
-   /// @notice getter for address of the underlying currency, or underlying
+  /// @notice getter for address of the underlying currency, or underlying
   /// @return decimals for of underlying currency
   function underlyingAddress() public view returns (address) {
     return address(_underlying);
@@ -82,6 +80,8 @@ contract CappedSTETH is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   function decimals() public pure override returns (uint8) {
     return 18;
   }
+
+  ///////////////////////// WSTETH FUNCTIONS /////////////////////////
 
   /**
    * @notice Exchanges stETH to wstETH
