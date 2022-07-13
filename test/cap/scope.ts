@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { USDI, IERC20, IVOTE, CappedToken, RebasingCapped, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido } from "../../typechain-types";
+import { USDI, IERC20, IVOTE, CappedToken, CappedSTETH, RebasingCapped, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
@@ -57,7 +57,7 @@ export class TestScope extends MainnetAddresses {
     Carol!: SignerWithAddress  // carol is a uni holder. She wishes to deposit uni and borrow USDI, and still be able to vote
     Dave!: SignerWithAddress   // dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
     Eric!: SignerWithAddress   // eric only holds ETH and generally does not use IP unless a clean slate is needed
-    Gus!: SignerWithAddress    // gus is a wBTC holder. He wishes to deposit wBTC and borrow USDI
+    Gus!: SignerWithAddress    // gus is the control, we can compare balances of those who wrapped to his to ensure all rebases are correct
 
     accounts!:SignerWithAddress[]
 
@@ -73,10 +73,11 @@ export class TestScope extends MainnetAddresses {
     PAXG!: IERC20
 
     ST_ORACLE!: ILidoOracle
+    CappedSTETH!: CappedSTETH
     STETH!: ILido
     STETH_AMOUNT = BN("10e18")
     STETH_ADDRESS = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84"
-    STETH_CAP = BN("100e18")//100 STETH
+    STETH_CAP = BN("1000e18")
 
 
     USDC_AMOUNT = BN("1000e6")

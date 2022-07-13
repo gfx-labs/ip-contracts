@@ -11,31 +11,7 @@ import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import {toNumber}from "../../../util/math"
 import {
-  AnchoredViewRelay,
-  AnchoredViewRelay__factory,
-  ChainlinkOracleRelay,
-  ChainlinkOracleRelay__factory,
-  CurveMaster,
-  CurveMaster__factory,
-  IERC20,
-  IERC20__factory,
-  IOracleRelay,
-  OracleMaster,
-  OracleMaster__factory,
-  ProxyAdmin,
-  ProxyAdmin__factory,
-  TransparentUpgradeableProxy__factory,
-  ThreeLines0_100,
-  ThreeLines0_100__factory,
-  UniswapV3OracleRelay__factory,
-  USDI,
-  USDI__factory,
-  Vault,
-  VaultController,
-  VaultController__factory,
-  IVOTE,
-  IVOTE__factory,
-  RebasingCapped__factory
+  CappedSTETH__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
@@ -66,8 +42,8 @@ describe("Check Interest Protocol contracts", () => {
 
 describe("Deploy cappedToken contract", () => {
     it("Deploy cappedToken", async () => {
-        s.RebasingCapped = await DeployContractWithProxy(
-            new RebasingCapped__factory(s.Frank),
+        s.CappedSTETH = await DeployContractWithProxy(
+            new CappedSTETH__factory(s.Frank),
             s.Frank,
             s.ProxyAdmin,
             "CappedSTETH", 
@@ -75,17 +51,17 @@ describe("Deploy cappedToken contract", () => {
             s.STETH.address
         )
         await mineBlock();
-        await s.RebasingCapped.deployed()
+        await s.CappedSTETH.deployed()
     })
 
     it("Set Cap", async () => {
-        await s.RebasingCapped.connect(s.Frank).setCap(s.STETH_CAP)
+        await s.CappedSTETH.connect(s.Frank).setCap(s.STETH_CAP)
         await mineBlock()
     })
 
     it("Sanity check", async () => {
-        expect(await s.RebasingCapped.getCap()).to.eq(s.STETH_CAP)
-        expect(await s.RebasingCapped.underlyingAddress()).to.eq(s.STETH.address)
+        expect(await s.CappedSTETH.getCap()).to.eq(s.STETH_CAP)
+        expect(await s.CappedSTETH.underlyingAddress()).to.eq(s.STETH.address)
     })
 
    

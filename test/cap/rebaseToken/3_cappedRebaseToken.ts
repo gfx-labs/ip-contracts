@@ -17,12 +17,13 @@ import { max, red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { start } from "repl";
 require("chai").should();
-describe("Testing RebasingCapped functions", () => {
+const depositAmount = utils.parseEther("5")
+
+describe("Testing CappedSTETH functions", () => {
 
     //Bob wraps and later unwraps
     //compare Bob's balance after unwrap to one of the users who did not wrap
 
-    const depositAmount = utils.parseEther("5")
 
     const rebase = async () => {
         const callerAddr = "0x404335bce530400a5814375e7ec1fb55faff3ea2";
@@ -32,25 +33,9 @@ describe("Testing RebasingCapped functions", () => {
 
         await s.ST_ORACLE.connect(signer).reportBeacon(132300, 4243292214304813, 129034)
         await mineBlock()
+
         await ceaseImpersonation(callerAddr)
         await mineBlock()
-
-       
-
-
-        /**
-         let oracle = await s.STETH.getOracle()
-        showBody("Oracle: ", oracle)
-
-        await impersonateAccount(oracle)
-        let signer = ethers.provider.getSigner(oracle)
-
-        await s.STETH.connect(signer).depositBufferedEther()
-        await mineBlock()
-        await ceaseImpersonation(oracle)
-        await mineBlock()
-         */
-
 
     }
 
@@ -61,9 +46,9 @@ describe("Testing RebasingCapped functions", () => {
         expect(await toNumber(startBalance)).to.be.closeTo(await toNumber(s.STETH_AMOUNT), 0.01, "Start balance is correct")
 
 
-        await s.STETH.connect(s.Bob).approve(s.RebasingCapped.address, depositAmount)
+        await s.STETH.connect(s.Bob).approve(s.CappedSTETH.address, depositAmount)
         await mineBlock()
-        await s.RebasingCapped.connect(s.Bob).depositFor(s.Bob.address, depositAmount)
+        await s.CappedSTETH.connect(s.Bob).wrap(depositAmount)
         await mineBlock()
 
         showBody("start balance: ", await toNumber(startBalance))
@@ -74,55 +59,99 @@ describe("Testing RebasingCapped functions", () => {
         //expect(await toNumber(balance)).to.eq(await toNumber(startBalance.sub(depositAmount)), "Correct amount of STETH taken from depositer")
 
 
-        balance = await s.RebasingCapped.balanceOf(s.Bob.address)
+        balance = await s.CappedSTETH.balanceOf(s.Bob.address)
         showBody("Bob's cap token balance: ", await toNumber(balance))
 
 
 
     })
 
-    it("elapse time and pay interest to rebase", async () => {
-        await fastForward(OneWeek * 52)
+    it("elapse time and rebase", async () => {
+        await fastForward(OneWeek)
         await mineBlock()
         let balance = await s.STETH.balanceOf(s.Bob.address)
-        showBody("Pre rebase balance: ", await toNumber(balance))
 
         await rebase()
 
-        balance = await s.STETH.balanceOf(s.Bob.address)
-        showBody("post rebase balance: ", await toNumber(balance))
-
+        let newBalance = await s.STETH.balanceOf(s.Bob.address)
+        expect(newBalance).to.be.gt(balance, "Rebase increased balance")
 
     })
 
     it("Check things", async () => {
+        let balance = await s.CappedSTETH.balanceOf(s.Bob.address)
 
-        /**
-         let balance = await s.RebasingCapped.balanceOf(s.Bob.address)
-
-        balance = await s.USDI.balanceOf(s.RebasingCapped.address)
-        showBody("Bob USDI: ", await toNumber(balance))
-
-
-        await s.RebasingCapped.connect(s.Bob).approve(s.RebasingCapped.address, await s.RebasingCapped.balanceOf(s.Bob.address))
-        await mineBlock()
-        await s.RebasingCapped.connect(s.Bob).withdraw(balance)
+        //unwrap
+        await s.CappedSTETH.connect(s.Bob).approve(s.CappedSTETH.address, balance)
+        await s.CappedSTETH.connect(s.Bob).unwrap(balance)
         await mineBlock()
 
-        balance = await s.USDI.balanceOf(s.RebasingCapped.address)
-        expect(balance).to.eq(0, "Remaining USDI on cap contract is 0")
+        balance = await s.STETH.balanceOf(s.Bob.address)
 
-        balance = await s.USDI.balanceOf(s.Bob.address)
-        showBody("Bob USDI: ", await toNumber(balance))
+        //Bob has the expected amount of STETH after unwrap
+        expect(await toNumber(balance)).to.eq(await toNumber(await s.STETH.balanceOf(s.Gus.address)), "Bob has the same STETH as a control, he received the rebase")
 
-        balance = await s.USDI.balanceOf(s.Dave.address)
-        showBody("control USDI: ", await toNumber(balance))
 
-         */
+    })
+})
+
+describe("Checking the cap", () => {
+
+    it("Wrap some stETH", async () => {
+        //Bob wraps some
+        await s.STETH.connect(s.Bob).approve(s.CappedSTETH.address, depositAmount)
+        await mineBlock()
+        await s.CappedSTETH.connect(s.Bob).wrap(depositAmount)
+        await mineBlock()
+
+        //Carol wraps some
+        await s.STETH.connect(s.Carol).approve(s.CappedSTETH.address, depositAmount)
+        await mineBlock()
+        await s.CappedSTETH.connect(s.Carol).wrap(depositAmount)
+        await mineBlock()
+    })
+
+    it("Admin reduces cap while there are more CapTokens in curculation than the cap", async () => {
+        await s.CappedSTETH.connect(s.Frank).setCap(BN("5e18"))
+        await mineBlock()
+        expect(await s.CappedSTETH.getCap()).to.eq(BN("5e18"), "Cap has been set correctly")
+    })
+
+    it("Try to wrap more", async () => {
+        //Eric tries
+        await s.STETH.connect(s.Eric).approve(s.CappedSTETH.address, depositAmount)
+        await mineBlock()
+        expect(s.CappedSTETH.connect(s.Eric).wrap(depositAmount)).to.be.revertedWith("cap reached")
+    })
+
+    it("Unwrap", async () => {
+
+        let balance = await s.CappedSTETH.balanceOf(s.Bob.address)
+        await s.CappedSTETH.connect(s.Bob).approve(s.CappedSTETH.address, balance)
+        await s.CappedSTETH.connect(s.Bob).unwrap(balance)
+        await mineBlock()
+
+        balance = await s.CappedSTETH.balanceOf(s.Carol.address)
+        await s.CappedSTETH.connect(s.Carol).approve(s.CappedSTETH.address, balance)
+        await s.CappedSTETH.connect(s.Carol).unwrap(balance)
+        await mineBlock()
+    })
+
+    it("Check end state", async () => {
+
+        //Balance is not exactly 0 due to 1 wei corner case - https://docs.lido.fi/guides/steth-integration-guide
+        let balance = await s.STETH.balanceOf(s.CappedSTETH.address)
+        expect(balance.toNumber()).to.be.closeTo(0, 5, "Cap contract returned all STETH")
+
+
+        //control
+        let expectedBalance = await s.STETH.balanceOf(s.Gus.address)
+
+        let carolBalance = await s.STETH.balanceOf(s.Carol.address)
+        let bobBalance = await s.STETH.balanceOf(s.Bob.address)
+
+        expect(await toNumber(bobBalance)).to.eq(await toNumber(carolBalance)).to.eq(await toNumber(expectedBalance), "All balances correct")
 
     })
 
-    it("Withdraw underlying", async () => {
-
-    })
 })
