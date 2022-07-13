@@ -35,13 +35,13 @@ describe("Testing CappedAMPL functions", () => {
         await s.CappedAMPL.connect(s.Bob).deposit(depositAmount)
         await mineBlock()
 
-        
+
         let balance = await s.AMPL.balanceOf(s.Bob.address)
         expect(balance.toNumber()).to.be.closeTo((startBalance.sub(depositAmount)).toNumber(), 0.0001, "Balance decremented by the correct amount")
 
         balance = await s.CappedAMPL.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(mintAmount), 5, "Expected amount of CappedAmpl received")
-       
+
 
     })
 
@@ -63,10 +63,10 @@ describe("Testing CappedAMPL functions", () => {
     })
 
     //rebase??
-   
+
 
     it("Withdraw underlying", async () => {
-        
+
         let startBalance = await s.AMPL.balanceOf(s.Bob.address)
 
         await s.CappedAMPL.connect(s.Bob).withdrawAll()
@@ -84,6 +84,5 @@ describe("Testing CappedAMPL functions", () => {
 
         let underlyingBalance = await s.AMPL.balanceOf(s.Carol.address)
         expect(underlyingBalance.toNumber()).to.be.closeTo(s.AMPL_AMOUNT.toNumber(), 1, "Carol received all AMPL back")
-    
     })
 })
