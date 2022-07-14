@@ -84,5 +84,18 @@ describe("Testing CappedAMPL functions", () => {
 
         let underlyingBalance = await s.AMPL.balanceOf(s.Carol.address)
         expect(underlyingBalance.toNumber()).to.be.closeTo(s.AMPL_AMOUNT.toNumber(), 1, "Carol received all AMPL back")
+
+        let remainingAMPL = await s.AMPL.balanceOf(s.CappedAMPL.address)
+        expect(remainingAMPL.toNumber()).to.be.closeTo(0, 2, "All AMPL removed from cap contract")
     })
+})
+
+describe("Testing cap", () => {
+
+    it("Admin reduces cap", async () => {
+        //set cap to 500 AMPL ~500USD
+        await s.CappedAMPL.connect(s.Frank).setCap(BN("500e9"))
+        await mineBlock()
+    })
+
 })
