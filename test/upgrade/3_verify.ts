@@ -71,18 +71,17 @@ describe("Verify Upgraded Contracts", () => {
 
         expect(await toNumber(await s.USDI.balanceOf(s.Bob.address))).to.be.closeTo(0, 0.0001, "Bob is able to withdraw using the new withdrawAll function")
 
-        
-
+    
     })
 
     it("Check depositTo", async () => {
         await s.USDC.connect(s.Bob).approve(s.USDI.address, usdcAmount)
         await mineBlock()
 
-        await s.USDI.connect(s.Bob).depositTo(usdcAmount, s.Eric.address)
+        await s.USDI.connect(s.Bob).depositTo(usdcAmount, s.Andy.address)
         await mineBlock()
 
-        expect(await s.USDI.balanceOf(s.Eric.address)).to.eq(BN("50e18"), "Eric received the USDI from Bob's deposit")
+        expect(await s.USDI.balanceOf(s.Andy.address)).to.eq(BN("50e18"), "Andy received the USDI from Bob's deposit")
     })
 
     it("Confirm VaultController now has borrowUSDCto", async () => {
@@ -152,6 +151,8 @@ describe("Testing for failure on new USDI functions", () => {
     })
 
     it("Try to withdrawAllTo when holding 0 USDI", async () => {
+
+
         let balance = await s.USDI.balanceOf(s.Eric.address)
         expect(balance).to.eq(0, "Eric holds 0 USDi")
 
