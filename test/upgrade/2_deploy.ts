@@ -107,7 +107,7 @@ describe("Verify Contracts", () => {
   })
 });
 
-describe("Deploy upgrades and point proxy", () => {
+describe("Deploy upgrades and point proxy to new implementation", () => {
 
   const owner = ethers.provider.getSigner(s.IP_OWNER)
 
@@ -133,7 +133,7 @@ describe("Deploy upgrades and point proxy", () => {
     await mineBlock()
 
     await impersonateAccount(owner._address)
-    
+
     await s.ProxyAdmin.connect(owner).upgrade(s.VaultController.address, VC_imp.address)
     await mineBlock()
 
@@ -141,23 +141,5 @@ describe("Deploy upgrades and point proxy", () => {
     await mineBlock()
 
     await ceaseImpersonation(owner._address)
-
-
-
-
-
-
-  })
-
-  it("Deploy new USDI", async () => {
-
-  })
-
-  it("Upgrade protocol on proxy", async () => {
-
-  })
-
-  it("Verify upgrades", async () => {
-
   })
 })
