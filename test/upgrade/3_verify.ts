@@ -1,5 +1,6 @@
 import { s } from "./scope";
 import { upgrades, ethers } from "hardhat";
+import { BigNumber, utils } from "ethers";
 import { expect, assert } from "chai";
 import { showBody, showBodyCyan } from "../../util/format";
 import { impersonateAccount, ceaseImpersonation } from "../../util/impersonator"
@@ -20,15 +21,16 @@ import {
 } from "../../util/block";
 import { toNumber, getGas } from "../../util/math";
 
+const usdcAmount = BN("50e6")
+const usdiAmount = BN("50e18")
+
+const USDC_BORROW = BN("1000e6")//1k USDC
+const USDI_BORROW = BN("100e18")//500 USDI
+
+
 
 require("chai").should();
 describe("Verify Upgraded Contracts", () => {
-
-    const usdcAmount = BN("50e6")
-    const usdiAmount = BN("50e18")
-
-    const USDC_BORROW = BN("1000e6")//1k USDC
-    const USDI_BORROW = BN("100e18")//500 USDI
 
 
     it("Confirm USDI now has the upgraded functions", async () => {
@@ -69,6 +71,18 @@ describe("Verify Upgraded Contracts", () => {
 
         expect(await toNumber(await s.USDI.balanceOf(s.Bob.address))).to.be.closeTo(0, 0.0001, "Bob is able to withdraw using the new withdrawAll function")
 
+        
+
+    })
+
+    it("Check depositTo", async () => {
+        await s.USDC.connect(s.Bob).approve(s.USDI.address, usdcAmount)
+        await mineBlock()
+
+        await s.USDI.connect(s.Bob).depositTo(usdcAmount, s.Eric.address)
+        await mineBlock()
+
+        expect(await s.USDI.balanceOf(s.Eric.address)).to.eq(BN("50e18"), "Eric received the USDI from Bob's deposit")
     })
 
     it("Confirm VaultController now has borrowUSDCto", async () => {
@@ -109,4 +123,46 @@ describe("Verify Upgraded Contracts", () => {
         expect(await s.USDI.balanceOf(s.Carol.address)).to.be.gt(USDI_BORROW.mul(2), "Carol received the correct amount of USDI from the second loan")
     })
 });
+
+describe("Testing for failure on new USDI functions", () => {
+    it("call deposit with amount == 0", async () => {
+        //approve
+        await s.USDC.connect(s.Dave).approve(s.USDI.address, usdcAmount)
+        await mineBlock()
+
+        await expect(s.USDI.connect(s.Dave).deposit(0)).to.be.revertedWith("Cannot deposit 0")
+        await mineBlock()
+    })
+
+    it("call deposit with an amount that is more than what is posessed", async () => {
+
+        await s.USDC.connect(s.Eric).transfer(s.Bob.address, await s.USDC.balanceOf(s.Eric.address))
+        await mineBlock()
+
+        let balance = await s.USDC.balanceOf(s.Eric.address)
+        assert.equal(balance.toString(), "0", "Eric holds no USDC")
+
+        //approve
+        await s.USDC.connect(s.Eric).approve(s.USDI.address, utils.parseEther("500"))
+        await mineBlock()
+
+        await expect(s.USDI.connect(s.Eric).depositTo(utils.parseEther("500"), s.Eric.address)).to.be.revertedWith("ERC20: transfer amount exceeds balance")
+        await mineBlock()
+
+    })
+
+    it("Try to withdrawAllTo when holding 0 USDI", async () => {
+        let balance = await s.USDI.balanceOf(s.Eric.address)
+        expect(balance).to.eq(0, "Eric holds 0 USDi")
+
+        const startUSDC = await s.USDC.balanceOf(s.Eric.address)
+
+        //Eric tries to withdraw way more than should be allowed
+        await s.USDI.connect(s.Eric).withdrawAllTo(s.Eric.address)
+        await mineBlock()
+
+        expect(await s.USDC.balanceOf(s.Eric.address)).to.eq(startUSDC, "Eric did not receive any USDC")
+
+    })   
+})
 

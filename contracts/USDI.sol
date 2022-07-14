@@ -10,6 +10,8 @@ import "./_external/IERC20.sol";
 import "./_external/compound/ExponentialNoError.sol";
 import "./_external/openzeppelin/PausableUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 /// @title USDI token contract
 /// @notice handles all minting/burning of usdi
 /// @dev extends UFragments
@@ -129,9 +131,9 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     uint256 amount = usdc_amount * 1e12;
     require(amount > 0, "Cannot deposit 0");
     // check allowance and ensure transfer success
-    uint256 allowance = _reserve.allowance(target, address(this));
+    uint256 allowance = _reserve.allowance(_msgSender(), address(this));
     require(allowance >= usdc_amount, "Insufficient Allowance");
-    require(_reserve.transferFrom(target, address(this), usdc_amount), "transfer failed");
+    require(_reserve.transferFrom(_msgSender(), address(this), usdc_amount), "transfer failed");
     // the gonbalances of the sender is in gons, therefore we must multiply the deposit amount, which is in fragments, by gonsperfragment
     _gonBalances[target] = _gonBalances[target] + amount * _gonsPerFragment;
     // total supply is in fragments, and so we add amount
