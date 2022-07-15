@@ -135,6 +135,7 @@ describe("Testing repay", () => {
 })
 
 
+
 describe("Checking for eronious inputs and scenarios", () => {
     let vaultID: BigNumber
     let solvency: boolean
@@ -145,21 +146,16 @@ describe("Checking for eronious inputs and scenarios", () => {
         //showBody("advance 1 week and then calculate interest")
         vaultID = s.CaroLVaultID
 
-        let borrowPower = await (await s.VaultController.vaultBorrowingPower(vaultID)).sub(await s.VaultController.vaultLiability(vaultID))
-        showBody(await toNumber(borrowPower))
+        //let borrowPower = await (await s.VaultController.vaultBorrowingPower(vaultID)).sub(await s.VaultController.vaultLiability(vaultID))
 
         await s.VaultController.connect(s.Carol).borrowUSDIto(vaultID, BN("175e18"), s.Carol.address)
         await mineBlock()
 
-        borrowPower = await (await s.VaultController.vaultBorrowingPower(vaultID)).sub(await s.VaultController.vaultLiability(vaultID))
-        showBody(await toNumber(borrowPower))
+        //borrowPower = await (await s.VaultController.vaultBorrowingPower(vaultID)).sub(await s.VaultController.vaultLiability(vaultID))
 
         await fastForward(OneWeek * 50)
         await s.VaultController.calculateInterest()
         await advanceBlockHeight(1)
-
-
-
 
         solvency = await s.VaultController.checkVault(vaultID)
         assert.equal(solvency, false, "Carol's vault is not solvent")
@@ -230,7 +226,10 @@ describe("Checking for eronious inputs and scenarios", () => {
     it("liquidate when liquidator doesn't have enough USDi", async () => {
         //send Eric 1 USDi
         const EricUSDI = utils.parseEther("1")
-        await s.USDI.connect(s.Dave).transfer(s.Eric.address, EricUSDI)
+
+        await s.USDC.connect(s.Dave).approve(s.USDI.address, BN("1e6"))
+        await advanceBlockHeight(1)
+        await s.USDI.connect(s.Dave).depositTo(BN("1e6"), s.Eric.address)
         await advanceBlockHeight(1)
 
         let EricBalance = await s.USDI.balanceOf(s.Eric.address)
@@ -240,6 +239,8 @@ describe("Checking for eronious inputs and scenarios", () => {
         await advanceBlockHeight(1)
 
     })
+
+
 
     it("accidently send USDi to the USDI contract", async () => {
         let EricBalance = await s.USDI.balanceOf(s.Eric.address)
@@ -269,6 +270,8 @@ describe("Checking for eronious inputs and scenarios", () => {
         assert.equal(balance.toString(), startingBalance.toString(), "Balance has not changed, TX reverted")
     })
 
+
+
     it("repay when borrower doesn't have enough USDi to do so", async () => {
         balance = await s.USDI.balanceOf(s.Carol.address)
         //carol sends all USDi to Dave
@@ -289,11 +292,19 @@ describe("Checking for eronious inputs and scenarios", () => {
         //Dave transfers enough USDi back to Carol to repay all
         AccountLiability = await s.VaultController.vaultLiability(vaultID)
 
-        await s.USDI.connect(s.Dave).transfer(s.Carol.address, AccountLiability.add(utils.parseEther("100")))
+        const depositToAmount = BN("900e6")
+
+        //await s.USDI.connect(s.Dave).transfer(s.Carol.address, AccountLiability.add(utils.parseEther("100")))
+        await s.USDC.connect(s.Dave).approve(s.USDI.address, depositToAmount)
+        await s.USDI.connect(s.Dave).depositTo(depositToAmount, s.Carol.address)
         await advanceBlockHeight(1)
+
+        showBody("DepositTo")
 
         await s.VaultController.connect(s.Carol).repayAllUSDi(vaultID)
         await advanceBlockHeight(1)
+        showBody("repayAllUSDi")
+
         AccountLiability = await s.VaultController.vaultLiability(vaultID)
         assert.equal(AccountLiability.toString(), "0", "There is no liability on Carol's vault anymore")
 
@@ -309,8 +320,13 @@ describe("Checking for eronious inputs and scenarios", () => {
         await expect(s.VaultController.connect(s.Carol).repayUSDi(vaultID, 10)).to.be.revertedWith("repay > borrow amount")
         await advanceBlockHeight(1)
 
+        showBody("repayUSDi")
+
         const repayAllResult = await s.VaultController.connect(s.Carol).repayAllUSDi(vaultID)
         await advanceBlockHeight(1)
+
+        showBody("repayAllUSDi again")
+
         let repayGas = await getGas(repayAllResult)
         showBodyCyan("Gas cost to repayAllUSDi on an empty vault: ", repayGas)
 
@@ -359,7 +375,10 @@ describe("Checking for eronious inputs and scenarios", () => {
         await expect(s.Bob.sendTransaction(tx)).to.be.reverted
         await mineBlock()
     })
+
 })
+
+
 
 describe("Checking getters", () => {
     it("checks totalBaseLiability", async () => {
@@ -406,7 +425,7 @@ describe("Checking vaultSummaries", async () => {
         await expect(s.VaultController.vaultSummaries(0, 6)).to.be.reverted
 
         //include vaults that don't exist yet
-        await expect(s.VaultController.vaultSummaries(1, 25)).to.be.reverted
+        await expect(s.VaultController.vaultSummaries(1, 999)).to.be.reverted
     })
 })
 
