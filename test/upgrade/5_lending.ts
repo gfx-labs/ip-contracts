@@ -299,11 +299,9 @@ describe("Checking for eronious inputs and scenarios", () => {
         await s.USDI.connect(s.Dave).depositTo(depositToAmount, s.Carol.address)
         await advanceBlockHeight(1)
 
-        showBody("DepositTo")
 
         await s.VaultController.connect(s.Carol).repayAllUSDi(vaultID)
         await advanceBlockHeight(1)
-        showBody("repayAllUSDi")
 
         AccountLiability = await s.VaultController.vaultLiability(vaultID)
         assert.equal(AccountLiability.toString(), "0", "There is no liability on Carol's vault anymore")
@@ -320,12 +318,8 @@ describe("Checking for eronious inputs and scenarios", () => {
         await expect(s.VaultController.connect(s.Carol).repayUSDi(vaultID, 10)).to.be.revertedWith("repay > borrow amount")
         await advanceBlockHeight(1)
 
-        showBody("repayUSDi")
-
         const repayAllResult = await s.VaultController.connect(s.Carol).repayAllUSDi(vaultID)
         await advanceBlockHeight(1)
-
-        showBody("repayAllUSDi again")
 
         let repayGas = await getGas(repayAllResult)
         showBodyCyan("Gas cost to repayAllUSDi on an empty vault: ", repayGas)
@@ -377,8 +371,6 @@ describe("Checking for eronious inputs and scenarios", () => {
     })
 
 })
-
-
 
 describe("Checking getters", () => {
     it("checks totalBaseLiability", async () => {
