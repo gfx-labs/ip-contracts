@@ -1,0 +1,7 @@
+{
+    "deploys": {
+        "new_vc": "0x2F483ee258D554fAE69A30aE788F299A13AeD14d",
+        "new_gov": "0x8B3D32cf2bb4d0D16656f4c0b04Fa546274f1545",
+        "new_usdi": "0xeDfEC0cb12B39EA11E477e722E06d9cd99A9d57A"
+    }
+}
