@@ -138,8 +138,6 @@ describe("Queue and Execute proposal", () => {
     await mineBlock();
 
     await ceaseImpersonation(proposer)
-
-
   })
 })
 
@@ -171,7 +169,7 @@ describe("Register STETH", async () => {
     await CurveRelay.deployed()
     expect(await CurveRelay.currentValue()).to.not.eq(0)
 
-    showBody("CurveRelay anchor: ", await toNumber(await CurveRelay.currentValue()))
+    //showBody("CurveRelay anchor: ", await toNumber(await CurveRelay.currentValue()))
 
 
     //Create chainlink steth relay
@@ -186,7 +184,7 @@ describe("Register STETH", async () => {
     await ChainlinkRelay.deployed()
     expect(await ChainlinkRelay.currentValue()).to.not.eq(0)
 
-    showBody("Chainlink main: ", await toNumber(await ChainlinkRelay.currentValue()))
+    //showBody("Chainlink main: ", await toNumber(await ChainlinkRelay.currentValue()))
 
 
     //create anchorview 
@@ -200,7 +198,7 @@ describe("Register STETH", async () => {
     )
     await mineBlock()
     await anchor.deployed()
-    showBody(await toNumber(await anchor.currentValue()))
+    //showBody(await toNumber(await anchor.currentValue()))
 
 
 
