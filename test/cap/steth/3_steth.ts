@@ -92,8 +92,10 @@ describe("Checking the cap", () => {
         //Bob wraps some
         await s.STETH.connect(s.Bob).approve(s.CappedSTETH.address, depositAmount)
         await mineBlock()
-        await s.CappedSTETH.connect(s.Bob).wrap(depositAmount)
+        const result = await s.CappedSTETH.connect(s.Bob).wrap(depositAmount)
         await mineBlock()
+        const gas = await getGas(result)
+        showBodyCyan("Gas to wrap: ", gas)
 
         //Carol wraps some
         await s.STETH.connect(s.Carol).approve(s.CappedSTETH.address, depositAmount)
@@ -119,8 +121,10 @@ describe("Checking the cap", () => {
 
         let balance = await s.CappedSTETH.balanceOf(s.Bob.address)
         await s.CappedSTETH.connect(s.Bob).approve(s.CappedSTETH.address, balance)
-        await s.CappedSTETH.connect(s.Bob).unwrap(balance)
+        const result = await s.CappedSTETH.connect(s.Bob).unwrap(balance)
         await mineBlock()
+        const gas = await getGas(result)
+        showBodyCyan("Gas to unwrap: ", gas)
 
         balance = await s.CappedSTETH.balanceOf(s.Carol.address)
         await s.CappedSTETH.connect(s.Carol).approve(s.CappedSTETH.address, balance)

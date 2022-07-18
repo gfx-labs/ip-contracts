@@ -163,6 +163,8 @@ describe("Deploy Contracts", () => {
     await mineBlock();
     expect(await s.UniswapRelayEthUsdc.currentValue()).to.not.eq(0);
 
+    showBody("ETH/USDC UNI RELAY: ", await s.UniswapRelayEthUsdc.currentValue())
+
     //showBody("create uniswap uni relay")
     s.UniswapRelayUniUsdc = await DeployContract(
       new UniswapV3OracleRelay__factory(s.Frank),
@@ -208,6 +210,8 @@ describe("Deploy Contracts", () => {
     );
     await mineBlock();
     expect(await s.ChainlinkEth.currentValue()).to.not.eq(0);
+    showBody("ETH/USDC CHAIN RELAY: ", await s.ChainlinkEth.currentValue())
+
 
     //showBody("create Uni anchoredview")
     s.AnchoredViewUni = await DeployContract(
