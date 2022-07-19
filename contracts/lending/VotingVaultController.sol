@@ -63,7 +63,7 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
 
 
 
-  event NewVotingVault(address vault_address, uint256 vaultId, address vaultOwner);
+  event NewVotingVault(address voting_vault_address, uint256 vaultId);
   /// @notice create a new vault
   /// @return address of the new vault
   function mintVault(uint96 id) public returns (address) {
@@ -77,7 +77,7 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
         _vaultAddress_vaultId[vault_address] = id;
         _votingVaultAddress_vaultId[voting_vault_address] = id;
         // emit the event
-        emit NewVotingVault(vault_address, id, _msgSender());
+        emit NewVotingVault(voting_vault_address, id);
       }
     }
     return _vaultId_votingVaultAddress[id];
