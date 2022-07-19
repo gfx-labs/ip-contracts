@@ -84,23 +84,6 @@ contract CappedGovToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     require(_underlying.transferFrom(_msgSender(), address(votingVault), amount), "transfer failed");
   }
 
-  /// @notice withdraw underlying by burning THIS token
-  /// caller should obtain 1 underlying for every THIS token
-  /// @param amount of underlying to withdraw
-  function withdraw(uint256 amount, uint96 vaultId, address target) public {
-    require(amount > 0, "Cannot withdraw 0");
-    VotingVault votingVault = VotingVault(_votingVaultController.votingVaultAddress(vaultId));
-    require(address(votingVault) != address(0x0), "invalid vault");
-    IVault vault = IVault(_vaultController.vaultAddress(vaultId));
-    require(address(vault) != address(0x0), "invalid voting vault");
-    require(_msgSender() == vault.minter(), "only minter may withdraw");
-    require(amount <= this.balanceOf(address(votingVault)), "insufficient funds");
-    // burn this token from the vault
-    ERC20Upgradeable._burn(address(vault), amount);
-    // move the underlying tokens to the target
-    _votingVaultController.retrieveUnderlying(amount, address(votingVault), target);
-  }
-
   function transfer(address recipient, uint256 amount) public override returns (bool) {
     uint96 vault_id = _votingVaultController.vaultId(_msgSender());
     // only vaults will ever send this. only vaults will ever hold this token.
