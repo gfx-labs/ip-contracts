@@ -6,12 +6,14 @@ import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonat
 
 import { BN } from "../../../util/number";
 import {
-  ProxyAdmin,
-  ProxyAdmin__factory,
+  AnchoredViewRelay,
   USDI__factory,
   IVault__factory,
   UniswapV3OracleRelay__factory,
-  ChainlinkOracleRelay__factory
+  ChainlinkOracleRelay__factory,
+  StEthOracleRelay__factory,
+  GovernorCharlieDelegate__factory,
+  GovernorCharlieDelegate
 } from "../../../typechain-types";
 import {
   advanceBlockHeight,
@@ -23,6 +25,7 @@ import {
 import { toNumber } from "../../../util/math";
 
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
+import { AnchoredViewRelay__factory } from "../../../typechain-types";
 
 
 
@@ -112,40 +115,29 @@ describe("Verify Contracts", () => {
   })
 });
 
-describe("Deploy upgrades and point proxy to new implementation", () => {
+describe("Queue and Execute proposal", () => {
+  const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
+  const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064";
+  const voteBlocks = 6570;
+  const timelockDelay = 43200;
+  let gov: GovernorCharlieDelegate;
 
-  const owner = ethers.provider.getSigner(s.IP_OWNER)
+  it("Queue and Execute", async () => {
 
-  it("Deploy and upgrade", async () => {
+    await impersonateAccount(proposer)
+    const prop = ethers.provider.getSigner(proposer)
 
-    const VC_factory = await ethers.getContractFactory("VaultController")
-    const VC_imp = await VC_factory.deploy()
+    gov = GovernorCharlieDelegate__factory.connect(governorAddress, prop);
+
+    await gov.castVote(3, 1)
+    await advanceBlockHeight(voteBlocks);
+    await gov.queue(3);
     await mineBlock()
-    await VC_imp.deployed()
+    await fastForward(timelockDelay);
+    await gov.execute(3);
+    await mineBlock();
 
-    const USDI_factory = await ethers.getContractFactory("USDI")
-    const USDI_imp = await USDI_factory.deploy()
-    await mineBlock()
-    await USDI_imp.deployed()
-
-
-    const ethAmount = BN("1e18")
-    let tx = {
-      to: owner._address,
-      value: ethAmount
-    }
-    await s.Frank.sendTransaction(tx)
-    await mineBlock()
-
-    await impersonateAccount(owner._address)
-
-    await s.ProxyAdmin.connect(owner).upgrade(s.VaultController.address, VC_imp.address)
-    await mineBlock()
-
-    await s.ProxyAdmin.connect(owner).upgrade(s.USDI.address, USDI_imp.address)
-    await mineBlock()
-
-    await ceaseImpersonation(owner._address)
+    await ceaseImpersonation(proposer)
   })
 })
 
@@ -156,28 +148,29 @@ describe("Register STETH", async () => {
 
   const UNIpool = "0x6c83b0Feef04139EB5520b1cE0e78069C6E7e2c5"
   const ChainlinkFeed = "0xcfe54b5cd566ab89272946f602d76ea879cab4a8"
+  const CurveFeed = "0xAb55Bf4DfBf469ebfe082b7872557D1F87692Fe6"
+
+  const owner = ethers.provider.getSigner(s.IP_OWNER)
+
+  let anchor: AnchoredViewRelay
+
 
   it("Set up oracle", async () => {
-    
 
-    //Create uniswap steth relay
-    const UniRelay = await DeployContract(
-      new UniswapV3OracleRelay__factory(s.Frank),
+
+    const CurveRelay = await DeployContract(
+      new StEthOracleRelay__factory(s.Frank),
       s.Frank,
-      60,
-      UNIpool,
-      false,
-      BN("1e10"),
+      CurveFeed,
+      BN("1"),
       BN("1")
     )
     await mineBlock()
-    await UniRelay.deployed()
-    expect(await UniRelay.currentValue()).to.not.eq(0);
+    await CurveRelay.deployed()
+    expect(await CurveRelay.currentValue()).to.not.eq(0)
 
-    showBody(await UniRelay.currentValue())
-    
+    //showBody("CurveRelay anchor: ", await toNumber(await CurveRelay.currentValue()))
 
-      
 
     //Create chainlink steth relay
     const ChainlinkRelay = await DeployContract(
@@ -190,13 +183,55 @@ describe("Register STETH", async () => {
     await mineBlock()
     await ChainlinkRelay.deployed()
     expect(await ChainlinkRelay.currentValue()).to.not.eq(0)
-    showBody(await ChainlinkRelay.currentValue())
+
+    //showBody("Chainlink main: ", await toNumber(await ChainlinkRelay.currentValue()))
+
+
+    //create anchorview 
+    anchor = await DeployContract(
+      new AnchoredViewRelay__factory(s.Frank),
+      s.Frank,
+      CurveRelay.address,
+      ChainlinkRelay.address,
+      BN("30"),
+      BN("100")
+    )
+    await mineBlock()
+    await anchor.deployed()
+    //showBody(await toNumber(await anchor.currentValue()))
+
 
 
   })
 
   it("Register STETH", async () => {
 
+    await impersonateAccount(owner._address)
+
+
+    const ethAmount = BN("1e18")
+    let tx = {
+      to: owner._address,
+      value: ethAmount
+    }
+    await s.Frank.sendTransaction(tx)
+    await mineBlock()
+
+    await s.Oracle.connect(owner).setRelay(
+      stethAddr,
+      anchor.address
+    )
+    await mineBlock()
+
+
+    await s.VaultController.connect(owner).registerErc20(
+      stethAddr,
+      s.wETH_LTV,
+      stethAddr,
+      s.LiquidationIncentive
+    )
+    await mineBlock()
+    await ceaseImpersonation(owner._address)
 
   })
 })

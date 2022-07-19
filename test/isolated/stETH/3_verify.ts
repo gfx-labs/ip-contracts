@@ -119,7 +119,7 @@ describe("Verify Upgraded Contracts", () => {
         await s.VaultController.connect(s.Carol).borrowUsdi(s.CaroLVaultID, USDI_BORROW)
         await mineBlock()
 
-        expect(await s.USDI.balanceOf(s.Carol.address)).to.be.gt(USDI_BORROW.mul(2), "Carol received the correct amount of USDI from the second loan")
+        expect(await s.USDI.balanceOf(s.Carol.address)).to.be.at.least(USDI_BORROW, "Carol received the correct amount of USDI from the second loan")
     })
 });
 
