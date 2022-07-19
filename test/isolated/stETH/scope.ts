@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { USDI, IERC20, IVOTE, VaultController, OracleMaster, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../../typechain-types";
+import { USDI, IERC20, IVOTE, ILido, CappedSTETH, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../../util/addresser";
 import { BN } from "../../../util/number";
 
@@ -56,6 +56,13 @@ export class TestScope extends MainnetAddresses {
     Eric!: SignerWithAddress   // eric only holds ETH and generally does not use IP unless a clean slate is needed
     Gus!: SignerWithAddress    // gus is a wBTC holder. He wishes to deposit wBTC and borrow USDI
     accounts!:SignerWithAddress[]
+
+    ST_ORACLE!: ILidoOracle
+    CappedSTETH!: CappedSTETH
+    STETH!: ILido
+    STETH_AMOUNT = BN("10e18")
+    STETH_ADDRESS = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84"
+    STETH_CAP = BN("1000e18")
 
     BobVault!: IVault
     BobVaultID!: BigNumber

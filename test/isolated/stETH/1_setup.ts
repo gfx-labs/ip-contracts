@@ -20,8 +20,8 @@ import {
     OracleMaster__factory,
     ProxyAdmin,
     ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory,
-    ThreeLines0_100,
+    ILido__factory,
+    ILidoOracle__factory,
     ThreeLines0_100__factory,
     UniswapV3OracleRelay__factory,
     USDI,
@@ -40,11 +40,9 @@ require("chai").should();
 let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
 let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
-let dydx_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let ens_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let aave_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let tribe_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
+
+const steth_minter = "0x2FAF487A4414Fe77e2327F0bf4AE2a264a776AD2"
 
 
 if (process.env.TENDERLY_KEY) {
@@ -56,7 +54,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(15169493)).to.not.throw;
+        expect(await reset(15127785)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -86,6 +84,12 @@ describe("Initial Setup", () => {
         s.AAVE = IVOTE__factory.connect(s.aaveAddress, s.Frank);
         s.TRIBE = IVOTE__factory.connect(s.tribeAddress, s.Frank);
 
+        s.STETH = ILido__factory.connect(s.STETH_ADDRESS, s.Frank)
+
+        let oracle = await s.STETH.getOracle()
+
+        s.ST_ORACLE = ILidoOracle__factory.connect(oracle, s.Frank)
+
     });
 
     it("Connect to mainnet deployments for interest protocol", async () => {
@@ -95,6 +99,8 @@ describe("Initial Setup", () => {
         s.Oracle = OracleMaster__factory.connect(d.Oracle, s.Frank)
 
         s.ProxyAdmin = ProxyAdmin__factory.connect(d.ProxyAdmin, s.Frank)
+
+        
 
 
     })
@@ -112,6 +118,11 @@ describe("Initial Setup", () => {
         await expect(
             stealMoney(weth_minter, s.Bob.address, s.wethAddress, s.Bob_WETH)
         ).to.not.be.reverted;
+
+        await expect(
+            stealMoney(steth_minter, s.Bob.address, s.STETH.address, s.STETH_AMOUNT)
+
+        )
 
 
         //for some reason at this block, account 1 has 1 USDC, need to burn so all accounts are equal

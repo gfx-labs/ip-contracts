@@ -63,6 +63,4 @@ describe("Deploy cappedToken contract", () => {
         expect(await s.CappedSTETH.getCap()).to.eq(s.STETH_CAP)
         expect(await s.CappedSTETH.underlyingAddress()).to.eq(s.STETH.address)
     })
-
-   
 })

@@ -30,9 +30,46 @@ const USDI_BORROW = BN("100e18")//500 USDI
 
 
 require("chai").should();
+describe("Prepare to test new protocol functions", () => {
+    it("mint vaults for testing", async () => {
+        //showBody("bob mint vault")
+        await expect(s.VaultController.connect(s.Bob).mintVault()).to.not
+            .reverted;
+        await mineBlock();
+        s.BobVaultID = await s.VaultController.vaultsMinted()
+        let vaultAddress = await s.VaultController.vaultAddress(s.BobVaultID)
+        s.BobVault = IVault__factory.connect(vaultAddress, s.Bob);
+        expect(await s.BobVault.minter()).to.eq(s.Bob.address);
+
+        //showBody("carol mint vault")
+        await expect(s.VaultController.connect(s.Carol).mintVault()).to.not
+            .reverted;
+        await mineBlock();
+        s.CaroLVaultID = await s.VaultController.vaultsMinted()
+        vaultAddress = await s.VaultController.vaultAddress(s.CaroLVaultID)
+        s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
+        expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
+    });
+
+    it("vault deposits", async () => {
+  
+
+        await expect(s.STETH.connect(s.Bob).transfer(s.BobVault.address, s.STETH_AMOUNT))
+            .to.not.reverted;
+        await expect(
+            s.UNI.connect(s.Carol).transfer(s.CarolVault.address, s.Carol_UNI)
+        ).to.not.reverted;
+        await mineBlock();
+
+        //showBody("bob transfer weth")
+        expect(await s.BobVault.tokenBalance(s.STETH_ADDRESS)).to.eq(s.STETH_AMOUNT.sub(1))//1 wei corner case
+
+        //showBody("carol transfer uni")
+        expect(await s.CarolVault.tokenBalance(s.uniAddress)).to.eq(s.Carol_UNI)
+
+    });
+})
 describe("Verify Upgraded Contracts", () => {
-
-
     it("Confirm USDI now has the upgraded functions", async () => {
 
         //depositTo() does not exist, revert without reason string
@@ -71,7 +108,7 @@ describe("Verify Upgraded Contracts", () => {
 
         expect(await toNumber(await s.USDI.balanceOf(s.Bob.address))).to.be.closeTo(0, 0.0001, "Bob is able to withdraw using the new withdrawAll function")
 
-    
+
     })
 
     it("Check depositTo", async () => {
@@ -87,7 +124,7 @@ describe("Verify Upgraded Contracts", () => {
     it("Confirm VaultController now has borrowUSDCto", async () => {
         const startUSDC = await s.USDC.balanceOf(s.Bob.address)
         //bob borrows USDC
-        const result = await s.VaultController.connect(s.Bob).borrowUSDCto(s.BobVaultID, USDC_BORROW, s.Bob.address)
+        const result = await s.VaultController.connect(s.Bob).borrowUSDCto(s.BobVaultID.toNumber(), USDC_BORROW, s.Bob.address)
         await mineBlock()
 
         const gas = await getGas(result)
@@ -98,7 +135,7 @@ describe("Verify Upgraded Contracts", () => {
         expect(difference).to.eq(USDC_BORROW, "Change in USDC balance after borrow is correct")
 
         //check liability
-        let liability = await s.VaultController.vaultLiability(s.BobVaultID)
+        let liability = await s.VaultController.vaultLiability(s.BobVaultID.toNumber())
         expect(await toNumber(liability)).to.eq(USDC_BORROW.div(BN("1e6")), "Liability matches borrow amount")
     })
 
@@ -164,6 +201,6 @@ describe("Testing for failure on new USDI functions", () => {
 
         expect(await s.USDC.balanceOf(s.Eric.address)).to.eq(startUSDC, "Eric did not receive any USDC")
 
-    })   
+    })
 })
 
