@@ -99,15 +99,10 @@ contract CappedGovToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   }
 
   function transferFrom(
-    address sender,
-    address recipient,
-    uint256 amount
+    address /*sender*/,
+    address /*recipient*/,
+    uint256 /*amount*/
   ) public pure override returns (bool) {
-    if(sender == recipient) {
-      if(amount > 0) {
-        return false;
-      }
-    }
     // allowances are never granted, as the VotingVault does not grant allowances.
     // this function is therefore always uncallable and so we will just return false
     return false;
