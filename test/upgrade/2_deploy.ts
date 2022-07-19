@@ -123,7 +123,6 @@ describe("Deploy upgrades and point proxy to new implementation", () => {
     await mineBlock()
     await USDI_imp.deployed()
 
-
     const ethAmount = BN("1e18")
     let tx = {
       to: owner._address,

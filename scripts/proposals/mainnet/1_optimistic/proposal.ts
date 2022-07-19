@@ -18,6 +18,8 @@ Adds Optimistic governance to governor charlie
 Add GFX labs as an optimistic proposer
 `;
 
+
+
 const main = async () => {
   const accounts = await ethers.getSigners();
   const x = accounts[0];
@@ -37,9 +39,6 @@ const main = async () => {
   await p.DeployAll();
   // now construct the proposal
 
-  const charlie = new GovernorCharlieDelegate__factory(x).attach(
-    "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
-  );
 
   const newGov = await new GovernorCharlieDelegator__factory(x)
   .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
@@ -69,11 +68,13 @@ const main = async () => {
   p.addStep(addOptimisticGFX, "_setWhitelistAccountExpiration(address,uint256)");
 
   const out = p.populateProposal();
-  console.log(out);
+  const charlie = new GovernorCharlieDelegate__factory(x).attach(
+    "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
+  );
+
   console.log("PLEASE CHECK PROPOSAL! PROPOSING IN 10 seconds")
   await countdownSeconds(10)
   console.log("sending transaction....")
-
   await p.sendProposal(charlie, description, true);
 
   return "success";

@@ -67,7 +67,6 @@ export class ProposalContext {
   addStep(p: PopulatedTransaction, sig: string) {
     this.steps.push({ p, sig });
   }
-
   populateProposal(): ProposalData {
     const out: ProposalData = {
       targets: [],
