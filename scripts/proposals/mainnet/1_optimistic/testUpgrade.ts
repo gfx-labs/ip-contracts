@@ -1,13 +1,3 @@
-// this is for testing the govenernance contract on a live deploy
-//
-//
-//
-//
-// this proposal will do the following
-// 1. Upgrade the VaultController implementation
-// 2. Upgrade the USDi implementation
-// 3. Upgrade the Governor implementation
-
 import { ethers } from "hardhat";
 import { Signer } from "ethers";
 import {
@@ -45,17 +35,19 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 
 const description = `
-#  Transfer Token
+# IP July Update
 
+A small update to Vault Controller and USDi for less friction in transfers.
 
-## Details
+Adds Optimistic governance to governor charlie
 
-Transfer token that owns governance
+Add GFX labs as an optimistic proposer
+
 `;
 const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
 const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064";
 const voteBlocks = 6570;
-const timelockDelay = 43200;
+const timelockDelay = 43300;
 
 const makeProposal = async () => {};
 
@@ -64,7 +56,7 @@ let x: SignerWithAddress;
 
 describe("Testing change of sale contract", () => {
   it("Does the thing", async () => {
-    await reset(15151469);
+    await reset(15168262);
     const imp = await Impersonate(proposer);
     await imp.start();
     x = await ethers.getSigner(proposer);
@@ -89,18 +81,29 @@ describe("Testing change of sale contract", () => {
     .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
     .populateTransaction._setImplementation(p.db.getData(".deploys.new_gov"));
 
-    const newVC = await new TransparentUpgradeableProxy__factory(x)
-    .attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3")
-    .populateTransaction.upgradeTo(p.db.getData(".deploys.new_vc"));
 
+    const newVC = await new ProxyAdmin__factory(x)
+    .attach("0x3D9d8c08dC16Aa104b5B24aBDd1aD857e2c0D8C5")
+    .populateTransaction.upgrade(
+      "0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3",
+      p.db.getData(".deploys.new_vc"),
+    )
 
-    const newUSDi = await new TransparentUpgradeableProxy__factory(x)
-    .attach("0x2a54ba2964c8cd459dc568853f79813a60761b58")
-    .populateTransaction.upgradeTo(p.db.getData(".deploys.new_usdi"));
+    const newUSDi = await new ProxyAdmin__factory(x)
+    .attach("0x3D9d8c08dC16Aa104b5B24aBDd1aD857e2c0D8C5")
+    .populateTransaction.upgrade(
+      "0x2a54ba2964c8cd459dc568853f79813a60761b58",
+      p.db.getData(".deploys.new_usdi")
+    )
+    const addOptimisticGFX = await new GovernorCharlieDelegate__factory(x)
+    .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
+    .populateTransaction._setWhitelistAccountExpiration("0xa6e8772af29b29b9202a073f8e36f447689beef6",31536000)
 
     p.addStep(newGov, "_setImplementation(address)");
-    p.addStep(newVC, "upgradeTo(address)");
-    p.addStep(newUSDi, "upgradeTo(address)");
+    p.addStep(newVC, "upgrade(address,address)");
+    p.addStep(newUSDi, "upgrade(address,address)");
+    p.addStep(addOptimisticGFX, "_setWhitelistAccountExpiration(address,uint256)");
+
 
     const out = p.populateProposal();
     console.log(out);
@@ -109,12 +112,15 @@ describe("Testing change of sale contract", () => {
       governorAddress
     );
 
-    await p.sendProposal(charlie, description, true);
-    await gov.castVote(1, 1);
+    console.log("sending proposal")
+    await p.sendProposal(charlie, description, true).then(mineBlock)
+    console.log("voting proposal")
+    await gov.castVote(2, 1).then(mineBlock)
     await advanceBlockHeight(voteBlocks);
-    await gov.queue(1);
+    console.log("queue proposal")
+    await gov.queue(2).then(mineBlock);
     await fastForward(timelockDelay);
-    await gov.execute(1);
-    await mineBlock();
+    console.log("execute proposal")
+    await gov.execute(2).then(mineBlock);
   });
 });

@@ -33,13 +33,12 @@ export const nextBlockTime = async (blockTime:number) => {
         let currentTime = await currentBlock()
         blockTime = currentTime.timestamp
     }
-    
+
     await network.provider.send("evm_setNextBlockTimestamp", [blockTime + 1])
 }
 
 export const reset = async (block: number) => {
     dotenv.config();
-
     //pass 0 to return to starting block
     if (block == 0) {
         block = 14546835

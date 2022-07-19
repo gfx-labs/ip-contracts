@@ -1,38 +1,21 @@
-// this is for testing the govenernance contract on a live deploy
-//
-//
-//
-//
-// this proposal will do the following
-// 1. Upgrade the VaultController implementation
-// 2. Upgrade the USDi implementation
-// 3. Upgrade the Governor implementation
-// 4. Set a new interest rate curve
-// 5. Modify a parameter of an existing token
-
 import { ethers } from "hardhat";
-import { Signer } from "ethers";
 import {
-  CurveMaster__factory,
   GovernorCharlieDelegate__factory,
   GovernorCharlieDelegator__factory,
-  InterestProtocolTokenDelegate__factory,
-  InterestProtocolToken__factory,
-  ThreeLines0_100__factory,
-  TransparentUpgradeableProxy__factory,
+  ProxyAdmin__factory,
   USDI__factory,
   VaultController__factory,
 } from "../../../../typechain-types";
-import { BN } from "../../../../util/number";
-import { ProposalContext } from "../../suite/proposal";
+import { countdownSeconds, ProposalContext, sleep } from "../../suite/proposal";
 
 const description = `
-#  Transfer Token
+# IP July Update
 
+A small update to Vault Controller and USDi for less friction in transfers.
 
-## Details
+Adds Optimistic governance to governor charlie
 
-Transfer token that owns governance
+Add GFX labs as an optimistic proposer
 `;
 
 const main = async () => {
@@ -53,30 +36,45 @@ const main = async () => {
 
   await p.DeployAll();
   // now construct the proposal
-  const newGov = await new GovernorCharlieDelegator__factory(x)
-  .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
-  .populateTransaction._setImplementation(p.db.getData(".deploys.new_gov"));
-
-  const newVC = await new TransparentUpgradeableProxy__factory(x)
-  .attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3")
-  .populateTransaction.upgradeTo(p.db.getData(".deploys.new_vc"));
-
-  const newUSDi = await new TransparentUpgradeableProxy__factory(x)
-  .attach("0x2a54ba2964c8cd459dc568853f79813a60761b58")
-  .populateTransaction.upgradeTo(p.db.getData(".deploys.new_usdi"));
-
-  p.addStep(newGov, "_setImplementation(address)");
-  p.addStep(newVC, "upgradeTo(address)");
-  p.addStep(newUSDi, "upgradeTo(address)");
-
-  const out = p.populateProposal();
-  console.log(out);
 
   const charlie = new GovernorCharlieDelegate__factory(x).attach(
     "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
   );
 
-  //await p.sendProposal(charlie, description, true);
+  const newGov = await new GovernorCharlieDelegator__factory(x)
+  .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
+  .populateTransaction._setImplementation(p.db.getData(".deploys.new_gov"));
+
+
+  const newVC = await new ProxyAdmin__factory(x)
+  .attach("0x3D9d8c08dC16Aa104b5B24aBDd1aD857e2c0D8C5")
+  .populateTransaction.upgrade(
+    "0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3",
+    p.db.getData(".deploys.new_vc"),
+  )
+
+  const newUSDi = await new ProxyAdmin__factory(x)
+  .attach("0x3D9d8c08dC16Aa104b5B24aBDd1aD857e2c0D8C5")
+  .populateTransaction.upgrade(
+    "0x2a54ba2964c8cd459dc568853f79813a60761b58",
+    p.db.getData(".deploys.new_usdi")
+  )
+  const addOptimisticGFX = await new GovernorCharlieDelegate__factory(x)
+  .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
+  .populateTransaction._setWhitelistAccountExpiration("0xa6e8772af29b29b9202a073f8e36f447689beef6",31536000)
+
+  p.addStep(newGov, "_setImplementation(address)");
+  p.addStep(newVC, "upgrade(address,address)");
+  p.addStep(newUSDi, "upgrade(address,address)");
+  p.addStep(addOptimisticGFX, "_setWhitelistAccountExpiration(address,uint256)");
+
+  const out = p.populateProposal();
+  console.log(out);
+  console.log("PLEASE CHECK PROPOSAL! PROPOSING IN 10 seconds")
+  await countdownSeconds(10)
+  console.log("sending transaction....")
+
+  await p.sendProposal(charlie, description, true);
 
   return "success";
 };

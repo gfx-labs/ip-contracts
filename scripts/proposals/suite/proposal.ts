@@ -11,6 +11,21 @@ import { JsonDB } from "node-json-db";
 import { Config } from "node-json-db/dist/lib/JsonDBConfig";
 import { GovernorCharlieDelegate } from "../../../typechain-types";
 
+export const sleep = async(ms:number)=>{
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export const countdownSeconds = async(secs:number)=>{
+  while(true){
+  console.log(secs)
+  await sleep(1000)
+  secs = secs - 1
+  if(secs < 1){
+    return
+  }
+  }
+}
+
 export interface ProposalContext {
   PreProposal: (x: Signer) => PromiseLike<any>;
   Proposal: (x: Signer) => PromiseLike<any>;
@@ -79,18 +94,18 @@ export class ProposalContext {
   ) {
     const out = this.populateProposal();
     const txn = await charlie
-      .propose(
-        out.targets,
-        out.values,
-        out.signatures,
-        out.calldatas,
-        description,
-        emergency ? true : false
-      )
-      .then(async (res) => {
-        this.db.push(".proposal.proposeTxn", res.hash);
-        await res.wait();
-      });
+    .propose(
+      out.targets,
+      out.values,
+      out.signatures,
+      out.calldatas,
+      description,
+      emergency ? true : false
+    )
+    .then(async (res) => {
+      this.db.push(".proposal.proposeTxn", res.hash);
+      await res.wait();
+    });
   }
 
   AddDeploy(name: string, deployment: () => Promise<BaseContract>) {
@@ -108,15 +123,17 @@ export class ProposalContext {
       if (!dbv) {
         console.log("deploying:", k);
         await v()
-          .then(async (x: any) => {
-            return x.deployed().then(() => {
-              this.db.push(".deploys." + k, x.address);
-            });
-          })
-          .catch((e: any) => {
-            console.log(`failed to deploy ${k}, ${e}`);
+        .then(async (x: any) => {
+          return x.deployed().then(() => {
+            this.db.push(".deploys." + k, x.address);
           });
+        })
+        .catch((e: any) => {
+          console.log(`failed to deploy ${k}, ${e}`);
+        });
       }
     }
   }
 }
+
+
