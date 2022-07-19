@@ -1,0 +1,11 @@
+{
+    "deploys": {
+        "new_curvefi": "0x7bb0e115668A9094cf8b3cea4B274Daea4C1E8cD",
+        "new_chainlink": "0xdD8482e09DB2274cbEd08846daF97Bd21acf9f2B",
+        "new_anchored": "0x705a8a3e6F179cD9f32e60Fa75C302188A97b378",
+        "new_gov": "0xF082066e2F023b57617F2167c1f2a5D93EAB65a8"
+    },
+    "proposal": {
+        "proposeTxn": "0x52c554bf521a74c94946a48d2f060fcaf4451a31503ad3f80c3e55d461904170"
+    }
+}

@@ -41,11 +41,16 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     emergencyQuorumVotes = 40000000000000000000000000;
     emergencyVotingPeriod = 6570;
     emergencyTimelockDelay = 43200;
+
     optimisticQuorumVotes = 2000000000000000000000000;
     optimisticVotingDelay = 18000;
     maxWhitelistPeriod = 31536000;
 
     initialized = true;
+  }
+
+  function setMaxWhitelistPeriod(uint256 second) external onlyGov {
+    maxWhitelistPeriod = second;
   }
 
   /// @notice any function with this modifier will call the pay_interest() function before
@@ -557,6 +562,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
 
     emit WhitelistAccountExpirationSet(account, expiration);
   }
+
 
   /**
    * @notice Governance function for setting the whitelistGuardian. WhitelistGuardian can cancel proposals from whitelisted addresses
