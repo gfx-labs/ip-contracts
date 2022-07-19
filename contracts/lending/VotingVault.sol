@@ -40,7 +40,7 @@ contract VotingVault is Context {
 
   /// @notice checks if _msgSender is the controller of the voting vault
   modifier onlyVotingVaultController() {
-    require(_msgSender() == address(_controller), "sender not VotingVaultController");
+    require(_msgSender() == address(_votingController), "sender not VotingVaultController");
     _;
   }
   /// @notice checks if _msgSender is the controller of the vault
