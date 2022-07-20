@@ -32,43 +32,61 @@ const USDI_BORROW = BN("100e18")//500 USDI
 require("chai").should();
 
 describe("Verify Upgraded Contracts", () => {
-    it("STETH oracle is working now", async () => {
-
-     /**
-         await impersonateAccount(s.IP_OWNER)
-        let owner = ethers.provider.getSigner(s.IP_OWNER)
-        await s.Oracle.connect(owner).setRelay(s.STETH_ADDRESS, "0x73052741d8bE063b086c4B7eFe084B0CEE50677A")
-        await mineBlock()
-
-        await ceaseImpersonation(s.IP_OWNER)
-      */
-
-
+    it("STETH oracle is working on the oracle master", async () => {
         const price = await s.Oracle.getLivePrice(s.STETH_ADDRESS)
-        showBody("Price: ", price)
         const ref = await s.Oracle.getLivePrice(s.wethAddress)
-        showBody("ref: ", ref)
         expect(await toNumber(price)).to.be.closeTo(await toNumber(ref), 50, "STETH price is close to WETH price")
-
-
-    })
-
-    it("STETH has been registered", async () => {
     })
 });
 
-describe("Testing for failure on new USDI functions", () => {
-    it("call deposit with amount == 0", async () => {
+describe("Borrow against STETH", () => {
 
-    })
+    it("mint vaults for testing", async () => {
+        //showBody("bob mint vault")
+        await expect(s.VaultController.connect(s.Bob).mintVault()).to.not
+            .reverted;
+        await mineBlock();
+        s.BobVaultID = await s.VaultController.vaultsMinted()
+        let vaultAddress = await s.VaultController.vaultAddress(s.BobVaultID)
+        s.BobVault = IVault__factory.connect(vaultAddress, s.Bob);
+        expect(await s.BobVault.minter()).to.eq(s.Bob.address);
+    });
 
-    it("call deposit with an amount that is more than what is posessed", async () => {
+    it("vault deposits", async () => {
 
 
-    })
+        await s.STETH.connect(s.Bob).transfer(s.BobVault.address, s.STETH_AMOUNT)
+        await mineBlock()
 
-    it("Try to withdrawAllTo when holding 0 USDI", async () => {
+        expect(await s.BobVault.tokenBalance(s.STETH_ADDRESS)).to.eq(s.STETH_AMOUNT.sub(1))//1 wei corner case
 
+
+    });
+
+    it("Borrow against STETH", async () => {
+        const borrowAmount = BN("500e18")
+
+        const startLiab = await s.VaultController.vaultLiability(s.BobVaultID)
+
+        //confirm steth balance
+        expect(await s.STETH.balanceOf(s.BobVault.address)).to.eq(s.STETH_AMOUNT.sub(1))//1 wei corner case
+
+        //check borrow power
+        const borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
+
+        expect(borrowPower).to.be.gt(0, "Bob has borrow power against stEth")
+
+        const startUSDI = await s.USDI.balanceOf(s.Bob.address)
+
+        await s.VaultController.connect(s.Bob).borrowUSDIto(s.BobVaultID, borrowAmount, s.Bob.address)
+        await mineBlock()
+
+        let balance = await s.USDI.balanceOf(s.Bob.address)
+
+        expect(await toNumber(balance.sub(startUSDI))).to.be.closeTo(borrowAmount.div(BN("1e18")), 1, "Bob borrowed USDi against stEth")
+
+        //account for 1 wei corner case
+        expect(await toNumber(await s.VaultController.vaultLiability(s.BobVaultID))).to.be.closeTo(await toNumber(borrowAmount.add(startLiab)), 0.0001, "Bob's vault has the correct amount of liability")
 
     })
 })

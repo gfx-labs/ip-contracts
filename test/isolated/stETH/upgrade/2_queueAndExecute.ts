@@ -112,7 +112,6 @@ describe("Queue and Execute proposal", () => {
                 lido_token_address,
                 "0x73052741d8bE063b086c4B7eFe084B0CEE50677A"//p.db.getData(".deploys.new_anchored")
             )
-        showBody(p.db.getData(".deploys.new_anchored"))
         const listLido = await new VaultController__factory(prop).
             attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3")
             .populateTransaction.registerErc20(

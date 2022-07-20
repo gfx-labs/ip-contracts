@@ -54,7 +54,7 @@ describe("Verify Upgraded Contracts", () => {
         expect(await toNumber(price)).to.be.closeTo(await toNumber(ref), 50, "STETH price is close to WETH price")
     })
 
-    it("Confirm USDI now has the upgraded functions", async () => {
+    it("Borrow against STETH", async () => {
 
         const startLiab = await s.VaultController.vaultLiability(s.BobVaultID)
 
