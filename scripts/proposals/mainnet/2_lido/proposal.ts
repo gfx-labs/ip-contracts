@@ -57,7 +57,7 @@ const main = async () => {
   p.AddDeploy("new_chainlink", () => {
     return new ChainlinkOracleRelay__factory(x).deploy(
       chainlink_oracle_address,
-      1,
+      BN("1e10"),
       1,
     );
   });

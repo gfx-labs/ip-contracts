@@ -87,38 +87,6 @@ describe("Confirm state before upgrade", async () => {
     })
 })
 
-describe("Deploy new relays and anchor", () => {
-
-    const curveFi = "0x7bb0e115668A9094cf8b3cea4B274Daea4C1E8cD"//this deploy is still good
-    it("Deploy new chainlink relay and anchor", async () => {
-        const ChainlinkFeed = "0xcfe54b5cd566ab89272946f602d76ea879cab4a8"
-
-        //Create chainlink steth relay
-        const ChainlinkRelay = await DeployContract(
-            new ChainlinkOracleRelay__factory(s.Frank),
-            s.Frank,
-            ChainlinkFeed,
-            BN("1e10"),
-            BN("1")
-        )
-        await mineBlock()
-        await ChainlinkRelay.deployed()
-        expect(await ChainlinkRelay.currentValue()).to.not.eq(0)
-
-
-        s.AnchoredViewSTETH = await DeployContract(
-            new AnchoredViewRelay__factory(s.Frank),
-            s.Frank,
-            curveFi,
-            ChainlinkRelay.address,
-            BN("10"),
-            BN("100")
-        )
-        await mineBlock()
-    })
-
-})
-
 describe("Queue and Execute proposal", () => {
     const lido_token_address = "0xae7ab96520de3a18e5e111b5eaab095312d7fe84";
 
@@ -131,6 +99,8 @@ describe("Queue and Execute proposal", () => {
 
     const gov = GovernorCharlieDelegate__factory.connect(governorAddress, prop);
 
+
+
     it("execute previous proposal and propose new one", async () => {
         await impersonateAccount(proposer)
         const p = new ProposalContext("mainnet_2_lido");
@@ -140,11 +110,11 @@ describe("Queue and Execute proposal", () => {
             attach("0xf4818813045e954f5dc55a40c9b60def0ba3d477")
             .populateTransaction.setRelay(
                 lido_token_address,
-                s.AnchoredViewSTETH.address//p.db.getData(".deploys.new_anchored")
+                p.db.getData(".deploys.new_anchored")
             )
         const listLido = await new VaultController__factory(prop).
-            attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3").
-            populateTransaction.registerErc20(
+            attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3")
+            .populateTransaction.registerErc20(
                 lido_token_address,
                 BN("10e16"),
                 lido_token_address,
@@ -184,7 +154,7 @@ describe("Queue and Execute proposal", () => {
 
 
         const out = p.populateProposal();
-        //console.log(out);
+        console.log(out);
 
 
         const charlie = new GovernorCharlieDelegate__factory(prop).attach(

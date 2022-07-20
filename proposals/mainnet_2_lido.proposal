@@ -1,11 +1,8 @@
 {
     "deploys": {
-        "new_curvefi": "0x7bb0e115668A9094cf8b3cea4B274Daea4C1E8cD",
-        "new_chainlink": "0xdD8482e09DB2274cbEd08846daF97Bd21acf9f2B",
-        "new_anchored": "0x705a8a3e6F179cD9f32e60Fa75C302188A97b378",
-        "new_gov": "0xF082066e2F023b57617F2167c1f2a5D93EAB65a8"
-    },
-    "proposal": {
-        "proposeTxn": "0x379e7f7f38617cecabba0acc1a9fbf060c2fcd1e0af8a4f055c7f1a655ffcda7"
+        "new_gov": "0x6b91A0Ba78Acc4a8C7919f96c181a895D5b31563",
+        "new_curvefi": "0xAa2639C9Dcf71547e585439E8744128ED9832FE8",
+        "new_chainlink": "0xa9DD6FB60c84cc4788b02c45B6B3f59f8444674f",
+        "new_anchored": "0x73052741d8bE063b086c4B7eFe084B0CEE50677A"
     }
 }
