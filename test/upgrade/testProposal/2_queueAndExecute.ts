@@ -6,9 +6,6 @@ import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonat
 
 import { BN } from "../../../util/number";
 import {
-  ProxyAdmin,
-  ProxyAdmin__factory,
-  USDI__factory,
   IVault__factory,
   GovernorCharlieDelegate,
   GovernorCharlieDelegate__factory

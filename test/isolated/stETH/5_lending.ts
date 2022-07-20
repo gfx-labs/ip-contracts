@@ -48,6 +48,12 @@ describe("Verify Upgraded Contracts", () => {
 
     const borrowAmount = BN("2000e18")
 
+    it("Check price feed", async () => {
+        const price = await s.Oracle.getLivePrice(s.STETH_ADDRESS)
+        const ref = await s.Oracle.getLivePrice(s.wethAddress)
+        expect(await toNumber(price)).to.be.closeTo(await toNumber(ref), 50, "STETH price is close to WETH price")
+    })
+
     it("Confirm USDI now has the upgraded functions", async () => {
 
         const startLiab = await s.VaultController.vaultLiability(s.BobVaultID)
