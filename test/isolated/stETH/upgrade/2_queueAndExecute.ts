@@ -101,7 +101,7 @@ describe("Queue and Execute proposal", () => {
 
 
 
-    it("execute previous proposal and propose new one", async () => {
+    it("Makes the new proposal", async () => {
         await impersonateAccount(proposer)
         const p = new ProposalContext("mainnet_2_lido");
         // construct the proposal
@@ -110,8 +110,9 @@ describe("Queue and Execute proposal", () => {
             attach("0xf4818813045e954f5dc55a40c9b60def0ba3d477")
             .populateTransaction.setRelay(
                 lido_token_address,
-                p.db.getData(".deploys.new_anchored")
+                "0x73052741d8bE063b086c4B7eFe084B0CEE50677A"//p.db.getData(".deploys.new_anchored")
             )
+        showBody(p.db.getData(".deploys.new_anchored"))
         const listLido = await new VaultController__factory(prop).
             attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3")
             .populateTransaction.registerErc20(
@@ -154,7 +155,7 @@ describe("Queue and Execute proposal", () => {
 
 
         const out = p.populateProposal();
-        console.log(out);
+        //console.log(out);
 
 
         const charlie = new GovernorCharlieDelegate__factory(prop).attach(
@@ -166,17 +167,13 @@ describe("Queue and Execute proposal", () => {
 
             `;
 
-        await fastForward(timelockDelay);
-        await gov.execute(3)
-        await mineBlock()
-
         await charlie.propose(
             out.targets,
             out.values,
             out.signatures,
             out.calldatas,
             description,
-            false
+            true
         )
 
         //await p.sendProposal(charlie, description, true)
@@ -188,24 +185,20 @@ describe("Queue and Execute proposal", () => {
     it("Queue and Execute", async () => {
 
 
-        const votingPeriod = await gov.votingPeriod()
-        const votingDelay = await gov.votingDelay()
-        const timelock = await gov.proposalTimelockDelay()
+        const votingPeriod = await gov.emergencyVotingPeriod()
+        const timelock = await gov.emergencyTimelockDelay()
 
         const block = await currentBlock()
         const votes = await s.IPT.getPriorVotes(proposer, block.number - 2)
         expect(await toNumber(votes)).to.eq(45000000, "Correct number of votes delegated")
 
 
-        await advanceBlockHeight(votingDelay.toNumber())//votingDelay
-
-
 
         await impersonateAccount(proposer)
 
         await gov.connect(prop).castVote(4, 1)
-        showBody("Advancing a lot of blocks, your CPU is slow...")
-        await advanceBlockHeight(votingPeriod.add(votingDelay).toNumber());
+        showBody("Advancing a lot of blocks...")
+        await advanceBlockHeight(votingPeriod.toNumber());
         await gov.connect(prop).queue(4);
         await mineBlock()
         await fastForward(timelock.toNumber());

@@ -34,12 +34,14 @@ require("chai").should();
 describe("Verify Upgraded Contracts", () => {
     it("STETH oracle is working now", async () => {
 
-        await impersonateAccount(s.IP_OWNER)
+     /**
+         await impersonateAccount(s.IP_OWNER)
         let owner = ethers.provider.getSigner(s.IP_OWNER)
         await s.Oracle.connect(owner).setRelay(s.STETH_ADDRESS, "0x73052741d8bE063b086c4B7eFe084B0CEE50677A")
         await mineBlock()
 
         await ceaseImpersonation(s.IP_OWNER)
+      */
 
 
         const price = await s.Oracle.getLivePrice(s.STETH_ADDRESS)
