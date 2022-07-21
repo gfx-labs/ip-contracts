@@ -71,15 +71,7 @@ const deployGovAndToken = async () => {
         new GovernorCharlieDelegator__factory(s.Frank),
         s.Frank,
         ipt_,  //ipt
-        Govimplementation_,
-        votingPeriod_,
-        votingDelay_,
-        proposalThreshold_,
-        proposalTimelockDelay_,
-        quorumVotes_,
-        emergencyQuorumVotes_,
-        emergencyVotingPeriod_,
-        emergencyTimelockDelay_
+        Govimplementation_   
     )
     await mineBlock()
     s.GOV = GovernorCharlieDelegate__factory.connect(s.GovernorCharlieDelegator.address, s.Frank);

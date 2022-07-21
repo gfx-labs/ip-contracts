@@ -6,5 +6,7 @@ export * from "./wbtcLoan/index"
 export * from "./uniV3Pool/index"
 export * from "./wUSDI_uniV3/index"
 export * from "./multiAssetLoan/index"
+export * from "./stETH/index"
+export * from "./borrowUSDC/index"
 
 

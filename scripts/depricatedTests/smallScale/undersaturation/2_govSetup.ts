@@ -1,4 +1,4 @@
-import { s } from ".././scope";
+import { s } from "../scope";
 import { ethers, network, tenderly } from "hardhat";
 import { expect, assert } from "chai";
 import { showBody } from "../../../../util/format";

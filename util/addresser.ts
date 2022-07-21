@@ -12,7 +12,7 @@ export interface Addresser {
 }
 
 export class MainnetAddresses {
-    readonly wethAddress: string = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+    readonly wethAddress: string = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
     readonly usdcAddress: string = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
     readonly usdcWethPool: string = "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8";
     readonly compAddress: string = "0xc00e94cb662c3520282e6f5717214004a7f26888";
