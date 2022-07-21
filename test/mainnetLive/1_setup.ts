@@ -6,6 +6,8 @@ import { BN } from "../../util/number";
 import { s } from "./scope";
 import { d } from "./DeploymentInfo";
 import { advanceBlockHeight, reset, mineBlock } from "../../util/block";
+import { toNumber } from "../../util/math";
+
 import {
     AnchoredViewRelay,
     AnchoredViewRelay__factory,
@@ -37,14 +39,14 @@ import {
 require("chai").should();
 
 // configurable variables
-let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
+let usdc_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
 let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
 let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
 let dydx_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let ens_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let aave_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let tribe_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
+let weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
 
 
 if (process.env.TENDERLY_KEY) {
@@ -56,7 +58,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(14956731)).to.not.throw;//14940917
+        expect(await reset(15186589)).to.not.throw;//14940917
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -98,45 +100,40 @@ describe("Token Setup", () => {
     })
     it("Should succesfully transfer money", async () => {
         //showBody(`stealing ${s.Andy_USDC} to andy from ${s.usdcAddress}`);
-        await expect(
-            stealMoney(usdc_minter, s.Andy.address, s.usdcAddress, s.Andy_USDC)
-        ).to.not.be.reverted;
+        await stealMoney(usdc_minter, s.Andy.address, s.usdcAddress, s.Andy_USDC)
+        await mineBlock()
+
+
         //showBody(`stealing ${s.Dave_USDC} to dave from ${s.usdcAddress}`);
-        await expect(
-            stealMoney(usdc_minter, s.Dave.address, s.usdcAddress, s.Dave_USDC)
-        ).to.not.be.reverted;
+        await stealMoney(usdc_minter, s.Dave.address, s.usdcAddress, s.Dave_USDC)
+        await mineBlock()
+
         //showBody(`stealing ${s.Carol_UNI} to carol from ${s.uniAddress}`);
-        await expect(
-            stealMoney(uni_minter, s.Carol.address, s.uniAddress, s.Carol_UNI)
-        ).to.not.be.reverted;
+        await stealMoney(uni_minter, s.Carol.address, s.uniAddress, s.Carol_UNI)
+        await mineBlock()
+
         //showBody(`stealing ${s.Gus_WBTC} to gus from ${s.wbtcAddress}`);
-        await expect(
-            stealMoney(wbtc_minter, s.Gus.address, s.wbtcAddress, s.Gus_WBTC)
-        ).to.not.be.reverted;
+        await stealMoney(wbtc_minter, s.Gus.address, s.wbtcAddress, s.Gus_WBTC)
+        await mineBlock()
+
         //showBody(`stealing ${s.Bob_WETH} weth to bob from ${s.wethAddress}`);
-        await expect(
-            stealMoney(weth_minter, s.Bob.address, s.wethAddress, s.Bob_WETH)
-        ).to.not.be.reverted;
+        await stealMoney(weth_minter, s.Bob.address, s.wethAddress, s.Bob_WETH)
+        await mineBlock()
+
         //showBody(`stealing`,s.Bob_USDC,`usdc to bob from ${s.usdcAddress}`);
-        await expect(
-            stealMoney(usdc_minter, s.Bob.address, s.usdcAddress, s.Bob_USDC)
-        ).to.not.be.reverted
-        //showBody(`stealing ${s.Carol_ENS} ens to carol from ${s.ensAddress}`);
-        await expect(
+        await stealMoney(usdc_minter, s.Bob.address, s.usdcAddress, s.Bob_USDC)
+        await mineBlock()
+
+         //showBody(`stealing ${s.Carol_ENS} ens to carol from ${s.ensAddress}`);
+         await expect(
             stealMoney(ens_minter, s.Carol.address, s.ensAddress, s.Carol_ENS)
         ).to.not.be.reverted;
         //showBody(`stealing ${s.Carol_DYDX} dydx to carol from ${s.dydxAddress}`);
         await expect(
             stealMoney(dydx_minter, s.Carol.address, s.dydxAddress, s.Carol_DYDX)
         ).to.not.be.reverted;
-        //showBody(`stealing ${s.Carol_AAVE} aave to carol from ${s.aaveAddress}`);
-        await expect(
-            stealMoney(aave_minter, s.Carol.address, s.aaveAddress, s.Carol_AAVE)
-        ).to.not.be.reverted;
-        //showBody(`stealing ${s.Carol_TRIBE} to carol from ${s.tribeAddress}`);
-        await expect(
-            stealMoney(tribe_minter, s.Carol.address, s.tribeAddress, s.Carol_TRIBE)
-        ).to.not.be.reverted;
+
         await mineBlock();
+        
     });
 });

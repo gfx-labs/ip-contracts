@@ -11,7 +11,7 @@ import { advanceBlockHeight, mineBlock, fastForward, OneWeek} from "../../util/b
 const usdcAmount = BN("5000e6")
 
 const fundDave = async () => {
-    let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
+    let usdc_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
     //showBody(`stealing ${s.Dave_USDC} to dave from ${s.usdcAddress}`)
     await stealMoney(
         usdc_minter,

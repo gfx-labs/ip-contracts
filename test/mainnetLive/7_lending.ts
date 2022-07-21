@@ -529,7 +529,7 @@ describe("Checking vaultSummaries", async () => {
         await expect(s.VaultController.vaultSummaries(0, 6)).to.be.reverted
 
         //include vaults that don't exist yet
-        await expect(s.VaultController.vaultSummaries(1, 25)).to.be.reverted
+        await expect(s.VaultController.vaultSummaries(1, 999)).to.be.reverted
     })
 })
 
