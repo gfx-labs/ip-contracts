@@ -532,4 +532,43 @@ describe("Checking vaultSummaries", async () => {
         await expect(s.VaultController.vaultSummaries(1, 999)).to.be.reverted
     })
 })
+describe ("Checking for new functionality on Vault Controller", () => {
+    it("Check borrowUSDIto function", async () => {
 
+        const carolUSDI = await s.USDI.balanceOf(s.Carol.address)
+        await s.USDI.connect(s.Carol).approve(s.VaultController.address, carolUSDI)
+        await s.VaultController.connect(s.Carol).repayAllUSDi(s.CaroLVaultID)
+        await mineBlock()
+
+        const startingUSDi = await s.USDI.balanceOf(s.Bob.address)
+        const borrowPower = await s.VaultController.vaultBorrowingPower(s.CaroLVaultID)
+
+        await s.VaultController.connect(s.Carol).borrowUSDIto(s.CaroLVaultID, borrowPower.sub(BN("5e18")), s.Bob.address)
+        await mineBlock()
+
+        expect(await toNumber(await s.USDI.balanceOf(s.Bob.address))).to.be.closeTo(await toNumber(startingUSDi.add(borrowPower.sub(BN("5e18")))), 5, "Bob received USDi from Carol's borrow")
+
+    })
+
+    it("Check borrowUUSDCto function", async () => {
+
+        
+
+        const bobUSDI = await s.USDI.balanceOf(s.Bob.address)
+        await s.USDI.connect(s.Bob).approve(s.VaultController.address, bobUSDI)
+        await s.VaultController.connect(s.Bob).repayAllUSDi(s.CaroLVaultID)
+        await mineBlock()
+
+        const startingUSDC = await s.USDC.balanceOf(s.Bob.address)
+        const borrowPower = await s.VaultController.vaultBorrowingPower(s.CaroLVaultID)
+
+        const USDCborrow = (borrowPower.sub(BN("5e18")).div(BN("1e12")))
+        showBody(USDCborrow)
+
+        await s.VaultController.connect(s.Carol).borrowUSDCto(s.CaroLVaultID, USDCborrow, s.Bob.address)
+        await mineBlock()
+
+        expect(await s.USDC.balanceOf(s.Bob.address)).to.eq(startingUSDC.add(USDCborrow))
+
+    })
+})

@@ -7,6 +7,7 @@ import { stealMoney } from "../../util/money";
 import { showBody, showBodyCyan } from "../../util/format";
 import { BN } from "../../util/number";
 import { advanceBlockHeight, mineBlock, fastForward, OneWeek} from "../../util/block";
+import { start } from "repl";
 
 const usdcAmount = BN("5000e6")
 
@@ -155,3 +156,54 @@ describe("TESTING USDI CONTRACT", async () => {
     })
 
 });
+
+describe("Checking for new functionality on USDi contract", () => {
+
+    const withdrawAmount = BN("1000e18")
+    const usdcAmount = withdrawAmount.div(BN("1e12"))
+
+    it("Check withdrawTo", async () => {
+
+        const startingUSDC = await s.USDC.balanceOf(s.Andy.address)
+        expect(startingUSDC).to.eq(0, "Andy holds 0 USDC")
+
+        const startingUSDi = await s.USDI.balanceOf(s.Dave.address)
+        expect(startingUSDi).to.be.gt(withdrawAmount, "Dave has enough USDi")
+
+        await s.USDI.connect(s.Dave).withdrawTo(usdcAmount, s.Andy.address)
+        await mineBlock()
+    })
+
+    it("Check depositTo", async () => {
+   
+
+        const startingUSDC = await s.USDC.balanceOf(s.Andy.address)
+        expect(startingUSDC).to.be.gt(0, "Andy holds some USDC")
+
+        const startingUSDi = await s.USDI.balanceOf(s.Dave.address)
+        expect(startingUSDi).to.be.gt(withdrawAmount, "Dave still has enough USDi")
+
+        await s.USDC.connect(s.Andy).approve(s.USDI.address, startingUSDC)
+        await s.USDI.connect(s.Andy).depositTo(startingUSDC, s.Dave.address)
+        await mineBlock()
+
+        const result = await s.USDI.balanceOf(s.Dave.address)
+
+        expect(await toNumber(result)).to.be.closeTo(await toNumber(startingUSDi.add(withdrawAmount)), 5, "Dave received the deposit")
+
+    })
+
+    it("Check withdrawAllTo", async () => {
+        
+        const startingUSDi = await s.USDI.balanceOf(s.Andy.address)
+        expect(startingUSDi).to.be.gt(0, "Andy has some USDI")
+
+        const gusUSDI = await s.USDI.balanceOf(s.Gus.address)
+        expect(gusUSDI).to.eq(0, "Gus has 0 USDi")
+
+        await s.USDI.connect(s.Andy).withdrawAllTo(s.Gus.address)
+        await mineBlock()
+
+        expect(await s.USDC.balanceOf(s.Gus.address)).to.be.closeTo(startingUSDi.div(BN("1e12")), BN("5e6"), "Gus received the withdraw")
+    })
+})
