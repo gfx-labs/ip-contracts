@@ -2,14 +2,14 @@
 pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
-import "./IStEthPriceFeed.sol";
+import "./ICurvePoolFeed.sol";
 import "../../lending/IVaultController.sol";
 import "../IOracleMaster.sol";
 
 /// @title Oracle that wraps a chainlink oracle
 /// @notice The oracle returns (chainlinkPrice) * mul / div
 contract StEthOracleRelay is IOracleRelay {
-  IStEthPriceFeed private immutable _priceFeed;
+  ICurvePoolFeed private immutable _priceFeed;
   IVaultController public constant VC = IVaultController(0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3);
 
   IOracleMaster public _oracle;
@@ -26,7 +26,7 @@ contract StEthOracleRelay is IOracleRelay {
     uint256 mul,
     uint256 div
   ) {
-    _priceFeed = IStEthPriceFeed(feed_address);
+    _priceFeed = ICurvePoolFeed(feed_address);
     _multiply = mul;
     _divide = div;
     _oracle = IOracleMaster(VC.getOracleMaster());

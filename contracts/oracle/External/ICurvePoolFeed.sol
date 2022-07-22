@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-interface IStEthPriceFeed {
+interface ICurvePoolFeed {
   function initialize(
     uint256 max_safe_price_difference,
     address stable_swap_oracle_address,
