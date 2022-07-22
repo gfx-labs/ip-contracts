@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { USDI, IERC20, IVOTE, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController } from "../../typechain-types";
+import { USDI, IERC20, IVOTE, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
@@ -39,6 +39,7 @@ export class TestScope extends MainnetAddresses {
     AnchoredViewComp!: AnchoredViewRelay
     AnchoredViewUni!: AnchoredViewRelay
     AnchoredViewBtc!: AnchoredViewRelay
+    AnchoredViewAave!: AnchoredViewRelay
     ChainlinkEth!: ChainlinkOracleRelay
     ChainlinkComp!: ChainlinkOracleRelay
     ChainLinkUni!: ChainlinkOracleRelay
@@ -63,6 +64,8 @@ export class TestScope extends MainnetAddresses {
 
     BobVault!: IVault
     BobVaultID!: BigNumber
+    BobVotingVaultID!: BigNumber
+    BobVotingVault!: VotingVault
     CarolVault!: IVault
     CaroLVaultID!: BigNumber
 
@@ -89,6 +92,7 @@ export class TestScope extends MainnetAddresses {
 
     CappedAave!: CappedGovToken
     AaveCap = BN("500e18")
+    aaveAmount = BN("1000e18")
 
     USDC_AMOUNT = BN("1000e6")
 

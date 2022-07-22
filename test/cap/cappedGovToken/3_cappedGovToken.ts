@@ -19,6 +19,8 @@ require("chai").should();
 describe("Testing CappedToken functions", () => {
     it("Deposit underlying", async () => {
 
+        expect(await s.AAVE.balanceOf(s.Bob.address)).to.eq(s.aaveAmount, "Bob has the expected amount of aave")
+
 
     })
 

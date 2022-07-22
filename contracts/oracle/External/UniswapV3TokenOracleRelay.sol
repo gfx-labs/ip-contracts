@@ -7,8 +7,6 @@ import "../../_external/uniswap/TickMath.sol";
 import "../../lending/IVaultController.sol";
 import "../IOracleMaster.sol";
 
-import "hardhat/console.sol";
-
 /// @title Oracle that wraps a univ3 pool
 /// @notice This oracle is for tokens that do not have a stable Uniswap V3 pair against USDC
 /// if quote_token_is_token0 == true, then the reciprocal is returned
@@ -52,24 +50,20 @@ contract UniswapV3TokenOracleRelay is IOracleRelay {
     IOracleMaster oracle = IOracleMaster(VC.getOracleMaster());
 
     uint256 ethPrice = oracle.getLivePrice(WETH); //WETH
-    console.log("Price in eth: ", priceInEth);
-    //console.log("EthPrice    : ", ethPrice);
 
     return (ethPrice * priceInEth) / 1e18;
   }
 
-  function getLastSeconds(uint32 seconds_) private view returns (uint256 price) {
+  function getLastSeconds(uint32 tickTimeDifference) private view returns (uint256 price) {
     int56[] memory tickCumulatives;
     uint32[] memory input = new uint32[](2);
-    input[0] = seconds_;
+    input[0] = tickTimeDifference;
     input[1] = 0;
 
     (tickCumulatives, ) = _pool.observe(input);
 
-    uint32 tickTimeDifference = seconds_;
     int56 tickCumulativeDifference = tickCumulatives[0] - tickCumulatives[1];
     bool tickNegative = tickCumulativeDifference < 0;
-    console.log("tickNegative: ", tickNegative);
 
     uint56 tickAbs;
 
@@ -78,7 +72,6 @@ contract UniswapV3TokenOracleRelay is IOracleRelay {
     } else {
       tickAbs = uint56(tickCumulativeDifference);
     }
-    console.log("tickAbs: ", tickAbs);
 
     uint56 bigTick = tickAbs / tickTimeDifference;
     require(bigTick < 887272, "Tick time diff fail");

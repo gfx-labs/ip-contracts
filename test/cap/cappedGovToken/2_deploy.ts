@@ -34,7 +34,7 @@ import {
   VaultController,
   VaultController__factory,
   IVOTE,
-  IVOTE__factory,
+  VotingVault__factory,
   UniswapV3TokenOracleRelay__factory,
   CappedGovToken__factory,
   VotingVaultController__factory
@@ -104,8 +104,8 @@ describe("Deploy cappedToken contract and infastructure", () => {
         s.Frank, 
         60,
         uniV3AaveWETHfeed,
-        true,
-        BN("1e12"),
+        false,
+        BN("1"),
         BN("1")
       )
       await mineBlock()
@@ -115,28 +115,71 @@ describe("Deploy cappedToken contract and infastructure", () => {
 
       //Chainlink relay
       const chainlinkAaveUSDfeed = "0x547a514d5e3769680ce22b2361c10ea13619e8a9"
+      const LinkAaveRelay = await DeployContract(
+        new ChainlinkOracleRelay__factory(s.Frank),
+        s.Frank,
+        chainlinkAaveUSDfeed,
+        BN("1e10"),
+        BN("1")
+      )
+      await mineBlock()
+      result = await LinkAaveRelay.currentValue()
+      //showBody("Result: ", await toNumber(result))
 
+      s.AnchoredViewAave = await DeployContract(
+        new AnchoredViewRelay__factory(s.Frank),
+        s.Frank,
+        UniRelay.address,
+        LinkAaveRelay.address,
+        BN("10"),
+        BN("100")
+      )
+      await mineBlock()
+      result = await s.AnchoredViewAave.currentValue()
+      expect(result).to.not.eq(0, "Oracle is returning a price")
+      //showBody("Result: ", await toNumber(result))
 
 
     })
 
     it("Register Underlying on voting vault controller", async () => {
 
+      await s.VotingVaultController.connect(s.Frank).registerUnderlying(s.aaveAddress, s.CappedAave.address)
+      await mineBlock()
+
+      const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.aaveAddress)
+      const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedAave.address)
+
+      expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedAave.address.toUpperCase(), "Capped token registered correctly")
+      expect(_CappedToken_underlying.toUpperCase()).to.eq(s.AAVE.address.toUpperCase(), "Underlying token registered correctly")
+
     })
 
     it("Mint voting vault", async () => {
 
+      expect(await s.VotingVaultController._vaultsMinted()).to.eq(0, "No vaults minted yet")
+
+      await s.VotingVaultController.connect(s.Bob).mintVault()
+      await mineBlock()
+
+      expect(await s.VotingVaultController._vaultsMinted()).to.eq(1, "1 vault minted")
+
+      s.BobVotingVaultID = await s.VotingVaultController._vaultsMinted()
+      let vaultAddr = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVotingVaultID)
+      s.BobVotingVault = VotingVault__factory.connect(vaultAddr, s.Bob)
+
+      expect(s.BobVotingVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Bob's voting vault setup complete")
+
     })
 
-
     it("Set Cap", async () => {
-        //await s.CappedToken.connect(s.Frank).setCap(cap)//100K USDC
-       // await mineBlock()
+        await s.CappedAave.connect(s.Frank).setCap(s.AaveCap)//100K USDC
+        await mineBlock()
     })
 
     it("Sanity check", async () => {
-        //expect(await s.CappedToken.getCap()).to.eq(cap)
-        //expect(await s.CappedToken.underlyingAddress()).to.eq(s.USDC.address)
+        expect(await s.CappedAave.getCap()).to.eq(s.AaveCap)
+        expect(await (await s.CappedAave._underlying()).toUpperCase()).to.eq(s.AAVE.address.toUpperCase())
     })
 
    
