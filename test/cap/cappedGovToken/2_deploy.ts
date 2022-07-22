@@ -35,7 +35,7 @@ import {
   VaultController__factory,
   IVOTE,
   IVOTE__factory,
-  CappedToken__factory,
+  UniswapV3TokenOracleRelay__factory,
   CappedGovToken__factory,
   VotingVaultController__factory
 } from "../../../typechain-types"
@@ -98,9 +98,9 @@ describe("Deploy cappedToken contract and infastructure", () => {
     it("Deploy new oracle system for Aave", async () => {
 
       //UniV3 Relay
-      const uniV3AaveWETHfeed = "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640"
+      const uniV3AaveWETHfeed = "0x5aB53EE1d50eeF2C1DD3d5402789cd27bB52c1bB"
       const UniRelay = await DeployContract(
-        new UniswapV3OracleRelay__factory(s.Frank),
+        new UniswapV3TokenOracleRelay__factory(s.Frank),
         s.Frank, 
         60,
         uniV3AaveWETHfeed,
@@ -111,7 +111,7 @@ describe("Deploy cappedToken contract and infastructure", () => {
       await mineBlock()
 
       let result = await UniRelay.currentValue()
-      showBody(await toNumber(result))
+      //showBody("Result: ", await toNumber(result))
 
       //Chainlink relay
       const chainlinkAaveUSDfeed = "0x547a514d5e3769680ce22b2361c10ea13619e8a9"

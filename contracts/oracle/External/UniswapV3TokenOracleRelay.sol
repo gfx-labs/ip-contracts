@@ -9,11 +9,10 @@ import "../IOracleMaster.sol";
 
 import "hardhat/console.sol";
 
-
 /// @title Oracle that wraps a univ3 pool
 /// @notice This oracle is for tokens that do not have a stable Uniswap V3 pair against USDC
 /// if quote_token_is_token0 == true, then the reciprocal is returned
-contract UniswapV3OracleRelay is IOracleRelay {
+contract UniswapV3TokenOracleRelay is IOracleRelay {
   bool public immutable _quoteTokenIsToken0;
   IUniswapV3PoolDerivedState public immutable _pool;
   uint32 public immutable _lookback;
@@ -48,17 +47,15 @@ contract UniswapV3OracleRelay is IOracleRelay {
   /// @return usdPrice - the price in USD terms e18
   /// @dev implementation in getLastSecond
   function currentValue() external view override returns (uint256) {
-
     uint256 priceInEth = getLastSeconds(_lookback);
-    console.log("Price in eth: ", priceInEth);
 
     IOracleMaster oracle = IOracleMaster(VC.getOracleMaster());
-    
-    uint256 ethPrice = oracle.getLivePrice(WETH);//WETH 
-    console.log("EthPrice: ", ethPrice);
+
+    uint256 ethPrice = oracle.getLivePrice(WETH); //WETH
+    console.log("Price in eth: ", priceInEth);
+    //console.log("EthPrice    : ", ethPrice);
 
     return (ethPrice * priceInEth) / 1e18;
-
   }
 
   function getLastSeconds(uint32 seconds_) private view returns (uint256 price) {
@@ -72,12 +69,16 @@ contract UniswapV3OracleRelay is IOracleRelay {
     uint32 tickTimeDifference = seconds_;
     int56 tickCumulativeDifference = tickCumulatives[0] - tickCumulatives[1];
     bool tickNegative = tickCumulativeDifference < 0;
+    console.log("tickNegative: ", tickNegative);
+
     uint56 tickAbs;
+
     if (tickNegative) {
       tickAbs = uint56(-tickCumulativeDifference);
     } else {
       tickAbs = uint56(tickCumulativeDifference);
     }
+    console.log("tickAbs: ", tickAbs);
 
     uint56 bigTick = tickAbs / tickTimeDifference;
     require(bigTick < 887272, "Tick time diff fail");
@@ -100,6 +101,5 @@ contract UniswapV3OracleRelay is IOracleRelay {
     }
 
     price = (price * _mul) / _div;
-
   }
 }

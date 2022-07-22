@@ -116,9 +116,9 @@ describe("Queue and Execute proposal", () => {
             attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3")
             .populateTransaction.registerErc20(
                 lido_token_address,
-                BN("10e16"),
-                lido_token_address,
                 BN("75e16"),
+                lido_token_address,
+                BN("10e16")
             )
         const addOptimisticGFX = await new GovernorCharlieDelegate__factory(prop)
             .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
@@ -141,7 +141,7 @@ describe("Queue and Execute proposal", () => {
 
         const govSetOpDelay = await new GovernorCharlieDelegate__factory(prop)
             .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
-            .populateTransaction._setOptimisticDelay(18000)
+            .populateTransaction._setOptimisticDelay(25600)
 
         p.addStep(newGov, "_setImplementation(address)");
         p.addStep(govSetPeriod, "setMaxWhitelistPeriod(uint256)")
