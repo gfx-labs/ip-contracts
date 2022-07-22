@@ -16,10 +16,19 @@ import { start } from "repl";
 require("chai").should();
 
 
+describe("Verify setup", () => {
+    it("Voting Vault setup correctly", async () => {
+        
+    })
+})
+
+
 describe("Testing CappedToken functions", () => {
+    const depositAmount = BN("500e18")
     it("Deposit underlying", async () => {
 
         expect(await s.AAVE.balanceOf(s.Bob.address)).to.eq(s.aaveAmount, "Bob has the expected amount of aave")
+        expect(await s.AAVE.balanceOf(s.Bob.address)).to.be.gt(depositAmount, "Bob has enough Aave")
 
 
     })
