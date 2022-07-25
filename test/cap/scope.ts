@@ -70,6 +70,9 @@ export class TestScope extends MainnetAddresses {
     CarolVault!: IVault
     CaroLVaultID!: BigNumber
 
+    IP_OWNER = "0x266d1020a84b9e8b0ed320831838152075f8c4ca"
+
+
     AMPL_ADDR = "0xD46bA6D942050d489DBd938a2C909A5d5039A161"
     AMPL_AMOUNT = BN("1000e9")//AMPL is e9
     AMPL_CAP = BN("10000e9")//Max AMPL, not wrapped tokens

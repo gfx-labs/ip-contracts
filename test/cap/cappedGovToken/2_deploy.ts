@@ -1,5 +1,6 @@
 import { s } from "../scope";
 import { d } from "../DeploymentInfo";
+import { upgrades, ethers } from "hardhat";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
 import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../../util/block";
@@ -41,6 +42,7 @@ import {
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
+import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
 require("chai").should();
 describe("Check Interest Protocol contracts", () => {
   describe("Sanity check USDi deploy", () => {
@@ -68,7 +70,18 @@ describe("Check Interest Protocol contracts", () => {
 
 describe("Deploy cappedToken contract and infastructure", () => {
   const cap = utils.parseEther("100000")//100K 
+  const owner = ethers.provider.getSigner(s.IP_OWNER)
 
+  const ethAmount = BN("1e18")
+  let tx = {
+    to: owner._address,
+    value: ethAmount
+  }
+  before(async () => {
+    await s.Frank.sendTransaction(tx)
+    await mineBlock()
+
+  })
   it("Deploy Voting Vault Controller", async () => {
 
     s.VotingVaultController = await DeployContractWithProxy(
@@ -141,6 +154,38 @@ describe("Deploy cappedToken contract and infastructure", () => {
 
 
   })
+
+  /**
+   it("Register on oracle master", async () => {
+
+    await impersonateAccount(owner._address)
+    await s.Oracle.connect(owner).setRelay(s.AAVE.address, s.AnchoredViewAave.address)
+    await mineBlock()
+    await ceaseImpersonation(owner._address)
+
+    let price = await s.Oracle.getLivePrice(s.AAVE.address)
+    expect(price).to.not.eq(0, "Getting a price")
+    showBody("Price: ", await toNumber(price))
+
+
+  })
+
+  it("Register Capped token on VaultController", async () => {
+
+    await impersonateAccount(owner._address)
+
+    await s.VaultController.connect(owner).registerErc20(
+      s.CappedAave.address,
+      s.UNI_LTV,
+      s.AAVE.address,
+      s.LiquidationIncentive
+    )
+    await mineBlock()
+
+    await ceaseImpersonation(owner._address)
+
+  })
+   */
 
   it("Register Underlying on voting vault controller", async () => {
 

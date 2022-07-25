@@ -19,6 +19,9 @@ require("chai").should();
 describe("Verify setup", () => {
     it("Bob's Voting Vault setup correctly", async () => {
         const vaultInfo = await s.BobVotingVault._vaultInfo()
+        const parentVault = await s.BobVotingVault.parentVault()
+
+        expect(parentVault.toUpperCase()).to.eq(vaultInfo.vault_address.toUpperCase(), "Parent Vault matches vault info")
 
         expect(vaultInfo.id).to.eq(s.BobVaultID, "Voting Vault ID is correct")
         expect(vaultInfo.vault_address).to.eq(s.BobVault.address, "Vault address is correct")
@@ -60,21 +63,43 @@ describe("Testing CappedToken functions", () => {
 
     })
 
-    it("Deposit underlying to another address", async () => {
-
-
+    it("Try to transfer", async () => {
+       expect(s.CappedAave.connect(s.Bob).transfer(s.Carol.address, BN("1e18"))).to.be.revertedWith("only vaults")
     })
 
-    it("Check things", async () => {
-      
+    it("Try to exceed the cap", async () => {
+        const cap = await s.CappedAave.getCap()
+        expect(cap).to.eq(s.AaveCap, "Cap is still correct")
+        expect(await s.CappedAave.totalSupply()).to.eq(cap, "Cap reached")
+
+        await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, 1)
+        await mineBlock()
+        expect(s.CappedAave.connect(s.Bob).deposit(1, s.BobVaultID)).to.be.revertedWith("cap reached")
+    })    
+
+
+    it("Withdraw Underlying", async () => {
+
+        const amount = BN("250e18")
+
+        const startAave = await s.AAVE.balanceOf(s.Bob.address)
+        const startCapAave = await s.CappedAave.balanceOf(s.BobVault.address)
+
+        expect(startCapAave).to.be.gt(amount, "Enough CapAave")
+
+        //await s.CappedAave.connect(s.Bob).approve(s.VotingVaultController.address, BN("500e18"))
+        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAave.address, amount)
+        await mineBlock()
+
+        let balance = await s.AAVE.balanceOf(s.Bob.address)
+        expect(balance).to.eq(startAave.add(amount), "Aave balance changed as expected")
+
+        balance = await s.CappedAave.balanceOf(s.BobVault.address)
+        expect(balance).to.eq(startCapAave.sub(amount), "CappedAave balance changed as expected")
+
+        //Deposit again to reset for further tests
+        await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, amount)
+        await s.CappedAave.connect(s.Bob).deposit(amount, s.BobVaultID)
+        await mineBlock()
     })
-
-    it("Withdraw underlying", async () => {
-
-    })
-
-    it("Withdraw underlying to another address", async () => {
-
-    })
-    
 })
