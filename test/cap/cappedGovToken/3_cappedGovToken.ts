@@ -18,9 +18,14 @@ require("chai").should();
 
 describe("Verify setup", () => {
     it("Voting Vault setup correctly", async () => {
-        
+        const vaultInfo = await s.BobVotingVault._vaultInfo()
+
+        expect(vaultInfo.id).to.eq(1, "Voting Vault ID is correct")
+        //expect(vaultInfo.vault_address).to.eq(s.BobVault.address, "Vault address is correct")
     })
 })
+
+//mint voting vault from an account that does not yet have a regular vault
 
 
 describe("Testing CappedToken functions", () => {
