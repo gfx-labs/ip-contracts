@@ -27,7 +27,7 @@ Lists Lido Staked Eth, or stEth, to the protocol.
 
   Oracle: Chainlink + Curvefi Anchored View, 10% wide on each side
   Chainlink Oracle: 0xcfe54b5cd566ab89272946f602d76ea879cab4a8
-  Curve Pool:
+  Curve Pool: 0xAb55Bf4DfBf469ebfe082b7872557D1F87692Fe6
 `;
 
 
