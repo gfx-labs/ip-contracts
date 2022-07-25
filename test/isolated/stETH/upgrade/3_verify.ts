@@ -1,4 +1,5 @@
 import { s } from "../scope";
+import { d } from "../../DeploymentInfo"
 import { ethers, network, tenderly } from "hardhat";
 import { BigNumber, utils } from "ethers";
 import { expect, assert } from "chai";
@@ -8,9 +9,10 @@ import { impersonateAccount, ceaseImpersonation } from "../../../../util/imperso
 import { BN } from "../../../../util/number";
 import {
     ProxyAdmin,
-    ProxyAdmin__factory,
-    USDI__factory,
-    IVault__factory
+    IGovernorCharlieDelegate__factory,
+    InterestProtocolTokenDelegate__factory,
+    IVault__factory,
+    GovernorCharlieDelegate__factory
 } from "../../../../typechain-types";
 import {
     advanceBlockHeight,
@@ -19,7 +21,8 @@ import {
     OneWeek,
     OneYear,
 } from "../../../../util/block";
-import { toNumber, getGas } from "../../../../util/math";
+import { toNumber, getGas, getArgs } from "../../../../util/math";
+import { GovernorCharlieDelegator__factory } from "../../../../typechain-types";
 
 const usdcAmount = BN("50e6")
 const usdiAmount = BN("50e18")
@@ -91,3 +94,21 @@ describe("Borrow against STETH", () => {
     })
 })
 
+describe("Check gov parameters", async () => {
+
+    it("Connect to gov contracts", async () => {
+
+        s.DELEGATOR = GovernorCharlieDelegator__factory.connect(d.CharlieDelegator, s.Frank)
+
+        s.IPT = InterestProtocolTokenDelegate__factory.connect(d.IPTDelegator, s.Frank)
+        s.GOV = GovernorCharlieDelegate__factory.connect(s.DELEGATOR.address, s.Frank)
+
+    })
+
+    it("Check optimistic parameters", async () => {
+        expect(await s.GOV.optimisticQuorumVotes()).to.equal(BN("2000000000000000000000000"), "Optimistic quorum votes are correct")
+        expect(await s.GOV.optimisticVotingDelay()).to.equal(BN("25600"), "optimisticVotingDelay is correct")
+        expect(await s.GOV.maxWhitelistPeriod()).to.equal(BN("31536000"), "maxWhitelistPeriod is correct")    
+    })
+
+})

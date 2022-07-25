@@ -1,7 +1,29 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, ILido, CappedSTETH, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../../typechain-types";
+import { IGovernorCharlieDelegate } from "../../../typechain-types";
+import { 
+    InterestProtocolTokenDelegate, 
+    USDI, 
+    IERC20, 
+    IVOTE, 
+    ILido, 
+    CappedSTETH, 
+    AnchoredViewRelay, 
+    ChainlinkOracleRelay, 
+    IOracleRelay, 
+    ILidoOracle, 
+    ThreeLines0_100, 
+    IVault, 
+    IOracleMaster, 
+    IVaultController, 
+    ProxyAdmin, 
+    IUSDI, 
+    ICurveMaster, 
+    GovernorCharlieDelegate, 
+    IGovernorCharlieDelegator,
+    IGovernorCharlieDelegate__factory
+ } from "../../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../../util/addresser";
 import { BN } from "../../../util/number";
 
@@ -50,6 +72,8 @@ export class TestScope extends MainnetAddresses {
     ThreeLines!: ThreeLines0_100;
 
     IPT!: InterestProtocolTokenDelegate;
+    GOV!: GovernorCharlieDelegate
+    DELEGATOR!: IGovernorCharlieDelegator
 
     Frank!: SignerWithAddress  // frank is the Frank and master of USDI, and symbolizes the power of governance
     Andy!: SignerWithAddress   // andy is a usdc holder. He wishes to deposit his USDC to hold USDI

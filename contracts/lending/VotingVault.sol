@@ -34,9 +34,9 @@ contract VotingVault is Context {
   /// @notice Metadata of vault, aka the id & the minter's address
   VaultInfo public _vaultInfo;
 
-  VotingVaultController _votingController;
-  IVaultController _controller;
-  IVault _parentVault;
+  VotingVaultController public _votingController;
+  IVaultController public _controller;
+  IVault public _parentVault;
 
   /// @notice checks if _msgSender is the controller of the voting vault
   modifier onlyVotingVaultController() {

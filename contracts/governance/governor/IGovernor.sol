@@ -14,9 +14,7 @@ interface IGovernorCharlieDelegator {
 
 /// @title interface to interact with TokenDelgate
 interface IGovernorCharlieDelegate {
-  function initialize(
-    address ipt_
-  ) external;
+  function initialize(address ipt_) external;
 
   function propose(
     address[] memory targets,

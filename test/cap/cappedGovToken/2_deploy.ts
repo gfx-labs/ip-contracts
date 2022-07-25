@@ -30,7 +30,7 @@ import {
   UniswapV3OracleRelay__factory,
   USDI,
   USDI__factory,
-  Vault,
+  IVault__factory,
   VaultController,
   VaultController__factory,
   IVOTE,
@@ -155,38 +155,45 @@ describe("Deploy cappedToken contract and infastructure", () => {
 
   })
 
+  it("Mint vault from vault controller", async () => {
+    //showBody("bob mint vault")
+    await expect(s.VaultController.connect(s.Bob).mintVault()).to.not
+      .reverted;
+    await mineBlock();
+    s.BobVaultID = await s.VaultController.vaultsMinted()
+    let vaultAddress = await s.VaultController.vaultAddress(s.BobVaultID)
+    s.BobVault = IVault__factory.connect(vaultAddress, s.Bob);
+    expect(await s.BobVault.minter()).to.eq(s.Bob.address);
+
+    //showBody("carol mint vault")
+    await expect(s.VaultController.connect(s.Carol).mintVault()).to.not
+      .reverted;
+    await mineBlock();
+    s.CaroLVaultID = await s.VaultController.vaultsMinted()
+    vaultAddress = await s.VaultController.vaultAddress(s.CaroLVaultID)
+    s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
+    expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
+  })
+
   it("Mint voting vault", async () => {
 
-    //Bob does not yet have a regular vault
-    const vaultsMinted = await s.VaultController.vaultsMinted()
-    let vaultIDs = await s.VaultController.vaultIDs(s.Bob.address)
-    expect(vaultIDs.toString()).to.eq("", "Bob does not have any vaults")
-
-    //showBody("Addr: ", await s.VaultController.vaultAddress(1))
-    
-    expect(await s.VotingVaultController._vaultsMinted()).to.eq(0, "No vaults minted yet")
-
-    const result = await s.VotingVaultController.connect(s.Bob).mintVault()
+    const result = await s.VotingVaultController.connect(s.Bob).mintVault(s.BobVaultID)
     await mineBlock()
-    const receipt = await result.wait()
-    showBody(receipt.events)
 
-    expect(await s.VotingVaultController._vaultsMinted()).to.eq(1, "1 vault minted")
-
-    s.BobVotingVaultID = await s.VotingVaultController._vaultsMinted()
-    let vaultAddr = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVotingVaultID)
+    let vaultAddr = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVaultID)
     s.BobVotingVault = VotingVault__factory.connect(vaultAddr, s.Bob)
 
     expect(s.BobVotingVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Bob's voting vault setup complete")
+  })
 
-    vaultIDs = await s.VaultController.vaultIDs(s.Bob.address)
-    showBody(vaultIDs.toString())
+  it("Mint a voting vault for a vault that you don't own", async () => {
+    await s.VotingVaultController.connect(s.Bob).mintVault(s.CaroLVaultID)
+    await mineBlock()
 
-    const newVaultsMinted = await s.VaultController.vaultsMinted()
-    expect(newVaultsMinted.toNumber()).to.eq(vaultsMinted.toNumber() + 1, "1 new regular vault minted for Bob")
-    
-    expect(vaultIDs).to.not.eq([], "Bob does not have any vaults")
+    let vaultAddr = await s.VotingVaultController._vaultId_votingVaultAddress(s.CaroLVaultID)
+    s.CarolVotingVault = VotingVault__factory.connect(vaultAddr, s.Bob)
 
+    expect(s.CarolVotingVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Carol's voting vault setup complete")
   })
 
   it("Set Cap", async () => {
@@ -198,6 +205,4 @@ describe("Deploy cappedToken contract and infastructure", () => {
     expect(await s.CappedAave.getCap()).to.eq(s.AaveCap)
     expect(await (await s.CappedAave._underlying()).toUpperCase()).to.eq(s.AAVE.address.toUpperCase())
   })
-
-
 })

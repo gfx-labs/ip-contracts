@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 pragma experimental ABIEncoderV2;
-import "hardhat/console.sol";
 
 import "./IGovernor.sol";
 import "./GovernorStorage.sol";
@@ -27,9 +26,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Used to initialize the contract during delegator contructor
    * @param ipt_ The address of the IPT token
    */
-  function initialize(
-    address ipt_
-  ) external override {
+  function initialize(address ipt_) external override {
     require(!initialized, "already been initialized");
     ipt = IIpt(ipt_);
     votingPeriod = 40320;
@@ -43,14 +40,10 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     emergencyTimelockDelay = 43200;
 
     optimisticQuorumVotes = 2000000000000000000000000;
-    optimisticVotingDelay = 18000;
+    optimisticVotingDelay = 25600;
     maxWhitelistPeriod = 31536000;
 
     initialized = true;
-  }
-
-  function setMaxWhitelistPeriod(uint256 second) external onlyGov {
-    maxWhitelistPeriod = second;
   }
 
   /// @notice any function with this modifier will call the pay_interest() function before
@@ -463,6 +456,14 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
   }
 
   /**
+   * @notice Governance function for setting the max whitelist period 
+   * @param  second how many seconds to whitelist for 
+   */
+  function setMaxWhitelistPeriod(uint256 second) external onlyGov {
+    maxWhitelistPeriod = second;
+  }
+
+  /**
    * @notice Used to update the timelock period
    * @param proposalTimelockDelay_ The proposal holding period
    */
@@ -557,12 +558,11 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @param expiration Expiration for account whitelist status as timestamp (if now < expiration, whitelisted)
    */
   function _setWhitelistAccountExpiration(address account, uint256 expiration) external override onlyGov {
-    require (expiration < (maxWhitelistPeriod + block.timestamp), "expiration exceeds max");
+    require(expiration < (maxWhitelistPeriod + block.timestamp), "expiration exceeds max");
     whitelistAccountExpirations[account] = expiration;
 
     emit WhitelistAccountExpirationSet(account, expiration);
   }
-
 
   /**
    * @notice Governance function for setting the whitelistGuardian. WhitelistGuardian can cancel proposals from whitelisted addresses

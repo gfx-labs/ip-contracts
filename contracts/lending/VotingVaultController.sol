@@ -17,8 +17,6 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
   uint8 private _underlying_decimals;
   IVaultController public _vaultController;
 
-  uint256 public _vaultsMinted;
-
   mapping(address => uint96) public _vaultAddress_vaultId;
   mapping(uint96 => address) public _vaultId_votingVaultAddress;
   mapping(address => uint96) public _votingVaultAddress_vaultId;
@@ -33,7 +31,6 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
   ) public initializer {
     __Ownable_init();
     _vaultController = IVaultController(vaultController_);
-    _vaultsMinted = 0;
   }
 
   /// @notice register an underlying capped token pair
@@ -69,11 +66,9 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
 
   event NewVotingVault(address voting_vault_address, uint256 vaultId);
   /// @notice create a new vault
+  /// @param id of an existing vault belonging to the calling wallet 
   /// @return address of the new vault
-  function mintVault() public returns (address) {
-    _vaultsMinted = _vaultsMinted + 1;
-    uint96 id = uint96(_vaultsMinted);
-
+  function mintVault(uint96 id) public returns (address) {
     if(_vaultId_votingVaultAddress[id] == address(0)) {
       address vault_address = _vaultController.vaultAddress(id);
       if(vault_address != address(0)) {
