@@ -33,10 +33,3 @@ contract OracleMaster is IOracleMaster, Ownable {
     _relays[token_address] = relay_address;
   }
 }
-
-
-/**
-  change OracleMaster to keep track of capTokens
-  register a relay for the cap token, and check underlying price if cap
-
- */

@@ -16,7 +16,7 @@ import { start } from "repl";
 require("chai").should();
 
 
-describe("Testing Lending functionality", () => {
+describe("Check starting values", () => {
     const amount = BN("500e18")
     it("Check starting balance", async () => {
         const startCap = await s.CappedAave.balanceOf(s.BobVault.address)
@@ -34,14 +34,62 @@ describe("Testing Lending functionality", () => {
         expect(liability).to.eq(0, "Bob's vault has no outstanding debt")
     })
 
-    it("Check borrow power", async () => {
-
+    it("Check borrow power / LTV", async () => {
         let borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
-        showBody(await toNumber(borrowPower))
+        expect(borrowPower).to.be.gt(0, "There exists a borrow power against capped token")     
+
+        const balance = await s.CappedAave.balanceOf(s.BobVault.address)
+        const price = await s.Oracle.getLivePrice(s.CappedAave.address)
+        let totalValue = (balance.mul(price)).div(BN("1e18"))
+        let expectedBorrowPower = (totalValue.mul(s.UNI_LTV)).div(BN("1e18"))
+
+        expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 0.0001, "Borrow power is correct")
+    })
+})
+
+describe("Lending", () => {
+    const borrowAmount = BN("500e18")
+    it("Borrow a small amount against capped token", async () => {
+        
+        const startUSDI = await s.USDI.balanceOf(s.Bob.address)
+        expect(startUSDI).to.eq(0, "Bob holds 0 USDi")
+
+        await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowAmount)
+        await mineBlock()
+
+        let balance = await s.USDI.balanceOf(s.Bob.address)
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(startUSDI.add(balance)), 0.001, "Bob received USDi loan")
+
+    })  
+
+    it("Check loan details", async () => {
+
+        const liability = await s.VaultController.vaultLiability(s.BobVaultID)
+        expect(await toNumber(liability)).to.be.closeTo(await toNumber(borrowAmount), 0.001, "Liability is correct")
 
     })
 
-    it("Try to exceed the cap", async () => {
-    
-    })    
+    it("Check governance vote delegation", async () => {
+
+    })
+
+    it("Repay loan", async () => {
+        expect(await s.USDC.balanceOf(s.Bob.address)).to.eq(s.Bob_USDC, "Bob still holds starting USDC")
+
+        //deposit some to be able to repay all
+        await s.USDC.connect(s.Bob).approve(s.USDI.address, BN("50e6"))
+        await s.USDI.connect(s.Bob).deposit(BN("50e6"))
+        await mineBlock()
+
+        await s.USDI.connect(s.Bob).approve(s.VaultController.address, await s.USDI.balanceOf(s.Bob.address))
+        await s.VaultController.connect(s.Bob).repayAllUSDi(s.BobVaultID)
+        await mineBlock()
+
+        const liability = await s.VaultController.vaultLiability(s.BobVaultID)
+        expect(liability).to.eq(0, "Loan repaid")
+    })
+})
+
+describe("Liquidations", () => {
+
 })

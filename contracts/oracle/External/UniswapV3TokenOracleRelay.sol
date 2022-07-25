@@ -10,6 +10,7 @@ import "../IOracleMaster.sol";
 /// @title Oracle that wraps a univ3 pool
 /// @notice This oracle is for tokens that do not have a stable Uniswap V3 pair against USDC
 /// if quote_token_is_token0 == true, then the reciprocal is returned
+/// quote_token refers to the token we are comparing to, so for an Aave/eth price, Aave is the target and Eth is the quote 
 contract UniswapV3TokenOracleRelay is IOracleRelay {
   bool public immutable _quoteTokenIsToken0;
   IUniswapV3PoolDerivedState public immutable _pool;
@@ -24,7 +25,7 @@ contract UniswapV3TokenOracleRelay is IOracleRelay {
   /// @notice all values set at construction time
   /// @param lookback how many seconds to twap for
   /// @param  pool_address address of chainlink feed
-  /// @param quote_token_is_token0 marker for which token to use as quote/base in calculation
+  /// @param quote_token_is_token0 true if eth is token 0, or false if eth is token 1
   /// @param mul numerator of scalar
   /// @param div denominator of scalar
   constructor(

@@ -151,23 +151,22 @@ describe("Deploy cappedToken contract and infastructure", () => {
     result = await s.AnchoredViewAave.currentValue()
     expect(result).to.not.eq(0, "Oracle is returning a price")
     //showBody("Result: ", await toNumber(result))
-
-
   })
 
-/**
+
  
   it("Register on oracle master", async () => {
 
+
+    //Register CappedAave against Aave oracle, so Aave price is fetched for cappedAave
+
     await impersonateAccount(owner._address)
-    await s.Oracle.connect(owner).setRelay(s.AAVE.address, s.AnchoredViewAave.address)
+    await s.Oracle.connect(owner).setRelay(s.CappedAave.address, s.AnchoredViewAave.address)
     await mineBlock()
     await ceaseImpersonation(owner._address)
 
-    let price = await s.Oracle.getLivePrice(s.AAVE.address)
+    let price = await s.Oracle.getLivePrice(s.CappedAave.address)
     expect(price).to.not.eq(0, "Getting a price")
-    showBody("Price: ", await toNumber(price))
-
 
   })
 
@@ -178,7 +177,7 @@ describe("Deploy cappedToken contract and infastructure", () => {
     await s.VaultController.connect(owner).registerErc20(
       s.CappedAave.address,
       s.UNI_LTV,
-      s.AAVE.address,
+      s.CappedAave.address,
       s.LiquidationIncentive
     )
     await mineBlock()
@@ -186,7 +185,7 @@ describe("Deploy cappedToken contract and infastructure", () => {
     await ceaseImpersonation(owner._address)
 
   })
- */
+ 
 
 
   it("Register Underlying on voting vault controller", async () => {
