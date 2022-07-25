@@ -155,8 +155,9 @@ describe("Deploy cappedToken contract and infastructure", () => {
 
   })
 
-  /**
-   it("Register on oracle master", async () => {
+/**
+ 
+  it("Register on oracle master", async () => {
 
     await impersonateAccount(owner._address)
     await s.Oracle.connect(owner).setRelay(s.AAVE.address, s.AnchoredViewAave.address)
@@ -185,7 +186,8 @@ describe("Deploy cappedToken contract and infastructure", () => {
     await ceaseImpersonation(owner._address)
 
   })
-   */
+ */
+
 
   it("Register Underlying on voting vault controller", async () => {
 

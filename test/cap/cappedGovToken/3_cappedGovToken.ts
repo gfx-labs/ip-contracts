@@ -63,6 +63,16 @@ describe("Testing CappedToken functions", () => {
 
     })
 
+    it("Check token destinations", async () => {
+
+        let balance = await s.AAVE.balanceOf(s.BobVotingVault.address)
+        expect(balance).to.eq(depositAmount, "Voting vault holds the underlying")
+
+        balance = await s.CappedAave.balanceOf(s.BobVault.address)
+        expect(balance).to.eq(depositAmount, "Bob's regular vault holds the wrapped capTokens")
+
+    })
+
     it("Try to transfer", async () => {
        expect(s.CappedAave.connect(s.Bob).transfer(s.Carol.address, BN("1e18"))).to.be.revertedWith("only vaults")
     })
