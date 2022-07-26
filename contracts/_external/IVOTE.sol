@@ -27,4 +27,7 @@ interface IVOTE is IERC20 {
   function getPowerCurrent(address user, DelegationType delegationType) external view returns (uint256);
 
   function getVotes(address account) external view returns (uint256);
+
+  //aave functions
+  function getDelegateeByType(address delegator, DelegationType delegationType) external view returns (address);
 }

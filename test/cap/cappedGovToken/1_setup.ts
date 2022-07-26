@@ -69,7 +69,11 @@ describe("Token Setup", () => {
         s.COMP = IVOTE__factory.connect(s.compAddress, s.Frank);
         s.ENS = IVOTE__factory.connect(s.ensAddress, s.Frank);
         s.DYDX = IVOTE__factory.connect(s.dydxAddress, s.Frank);
+
+
         s.AAVE = IVOTE__factory.connect(s.aaveAddress, s.Frank);
+
+        
         s.TRIBE = IVOTE__factory.connect(s.tribeAddress, s.Frank);
 
     });

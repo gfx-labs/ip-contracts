@@ -71,6 +71,20 @@ describe("Lending", () => {
 
     it("Check governance vote delegation", async () => {
 
+
+        const startPower = await s.AAVE.getPowerCurrent(s.Bob.address, 0)
+
+        //delegate
+        await s.BobVotingVault.connect(s.Bob).delegateCompLikeTo(s.Bob.address, s.aaveAddress)
+        await mineBlock()
+
+        let power = await s.AAVE.getPowerCurrent(s.Bob.address, 0)
+
+        const expected = (await s.AAVE.balanceOf(s.Bob.address)).add(await s.AAVE.balanceOf(s.BobVotingVault.address))
+        
+        expect(power).to.be.gt(startPower, "Voting power increased")
+        expect(power).to.eq(expected, "Expected voting power achieved")
+
     })
 
     it("Repay loan", async () => {
@@ -91,5 +105,43 @@ describe("Lending", () => {
 })
 
 describe("Liquidations", () => {
+
+    let borrowPower:BigNumber
+
+    before(async () => {
+        borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
+        showBody(await toNumber(borrowPower))
+    })
+
+    it("Borrow max", async () => {
+
+        const startUSDI = await s.USDI.balanceOf(s.Bob.address)
+
+        await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower)
+        await mineBlock()
+        const liab = await s.VaultController.vaultLiability(s.BobVaultID)
+        showBody(await toNumber(borrowPower))
+        showBody(await toNumber(liab))
+
+        let balance = await s.USDI.balanceOf(s.Bob.address)
+        showBody("Balance: ", await toNumber(balance))
+
+        //expect(await toNumber(liab)).to.eq(await toNumber(borrowPower), "Borrow correct")
+
+
+    })
+
+    it("Elapse time to put vault underwater", async () => {
+
+        await fastForward(OneYear)
+        await mineBlock()
+        await s.VaultController.calculateInterest()
+        await mineBlock()
+
+    })
+
+    it("Liquidate", async () => {
+
+    })
 
 })

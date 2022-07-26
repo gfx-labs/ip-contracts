@@ -4,5 +4,8 @@
         "new_curvefi": "0xAa2639C9Dcf71547e585439E8744128ED9832FE8",
         "new_chainlink": "0xa9DD6FB60c84cc4788b02c45B6B3f59f8444674f",
         "new_anchored": "0x73052741d8bE063b086c4B7eFe084B0CEE50677A"
+    },
+    "proposal": {
+        "proposeTxn": "0x99ca21f4dfd23f63a004a7f132cb79f739afff3ddb5a687405d447c23ca1293a"
     }
 }
