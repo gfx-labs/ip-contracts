@@ -217,9 +217,9 @@ describe("Liquidations", () => {
     it("Withdraw after loan", async () => {
 
         const voteVaultAave = await s.AAVE.balanceOf(s.BobVotingVault.address)
+        expect(voteVaultAave).to.be.gt(0, "Vote vault holds Aave")
         const vaultCappedAave = await s.CappedAave.balanceOf(s.BobVault.address)
-        const bobAave = await s.AAVE.balanceOf(s.Bob.address)
-
+        
         await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAave.address, vaultCappedAave)
         await mineBlock()
 
@@ -232,10 +232,8 @@ describe("Liquidations", () => {
         const supply = await s.CappedAave.totalSupply()
         expect(await toNumber(supply)).to.eq(0, "All CappedAave Burned")
 
-
         balance = await s.AAVE.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.aaveAmount.sub(T2L)), 2, "Bob received collateral - liquidated amount")
 
     })
-
 })
