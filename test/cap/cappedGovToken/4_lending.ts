@@ -91,6 +91,41 @@ describe("Lending", () => {
 
     })
 
+    /**
+     * Bob minted this voting vault using Carol's regular vault ID
+     * Previous tests confirmed Carol is the minter
+     * We will now confirm that only carol has the right to delegate voting power
+     */
+    it("Check governance vote delgation for a vault that was minted by someone else", async () => {
+        const amount = BN("50e18")
+
+        //raise cap so Carol can have some capped aave
+        await s.CappedAave.connect(s.Frank).setCap(BN("550e18"))
+        await mineBlock()
+
+        //Bob funds Carol's vault
+        await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, amount)
+        await s.CappedAave.connect(s.Bob).deposit(amount, s.CaroLVaultID)
+        await mineBlock()
+
+        const startPower = await s.AAVE.getPowerCurrent(s.Carol.address, 0)
+        expect(startPower).to.eq(0, "Carol holds 0 Aave and has no delegated voting power")
+
+        await s.CarolVotingVault.connect(s.Carol).delegateCompLikeTo(s.Carol.address, s.aaveAddress)
+        await mineBlock()
+
+        //await s.CarolVotingVault.connect(s.Carol).delegateCompLikeTo(s.Carol.address, s.aaveAddress)
+        //await mineBlock()
+
+        let power = await s.AAVE.getPowerCurrent(s.Carol.address, 0)
+        expect(power).to.eq(amount, "Voting power is correct")
+
+        await s.CarolVault.connect(s.Carol).withdrawErc20(s.CappedAave.address, amount)
+        await s.AAVE.connect(s.Carol).transfer(s.Bob.address, amount)
+        await mineBlock()
+
+    })
+
     it("Repay loan", async () => {
         expect(await s.USDC.balanceOf(s.Bob.address)).to.eq(s.Bob_USDC, "Bob still holds starting USDC")
 
@@ -121,9 +156,24 @@ describe("Liquidations", () => {
 
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)
 
+        let startLiab = await s.VaultController.vaultLiability(s.BobVaultID)
+        let effective = borrowPower.sub(startLiab)
+        showBodyCyan("Reported  borrow power: ", await toNumber(borrowPower))
+
+        showBodyCyan("Effective borrow power: ", await toNumber(effective))
+
+
         const result = await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower)
         await mineBlock()
+        //showBody("borrowed")
+        const receipt = await result.wait()
+        //showBody(receipt)
+        const length = receipt!.events!.length
+        //showBody(length)
+        const args = await getArgs(result)
+        //showBody(args)
         const liab = await s.VaultController.vaultLiability(s.BobVaultID)
+        showBodyCyan("LIAB: ", await toNumber(liab))
         expect(await toNumber(liab)).to.be.closeTo(await toNumber(borrowPower), 0.001, "Liability is correct")
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
@@ -219,7 +269,7 @@ describe("Liquidations", () => {
         const voteVaultAave = await s.AAVE.balanceOf(s.BobVotingVault.address)
         expect(voteVaultAave).to.be.gt(0, "Vote vault holds Aave")
         const vaultCappedAave = await s.CappedAave.balanceOf(s.BobVault.address)
-        
+
         await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAave.address, vaultCappedAave)
         await mineBlock()
 
@@ -234,6 +284,28 @@ describe("Liquidations", () => {
 
         balance = await s.AAVE.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.aaveAmount.sub(T2L)), 2, "Bob received collateral - liquidated amount")
+
+    })
+})
+
+describe("Other", () => {
+    const amount = BN("10e18")
+    it("unregister underlying", async () => {
+
+        await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, amount)
+        await s.CappedAave.connect(s.Bob).deposit(amount, s.BobVaultID)
+        await mineBlock()
+
+        await s.VotingVaultController.connect(s.Frank).unregisterUnderlying(s.aaveAddress, s.CappedAave.address)
+        await mineBlock()
+
+    })
+
+    it("underlying_decimals", async () => {
+
+    })
+
+    it("mappings", async () => {
 
     })
 })

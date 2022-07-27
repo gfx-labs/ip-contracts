@@ -8,7 +8,7 @@ import "../../_external/uniswap/TickMath.sol";
 /// @title Oracle that wraps a univ3 pool
 /// @notice This oracle is for tokens that do not have a stable Uniswap V3 pair against USDC
 /// if quote_token_is_token0 == true, then the reciprocal is returned
-/// quote_token refers to the token we are comparing to, so for an Aave/eth price, Aave is the target and Eth is the quote 
+/// quote_token refers to the token we are comparing to, so for an Aave price in ETH, Aave is the target and Eth is the quote 
 contract UniswapV3TokenOracleRelay is IOracleRelay {
   bool public immutable _quoteTokenIsToken0;
   IUniswapV3PoolDerivedState public immutable _pool;
@@ -18,7 +18,6 @@ contract UniswapV3TokenOracleRelay is IOracleRelay {
   uint256 public immutable _div;
 
   IOracleRelay public constant ethOracle = IOracleRelay(0x22B01826063564CBe01Ef47B96d623b739F82Bf2);
-  //0x22B01826063564CBe01Ef47B96d623b739F82Bf2
 
   /// @notice all values set at construction time
   /// @param lookback how many seconds to twap for
@@ -41,12 +40,13 @@ contract UniswapV3TokenOracleRelay is IOracleRelay {
   }
 
   /// @notice the current reported value of the oracle
-  /// @return usdPrice - the price in USD terms e18
-  /// @dev implementation in getLastSecond
+  /// @return usdPrice - the price in USD terms 
+  /// @dev implementation in getLastSeconds
   function currentValue() external view override returns (uint256) {
     uint256 priceInEth = getLastSeconds(_lookback);
 
-    uint256 ethPrice = ethOracle.currentValue();//oracle.getLivePrice(WETH); //WETH
+    //get price of eth to convert priceInEth to USD terms
+    uint256 ethPrice = ethOracle.currentValue();
 
     return (ethPrice * priceInEth) / 1e18;
   }

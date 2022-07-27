@@ -233,6 +233,7 @@ describe("Deploy cappedToken contract and infastructure", () => {
   })
 
   it("Mint a voting vault for a vault that you don't own", async () => {
+    //Bob mints a vault using Carol's vault ID
     await s.VotingVaultController.connect(s.Bob).mintVault(s.CaroLVaultID)
     await mineBlock()
 
@@ -240,6 +241,14 @@ describe("Deploy cappedToken contract and infastructure", () => {
     s.CarolVotingVault = VotingVault__factory.connect(vaultAddr, s.Bob)
 
     expect(s.CarolVotingVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Carol's voting vault setup complete")
+    
+    let info = await s.CarolVotingVault._vaultInfo()
+    let vault = IVault__factory.connect(info.vault_address, s.Bob)
+    let minter = await vault.minter()
+    expect(minter.toUpperCase()).to.eq(s.Carol.address.toUpperCase())
+
+
+  
   })
 
   it("Set Cap", async () => {
