@@ -64,7 +64,6 @@ export class TestScope extends MainnetAddresses {
 
     BobVault!: IVault
     BobVaultID!: BigNumber
-    BobVotingVaultID!: BigNumber
     BobVotingVault!: VotingVault
     CarolVotingVault!: VotingVault
     CarolVault!: IVault

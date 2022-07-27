@@ -114,9 +114,6 @@ describe("Lending", () => {
         await s.CarolVotingVault.connect(s.Carol).delegateCompLikeTo(s.Carol.address, s.aaveAddress)
         await mineBlock()
 
-        //await s.CarolVotingVault.connect(s.Carol).delegateCompLikeTo(s.Carol.address, s.aaveAddress)
-        //await mineBlock()
-
         let power = await s.AAVE.getPowerCurrent(s.Carol.address, 0)
         expect(power).to.eq(amount, "Voting power is correct")
 
@@ -137,6 +134,8 @@ describe("Lending", () => {
         await s.USDI.connect(s.Bob).approve(s.VaultController.address, await s.USDI.balanceOf(s.Bob.address))
         await s.VaultController.connect(s.Bob).repayAllUSDi(s.BobVaultID)
         await mineBlock()
+        await mineBlock()
+
 
         const liability = await s.VaultController.vaultLiability(s.BobVaultID)
         expect(liability).to.eq(0, "Loan repaid")
@@ -157,23 +156,11 @@ describe("Liquidations", () => {
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)
 
         let startLiab = await s.VaultController.vaultLiability(s.BobVaultID)
-        let effective = borrowPower.sub(startLiab)
-        showBodyCyan("Reported  borrow power: ", await toNumber(borrowPower))
+        expect(startLiab).to.eq(0, "Liability is still 0")
 
-        showBodyCyan("Effective borrow power: ", await toNumber(effective))
-
-
-        const result = await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower)
+        await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower)
         await mineBlock()
-        //showBody("borrowed")
-        const receipt = await result.wait()
-        //showBody(receipt)
-        const length = receipt!.events!.length
-        //showBody(length)
-        const args = await getArgs(result)
-        //showBody(args)
         const liab = await s.VaultController.vaultLiability(s.BobVaultID)
-        showBodyCyan("LIAB: ", await toNumber(liab))
         expect(await toNumber(liab)).to.be.closeTo(await toNumber(borrowPower), 0.001, "Liability is correct")
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
@@ -290,6 +277,29 @@ describe("Liquidations", () => {
 
 describe("Other", () => {
     const amount = BN("10e18")
+    
+
+    it("underlying_decimals", async () => {
+
+    })
+
+    it("mappings", async () => {
+        const vavi = await s.VotingVaultController._vaultAddress_vaultId(s.BobVault.address)
+        expect(vavi.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
+
+        const _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_votingVaultAddress(BN(s.BobVaultID))
+        expect(_vaultId_votingVaultAddress.toUpperCase()).to.equal(s.BobVotingVault.address.toUpperCase(), "Correct voting vault ID")
+
+        const _votingVaultAddress_vaultId = await s.VotingVaultController._votingVaultAddress_vaultId(s.BobVotingVault.address)
+        expect(_votingVaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
+
+        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.aaveAddress)
+        expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedAave.address.toUpperCase(), "Underlying => Capped is correct")
+
+        const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedAave.address)
+        expect(_CappedToken_underlying.toUpperCase()).to.eq(s.aaveAddress.toUpperCase(), "Capped => Underlying correct")
+    })
+
     it("unregister underlying", async () => {
 
         await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, amount)
@@ -299,13 +309,9 @@ describe("Other", () => {
         await s.VotingVaultController.connect(s.Frank).unregisterUnderlying(s.aaveAddress, s.CappedAave.address)
         await mineBlock()
 
-    })
+        //Unregistering token prevents withdraw 
+        expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAave.address, amount)).to.be.revertedWith("Only Capped Token") 
 
-    it("underlying_decimals", async () => {
-
-    })
-
-    it("mappings", async () => {
 
     })
 })
