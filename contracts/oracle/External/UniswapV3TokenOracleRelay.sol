@@ -4,8 +4,6 @@ pragma solidity 0.8.9;
 import "../IOracleRelay.sol";
 import "../../_external/uniswap/IUniswapV3PoolDerivedState.sol";
 import "../../_external/uniswap/TickMath.sol";
-import "../../lending/IVaultController.sol";
-import "../IOracleMaster.sol";
 
 /// @title Oracle that wraps a univ3 pool
 /// @notice This oracle is for tokens that do not have a stable Uniswap V3 pair against USDC
@@ -19,8 +17,8 @@ contract UniswapV3TokenOracleRelay is IOracleRelay {
   uint256 public immutable _mul;
   uint256 public immutable _div;
 
-  IVaultController public constant VC = IVaultController(0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3);
-  address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+  IOracleRelay public constant ethOracle = IOracleRelay(0x22B01826063564CBe01Ef47B96d623b739F82Bf2);
+  //0x22B01826063564CBe01Ef47B96d623b739F82Bf2
 
   /// @notice all values set at construction time
   /// @param lookback how many seconds to twap for
@@ -48,9 +46,7 @@ contract UniswapV3TokenOracleRelay is IOracleRelay {
   function currentValue() external view override returns (uint256) {
     uint256 priceInEth = getLastSeconds(_lookback);
 
-    IOracleMaster oracle = IOracleMaster(VC.getOracleMaster());
-
-    uint256 ethPrice = oracle.getLivePrice(WETH); //WETH
+    uint256 ethPrice = ethOracle.currentValue();//oracle.getLivePrice(WETH); //WETH
 
     return (ethPrice * priceInEth) / 1e18;
   }
