@@ -1,5 +1,5 @@
 import { s } from "../scope";
-import { d } from "../../DeploymentInfo"
+import { d } from "../DeploymentInfo"
 import { ethers, network, tenderly } from "hardhat";
 import { BigNumber, utils } from "ethers";
 import { expect, assert } from "chai";

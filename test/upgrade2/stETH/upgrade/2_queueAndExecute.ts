@@ -7,7 +7,7 @@ import { toNumber } from "../../../../util/math";
 import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
 
 import { s } from "../scope";
-import { d } from "../../DeploymentInfo";
+import { d } from "../DeploymentInfo";
 import { advanceBlockHeight, fastForward, currentBlock, mineBlock } from "../../../../util/block";
 import {
     IVault__factory,
