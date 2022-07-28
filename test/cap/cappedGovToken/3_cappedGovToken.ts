@@ -13,6 +13,9 @@ import { toNumber } from "../../../util/math"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { start } from "repl";
+import {
+    IVault__factory
+} from "../../../typechain-types"
 require("chai").should();
 
 
@@ -74,7 +77,7 @@ describe("Testing CappedToken functions", () => {
     })
 
     it("Try to transfer", async () => {
-       expect(s.CappedAave.connect(s.Bob).transfer(s.Carol.address, BN("1e18"))).to.be.revertedWith("only vaults")
+        expect(s.CappedAave.connect(s.Bob).transfer(s.Carol.address, BN("1e18"))).to.be.revertedWith("only vaults")
     })
 
     it("Try to exceed the cap", async () => {
@@ -85,7 +88,34 @@ describe("Testing CappedToken functions", () => {
         await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, 1)
         await mineBlock()
         expect(s.CappedAave.connect(s.Bob).deposit(1, s.BobVaultID)).to.be.revertedWith("cap reached")
-    })    
+    })
+
+    it("Try to transfer", async () => {
+        expect(s.CappedAave.connect(s.Bob).transfer(s.Frank.address, BN("10e18"))).to.be.revertedWith("only vaults")
+    })
+
+    it("no voting vault", async () => {
+        const amount = BN("5e18")
+
+        const startBal = await s.AAVE.balanceOf(s.Gus.address)
+        expect(startBal).to.eq(s.aaveAmount, "Balance correct")
+
+
+        //mint regular vault for gus
+        await expect(s.VaultController.connect(s.Gus).mintVault()).to.not
+            .reverted;
+        await mineBlock();
+        const gusVaultID = await s.VaultController.vaultsMinted()
+        let vaultAddress = await s.VaultController.vaultAddress(gusVaultID)
+        const gusVault = IVault__factory.connect(vaultAddress, s.Gus);
+        expect(await gusVault.minter()).to.eq(s.Gus.address);
+
+
+
+        await s.AAVE.connect(s.Gus).approve(s.CappedAave.address, amount)
+        //await s.CappedAave.connect(s.Gus).deposit(amount)
+
+    })
 
 
     it("Withdraw Underlying", async () => {

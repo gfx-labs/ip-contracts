@@ -39,7 +39,7 @@ export const nextBlockTime = async (blockTime:number) => {
 
 export const reset = async (block: number) => {
     dotenv.config();
-    //pass 0 to return to starting block
+    //pass 0 to return to starting block for main tests
     if (block == 0) {
         block = 14546835
     }

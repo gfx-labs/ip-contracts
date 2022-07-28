@@ -2,7 +2,7 @@ import { s } from "../scope";
 import { d } from "../DeploymentInfo";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../../util/block";
+import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear, OneDay } from "../../../util/block";
 import { utils, BigNumber } from "ethers";
 import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculatetokensToLiquidate, calculateUSDI2repurchase, changeInBalance } from "../../../util/math";
 import { currentBlock, reset } from "../../../util/block"
@@ -133,8 +133,10 @@ describe("Lending", () => {
 
         await s.USDI.connect(s.Bob).approve(s.VaultController.address, await s.USDI.balanceOf(s.Bob.address))
         await s.VaultController.connect(s.Bob).repayAllUSDi(s.BobVaultID)
-        await mineBlock()
-        await mineBlock()
+        //await mineBlock()
+        //await mineBlock()
+        await advanceBlockHeight(1)
+        await fastForward(OneDay)
 
 
         const liability = await s.VaultController.vaultLiability(s.BobVaultID)
@@ -273,19 +275,10 @@ describe("Liquidations", () => {
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.aaveAmount.sub(T2L)), 2, "Bob received collateral - liquidated amount")
 
     })
-})
-
-describe("Other", () => {
-    const amount = BN("10e18")
-    
-
-    it("underlying_decimals", async () => {
-
-    })
 
     it("mappings", async () => {
-        const vavi = await s.VotingVaultController._vaultAddress_vaultId(s.BobVault.address)
-        expect(vavi.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
+        const _vaultAddress_vaultId = await s.VotingVaultController._vaultAddress_vaultId(s.BobVault.address)
+        expect(_vaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
 
         const _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_votingVaultAddress(BN(s.BobVaultID))
         expect(_vaultId_votingVaultAddress.toUpperCase()).to.equal(s.BobVotingVault.address.toUpperCase(), "Correct voting vault ID")
@@ -299,19 +292,75 @@ describe("Other", () => {
         const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedAave.address)
         expect(_CappedToken_underlying.toUpperCase()).to.eq(s.aaveAddress.toUpperCase(), "Capped => Underlying correct")
     })
+})
 
-    it("unregister underlying", async () => {
+describe("Unregister Underlying", () => {
+    const amount = BN("10e18")
+    const oxo = "0x0000000000000000000000000000000000000000"
 
+    it("setup", async () => {
         await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, amount)
         await s.CappedAave.connect(s.Bob).deposit(amount, s.BobVaultID)
         await mineBlock()
 
-        await s.VotingVaultController.connect(s.Frank).unregisterUnderlying(s.aaveAddress, s.CappedAave.address)
+        let borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
+        let liability = await s.VaultController.vaultLiability(s.BobVaultID)
+        expect(liability).to.eq(0, "Bob's vault has no debt")
+
+        await s.VaultController.connect(s.Bob).borrowUSDIto(s.BobVaultID, borrowPower, s.Bob.address)
         await mineBlock()
 
-        //Unregistering token prevents withdraw 
-        expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAave.address, amount)).to.be.revertedWith("Only Capped Token") 
+        liability = await s.VaultController.vaultLiability(s.BobVaultID)
+        expect(await toNumber(liability)).to.be.closeTo(await toNumber(borrowPower), 0.001, "Liability correct")
+    })
 
+    it("unregister underlying", async () => {    
+
+        await s.VotingVaultController.connect(s.Frank).unregisterUnderlying(s.aaveAddress, s.CappedAave.address)
+        await mineBlock()     
+        
+        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.aaveAddress)
+        const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedAave.address)
+
+        expect(_underlying_CappedToken).to.eq(_CappedToken_underlying).to.eq(oxo, "Unregister successful")
+
+    }) 
+
+    it("Unregister does not prevent deposit", async () => {
+        const smallAmount = BN("1e16")
+        await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, smallAmount)
+        await expect(s.CappedAave.connect(s.Bob).deposit(smallAmount, s.BobVaultID)).to.not.be.reverted
+        await mineBlock()
+    })
+
+    it("Unregister prevents withdraw from cap contract", async () => {
+         expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAave.address, amount)).to.be.revertedWith("Only Capped Token") 
+    })
+
+    it("Elapse time to put vault underwater", async () => {
+
+        let solvency = await s.VaultController.checkVault(s.BobVaultID)
+        expect(solvency).to.eq(true, "Bob's vault is not yet underwater")
+
+
+        await fastForward(OneYear)
+        await mineBlock()
+        await s.VaultController.calculateInterest()
+        await mineBlock()
+
+        solvency = await s.VaultController.checkVault(s.BobVaultID) 
+        expect(solvency).to.eq(false, "Bob's vault is now underwater")
+
+    })
+
+    it("Unregister prevents liquidation", async () => {        
+         expect(s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedAave.address, BN("1e50"))).to.be.revertedWith("Only Capped Token")
+    })
+
+    it("Unregister does not prevent repay", async () => {
+
+        await expect(s.VaultController.connect(s.Bob).repayUSDi(s.BobVaultID, BN("10e18"))).to.not.be.reverted
+        await mineBlock()
 
     })
 })
