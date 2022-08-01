@@ -157,7 +157,5 @@ contract SlowRoll {
     bool check = _rewardToken.transfer(target, amount);
     require(check, "erc20 transfer failed");
   }
-
-
 }
 // solhint-enable comprehensive-interface

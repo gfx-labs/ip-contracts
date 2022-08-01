@@ -72,9 +72,6 @@ describe("Deploy wave - OVERSATURATION", () => {
 /**
  * Daily price resets to min each day
  * if max price is reached, all sales will be at that price for the day until cap is reached
- * 
- * If admin controls are allowed, we could potentially limit the participants to a whitelist for an arbitrary time or until we switch it off
- * 
  */
 
 describe("Wave 1 claims", () => {
@@ -201,16 +198,80 @@ describe("Wave 1 claims", () => {
 
     expect(await SlowRoll.getCurrentPrice()).to.be.lt(await SlowRoll._maxPrice(), "More USDC is needed to reach daily max price as less IPT are sold per USDC")
   })
+})
 
-  it("try to claim more than key amount", async () => {
+describe("Change Parameters", () => {
+
+  //starting values
+  let startPrice: BigNumber, maxPrice: BigNumber, currentPrice: BigNumber, maxQuantity: BigNumber
+
+  beforeEach(async () => {
+    currentPrice = await SlowRoll.getCurrentPrice()
+    //showBody("price: ", currentPrice)
+
+    maxQuantity = await SlowRoll._maxQuantity()
+    //showBody("maxQuantity: ", await toNumber(maxQuantity))
+
+    startPrice = await SlowRoll._startPrice()
+    //showBody("startPrice: ", startPrice)
+
+    maxPrice = await SlowRoll._maxPrice()
+    //showBody("maxPrice: ", maxPrice)
+  })
+  it("Change maxQuantity", async () => {
+    const prevPrice = currentPrice
+
+    //set to only slightly higher than current sold quantity
+    const soldQ = await SlowRoll._soldQuantity()
+    await SlowRoll.connect(s.Frank).setMaxQuantity(soldQ.add(BN("10e18")))
+    await mineBlock()
+
+    let price = await SlowRoll.getCurrentPrice()
+    expect(price).to.be.gt(prevPrice, "Price has increased as a result of setting a new maxQuantity")
 
   })
 
-  it("someone tries to claim who is not in this wave", async () => {
+  it("Change startPrice", async () => {
+    const newPrice = 350000
+    const prevPrice = currentPrice
+
+    await SlowRoll.connect(s.Frank).setStartPrice(newPrice)
+    await mineBlock()
+
+    let newStartPrice = await SlowRoll._startPrice()
+    expect(newStartPrice).to.eq(newPrice, "New price has been set")
+
+    let price = await SlowRoll.getCurrentPrice()
+    expect(price).to.be.gt(prevPrice, "Price has increased as a result of setting a new startPrice")
+  })
+  it("Change maxPrice", async () => {
+    const prevPrice = currentPrice
+    const currentMax = maxPrice
+
+    await SlowRoll.connect(s.Frank).setMaxPrice(currentMax.add(BN("100000")))//increase by $0.10
+    await mineBlock()
+
+    let price = await SlowRoll.getCurrentPrice()
+    expect(price).to.be.gt(prevPrice, "Price has increased as a result of setting a new max price")
 
   })
 
-  it("Bob claims exactly up to maximum", async () => {
+  it("Set new day", async () => {
+
+    let soldQ = await SlowRoll._soldQuantity()
+    expect(soldQ).to.be.gt(0, "Tokens have been sold today")
+    expect(currentPrice).to.be.gt(startPrice, "Price has increased as tokens have been sold")
+    expect(currentPrice).to.be.lt(maxPrice, "Max price has not yet been reached")
+
+
+    await SlowRoll.connect(s.Frank).forceNewDay()
+    await mineBlock()
+
+    let price = await SlowRoll.getCurrentPrice()
+    soldQ = await SlowRoll._soldQuantity()
+
+    expect(price).to.eq(startPrice)
+    expect(soldQ).to.eq(0, "Sold quantity reset to 0")
 
 
   })
