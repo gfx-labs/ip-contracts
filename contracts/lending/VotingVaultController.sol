@@ -47,16 +47,11 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
     _CappedToken_underlying[capped_token] = address(0x0);
   }
 
-  modifier onlyCappedToken() {
-    require(_CappedToken_underlying[_msgSender()] != address(0x0), "Only Capped Token");
-    _;
-  }
-
   function retrieveUnderlying(
     uint256 amount,
     address voting_vault,
     address target
-  ) public onlyCappedToken {
+  ) public {
     require(voting_vault != address(0x0), "invalid vault");
 
     address underlying_address = _CappedToken_underlying[_msgSender()];
@@ -69,7 +64,7 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
   event NewVotingVault(address voting_vault_address, uint256 vaultId);
 
   /// @notice create a new vault
-  /// @param id of an existing vault belonging to the calling wallet
+  /// @param id of an existing vault
   /// @return address of the new vault
   function mintVault(uint96 id) public returns (address) {
     if (_vaultId_votingVaultAddress[id] == address(0)) {

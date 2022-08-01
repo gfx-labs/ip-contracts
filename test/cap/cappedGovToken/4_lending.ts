@@ -13,6 +13,7 @@ import { toNumber } from "../../../util/math"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { start } from "repl";
+import { VotingVault__factory } from "../../../typechain-types";
 require("chai").should();
 
 const borrowAmount = BN("500e18")
@@ -292,8 +293,18 @@ describe("Liquidations", () => {
         const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedAave.address)
         expect(_CappedToken_underlying.toUpperCase()).to.eq(s.aaveAddress.toUpperCase(), "Capped => Underlying correct")
     })
+
+    
 })
 
+
+/**
+ * Unregister prevents withdraw and liquidation
+ * What is the use case for unregister? 
+ * 
+ * Also _underlying_CappedToken seems to be only for public visibility? 
+ * It is only changed or read when register/unregisterign underlying
+ */
 describe("Unregister Underlying", () => {
     const amount = BN("10e18")
     const oxo = "0x0000000000000000000000000000000000000000"

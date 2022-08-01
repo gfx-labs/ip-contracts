@@ -14,7 +14,8 @@ import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { start } from "repl";
 import {
-    IVault__factory
+    IVault__factory,
+    VotingVault__factory
 } from "../../../typechain-types"
 require("chai").should();
 
@@ -141,5 +142,41 @@ describe("Testing CappedToken functions", () => {
         await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, amount)
         await s.CappedAave.connect(s.Bob).deposit(amount, s.BobVaultID)
         await mineBlock()
+    })
+})
+
+describe("More checks", () => {
+    it("Try to retrieveUnderlying", async () => {
+        await expect(s.VotingVaultController.connect(s.Dave).retrieveUnderlying(BN("1e18"), s.BobVotingVault.address, s.Dave.address)).to.be.revertedWith("only capped token")
+    })
+
+    it("try to mint a second voting vault", async () => {
+
+        let _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVaultID)
+        expect(_vaultId_votingVaultAddress).to.not.eq("0x0000000000000000000000000000000000000000", "Voting vault exists already")
+
+        const ogVaultAddr = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVaultID)
+        const ogVault = VotingVault__factory.connect(ogVaultAddr, s.Bob)
+        const expectedBalance = await s.AAVE.balanceOf(s.BobVotingVault.address)
+
+        let balance = await s.AAVE.balanceOf(ogVault.address)
+        expect(balance).to.eq(expectedBalance, "Bob's voting vault holds the correct balance of gov tokens")
+
+
+        const result = await s.VotingVaultController.connect(s.Bob).mintVault(s.BobVaultID)
+        await mineBlock()
+        const gas = await getGas(result)
+        showBodyCyan("Gas to mintVault on an ID that exists already: ", gas)
+
+        let vaultAddr = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVaultID)
+        let dupeVault = VotingVault__factory.connect(vaultAddr, s.Bob)
+
+        expect(ogVaultAddr.toUpperCase()).to.eq(vaultAddr.toUpperCase(), "Bob's voting vault address did not change")
+
+        let dupeBalance = await s.AAVE.balanceOf(dupeVault.address)
+        expect(dupeBalance).to.eq(balance).to.eq(expectedBalance, "No new vault was minted")
+    
+
+
     })
 })

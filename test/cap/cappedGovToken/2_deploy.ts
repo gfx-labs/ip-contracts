@@ -154,7 +154,7 @@ describe("Deploy cappedToken contract and infastructure", () => {
   })
 
 
- 
+
   it("Register on oracle master", async () => {
 
 
@@ -185,7 +185,7 @@ describe("Deploy cappedToken contract and infastructure", () => {
     await ceaseImpersonation(owner._address)
 
   })
- 
+
 
 
   it("Register Underlying on voting vault controller", async () => {
@@ -223,6 +223,9 @@ describe("Deploy cappedToken contract and infastructure", () => {
 
   it("Mint voting vault", async () => {
 
+    let _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVaultID)
+    expect(_vaultId_votingVaultAddress).to.eq("0x0000000000000000000000000000000000000000", "Voting vault not yet minted")
+    
     const result = await s.VotingVaultController.connect(s.Bob).mintVault(s.BobVaultID)
     await mineBlock()
 
@@ -241,14 +244,14 @@ describe("Deploy cappedToken contract and infastructure", () => {
     s.CarolVotingVault = VotingVault__factory.connect(vaultAddr, s.Bob)
 
     expect(s.CarolVotingVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Carol's voting vault setup complete")
-    
+
     let info = await s.CarolVotingVault._vaultInfo()
     let vault = IVault__factory.connect(info.vault_address, s.Bob)
     let minter = await vault.minter()
     expect(minter.toUpperCase()).to.eq(s.Carol.address.toUpperCase())
 
 
-  
+
   })
 
   it("Set Cap", async () => {
