@@ -249,9 +249,6 @@ describe("Deploy cappedToken contract and infastructure", () => {
     let vault = IVault__factory.connect(info.vault_address, s.Bob)
     let minter = await vault.minter()
     expect(minter.toUpperCase()).to.eq(s.Carol.address.toUpperCase())
-
-
-
   })
 
   it("Set Cap", async () => {

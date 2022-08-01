@@ -28,7 +28,7 @@ export class TestScope extends MainnetAddresses {
 
     CappedToken!: CappedToken;
     CappedAMPL!: CappedRebaseToken;
-    FeeCapped!: CappedFeeOnTransferToken;
+    CappedPAXG!: CappedFeeOnTransferToken;
     CAP = BN("100000e18")//100k
 
     owner!: String
