@@ -1,6 +1,8 @@
 import { s } from "../scope";
 import { d } from "../DeploymentInfo";
 import { showBody, showBodyCyan } from "../../../util/format";
+import { upgrades, ethers } from "hardhat";
+
 import { BN } from "../../../util/number";
 import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../../util/block";
 import { utils, BigNumber } from "ethers";
@@ -9,7 +11,7 @@ import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
-import {toNumber}from "../../../util/math"
+import { toNumber } from "../../../util/math"
 import {
   CappedFeeOnTransferToken__factory
 } from "../../../typechain-types"
@@ -40,30 +42,55 @@ describe("Check Interest Protocol contracts", () => {
   });
 });
 
+
+
 describe("Deploy CappedPAXG contract", () => {
-    it("Deploy CappedPAXG", async () => {
-        s.CappedPAXG = await DeployContractWithProxy(
-            new CappedFeeOnTransferToken__factory(s.Frank),
-            s.Frank,
-            s.ProxyAdmin,
-            "CappedPAXG", 
-            "cpPAXG", 
-            s.PAXG_ADDR,
-            d.VaultController
-        )
-        await mineBlock();
-        await s.CappedPAXG.deployed()
-    })
 
-    it("Set Cap", async () => {
-        await s.CappedPAXG.connect(s.Frank).setCap(s.PAXG_CAP)//100K USDC
-        await mineBlock()
-    })
 
-    it("Sanity check", async () => {
-        expect(await s.CappedPAXG.getCap()).to.eq(s.PAXG_CAP)
-        expect(await s.CappedPAXG._underlying()).to.eq(s.PAXG.address)
-    })
+  const owner = ethers.provider.getSigner(s.IP_OWNER)
+  const ethAmount = BN("1e18")
+  let tx = {
+    to: owner._address,
+    value: ethAmount
+  }
 
-   
+  before(async () => {
+    await s.Frank.sendTransaction(tx)
+    await mineBlock()
+
+  })
+  it("Deploy CappedPAXG", async () => {
+    s.CappedPAXG = await DeployContractWithProxy(
+      new CappedFeeOnTransferToken__factory(s.Frank),
+      s.Frank,
+      s.ProxyAdmin,
+      "CappedPAXG",
+      "cpPAXG",
+      s.PAXG_ADDR,
+      d.VaultController
+    )
+    await mineBlock();
+    await s.CappedPAXG.deployed()
+  })
+
+  it("Set Cap", async () => {
+    await s.CappedPAXG.connect(s.Frank).setCap(s.PAXG_CAP)//100K USDC
+    await mineBlock()
+  })
+
+  it("Sanity check", async () => {
+    expect(await s.CappedPAXG.getCap()).to.eq(s.PAXG_CAP)
+    expect(await s.CappedPAXG._underlying()).to.eq(s.PAXG.address)
+  })
+
+
+  it("Deploy oracle system for PAXG", async () => {
+    
+  })
+
+
+
+
+
+
 })
