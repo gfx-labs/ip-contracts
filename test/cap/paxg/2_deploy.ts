@@ -13,10 +13,13 @@ import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import { toNumber } from "../../../util/math"
 import {
-  CappedFeeOnTransferToken__factory, UniswapV2Twap__factory
+  AnchoredViewV2__factory,
+  CappedFeeOnTransferToken__factory, ChainlinkOracleRelay__factory, UniswapV2OracleRelay__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
+import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
+
 require("chai").should();
 describe("Check Interest Protocol contracts", () => {
   describe("Sanity check USDi deploy", () => {
@@ -45,20 +48,6 @@ describe("Check Interest Protocol contracts", () => {
 
 
 describe("Deploy CappedPAXG contract", () => {
-
-
-  const owner = ethers.provider.getSigner(s.IP_OWNER)
-  const ethAmount = BN("1e18")
-  let tx = {
-    to: owner._address,
-    value: ethAmount
-  }
-
-  before(async () => {
-    await s.Frank.sendTransaction(tx)
-    await mineBlock()
-
-  })
   it("Deploy CappedPAXG", async () => {
     s.CappedPAXG = await DeployContractWithProxy(
       new CappedFeeOnTransferToken__factory(s.Frank),
@@ -85,13 +74,27 @@ describe("Deploy CappedPAXG contract", () => {
 })
 
 describe("Deploy and stup oracle system", () => {
+  const owner = ethers.provider.getSigner(s.IP_OWNER)
+  const ethAmount = BN("1e18")
+  let tx = {
+    to: owner._address,
+    value: ethAmount
+  }
+
+  before(async () => {
+    await s.Frank.sendTransaction(tx)
+    await mineBlock()
+  })
   it("Deploy oracle system for PAXG", async () => {
-    
+
     const v2PaxgPool = "0x9C4Fe5FFD9A9fC5678cFBd93Aa2D4FD684b67C4C"
     const uniV2Relay = await DeployContract(
-      new UniswapV2Twap__factory(s.Frank), 
+      new UniswapV2OracleRelay__factory(s.Frank),
       s.Frank,
-      v2PaxgPool
+      v2PaxgPool,
+      s.PAXG_ADDR,
+      BN("1"),
+      BN("1")
     )
     await mineBlock()
     await mineBlock()
@@ -102,10 +105,42 @@ describe("Deploy and stup oracle system", () => {
     await uniV2Relay.update()
     await mineBlock()
     const gas = await getGas(result)
-    showBodyCyan("Gas cost to update: ", gas)
+    //showBodyCyan("Gas cost to update: ", gas)
 
-    let amountOut = await uniV2Relay.consult(s.PAXG.address, BN("1e18"))
-    showBody("amountOut: ", await toNumber(amountOut))
+    let amountOut = await uniV2Relay.currentValue()
+    //showBody("amountOut: ", await toNumber(amountOut))
+
+    const CL_feed = "0x9b97304ea12efed0fad976fbecaad46016bf269e"
+    const LinkRelay = await DeployContract(
+      new ChainlinkOracleRelay__factory(s.Frank),
+      s.Frank,
+      CL_feed,
+      BN("1"),
+      BN("1")
+    )
+    await mineBlock()
+    let linkPrice = await LinkRelay.currentValue()
+    //showBody("Link price: ", await toNumber(linkPrice))
+
+    const anchorView = await DeployContract(
+      new AnchoredViewV2__factory(s.Frank),
+      s.Frank,
+      uniV2Relay.address,
+      LinkRelay.address,
+      BN("10"),
+      BN("100")
+    )
+    await mineBlock()
+    let anchorPrice = await anchorView.currentValue()
+    //showBody(await toNumber(anchorPrice))
+
+    await impersonateAccount(owner._address)
+    await s.Oracle.connect(owner).setRelay(s.CappedPAXG.address, anchorView.address)
+    await mineBlock()
+    await ceaseImpersonation(owner._address)
+
+    let price = await s.Oracle.getLivePrice(s.CappedPAXG.address)
+    expect(price).to.not.eq(0, "Getting a price")
 
 
 

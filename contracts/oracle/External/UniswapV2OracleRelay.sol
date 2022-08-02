@@ -1,18 +1,23 @@
 // SPDX-License-Identifier: MIT
+pragma solidity 0.8.9;
 
-pragma solidity =0.8.9;
+import "../IOracleRelay.sol";
 
-import "./IUniswapV2Pair.sol";
-import "./UniswapV2OracleLibrary.sol";
-//import "./UniswapV2Library.sol";
+import "../../_external/uniswap/IUniswapV2Pair.sol";
+import "../../_external/uniswap/UniswapV2OracleLibrary.sol";
 
-contract UniswapV2Twap {
-
+/// @title Oracle that wraps a univ3 pool
+/// @notice The oracle returns (univ3) * mul / div
+/// if quote_token_is_token0 == true, then the reciprocal is returned
+contract UniswapV2OracleRelay is IOracleRelay {
+  uint256 public immutable _mul;
+  uint256 public immutable _div;
   uint256 public constant PERIOD = 10;
 
   IUniswapV2Pair public immutable pair;
   address public immutable token0;
   address public immutable token1;
+  address public immutable targetToken;
 
   uint256 public price0CumulativeLast;
   uint256 public price1CumulativeLast;
@@ -24,9 +29,19 @@ contract UniswapV2Twap {
   uint224 public price0Average;
   uint224 public price1Average;
 
-  // NOTE: public visibility
-  // NOTE: IUniswapV2Pair
-  constructor(IUniswapV2Pair _pair) public {
+  /// @notice all values set at construction time
+
+  constructor(
+    IUniswapV2Pair _pair,
+    address _targetToken,
+    uint256 mul,
+    uint256 div
+  ) {
+    _mul = mul;
+    _div = div;
+
+    targetToken = _targetToken;
+
     pair = _pair;
     token0 = _pair.token0();
     token1 = _pair.token1();
@@ -61,12 +76,19 @@ contract UniswapV2Twap {
     blockTimestampLast = blockTimestamp;
   }
 
-  function consult(address token, uint256 amountIn) external view returns (uint256 amountOut) {
-    require(token == token0 || token == token1, "invalid token");
-    if (token == token0) {
-      amountOut = (price0Average * amountIn) >> 112;
+  /// @notice the current reported value of the oracle
+  /// @return the current value
+  /// @dev implementation in getLastSecond
+  function currentValue() external view override returns (uint256) {
+    return getLastSeconds();
+  }
+
+  function getLastSeconds() private view returns (uint256 price) {
+    require(targetToken == token0 || targetToken == token1, "invalid token");
+    if (targetToken == token0) {
+      price = (price0Average * 1e18) >> 112;
     } else {
-      amountOut = (price1Average * amountIn) >> 112;
+      price = (price1Average * 1e18) >> 112;
     }
   }
 }
