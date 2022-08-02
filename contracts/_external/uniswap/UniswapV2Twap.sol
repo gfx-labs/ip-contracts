@@ -7,6 +7,8 @@ import "./FixedPoint.sol";
 import "./UniswapV2OracleLibrary.sol";
 //import "./UniswapV2Library.sol";
 
+import "hardhat/console.sol";
+
 contract UniswapV2Twap {
   using FixedPoint for *;
 
@@ -26,6 +28,9 @@ contract UniswapV2Twap {
   FixedPoint.uq112x112 public price0Average;
   FixedPoint.uq112x112 public price1Average;
 
+  uint224 public p0a;
+  uint224 public p1a;
+
   // NOTE: public visibility
   // NOTE: IUniswapV2Pair
   constructor(IUniswapV2Pair _pair) public {
@@ -38,49 +43,42 @@ contract UniswapV2Twap {
   }
 
   function update() external {
-        (
-            uint price0Cumulative,
-            uint price1Cumulative,
-            uint32 blockTimestamp
-        ) = UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
-        uint32 timeElapsed = blockTimestamp - blockTimestampLast;
+    (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = UniswapV2OracleLibrary
+      .currentCumulativePrices(address(pair));
+    uint32 timeElapsed = blockTimestamp - blockTimestampLast;
 
-        require(timeElapsed >= PERIOD, "time elapsed < min period");
+    require(timeElapsed >= PERIOD, "time elapsed < min period");
 
-        // NOTE: overflow is desired
-        /*
+    // NOTE: overflow is desired
+    /*
         |----b-------------------------a---------|
         0                                     2**256 - 1
         b - a is preserved even if b overflows
         */
-        // NOTE: uint -> uint224 cuts off the bits above uint224
-        // max uint
-        // 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-        // max uint244
-        // 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-        price0Average = FixedPoint.uq112x112(
-            uint224((price0Cumulative - price0CumulativeLast) / timeElapsed)
-        );
-        price1Average = FixedPoint.uq112x112(
-            uint224((price1Cumulative - price1CumulativeLast) / timeElapsed)
-        );
+    // NOTE: uint -> uint224 cuts off the bits above uint224
+    // max uint
+    // 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    // max uint244
+    // 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    price0Average = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLast) / timeElapsed));
+    price1Average = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLast) / timeElapsed));
 
-        price0CumulativeLast = price0Cumulative;
-        price1CumulativeLast = price1Cumulative;
-        blockTimestampLast = blockTimestamp;
+    p0a = uint224((price0Cumulative - price0CumulativeLast) / timeElapsed);
+    p1a = uint224((price1Cumulative - price1CumulativeLast) / timeElapsed);
+
+    price0CumulativeLast = price0Cumulative;
+    price1CumulativeLast = price1Cumulative;
+    blockTimestampLast = blockTimestamp;
+  }
+
+  function consult(address token, uint256 amountIn) external view returns (uint256 amountOut) {
+    require(token == token0 || token == token1, "invalid token");
+    if (token == token0) {
+      console.log("token 0");
+      amountOut = (p0a * amountIn) >> 112;
+    } else {
+      console.log("token 1");
+      amountOut = (p1a * amountIn) >> 112;
     }
-
-    function consult(address token, uint amountIn)
-        external
-        view
-        returns (uint amountOut)
-    {
-        require(token == token0 || token == token1, "invalid token");
-
-        if (token == token0) {
-            amountOut = price0Average._x * (amountIn >> 112);
-        } else {
-            amountOut = price1Average._x * (amountIn >> 112);
-        }
-    }
+  }
 }

@@ -13,7 +13,7 @@ import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import { toNumber } from "../../../util/math"
 import {
-  CappedFeeOnTransferToken__factory
+  CappedFeeOnTransferToken__factory, UniswapV2Twap__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
@@ -82,15 +82,32 @@ describe("Deploy CappedPAXG contract", () => {
     expect(await s.CappedPAXG.getCap()).to.eq(s.PAXG_CAP)
     expect(await s.CappedPAXG._underlying()).to.eq(s.PAXG.address)
   })
+})
 
-
+describe("Deploy and stup oracle system", () => {
   it("Deploy oracle system for PAXG", async () => {
     
+    const v2PaxgPool = "0x9C4Fe5FFD9A9fC5678cFBd93Aa2D4FD684b67C4C"
+    const uniV2Relay = await DeployContract(
+      new UniswapV2Twap__factory(s.Frank), 
+      s.Frank,
+      v2PaxgPool
+    )
+    await mineBlock()
+    await mineBlock()
+    const result = await uniV2Relay.update()
+    await mineBlock()
+    await fastForward(500)
+    await mineBlock()
+    await uniV2Relay.update()
+    await mineBlock()
+    const gas = await getGas(result)
+    showBodyCyan("Gas cost to update: ", gas)
+
+    let amountOut = await uniV2Relay.consult(s.PAXG.address, BN("1e18"))
+    showBody("amountOut: ", await toNumber(amountOut))
+
+
+
   })
-
-
-
-
-
-
 })
