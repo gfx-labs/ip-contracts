@@ -14,6 +14,7 @@ import { expect, assert } from "chai";
 import { toNumber } from "../../../util/math"
 import {
   AnchoredViewV2__factory,
+  IVault__factory,
   CappedFeeOnTransferToken__factory, ChainlinkOracleRelay__factory, UniswapV2OracleRelay__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
@@ -63,7 +64,7 @@ describe("Deploy CappedPAXG contract", () => {
   })
 
   it("Set Cap", async () => {
-    await s.CappedPAXG.connect(s.Frank).setCap(s.PAXG_CAP)//100K USDC
+    await s.CappedPAXG.connect(s.Frank).setCap(s.PAXG_CAP)
     await mineBlock()
   })
 
@@ -144,5 +145,40 @@ describe("Deploy and stup oracle system", () => {
 
 
 
+  })
+
+  it("Register capped token on VaultController", async () => {
+    await impersonateAccount(owner._address)
+
+    await s.VaultController.connect(owner).registerErc20(
+      s.CappedPAXG.address,
+      s.UNI_LTV,
+      s.CappedPAXG.address,
+      s.LiquidationIncentive
+    )
+    await mineBlock()
+
+    await ceaseImpersonation(owner._address)
+
+  })
+
+  it("Mint vault from vault controller", async () => {
+    //showBody("bob mint vault")
+    await expect(s.VaultController.connect(s.Bob).mintVault()).to.not
+      .reverted;
+    await mineBlock();
+    s.BobVaultID = await s.VaultController.vaultsMinted()
+    let vaultAddress = await s.VaultController.vaultAddress(s.BobVaultID)
+    s.BobVault = IVault__factory.connect(vaultAddress, s.Bob);
+    expect(await s.BobVault.minter()).to.eq(s.Bob.address);
+
+    //showBody("carol mint vault")
+    await expect(s.VaultController.connect(s.Carol).mintVault()).to.not
+      .reverted;
+    await mineBlock();
+    s.CaroLVaultID = await s.VaultController.vaultsMinted()
+    vaultAddress = await s.VaultController.vaultAddress(s.CaroLVaultID)
+    s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
+    expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
   })
 })

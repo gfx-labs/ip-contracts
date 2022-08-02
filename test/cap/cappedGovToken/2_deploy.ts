@@ -185,8 +185,6 @@ describe("Deploy cappedToken contract and infastructure", () => {
 
   })
 
-
-
   it("Register Underlying on voting vault controller", async () => {
 
     await s.VotingVaultController.connect(s.Frank).registerUnderlying(s.aaveAddress, s.CappedAave.address)
