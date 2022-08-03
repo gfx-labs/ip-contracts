@@ -204,12 +204,13 @@ contract VaultController is
     emit NewProtocolFee(new_protocol_fee);
   }
 
-  function changeTBL(bool add, uint192 amt) external onlyOwner {
-    if(add){
-      _totalBaseLiability = _totalBaseLiability + amt;
-    }else{
-      _totalBaseLiability = _totalBaseLiability - amt;
+  function patchTBL() external onlyOwner {
+    uint192 total = 0;
+    for (uint96 i = 1; i <= _vaultsMinted; i++) {
+      IVault vault = getVault(i);
+      total = total + vault.baseLiability();
     }
+    _totalBaseLiability = total;
   }
 
   /// @notice register a new token to be used as collateral

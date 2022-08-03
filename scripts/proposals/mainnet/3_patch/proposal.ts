@@ -43,7 +43,7 @@ const main = async () => {
 
   const changeTBL = await new VaultController__factory(x)
   .attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3").populateTransaction
-  .changeTBL(false, BN("3208100e18"))
+  .patchTBL()
 
   p.addStep(newVC, "upgrade(address,address)");
   p.addStep(changeTBL, "changeTBL(bool,uint192)");

@@ -56,56 +56,37 @@ describe("Testing change of sale contract", () => {
     x = await ethers.getSigner(proposer);
     gov = GovernorCharlieDelegate__factory.connect(governorAddress, x);
     /////
-    const p = new ProposalContext("mainnet_2_lido");
+    const p = new ProposalContext("mainnet_3_patch");
 
-    // construct the proposal
+    // new governor
+    p.AddDeploy("new_vc", () => {
+      return new VaultController__factory(x).deploy();
+    });
 
-    const addOracle = await new OracleMaster__factory(x).
-      attach("0xf4818813045e954f5dc55a40c9b60def0ba3d477")
-    .populateTransaction.setRelay(
-      lido_token_address,
-      p.db.getData(".deploys.new_anchored")
-    )
-    const listLido = await  new VaultController__factory(x).
-      attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3").
-    populateTransaction.registerErc20(
-      lido_token_address,
-      BN("10e16"),
-      lido_token_address,
-      BN("75e16"),
-    )
-    const addOptimisticGFX = await new GovernorCharlieDelegate__factory(x)
-    .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
-    .populateTransaction._setWhitelistAccountExpiration(
-      "0xa6e8772af29b29b9202a073f8e36f447689beef6",
-      1658261294+30000000,
+    await p.DeployAll();
+    const newVC = await new ProxyAdmin__factory(x)
+    .attach("0x3D9d8c08dC16Aa104b5B24aBDd1aD857e2c0D8C5")
+    .populateTransaction.upgrade(
+      "0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3",
+      p.db.getData(".deploys.new_vc"),
     )
 
-    const newGov = await new GovernorCharlieDelegator__factory(x)
-    .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
-    .populateTransaction._setImplementation(p.db.getData(".deploys.new_gov"));
+    const changeTBL = await new VaultController__factory(x)
+    .attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3").populateTransaction
+    .changeTBL(false, BN("3208100e18"))
 
-    const govSetPeriod = await new GovernorCharlieDelegate__factory(x)
-    .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
-    .populateTransaction.setMaxWhitelistPeriod(31536000)
+    p.addStep(newVC, "upgrade(address,address)");
+    p.addStep(changeTBL, "changeTBL(bool,uint192)");
 
-    const govSetOpVotes = await new GovernorCharlieDelegate__factory(x)
-    .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
-    .populateTransaction["_setOptimisticQuorumVotes(uint256)"]("2000000000000000000000000")
+    const out = p.populateProposal();
+    const charlie = new GovernorCharlieDelegate__factory(x).attach(
+      "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
+    );
 
-    const govSetOpDelay = await new GovernorCharlieDelegate__factory(x)
-    .attach("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
-    .populateTransaction._setOptimisticDelay(18000)
-
-    p.addStep(newGov, "_setImplementation(address)");
-    p.addStep(govSetPeriod, "setMaxWhitelistPeriod(uint256)")
-    p.addStep(govSetOpVotes, "_setOptimisticQuorumVotes(uint256)")
-    p.addStep(govSetOpDelay, "_setOptimisticDelay(uint256)")
-
-    p.addStep(addOracle, "setRelay(address,address)");
-    p.addStep(listLido, "registerErc20(address,uint256,address,uint256)");
-    p.addStep(addOptimisticGFX, "_setWhitelistAccountExpiration(address,uint256)");
-
+    console.log(out)
+    console.log("PLEASE CHECK PROPOSAL! PROPOSING IN 10 seconds")
+    await countdownSeconds(10)
+    console.log("sending transaction....")
 
     const out = p.populateProposal();
     console.log(out);
@@ -115,16 +96,14 @@ describe("Testing change of sale contract", () => {
     );
 
     console.log("sending proposal")
-    await fastForward(timelockDelay);
-    await gov.execute(3).then(mineBlock);
     await p.sendProposal(charlie, description, true).then(mineBlock)
     console.log("voting proposal")
-    await gov.castVote(4, 1).then(mineBlock)
+    await gov.castVote(5, 1).then(mineBlock)
     await advanceBlockHeight(voteBlocks);
     console.log("queue proposal")
-    await gov.queue(4).then(mineBlock);
+    await gov.queue(5).then(mineBlock);
     await fastForward(timelockDelay);
     console.log("execute proposal")
-    await gov.execute(4).then(mineBlock);
+    await gov.execute(5).then(mineBlock);
   });
 });
