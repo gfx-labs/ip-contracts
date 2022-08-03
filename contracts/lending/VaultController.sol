@@ -204,6 +204,14 @@ contract VaultController is
     emit NewProtocolFee(new_protocol_fee);
   }
 
+  function changeTBL(bool add, uint192 amt) external onlyOwner {
+    if(add){
+      _totalBaseLiability = _totalBaseLiability + amt;
+    }else{
+      _totalBaseLiability = _totalBaseLiability - amt;
+    }
+  }
+
   /// @notice register a new token to be used as collateral
   /// @param token_address token to register
   /// @param LTV LTV of the token, 1e18=100%
@@ -396,6 +404,8 @@ contract VaultController is
     // get the total USDi liability, equal to the interest factor * vault's base liabilty
     //uint256 usdi_liability = truncate(safeu192(_interest.factor * vault.baseLiability()));
     uint256 usdi_liability = uint256(safeu192(truncate(_interest.factor * vault.baseLiability())));
+    // decrease the total base liability by the vaults base liability
+    _totalBaseLiability = _totalBaseLiability - safeu192(vault.baseLiability());
     // decrease the vaults liability by the vauls base liability
     vault.modifyLiability(false, vault.baseLiability());
     // burn the amount of USDi paid back from the vault
