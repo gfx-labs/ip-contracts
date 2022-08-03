@@ -46,7 +46,7 @@ const main = async () => {
   .patchTBL()
 
   p.addStep(newVC, "upgrade(address,address)");
-  p.addStep(changeTBL, "changeTBL(bool,uint192)");
+  p.addStep(changeTBL, "patchTBL()");
 
   const out = p.populateProposal();
   const charlie = new GovernorCharlieDelegate__factory(x).attach(

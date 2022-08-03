@@ -208,7 +208,7 @@ contract VaultController is
     uint192 total = 0;
     for (uint96 i = 1; i <= _vaultsMinted; i++) {
       IVault vault = getVault(i);
-      total = total + vault.baseLiability();
+      total = total + safeu192(vault.baseLiability());
     }
     _totalBaseLiability = total;
   }

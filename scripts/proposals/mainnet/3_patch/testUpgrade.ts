@@ -45,12 +45,9 @@ const timelockDelay = 43300;
 let gov: GovernorCharlieDelegate;
 let x: SignerWithAddress;
 
-
-const lido_token_address = "0xae7ab96520de3a18e5e111b5eaab095312d7fe84";
-
 describe("Testing change of sale contract", () => {
   it("Does the thing", async () => {
-    await reset(15175227);
+    await reset(15270020);
     const imp = await Impersonate(proposer);
     await imp.start();
     x = await ethers.getSigner(proposer);
@@ -71,12 +68,13 @@ describe("Testing change of sale contract", () => {
       p.db.getData(".deploys.new_vc"),
     )
 
-    const changeTBL = await new VaultController__factory(x)
-    .attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3").populateTransaction
-    .changeTBL(false, BN("3208100e18"))
+    const vc = new VaultController__factory(x)
+    .attach("0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3")
+    const changeTBL = await vc.populateTransaction
+    .patchTBL()
 
     p.addStep(newVC, "upgrade(address,address)");
-    p.addStep(changeTBL, "changeTBL(bool,uint192)");
+    p.addStep(changeTBL, "patchTBL()");
 
     const out = p.populateProposal();
     const charlie = new GovernorCharlieDelegate__factory(x).attach(
@@ -84,17 +82,6 @@ describe("Testing change of sale contract", () => {
     );
 
     console.log(out)
-    console.log("PLEASE CHECK PROPOSAL! PROPOSING IN 10 seconds")
-    await countdownSeconds(10)
-    console.log("sending transaction....")
-
-    const out = p.populateProposal();
-    console.log(out);
-    ////
-    const charlie = new GovernorCharlieDelegate__factory(x).attach(
-      governorAddress
-    );
-
     console.log("sending proposal")
     await p.sendProposal(charlie, description, true).then(mineBlock)
     console.log("voting proposal")
@@ -104,6 +91,8 @@ describe("Testing change of sale contract", () => {
     await gov.queue(5).then(mineBlock);
     await fastForward(timelockDelay);
     console.log("execute proposal")
-    await gov.execute(5).then(mineBlock);
+    await gov.execute(5).catch(console.log).then(mineBlock);
+
+    console.log("new tbl:", await vc["totalBaseLiability()"]())
   });
 });
