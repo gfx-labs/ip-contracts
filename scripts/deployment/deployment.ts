@@ -592,15 +592,7 @@ export class Deployment {
         this.deployer
       ).deploy(
         this.IPTDelegator.address,
-        this.CharlieDelegate.address,
-        votingPeriod_,
-        votingDelay_,
-        proposalThreshold_,
-        proposalTimelockDelay_,
-        quorumVotes_,
-        emergencyQuorumVotes_,
-        emergencyVotingPeriod_,
-        emergencyTimelockDelay_
+        this.CharlieDelegate.address
       );
       await this.CharlieDelegator.deployed();
       console.log(
