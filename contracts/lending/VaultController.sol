@@ -446,6 +446,9 @@ contract VaultController is
     //decrease the vault's liability
     vault.modifyLiability(false, (usdi_to_repurchase * 1e18) / _interest.factor);
 
+    // decrease the total base liability
+    _totalBaseLiability = _totalBaseLiability - safeu192((usdi_to_repurchase * 1e18) / _interest.factor);
+
     //decrease liquidator's USDi balance
     _usdi.vaultControllerBurn(_msgSender(), usdi_to_repurchase);
 

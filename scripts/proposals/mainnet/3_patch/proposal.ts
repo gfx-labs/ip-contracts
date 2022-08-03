@@ -56,7 +56,7 @@ const main = async () => {
   console.log("PLEASE CHECK PROPOSAL! PROPOSING IN 10 seconds")
   await countdownSeconds(10)
   console.log("sending transaction....")
-  //await p.sendProposal(charlie, description, true);
+  await p.sendProposal(charlie, description, true);
 
   return "success";
 };

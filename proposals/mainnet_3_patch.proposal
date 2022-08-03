@@ -1,8 +1,8 @@
 {
     "deploys": {
-        "new_vc": "0x0bd408F2B32cA80C54cCdD21acF38BBa3d83dFD8"
+        "new_vc": "0xB5afBb38f00487F2d792B2a18765DB9a3019DEdf"
     },
     "proposal": {
-        "proposeTxn": "0xc93cd79936b9f3507411bc81e68c172ae9a7f11d6d28b5a56f60de921916aa17"
+        "proposeTxn": "0x3198e212b38d24872c79a1912cffc78648d4e30145acb7203327e0b9e5c4a6b7"
     }
 }

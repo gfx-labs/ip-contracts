@@ -47,7 +47,7 @@ let x: SignerWithAddress;
 
 describe("Testing change of sale contract", () => {
   it("Does the thing", async () => {
-    await reset(15270020);
+    await reset(15270094);
     const imp = await Impersonate(proposer);
     await imp.start();
     x = await ethers.getSigner(proposer);
