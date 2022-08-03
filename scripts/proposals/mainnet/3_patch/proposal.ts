@@ -16,8 +16,7 @@ import { countdownSeconds, ProposalContext, sleep } from "../../suite/proposal";
 
 const description = `
 # IP Aug Update #3
-
-patch
+patch to vc
 `;
 
 
