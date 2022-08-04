@@ -5,7 +5,6 @@ import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
 import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../../util/block";
 import { utils, BigNumber } from "ethers";
-import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculatetokensToLiquidate, calculateUSDI2repurchase, changeInBalance } from "../../../util/math";
 import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
@@ -186,8 +185,6 @@ describe("Deploy cappedToken contract and infastructure", () => {
 
   })
 
-
-
   it("Register Underlying on voting vault controller", async () => {
 
     await s.VotingVaultController.connect(s.Frank).registerUnderlying(s.aaveAddress, s.CappedAave.address)
@@ -249,9 +246,6 @@ describe("Deploy cappedToken contract and infastructure", () => {
     let vault = IVault__factory.connect(info.vault_address, s.Bob)
     let minter = await vault.minter()
     expect(minter.toUpperCase()).to.eq(s.Carol.address.toUpperCase())
-
-
-
   })
 
   it("Set Cap", async () => {

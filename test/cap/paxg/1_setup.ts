@@ -46,7 +46,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(15122319)).to.not.throw;//14940917
+        expect(await reset(15265252)).to.not.throw;//14940917
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -86,6 +86,10 @@ describe("Token Setup", () => {
 
     })
     it("Should succesfully transfer PAXG to all users", async () => {
+
+        await stealMoney(usdc_minter, s.Dave.address, s.USDC.address, BN("5000e6"))
+        await mineBlock()
+
         for(let i=0; i<s.accounts.length; i++){
             await expect(
                 stealMoney(s.PAXG_WHALE, s.accounts[i].address, s.PAXG_ADDR, s.PAXG_AMOUNT)

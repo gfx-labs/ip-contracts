@@ -5,12 +5,20 @@ import "../_external/IERC20Metadata.sol";
 import "../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
+import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
+
+import "./IVaultController.sol";
+import "./IVault.sol";
+
+import "hardhat/console.sol";
 
 /// @title CappedFeeOnTransferToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
 contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   IERC20Metadata public _underlying;
+  IVaultController public _vaultController;
+
   uint8 private _underlying_decimals;
 
   /// @notice CAP is in units of the CAP token,so 18 decimals.
@@ -33,12 +41,15 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
   function initialize(
     string memory name_,
     string memory symbol_,
-    address underlying_
+    address underlying_,
+    address vaultController_
   ) public initializer {
     __Ownable_init();
     __ERC20_init(name_, symbol_);
     _underlying = IERC20Metadata(underlying_);
     _underlying_decimals = _underlying.decimals();
+
+    _vaultController = IVaultController(vaultController_);
 
     locked = false;
   }
@@ -63,39 +74,26 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
     require(ERC20Upgradeable.totalSupply() + amount_ <= _cap, "cap reached");
   }
 
-  function underlyingScalar() public view returns (uint256) {
-    return (10**(18 - _underlying_decimals));
-  }
-
-  /// @notice get underlying ratio
-  /// @return amount amount of this CappedToken
-  function underlyingToCappedAmount(uint256 underlying_amount) internal view returns (uint256 amount) {
-    amount = underlying_amount * underlyingScalar();
-  }
-
-  function cappedAmountToUnderlying(uint256 underlying_amount) internal view returns (uint256 amount) {
-    amount = underlying_amount / underlyingScalar();
-  }
-
   /// @notice deposit _underlying to mint CappedToken
   /// @notice nonReentrant modifier needed as calculations are done after transfer
-  /// @param underlying_amount amount of underlying to deposit
-  /// @param target recipient of tokens
-  function deposit(uint256 underlying_amount, address target) public nonReentrant {
-    
+  /// @param amount of underlying to deposit
+  /// @param vaultId recipient vault of tokens
+  function deposit(uint256 amount, uint96 vaultId) public nonReentrant {
     // check how many underlying tokens we have before transfer
     uint256 startingUnderlying = _underlying.balanceOf(address(this));
 
     // scale the decimals to THIS token decimals, or 1e18. see underlyingToCappedAmount
-    uint256 amount = underlyingToCappedAmount(underlying_amount);
     require(amount > 0, "Cannot deposit 0");
-    
+
+    IVault vault = IVault(_vaultController.vaultAddress(vaultId));
+    require(address(vault) != address(0x0), "invalid vault");
+
     // check allowance and ensure transfer success
     uint256 allowance = _underlying.allowance(_msgSender(), address(this));
-    require(allowance >= underlying_amount, "Insufficient Allowance");
+    require(allowance >= amount, "Insufficient Allowance");
 
     // transfer underlying from SENDER to THIS
-    require(_underlying.transferFrom(_msgSender(), address(this), underlying_amount), "transfer failed");
+    require(_underlying.transferFrom(_msgSender(), address(this), amount), "transfer failed");
 
     // determine exact amount received to account for fee-on-transfer
     uint256 amountReceived = _underlying.balanceOf(address(this)) - startingUnderlying;
@@ -104,9 +102,10 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
     checkCap(amountReceived);
 
     // mint the scaled amount of tokens to the TARGET
-    ERC20Upgradeable._mint(target, amountReceived);
+    ERC20Upgradeable._mint(address(vault), amountReceived);
   }
 
+  /**
   /// @notice withdraw underlying by burning THIS token
   /// caller should obtain 1 underlying for every underlyingScalar() THIS token
   /// @param underlying_amount amount of underlying to withdraw
@@ -123,74 +122,40 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
     // transfer underlying to the TARGET
     require(_underlying.transfer(target, underlying_amount), "transfer failed");
   }
+   */
 
-  // EIP-4626 compliance, sorry it's not the most gas efficient.
+  /**
+      DEPOSIT - called publicly
+      PAXG stays here, cappedG goes to regular vault
+      need to get vault from user's 
 
-  function underlyingAddress() external view returns (address) {
-    return address(_underlying);
+      WITHDRAW - called only by vault as a result of calling withdraw on vault
+      call withdraw on vault
+      this calls safeTransfer on cappedG, calling transfer on cappedG
+
+      we need to burn cappedG received from the vault
+      then transfer paxg on its merry way
+     */
+  function transfer(address recipient, uint256 amount) public override returns (bool) {
+    IVault vault = IVault(_msgSender());
+    require(_vaultController.vaultAddress(vault.id()) != address(0x0), "Only vault");
+
+    //burn
+    ERC20Upgradeable._burn(_msgSender(), amount);
+
+    //retrieveUnderlying
+    SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(address(_underlying)), recipient, amount);
+
+    return true;
   }
 
-  function totalUnderlying() public view returns (uint256) {
-    return _underlying.balanceOf(address(this));
-  }
-
-  function convertToShares(uint256 assets) external view returns (uint256) {
-    return underlyingToCappedAmount(assets);
-  }
-
-  function convertToAssets(uint256 shares) external view returns (uint256) {
-    return cappedAmountToUnderlying(shares);
-  }
-
-  function maxDeposit(address receiver) public view returns (uint256) {
-    uint256 remaining = (_cap - (totalUnderlying() * underlyingScalar())) / underlyingScalar();
-    if (remaining < _underlying.balanceOf(receiver)) {
-      return _underlying.balanceOf(receiver);
-    }
-    return remaining;
-  }
-
-  function previewDeposit(uint256 assets) public view returns (uint256) {
-    return underlyingToCappedAmount(assets);
-  }
-
-  //function deposit - already implemented
-
-  function maxMint(address receiver) external view returns (uint256) {
-    return cappedAmountToUnderlying(maxDeposit(receiver));
-  }
-
-  function previewMint(uint256 shares) external view returns (uint256) {
-    return cappedAmountToUnderlying(previewDeposit(shares));
-  }
-
-  function mint(uint256 shares, address receiver) external {
-    return deposit(cappedAmountToUnderlying(shares), receiver);
-  }
-
-  function maxWithdraw(address receiver) public view returns (uint256) {
-    uint256 receiver_can = (ERC20Upgradeable.balanceOf(receiver) / underlyingScalar());
-    if (receiver_can > _underlying.balanceOf(address(this))) {
-      return _underlying.balanceOf(address(this));
-    }
-    return receiver_can;
-  }
-
-  function previewWithdraw(uint256 assets) public view returns (uint256) {
-    return underlyingToCappedAmount(assets);
-  }
-
-  //function withdraw - already implemented
-
-  function maxRedeem(address receiver) external view returns (uint256) {
-    return cappedAmountToUnderlying(maxWithdraw(receiver));
-  }
-
-  function previewRedeem(uint256 shares) external view returns (uint256) {
-    return cappedAmountToUnderlying(previewWithdraw(shares));
-  }
-
-  function redeem(uint256 shares, address receiver) external {
-    return withdraw(cappedAmountToUnderlying(shares), receiver);
+  function transferFrom(
+    address, /*sender*/
+    address, /*recipient*/
+    uint256 /*amount*/
+  ) public pure override returns (bool) {
+    // allowances are never granted, as the VotingVault does not grant allowances.
+    // this function is therefore always uncallable and so we will just return false
+    return false;
   }
 }
