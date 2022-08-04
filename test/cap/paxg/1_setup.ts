@@ -86,6 +86,10 @@ describe("Token Setup", () => {
 
     })
     it("Should succesfully transfer PAXG to all users", async () => {
+
+        await stealMoney(usdc_minter, s.Dave.address, s.USDC.address, BN("5000e6"))
+        await mineBlock()
+
         for(let i=0; i<s.accounts.length; i++){
             await expect(
                 stealMoney(s.PAXG_WHALE, s.accounts[i].address, s.PAXG_ADDR, s.PAXG_AMOUNT)
