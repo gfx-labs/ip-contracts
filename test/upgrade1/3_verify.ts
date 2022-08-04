@@ -10,7 +10,8 @@ import {
     ProxyAdmin,
     ProxyAdmin__factory,
     USDI__factory,
-    IVault__factory
+    IVault__factory,
+    VaultController__factory
 } from "../../typechain-types";
 import {
     advanceBlockHeight,
@@ -86,12 +87,21 @@ describe("Verify Upgraded Contracts", () => {
 
     it("Confirm VaultController now has borrowUSDCto", async () => {
         const startUSDC = await s.USDC.balanceOf(s.Bob.address)
+
+        const ge = (
+            await VaultController__factory.connect(
+                s.VaultController.address,
+                s.Bob
+            ).estimateGas.borrowUSDCto(s.BobVaultID, USDC_BORROW, s.Bob.address))
+
+
         //bob borrows USDC
         const result = await s.VaultController.connect(s.Bob).borrowUSDCto(s.BobVaultID, USDC_BORROW, s.Bob.address)
         await mineBlock()
 
         const gas = await getGas(result)
         showBodyCyan("Gas to borrow USDC: ", gas)
+        expect(ge).to.be.gt(gas, "Gas estimation correct")
 
         const endUSDC = await s.USDC.balanceOf(s.Bob.address)
         let difference = endUSDC.sub(startUSDC)
