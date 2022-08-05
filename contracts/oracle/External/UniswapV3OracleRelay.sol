@@ -70,6 +70,7 @@ contract UniswapV3OracleRelay is IOracleRelay {
     } else {
       tick = int24(int56(bigTick));
     }
+    
     // we use 1e18 bc this is what we're going to use in exp
     // basically, you need the "price" amount of the quote in order to buy 1 base
     // or, 1 base is worth this much quote;

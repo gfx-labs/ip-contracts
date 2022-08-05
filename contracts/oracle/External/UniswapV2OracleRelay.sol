@@ -8,16 +8,15 @@ import "../../_external/uniswap/UniswapV2OracleLibrary.sol";
 
 /// @title Oracle that wraps a univ3 pool
 /// @notice The oracle returns (univ3) * mul / div
-/// if quote_token_is_token0 == true, then the reciprocal is returned
 contract UniswapV2OracleRelay is IOracleRelay {
   uint256 public immutable _mul;
   uint256 public immutable _div;
   uint256 public constant PERIOD = 10;
 
-  IUniswapV2Pair public immutable pair;
-  address public immutable token0;
-  address public immutable token1;
-  address public immutable targetToken;
+  IUniswapV2Pair public immutable _pair;
+  address public immutable _token0;
+  address public immutable _token1;
+  address public immutable _targetToken;
 
   uint256 public price0CumulativeLast;
   uint256 public price1CumulativeLast;
@@ -31,20 +30,21 @@ contract UniswapV2OracleRelay is IOracleRelay {
 
   /// @notice all values set at construction time
 
+///@param targetToken is the token we want the price of, in terms of the other token
   constructor(
-    IUniswapV2Pair _pair,
-    address _targetToken,
+    IUniswapV2Pair pair,
+    address targetToken,
     uint256 mul,
     uint256 div
   ) {
     _mul = mul;
     _div = div;
 
-    targetToken = _targetToken;
+    _targetToken = targetToken;
 
-    pair = _pair;
-    token0 = _pair.token0();
-    token1 = _pair.token1();
+    _pair = pair;
+    _token0 = _pair.token0();
+    _token1 = _pair.token1();
     price0CumulativeLast = _pair.price0CumulativeLast();
     price1CumulativeLast = _pair.price1CumulativeLast();
     (, , blockTimestampLast) = _pair.getReserves();
@@ -52,7 +52,7 @@ contract UniswapV2OracleRelay is IOracleRelay {
 
   function update() external {
     (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = UniswapV2OracleLibrary
-      .currentCumulativePrices(address(pair));
+      .currentCumulativePrices(address(_pair));
     uint32 timeElapsed = blockTimestamp - blockTimestampLast;
 
     require(timeElapsed >= PERIOD, "time elapsed < min period");
@@ -84,8 +84,8 @@ contract UniswapV2OracleRelay is IOracleRelay {
   }
 
   function getLastSeconds() private view returns (uint256 price) {
-    require(targetToken == token0 || targetToken == token1, "invalid token");
-    if (targetToken == token0) {
+    require(_targetToken == _token0 || _targetToken == _token1, "invalid token");
+    if (_targetToken == _token0) {
       price = (price0Average * 1e18) >> 112;
     } else {
       price = (price1Average * 1e18) >> 112;

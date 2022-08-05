@@ -10,8 +10,6 @@ import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 import "./IVaultController.sol";
 import "./IVault.sol";
 
-import "hardhat/console.sol";
-
 /// @title CappedFeeOnTransferToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
@@ -105,37 +103,6 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
     ERC20Upgradeable._mint(address(vault), amountReceived);
   }
 
-  /**
-  /// @notice withdraw underlying by burning THIS token
-  /// caller should obtain 1 underlying for every underlyingScalar() THIS token
-  /// @param underlying_amount amount of underlying to withdraw
-  function withdraw(uint256 underlying_amount, address target) public {
-    // scale the underlying_amount to the THIS token decimal amount, aka 1e18
-    uint256 amount = underlyingToCappedAmount(underlying_amount);
-    // check balances all around
-    require(amount <= this.balanceOf(_msgSender()), "insufficient funds");
-    require(amount > 0, "Cannot withdraw 0");
-    uint256 balance = _underlying.balanceOf(address(this));
-    require(balance >= underlying_amount, "Insufficient underlying in Bank");
-    // burn the scaled amount of tokens from the SENDER
-    ERC20Upgradeable._burn(_msgSender(), amount);
-    // transfer underlying to the TARGET
-    require(_underlying.transfer(target, underlying_amount), "transfer failed");
-  }
-   */
-
-  /**
-      DEPOSIT - called publicly
-      PAXG stays here, cappedG goes to regular vault
-      need to get vault from user's 
-
-      WITHDRAW - called only by vault as a result of calling withdraw on vault
-      call withdraw on vault
-      this calls safeTransfer on cappedG, calling transfer on cappedG
-
-      we need to burn cappedG received from the vault
-      then transfer paxg on its merry way
-     */
   function transfer(address recipient, uint256 amount) public override returns (bool) {
     IVault vault = IVault(_msgSender());
     require(_vaultController.vaultAddress(vault.id()) != address(0x0), "Only vault");
@@ -154,8 +121,7 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
     address, /*recipient*/
     uint256 /*amount*/
   ) public pure override returns (bool) {
-    // allowances are never granted, as the VotingVault does not grant allowances.
-    // this function is therefore always uncallable and so we will just return false
+    // this function is always uncallable and so we will just return false
     return false;
   }
 }

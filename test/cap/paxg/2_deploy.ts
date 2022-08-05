@@ -20,6 +20,7 @@ import {
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
+import { stealMoney } from "../../../util/money";
 
 require("chai").should();
 describe("Check Interest Protocol contracts", () => {
@@ -89,7 +90,7 @@ describe("Deploy and stup oracle system", () => {
   it("Deploy oracle system for PAXG", async () => {
 
     const v2PaxgPool = "0x9C4Fe5FFD9A9fC5678cFBd93Aa2D4FD684b67C4C"
-    const uniV2Relay = await DeployContract(
+    s.UniV2Relay = await DeployContract(
       new UniswapV2OracleRelay__factory(s.Frank),
       s.Frank,
       v2PaxgPool,
@@ -99,16 +100,16 @@ describe("Deploy and stup oracle system", () => {
     )
     await mineBlock()
     await mineBlock()
-    const result = await uniV2Relay.update()
+    const result = await s.UniV2Relay.update()
     await mineBlock()
     await fastForward(500)
     await mineBlock()
-    await uniV2Relay.update()
+    await s.UniV2Relay.update()
     await mineBlock()
     const gas = await getGas(result)
-    //showBodyCyan("Gas cost to update: ", gas)
+    showBodyCyan("Gas cost to update: ", gas)
 
-    let amountOut = await uniV2Relay.currentValue()
+    let amountOut = await s.UniV2Relay.currentValue()
     //showBody("amountOut: ", await toNumber(amountOut))
 
     const CL_feed = "0x9b97304ea12efed0fad976fbecaad46016bf269e"
@@ -126,7 +127,7 @@ describe("Deploy and stup oracle system", () => {
     const anchorView = await DeployContract(
       new AnchoredViewV2__factory(s.Frank),
       s.Frank,
-      uniV2Relay.address,
+      s.UniV2Relay.address,
       LinkRelay.address,
       BN("10"),
       BN("100")
@@ -181,4 +182,74 @@ describe("Deploy and stup oracle system", () => {
     s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
     expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
   })
+})
+
+describe("Check oracle", () => {
+  const Router02Address = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+  const IUniswapV2Router02 = require("../../isolated/uniPool/util/IUniswapV2Router02")
+  const router02ABI = new IUniswapV2Router02()
+  let ro2 = router02ABI.Router02()
+  const router02 = ro2[0].abi
+  const routerV2 = new ethers.Contract(Router02Address, router02, ethers.provider)
+
+  let largePAXGamount: BigNumber
+
+  before(async () => {
+    largePAXGamount = await s.PAXG.balanceOf(s.PAXG_WHALE)
+    //showBody("LARGE PAXG AMOUNT: ", await toNumber(largePAXGamount))
+    //fund Gus with a large amount of PAXG to do a swap
+    await stealMoney(s.PAXG_WHALE, s.Gus.address, s.PAXG_ADDR, largePAXGamount)
+    await mineBlock()
+  })
+
+  it("Do a big swap on uniswap to change the price", async () => {
+
+    const startBalance = await s.PAXG.balanceOf(s.Gus.address)
+
+    //approve
+    await s.PAXG.connect(s.Gus).approve(routerV2.address, largePAXGamount)
+    await mineBlock()
+
+    const block = await currentBlock()
+    const deadline = block.timestamp + 500
+
+    //swap exact tokens for tokens
+    await routerV2.connect(s.Gus).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+      largePAXGamount,
+      largePAXGamount,//amountOutMin - PAXG is worth slightly less than ETH
+      [s.PAXG.address, s.WETH.address],
+      s.Gus.address,
+      deadline
+    )
+    await mineBlock()
+
+    let balance = await s.PAXG.balanceOf(s.Gus.address)
+    expect(await toNumber(balance)).to.be.closeTo(await toNumber(startBalance.sub(largePAXGamount)), 0.0021, "Correct amount of PAXG deducted from Gus")
+
+
+  })
+
+  it(`Selling ~248 PAXG is not enough to move the price on the anchor by the buffer amount`, async () => {
+
+    const startPrice = await s.UniV2Relay.currentValue()
+
+    const oraclePrice = await s.Oracle.getLivePrice(s.CappedPAXG.address)
+    expect(oraclePrice).to.be.gt(0, "Valid oracle price returned")
+
+    await s.UniV2Relay.update()
+    await mineBlock()
+
+    let newEthPrice = await s.UniV2Relay.currentValue()
+    expect(await toNumber(newEthPrice)).to.be.gt(await toNumber(startPrice) * 0.9, "Price is still in the expected bounds, update was not needed")
+
+    const percentMoved = (1 - (await toNumber(newEthPrice) / await toNumber(startPrice))) * 100
+
+    expect(percentMoved).to.be.closeTo(0.56, 0.01, `Selling ${await toNumber(largePAXGamount)} PAXG moved the price by ~0.56%, no need to call update`)
+
+  })
+
+ 
+
+
+
 })

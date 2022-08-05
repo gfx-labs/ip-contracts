@@ -84,8 +84,10 @@ describe("Testing CappedToken functions", () => {
         const startingPAXG = await s.PAXG.balanceOf(s.Dave.address)
         expect(await toNumber(startingPAXG)).to.be.closeTo(await toNumber(s.PAXG_AMOUNT), 0.003, "Dave has starting paxg amount minus fee on transfer")
 
-        await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedPAXG.address, BN("9999e18"))
+        const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedPAXG.address, BN("9999e18"))
         await mineBlock()
+        const gas = await getGas(result)
+        showBodyCyan("Gas to liquidate a capped token and receive underlying: ", gas)
 
         let balance = await s.PAXG.balanceOf(s.Dave.address)
         expect(balance).to.be.gt(startingPAXG, "Dave received PAXG for liquidating CappedPAXG")
@@ -173,6 +175,7 @@ describe("Hitting the cap", () => {
         await mineBlock()
 
         expect(await s.CappedPAXG.getCap()).to.eq(lowerCap, "Cap has been set correctly")  
+        expect(lowerCap).to.be.lt(await s.CappedPAXG.totalSupply(), "Cap is lower than supply")
 
         let bp = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
         expect(bp).to.eq(startBorrowPower, "Borrow power did not change when cap was lowered")
