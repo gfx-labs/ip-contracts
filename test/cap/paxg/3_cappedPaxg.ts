@@ -2,8 +2,9 @@ import { s } from "../scope";
 import { d } from "../DeploymentInfo";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../../util/block";
+import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear, OneDay } from "../../../util/block";
 import { utils, BigNumber } from "ethers";
+import { upgrades, ethers } from "hardhat";
 import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculatetokensToLiquidate, calculateUSDI2repurchase, changeInBalance } from "../../../util/math";
 import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs";
@@ -13,6 +14,7 @@ import { toNumber } from "../../../util/math"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { start } from "repl";
+import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
 require("chai").should();
 
 //147 040 
@@ -112,7 +114,7 @@ describe("Testing CappedToken functions", () => {
         await mineBlock()
 
         let liability = await s.VaultController.vaultLiability(s.BobVaultID)
-        expect(liability).to.eq(0, "Vault completely repaid")    
+        expect(liability).to.eq(0, "Vault completely repaid")
 
     })
     it("Withdraw underlying", async () => {
@@ -142,7 +144,7 @@ describe("Hitting the cap", () => {
         await s.CappedPAXG.connect(s.Frank).setCap(lowCap)
         await mineBlock()
 
-        expect(await s.CappedPAXG.getCap()).to.eq(lowCap, "Cap has been set correctly")       
+        expect(await s.CappedPAXG.getCap()).to.eq(lowCap, "Cap has been set correctly")
 
     })
 
@@ -174,7 +176,7 @@ describe("Hitting the cap", () => {
         await s.CappedPAXG.connect(s.Frank).setCap(lowerCap)
         await mineBlock()
 
-        expect(await s.CappedPAXG.getCap()).to.eq(lowerCap, "Cap has been set correctly")  
+        expect(await s.CappedPAXG.getCap()).to.eq(lowerCap, "Cap has been set correctly")
         expect(lowerCap).to.be.lt(await s.CappedPAXG.totalSupply(), "Cap is lower than supply")
 
         let bp = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
@@ -200,4 +202,143 @@ describe("Hitting the cap", () => {
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(startSupply.add(startPAXG)), 0.0021, "Bob received the correct amount of PAXG")
     })
 
+})
+
+describe("More oracle tests", async () => {
+
+    const megaWhale = "0x2FAF487A4414Fe77e2327F0bf4AE2a264a776AD2"
+    const whale = ethers.provider.getSigner(megaWhale)
+
+    const Router02Address = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
+    const IUniswapV2Router02 = require("../../isolated/uniPool/util/IUniswapV2Router02")
+    const router02ABI = new IUniswapV2Router02()
+    let ro2 = router02ABI.Router02()
+    const router02 = ro2[0].abi
+    const routerV2 = new ethers.Contract(Router02Address, router02, ethers.provider)
+
+    const largePAXGamount = BN("2000e18")
+    let whaleStartingPAXG: BigNumber
+    let wethReceived: BigNumber
+
+    let tx = {
+        to: whale._address,
+        value: BN("1e18")
+    }
+
+    before(async () => {
+
+        await s.Frank.sendTransaction(tx)
+        await mineBlock()
+        whaleStartingPAXG = await s.PAXG.balanceOf(megaWhale)
+
+        expect(whaleStartingPAXG).to.be.gt(largePAXGamount, "Enough PAXG")
+
+    })
+
+    /**
+     * In order to simulate what it might look like when we need to call update() on the relay, 
+     * we need the reported prices between the UniV3Relay and Chainlink price feed to deviate.
+     * We will achieve this by way of a giant swap
+     */
+    it("Do enormous swap on uni v2 to simulate a the main price deviating from the anchor", async () => {
+
+        const wethBalance = await s.WETH.balanceOf(whale._address)
+
+        await impersonateAccount(whale._address)
+
+        //approve
+        await s.PAXG.connect(whale).approve(routerV2.address, largePAXGamount)
+        await mineBlock()
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+        //swap exact tokens for tokens
+        await routerV2.connect(whale).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            largePAXGamount,
+            largePAXGamount.div(2),//amountOutMin - PAXG is worth slightly less than ETH
+            [s.PAXG.address, s.WETH.address],
+            whale._address,
+            deadline
+        )
+        await mineBlock()
+        await ceaseImpersonation(whale._address)
+
+
+        wethReceived = await s.WETH.balanceOf(whale._address)
+        expect(wethReceived.sub(wethBalance)).to.be.gt(largePAXGamount.div(2), "Received weth from swap")
+        //showBody("WETH received: ", await toNumber(wethReceived.sub(wethBalance)))
+
+        const startPrice = await s.UniV2Relay.currentValue()
+
+        await mineBlock()
+        await fastForward(OneDay * 14)
+        await mineBlock()
+        await s.UniV2Relay.update()
+        await mineBlock()
+
+        let newEthPrice = await s.UniV2Relay.currentValue()
+
+        const percentMoved = (1 - (await toNumber(newEthPrice) / await toNumber(startPrice))) * 100
+        expect(percentMoved).to.be.gt(10, "Out of bounds relative to main price")
+
+        //try to get oraclePrice
+        expect(s.Oracle.getLivePrice(s.CappedPAXG.address)).to.be.revertedWith("anchor too low")
+
+    })
+
+    /**
+     * As of this point, we have simulated what it might look like if the chainlink feed price rises faster than the uniswap v2 pool
+     * The currentValue() reported from the UniV2Relay should be less than the main price reported by chainlink by at least 10% 
+     */
+    it("Return to equilibrium", async () => {
+
+        await impersonateAccount(whale._address)
+
+        //approve
+        await s.WETH.connect(whale).approve(routerV2.address, wethReceived)
+        await mineBlock()
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+        //swap exact tokens for tokens
+        await routerV2.connect(whale).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            wethReceived,
+            wethReceived.div(2),//amountOutMin - PAXG is worth slightly less than ETH
+            [s.WETH.address, s.PAXG.address],
+            whale._address,
+            deadline
+        )
+        await mineBlock()
+        await ceaseImpersonation(whale._address)
+
+        await mineBlock()
+        await fastForward(OneDay * 14)
+        await mineBlock()
+
+    })
+
+    /**
+     * As of this point, the effective price of the pool should be within bounds of the main relay (chainlink)
+     * In our simulation, think of this as the Uniswap v2 pool price catching up with the chainlink price
+     * However, update() has not been called, so the reported price is still too low
+     */
+    it("Updating price restores oracle functionality", async () => {
+        //try to get oraclePrice - error because we have not updated the price yet
+        expect(s.Oracle.getLivePrice(s.CappedPAXG.address)).to.be.revertedWith("anchor too low")
+
+        const startPrice = await s.UniV2Relay.currentValue()
+
+        await s.UniV2Relay.update()
+        await mineBlock()
+
+        const newEthPrice = await s.UniV2Relay.currentValue()
+
+        expect(newEthPrice).to.be.gt(startPrice, "Price moved up after calling update()")
+
+        const oraclePrice = await s.Oracle.getLivePrice(s.CappedPAXG.address)
+        expect(oraclePrice).to.be.gt(0, "Valid oracle price returned, update restored functionality")
+
+    })
 })

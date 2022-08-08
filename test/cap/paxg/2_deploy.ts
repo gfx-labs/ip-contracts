@@ -236,6 +236,8 @@ describe("Check oracle", () => {
     const oraclePrice = await s.Oracle.getLivePrice(s.CappedPAXG.address)
     expect(oraclePrice).to.be.gt(0, "Valid oracle price returned")
 
+    await fastForward(OneWeek)
+    await mineBlock()
     await s.UniV2Relay.update()
     await mineBlock()
 
@@ -244,12 +246,11 @@ describe("Check oracle", () => {
 
     const percentMoved = (1 - (await toNumber(newEthPrice) / await toNumber(startPrice))) * 100
 
-    expect(percentMoved).to.be.closeTo(0.56, 0.01, `Selling ${await toNumber(largePAXGamount)} PAXG moved the price by ~0.56%, no need to call update`)
+    expect(percentMoved).to.be.lt(10, `Selling ${await toNumber(largePAXGamount)} PAXG moved the price by less than 10%, no need to call update`)
 
   })
 
- 
-
+  
 
 
 })

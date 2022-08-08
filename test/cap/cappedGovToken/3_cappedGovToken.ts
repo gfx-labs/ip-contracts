@@ -118,6 +118,12 @@ describe("Testing CappedToken functions", () => {
 
     })
 
+    it("Try to withdraw from a vault that is not yours", async () => {
+        const amount = BN("250e18")
+
+        expect(s.BobVault.connect(s.Carol).withdrawErc20(s.CappedAave.address, amount)).to.be.revertedWith("sender not minter")
+    })
+
 
     it("Withdraw Underlying", async () => {
 
@@ -175,7 +181,7 @@ describe("More checks", () => {
 
         let dupeBalance = await s.AAVE.balanceOf(dupeVault.address)
         expect(dupeBalance).to.eq(balance).to.eq(expectedBalance, "No new vault was minted")
-    
+
 
 
     })

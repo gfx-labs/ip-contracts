@@ -75,9 +75,10 @@ describe("Lending", () => {
     })
 
     it("Check governance vote delegation", async () => {
-
-
         const startPower = await s.AAVE.getPowerCurrent(s.Bob.address, 0)
+
+        //Unable to delegate gov tokens in a vault that you don't own
+        expect(s.BobVotingVault.connect(s.Carol).delegateCompLikeTo(s.Bob.address, s.aaveAddress)).to.be.revertedWith("sender not minter")
 
         //delegate
         await s.BobVotingVault.connect(s.Bob).delegateCompLikeTo(s.Bob.address, s.aaveAddress)
@@ -181,6 +182,11 @@ describe("Liquidations", () => {
         const solvency = await s.VaultController.checkVault(s.BobVaultID)
         expect(solvency).to.eq(false, "Bob's vault is now underwater")
 
+    })
+
+    it("Try to withdraw when vault is underwater", async () => {
+        const amount = BN("250e18")
+        expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAave.address, amount)).to.be.revertedWith("over-withdrawal")
     })
 
     it("Liquidate", async () => {
@@ -292,86 +298,5 @@ describe("Liquidations", () => {
 
         const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedAave.address)
         expect(_CappedToken_underlying.toUpperCase()).to.eq(s.aaveAddress.toUpperCase(), "Capped => Underlying correct")
-    })
-
-    
-})
-
-
-/**
- * Unregister prevents withdraw and liquidation
- * What is the use case for unregister? 
- * 
- * Also _underlying_CappedToken seems to be only for public visibility? 
- * It is only changed or read when register/unregisterign underlying
- */
-describe("Unregister Underlying", () => {
-    const amount = BN("10e18")
-    const oxo = "0x0000000000000000000000000000000000000000"
-
-    it("setup", async () => {
-        await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, amount)
-        await s.CappedAave.connect(s.Bob).deposit(amount, s.BobVaultID)
-        await mineBlock()
-
-        let borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
-        let liability = await s.VaultController.vaultLiability(s.BobVaultID)
-        expect(liability).to.eq(0, "Bob's vault has no debt")
-
-        await s.VaultController.connect(s.Bob).borrowUSDIto(s.BobVaultID, borrowPower, s.Bob.address)
-        await mineBlock()
-
-        liability = await s.VaultController.vaultLiability(s.BobVaultID)
-        expect(await toNumber(liability)).to.be.closeTo(await toNumber(borrowPower), 0.001, "Liability correct")
-    })
-
-    it("unregister underlying", async () => {    
-
-        await s.VotingVaultController.connect(s.Frank).unregisterUnderlying(s.aaveAddress, s.CappedAave.address)
-        await mineBlock()     
-        
-        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.aaveAddress)
-        const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedAave.address)
-
-        expect(_underlying_CappedToken).to.eq(_CappedToken_underlying).to.eq(oxo, "Unregister successful")
-
-    }) 
-
-    it("Unregister does not prevent deposit", async () => {
-        const smallAmount = BN("1e16")
-        await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, smallAmount)
-        await expect(s.CappedAave.connect(s.Bob).deposit(smallAmount, s.BobVaultID)).to.not.be.reverted
-        await mineBlock()
-    })
-
-    it("Unregister prevents withdraw from cap contract", async () => {
-         expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAave.address, amount)).to.be.revertedWith("Only Capped Token") 
-    })
-
-    it("Elapse time to put vault underwater", async () => {
-
-        let solvency = await s.VaultController.checkVault(s.BobVaultID)
-        expect(solvency).to.eq(true, "Bob's vault is not yet underwater")
-
-
-        await fastForward(OneYear)
-        await mineBlock()
-        await s.VaultController.calculateInterest()
-        await mineBlock()
-
-        solvency = await s.VaultController.checkVault(s.BobVaultID) 
-        expect(solvency).to.eq(false, "Bob's vault is now underwater")
-
-    })
-
-    it("Unregister prevents liquidation", async () => {        
-         expect(s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedAave.address, BN("1e50"))).to.be.revertedWith("Only Capped Token")
-    })
-
-    it("Unregister does not prevent repay", async () => {
-
-        await expect(s.VaultController.connect(s.Bob).repayUSDi(s.BobVaultID, BN("10e18"))).to.not.be.reverted
-        await mineBlock()
-
     })
 })

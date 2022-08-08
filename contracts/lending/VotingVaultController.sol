@@ -39,14 +39,6 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
     _CappedToken_underlying[capped_token] = underlying_address;
   }
 
-  /// @notice unregister the pair
-  /// @param underlying_address address of underlying
-  /// @param capped_token address of capped token
-  function unregisterUnderlying(address underlying_address, address capped_token) external onlyOwner {
-    _underlying_CappedToken[underlying_address] = address(0x0);
-    _CappedToken_underlying[capped_token] = address(0x0);
-  }
-
   function retrieveUnderlying(
     uint256 amount,
     address voting_vault,
