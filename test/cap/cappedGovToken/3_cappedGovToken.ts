@@ -17,6 +17,7 @@ import {
     IVault__factory,
     VotingVault__factory
 } from "../../../typechain-types"
+import { JsxEmit } from "typescript";
 require("chai").should();
 
 
@@ -81,6 +82,8 @@ describe("Testing CappedToken functions", () => {
         expect(s.CappedAave.connect(s.Bob).transfer(s.Carol.address, BN("1e18"))).to.be.revertedWith("only vaults")
     })
 
+    
+
     it("Try to exceed the cap", async () => {
         const cap = await s.CappedAave.getCap()
         expect(cap).to.eq(s.AaveCap, "Cap is still correct")
@@ -93,6 +96,15 @@ describe("Testing CappedToken functions", () => {
 
     it("Try to transfer", async () => {
         expect(s.CappedAave.connect(s.Bob).transfer(s.Frank.address, BN("10e18"))).to.be.revertedWith("only vaults")
+    })
+
+    it("No vault", async () => {
+        const amount = BN("5e18")
+        const startBal = await s.AAVE.balanceOf(s.Gus.address)
+        expect(startBal).to.eq(s.aaveAmount, "Balance correct")
+
+        await s.AAVE.connect(s.Gus).approve(s.CappedAave.address, amount)
+        expect(s.CappedAave.connect(s.Gus).deposit(amount, 99999)).to.be.revertedWith("invalid vault")
     })
 
     it("no voting vault", async () => {
@@ -111,11 +123,14 @@ describe("Testing CappedToken functions", () => {
         const gusVault = IVault__factory.connect(vaultAddress, s.Gus);
         expect(await gusVault.minter()).to.eq(s.Gus.address);
 
-
-
         await s.AAVE.connect(s.Gus).approve(s.CappedAave.address, amount)
-        //await s.CappedAave.connect(s.Gus).deposit(amount)
+        expect(s.CappedAave.connect(s.Gus).deposit(amount, gusVaultID)).to.be.revertedWith("invalid voting vault")
+    })
 
+    it("TODO no voting vault on transfer", async () => {
+        //transfer some to cap contract instead of deposit? 
+        //can erroniously transferred funds be recovered using withdraw? 
+        //does this break accounting? 
     })
 
     it("Try to withdraw from a vault that is not yours", async () => {
