@@ -1,0 +1,8 @@
+{
+    "deploys": {
+        "new_vvc": "0xb800CA12a3e37c381E92DAA0a2910d70a267Da6E",
+        "new_vvc_proxy": "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2",
+        "capped_token": "0x6EBF5bb031ac1EDf004B51eA8cbAD2C5A2779CF2",
+        "capped_token_proxy": "0x42b4D79aE23165541f24c4cD52494fe8516B3C80"
+    }
+}

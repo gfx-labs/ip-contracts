@@ -35,7 +35,6 @@ contract VotingVault is Context {
 
   VotingVaultController public _votingController;
   IVaultController public _controller;
-  IVault public _parentVault;
 
   /// @notice checks if _msgSender is the controller of the voting vault
   modifier onlyVotingVaultController() {
@@ -67,11 +66,10 @@ contract VotingVault is Context {
     _vaultInfo = VaultInfo(id_, vault_address);
     _controller = IVaultController(controller_address);
     _votingController = VotingVaultController(voting_controller_address);
-    _parentVault = IVault(vault_address);
   }
 
   function parentVault() external view returns (address) {
-    return address(_parentVault);
+    return address(_vaultInfo.vault_address);
   }
 
   /// @notice id of the vault
