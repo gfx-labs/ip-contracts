@@ -17,7 +17,9 @@ import {
     IVault__factory,
     VotingVault__factory,
     VotingVault,
-    IVault
+    IVault,
+    CappedGovToken__factory,
+    CappedGovToken
 } from "../../../typechain-types"
 import { JsxEmit } from "typescript";
 require("chai").should();
@@ -242,6 +244,86 @@ describe("More checks", () => {
         expect(dupeBalance).to.eq(balance).to.eq(expectedBalance, "No new vault was minted")
 
 
+
+    })
+
+
+})
+
+describe("Register second token", () => {
+    let cappedDydx: CappedGovToken
+    const DydxAmount = BN("5e18")
+
+    it("Deploy a new capped token", async () => {
+        cappedDydx = await DeployContractWithProxy(
+            new CappedGovToken__factory(s.Frank),
+            s.Frank,
+            s.ProxyAdmin,
+            "CappedDydx",
+            "cDydx",
+            s.dydxAddress,
+            s.VaultController.address,
+            s.VotingVaultController.address
+        )
+        await mineBlock()
+
+    })
+
+    it("Admin registers a token that has not yet been registered on interest protocol", async () => {
+
+        await s.VotingVaultController.connect(s.Frank).registerUnderlying(s.dydxAddress, cappedDydx.address)
+        await mineBlock()
+
+        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.dydxAddress)
+        expect(_underlying_CappedToken.toUpperCase()).to.eq(cappedDydx.address.toUpperCase(), "Underlying => Capped is correct")
+
+        const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(cappedDydx.address)
+        expect(_CappedToken_underlying.toUpperCase()).to.eq(s.dydxAddress.toUpperCase(), "Capped => Underlying correct")
+
+        await cappedDydx.connect(s.Frank).setCap(BN("50e18"))
+        await mineBlock()
+    })
+
+    it("Carol deposits Dydx to vault", async () => {
+
+
+        await s.DYDX.connect(s.Carol).approve(cappedDydx.address, DydxAmount)
+        await cappedDydx.connect(s.Carol).deposit(DydxAmount, s.CaroLVaultID)
+        await mineBlock()
+
+        //check balances
+        let balance = await cappedDydx.balanceOf(s.CarolVault.address)
+        expect(balance).to.eq(DydxAmount, "Standard vault holds capped tokens")
+        
+        balance = await s.DYDX.balanceOf(s.CarolVotingVault.address)
+        expect(balance).to.eq(DydxAmount, "Voting vault holds underlying tokens")
+    })
+
+    it("Check things", async () => {
+
+        let balance = await s.CappedAave.balanceOf(s.CarolVotingVault.address)
+        expect(balance).to.equal(0, "Carol's vault holds 0 capped Aave")
+
+        let borrowPower = await s.VaultController.vaultBorrowingPower(s.CaroLVaultID)
+        expect(borrowPower).to.eq(0, "Carol's borrowing power is 0, dydx has not yet been registered")
+
+    })
+
+    it("Withdraw unregistered cap token", async () => {
+
+        const startBalance = await s.DYDX.balanceOf(s.Carol.address)
+
+        expect(s.CarolVault.connect(s.Bob).withdrawErc20(cappedDydx.address, DydxAmount)).to.be.revertedWith("sender not minter")
+
+        await s.CarolVault.connect(s.Carol).withdrawErc20(cappedDydx.address, DydxAmount)
+        await mineBlock()
+
+        let balance = await s.DYDX.balanceOf(s.Carol.address)
+        expect(balance).to.eq(s.Carol_DYDX).to.eq(startBalance.add(DydxAmount), "Carol received all of the underlying")
+
+    
+        let totalSupply = await cappedDydx.totalSupply()
+        expect(totalSupply).to.eq(0, "All cap tokens burned")
 
     })
 })
