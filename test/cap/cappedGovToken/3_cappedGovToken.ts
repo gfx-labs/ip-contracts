@@ -15,7 +15,9 @@ import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { start } from "repl";
 import {
     IVault__factory,
-    VotingVault__factory
+    VotingVault__factory,
+    VotingVault,
+    IVault
 } from "../../../typechain-types"
 import { JsxEmit } from "typescript";
 require("chai").should();
@@ -42,6 +44,9 @@ describe("Verify setup", () => {
 //mint voting vault from an account that does not yet have a regular vault
 describe("Testing CappedToken functions", () => {
     const depositAmount = BN("500e18")
+    let gusVaultId: BigNumber
+    let gusVault: IVault
+    let gusVotingVault: VotingVault
     it("Deposit underlying", async () => {
 
         expect(await s.AAVE.balanceOf(s.Bob.address)).to.eq(s.aaveAmount, "Bob has the expected amount of aave")
@@ -82,7 +87,7 @@ describe("Testing CappedToken functions", () => {
         expect(s.CappedAave.connect(s.Bob).transfer(s.Carol.address, BN("1e18"))).to.be.revertedWith("only vaults")
     })
 
-    
+
 
     it("Try to exceed the cap", async () => {
         const cap = await s.CappedAave.getCap()
@@ -107,7 +112,7 @@ describe("Testing CappedToken functions", () => {
         expect(s.CappedAave.connect(s.Gus).deposit(amount, 99999)).to.be.revertedWith("invalid vault")
     })
 
-    it("no voting vault", async () => {
+    it("Deposit with no voting vault", async () => {
         const amount = BN("5e18")
 
         const startBal = await s.AAVE.balanceOf(s.Gus.address)
@@ -118,19 +123,59 @@ describe("Testing CappedToken functions", () => {
         await expect(s.VaultController.connect(s.Gus).mintVault()).to.not
             .reverted;
         await mineBlock();
-        const gusVaultID = await s.VaultController.vaultsMinted()
-        let vaultAddress = await s.VaultController.vaultAddress(gusVaultID)
-        const gusVault = IVault__factory.connect(vaultAddress, s.Gus);
+        gusVaultId = await s.VaultController.vaultsMinted()
+        let vaultAddress = await s.VaultController.vaultAddress(gusVaultId)
+        gusVault = IVault__factory.connect(vaultAddress, s.Gus);
         expect(await gusVault.minter()).to.eq(s.Gus.address);
 
         await s.AAVE.connect(s.Gus).approve(s.CappedAave.address, amount)
-        expect(s.CappedAave.connect(s.Gus).deposit(amount, gusVaultID)).to.be.revertedWith("invalid voting vault")
+        expect(s.CappedAave.connect(s.Gus).deposit(amount, gusVaultId)).to.be.revertedWith("invalid voting vault")
     })
 
-    it("TODO no voting vault on transfer", async () => {
-        //transfer some to cap contract instead of deposit? 
-        //can erroniously transferred funds be recovered using withdraw? 
-        //does this break accounting? 
+    it("Eronious transfer and then withdraw with no voting vault", async () => {
+        //transfer some underlying to cap contract instead of deposit?
+        const transferAmount = BN("5e18")
+        let balance = await s.AAVE.balanceOf(s.Gus.address)
+        expect(balance).to.eq(s.aaveAmount, "Starting AAVE amount correct")
+        await s.AAVE.connect(s.Gus).transfer(s.CappedAave.address, transferAmount)
+        await mineBlock()
+
+        //try to withdraw - no voting vault
+        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedAave.address, transferAmount)).to.be.revertedWith("only vaults")
+
+    })
+
+    it("Try to withdraw eronious transfer after minting a voting vault", async () => {
+        const transferAmount = BN("5e18")
+
+        //mint a voting vault
+        await s.VotingVaultController.connect(s.Gus).mintVault(gusVaultId)
+        await mineBlock()
+
+        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedAave.address, transferAmount)).to.be.revertedWith("ERC20: burn amount exceeds balance")
+    })
+
+    it("Try to withdraw more than is possible given some cap tokens", async () => {
+
+        await s.CappedAave.connect(s.Frank).setCap(BN("501e18"))
+        await mineBlock()
+
+        await s.CappedAave.connect(s.Gus).deposit(BN("1e18"), gusVaultId)
+        await mineBlock()
+
+        let balance = await s.CappedAave.balanceOf(gusVault.address)
+        expect(balance).to.eq(BN("1e18"), "Balance is correct")
+
+        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedAave.address, BN("5e18"))).to.be.revertedWith("ERC20: burn amount exceeds balance")
+
+        //Withdraw the amount that was deposited
+        await gusVault.connect(s.Gus).withdrawErc20(s.CappedAave.address, BN("1e18"))
+        await mineBlock()
+
+        //return cap to expected amount
+        await s.CappedAave.connect(s.Frank).setCap(BN("500e18"))
+        await mineBlock()
+
     })
 
     it("Try to withdraw from a vault that is not yours", async () => {
@@ -149,7 +194,6 @@ describe("Testing CappedToken functions", () => {
 
         expect(startCapAave).to.be.gt(amount, "Enough CapAave")
 
-        //await s.CappedAave.connect(s.Bob).approve(s.VotingVaultController.address, BN("500e18"))
         await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAave.address, amount)
         await mineBlock()
 

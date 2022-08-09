@@ -92,7 +92,8 @@ describe("Token Setup", () => {
         //showBody(`stealing ${s.Andy_USDC} to andy from ${s.usdcAddress}`);
         await stealMoney(usdc_minter, s.Andy.address, s.usdcAddress, s.Andy_USDC)
         await mineBlock()
-
+        await stealMoney(aave_minter, s.Andy.address, s.aaveAddress, s.aaveAmount)
+        await mineBlock()
 
         //showBody(`stealing ${s.Dave_USDC} to dave from ${s.usdcAddress}`);
         await stealMoney(usdc_minter, s.Dave.address, s.usdcAddress, s.Dave_USDC)

@@ -14,16 +14,15 @@ import "../_external/IERC20.sol";
 import "../_external/Context.sol";
 import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
-/// @title Vault
-/// @notice our implentation of maker-vault like vault
-/// major differences:
-/// 1. multi-collateral
-/// 2. generate interest in USDi
-/// 3. can delegate voting power of contained tokens
 contract VotingVault is Context {
   using SafeERC20Upgradeable for IERC20;
 
   /// @title VaultInfo struct
+  /// @notice This vault holds the underlying token
+  /// @notice The Capped token is held by the parent vault
+  /// @notice Withdrawls must be initiated by the withdrawErc20() function on the parent vault
+
+
   /// @notice this struct is used to store the vault metadata
   /// this should reduce the cost of minting by ~15,000
   /// by limiting us to max 2**96-1 vaults
