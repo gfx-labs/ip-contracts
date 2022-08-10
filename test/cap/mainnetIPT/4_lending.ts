@@ -100,10 +100,10 @@ describe("Lending", () => {
         const startPower = await s.IPT.getPowerCurrent(s.Bob.address, 0)
 
         //Unable to delegate gov tokens in a vault that you don't own
-        expect(s.BobVotingVault.connect(s.Carol).delegateCompLikeTo(s.Bob.address, s.aaveAddress)).to.be.revertedWith("sender not minter")
+        expect(s.BobVotingVault.connect(s.Carol).delegateCompLikeTo(s.Bob.address, s.IPT.address)).to.be.revertedWith("sender not minter")
 
         //delegate
-        await s.BobVotingVault.connect(s.Bob).delegateCompLikeTo(s.Bob.address, s.aaveAddress)
+        await s.BobVotingVault.connect(s.Bob).delegateCompLikeTo(s.Bob.address, s.IPT.address)
         await mineBlock()
 
         let power = await s.IPT.getPowerCurrent(s.Bob.address, 0)
@@ -125,7 +125,7 @@ describe("Lending", () => {
      it("Check governance vote delgation for a vault that was minted by someone else", async () => {
         const amount = BN("50e18")
 
-        //raise cap so Carol can have some capped aave
+        //raise cap so Carol can have some capped IPT
         await s.cIPT.connect(s.Frank).setCap(BN("550e18"))
         await mineBlock()
 
@@ -135,9 +135,9 @@ describe("Lending", () => {
         await mineBlock()
 
         const startPower = await s.IPT.getPowerCurrent(s.Carol.address, 0)
-        expect(startPower).to.eq(0, "Carol holds 0 Aave and has no delegated voting power")
+        expect(startPower).to.eq(0, "Carol holds 0 IPT and has no delegated voting power")
 
-        await s.CarolVotingVault.connect(s.Carol).delegateCompLikeTo(s.Carol.address, s.aaveAddress)
+        await s.CarolVotingVault.connect(s.Carol).delegateCompLikeTo(s.Carol.address, s.IPT.address)
         await mineBlock()
 
         let power = await s.IPT.getPowerCurrent(s.Carol.address, 0)
@@ -225,23 +225,23 @@ describe("Liquidations", () => {
         const startingUSDI = await s.USDI.balanceOf(s.Dave.address)
         expect(startingUSDI).to.eq(s.Dave_USDC.mul(BN("1e12")))
 
-        const startingWAAVE = await s.cIPT.balanceOf(s.BobVault.address)
-        const startAAVE = await s.IPT.balanceOf(s.Dave.address)
-        expect(startAAVE).to.eq(0, "Dave holds 0 AAVE")
+        const startingCIPT = await s.cIPT.balanceOf(s.BobVault.address)
+        const startIPT = await s.IPT.balanceOf(s.Dave.address)
+        expect(startIPT).to.eq(0, "Dave holds 0 IPT")
 
         const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.cIPT.address, BN("1e50"))
         await mineBlock()
 
         let supply = await s.cIPT.totalSupply()
 
-        expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 2, "Total supply reduced as Capped Aave is liquidated")
+        expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 2, "Total supply reduced as Capped IPT is liquidated")
 
 
-        let endwaave = await s.cIPT.balanceOf(s.BobVault.address)
-        expect(await toNumber(endwaave)).to.be.closeTo(await toNumber(startingWAAVE.sub(tokensToLiquidate)), 0.0001, "Expected amount liquidated")
+        let endCIPT = await s.cIPT.balanceOf(s.BobVault.address)
+        expect(await toNumber(endCIPT)).to.be.closeTo(await toNumber(startingCIPT.sub(tokensToLiquidate)), 0.0001, "Expected amount liquidated")
 
-        let endAave = await s.IPT.balanceOf(s.Dave.address)
-        expect(await toNumber(endAave)).to.be.closeTo(await toNumber(tokensToLiquidate), 0.001, "Dave received the underlying Aave")
+        let endIPT = await s.IPT.balanceOf(s.Dave.address)
+        expect(await toNumber(endIPT)).to.be.closeTo(await toNumber(tokensToLiquidate), 0.001, "Dave received the underlying IPT")
 
         const usdiSpent = startingUSDI.sub(await s.USDI.balanceOf(s.Dave.address))
 
@@ -274,15 +274,15 @@ describe("Liquidations", () => {
 
     it("Withdraw after loan", async () => {
 
-        const voteVaultAave = await s.IPT.balanceOf(s.BobVotingVault.address)
-        expect(voteVaultAave).to.be.gt(0, "Vote vault holds Aave")
+        const voteVaultIPT = await s.IPT.balanceOf(s.BobVotingVault.address)
+        expect(voteVaultIPT).to.be.gt(0, "Vote vault holds IPT")
         const vaultCappedIPT = await s.cIPT.balanceOf(s.BobVault.address)
 
         await s.BobVault.connect(s.Bob).withdrawErc20(s.cIPT.address, vaultCappedIPT)
         await mineBlock()
 
         let balance = await s.IPT.balanceOf(s.BobVotingVault.address)
-        expect(await toNumber(balance)).to.eq(0, "All Aave withdrawn")
+        expect(await toNumber(balance)).to.eq(0, "All IPT withdrawn")
 
         balance = await s.cIPT.balanceOf(s.BobVault.address)
         expect(await toNumber(balance)).to.eq(0, "All CappedIPT removed from vault")

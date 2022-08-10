@@ -68,14 +68,14 @@ describe("Testing CappedToken functions", () => {
 
     it("Deposit underlying", async () => {
 
-        expect(await s.IPT.balanceOf(s.Bob.address)).to.eq(s.aaveAmount, "Bob has the expected amount of aave")
-        expect(await s.IPT.balanceOf(s.Bob.address)).to.be.gt(depositAmount, "Bob has enough Aave")
+        expect(await s.IPT.balanceOf(s.Bob.address)).to.eq(s.aaveAmount, "Bob has the expected amount of IPT")
+        expect(await s.IPT.balanceOf(s.Bob.address)).to.be.gt(depositAmount, "Bob has enough IPT")
 
         let caBalance = await s.cIPT.balanceOf(s.Bob.address)
-        expect(caBalance).to.eq(0, "Bob holds 0 capped aave at the start")
+        expect(caBalance).to.eq(0, "Bob holds 0 capped IPT at the start")
 
         caBalance = await s.cIPT.balanceOf(s.BobVault.address)
-        expect(caBalance).to.eq(0, "Bob's vault holds 0 capped aave at the start")
+        expect(caBalance).to.eq(0, "Bob's vault holds 0 capped IPT at the start")
 
 
         await s.IPT.connect(s.Bob).approve(s.cIPT.address, depositAmount)
@@ -84,10 +84,10 @@ describe("Testing CappedToken functions", () => {
 
 
         caBalance = await s.cIPT.balanceOf(s.Bob.address)
-        expect(caBalance).to.eq(0, "Bob holds 0 capped aave after deposit")
+        expect(caBalance).to.eq(0, "Bob holds 0 capped IPT after deposit")
 
         caBalance = await s.cIPT.balanceOf(s.BobVault.address)
-        expect(caBalance).to.eq(depositAmount, "Bob's vault received the capped aave tokens")
+        expect(caBalance).to.eq(depositAmount, "Bob's vault received the capped IPT tokens")
 
 
     })
@@ -141,7 +141,7 @@ describe("Testing CappedToken functions", () => {
         //transfer some underlying to cap contract instead of deposit?
         const transferAmount = BN("5e18")
         let balance = await s.IPT.balanceOf(s.Gus.address)
-        expect(balance).to.eq(s.aaveAmount, "Starting AAVE amount correct")
+        expect(balance).to.eq(s.aaveAmount, "Starting IPT amount correct")
         await s.IPT.connect(s.Gus).transfer(s.cIPT.address, transferAmount)
         await mineBlock()
 
@@ -204,19 +204,19 @@ describe("Testing CappedToken functions", () => {
 
         const amount = BN("250e18")
 
-        const startAave = await s.IPT.balanceOf(s.Bob.address)
-        const startCapAave = await s.cIPT.balanceOf(s.BobVault.address)
+        const startIPT = await s.IPT.balanceOf(s.Bob.address)
+        const startCapIPT = await s.cIPT.balanceOf(s.BobVault.address)
 
-        expect(startCapAave).to.be.gt(amount, "Enough Capped IPT")
+        expect(startCapIPT).to.be.gt(amount, "Enough Capped IPT")
 
         await s.BobVault.connect(s.Bob).withdrawErc20(s.cIPT.address, amount)
         await mineBlock()
 
         let balance = await s.IPT.balanceOf(s.Bob.address)
-        expect(balance).to.eq(startAave.add(amount), "IPT balance changed as expected")
+        expect(balance).to.eq(startIPT.add(amount), "IPT balance changed as expected")
 
         balance = await s.cIPT.balanceOf(s.BobVault.address)
-        expect(balance).to.eq(startCapAave.sub(amount), "cIPT balance changed as expected")
+        expect(balance).to.eq(startCapIPT.sub(amount), "cIPT balance changed as expected")
 
         //Deposit again to reset for further tests
         await s.IPT.connect(s.Bob).approve(s.cIPT.address, amount)
