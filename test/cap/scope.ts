@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController } from "../../typechain-types";
+import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
@@ -68,10 +68,13 @@ export class TestScope extends MainnetAddresses {
     BobVaultID!: BigNumber
     BobVotingVault!: VotingVault
     CarolVotingVault!: VotingVault
+    DeployerVotingVault!: VotingVault
     CarolVault!: IVault
     CaroLVaultID!: BigNumber
 
     IP_OWNER = "0x266d1020a84b9e8b0ed320831838152075f8c4ca"
+    IP_DEPLOYER = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
+    DEPLOYER =  ethers.provider.getSigner(this.IP_DEPLOYER)
 
 
     AMPL_ADDR = "0xD46bA6D942050d489DBd938a2C909A5d5039A161"
@@ -95,6 +98,8 @@ export class TestScope extends MainnetAddresses {
 
     VotingVaultController!: VotingVaultController
 
+    IPT!: InterestProtocolTokenDelegate;
+    cIPT!: CappedGovToken
     CappedAave!: CappedGovToken
     AaveCap = BN("500e18")
     aaveAmount = BN("1000e18")
