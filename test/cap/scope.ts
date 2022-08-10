@@ -31,7 +31,7 @@ export class TestScope extends MainnetAddresses {
     CappedPAXG!: CappedFeeOnTransferToken;
     CAP = BN("100000e18")//100k
 
-    owner!: String
+    //owner!: String
     pauser!: String
 
     Oracle!: IOracleMaster;
@@ -69,12 +69,17 @@ export class TestScope extends MainnetAddresses {
     BobVotingVault!: VotingVault
     CarolVotingVault!: VotingVault
     DeployerVotingVault!: VotingVault
+    DeployerVaultID = 1
+    DeployerVault!: IVault
     CarolVault!: IVault
     CaroLVaultID!: BigNumber
 
     IP_OWNER = "0x266d1020a84b9e8b0ed320831838152075f8c4ca"
+    owner = ethers.provider.getSigner(this.IP_OWNER)
+
     IP_DEPLOYER = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
     DEPLOYER =  ethers.provider.getSigner(this.IP_DEPLOYER)
+    
 
 
     AMPL_ADDR = "0xD46bA6D942050d489DBd938a2C909A5d5039A161"

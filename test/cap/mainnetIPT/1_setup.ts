@@ -7,7 +7,7 @@ import { s } from "../scope";
 import { d } from "../DeploymentInfo";
 
 import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
-import {InterestProtocolTokenDelegate__factory, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, VotingVaultController__factory, CappedGovToken__factory, VotingVault__factory } from "../../../typechain-types";
+import {InterestProtocolTokenDelegate__factory, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, VotingVaultController__factory, CappedGovToken__factory, VotingVault__factory, IVault__factory } from "../../../typechain-types";
 //import { assert } from "console";
 
 require("chai").should();
@@ -87,6 +87,8 @@ describe("Token Setup", () => {
         s.ProxyAdmin = ProxyAdmin__factory.connect(d.ProxyAdmin, s.Frank)
         const IPTaddress = "0xd909C5862Cdb164aDB949D92622082f0092eFC3d"
         s.IPT = InterestProtocolTokenDelegate__factory.connect(IPTaddress, s.Frank);
+        const deployerVault = "0x85a5fD00bB725661F639F7300D48f64671D33BE5"
+        s.DeployerVault = IVault__factory.connect(deployerVault, s.Frank)
 
 
     })
@@ -131,6 +133,14 @@ describe("Token Setup", () => {
         await stealMoney(aave_minter, s.Gus.address, s.aaveAddress, s.aaveAmount)
         await mineBlock()
 
+        //steal IPT for Bob and Carol
+        await stealMoney(s.DEPLOYER._address, s.Bob.address, s.IPT.address, s.aaveAmount)
+        await mineBlock()
+        await stealMoney(s.DEPLOYER._address, s.Carol.address, s.IPT.address, s.aaveAmount)
+        await mineBlock()
+        await stealMoney(s.DEPLOYER._address, s.Gus.address, s.IPT.address, s.aaveAmount)
+        await mineBlock()
+
 
 
         //showBody(`stealing`,s.Bob_USDC,`usdc to bob from ${s.usdcAddress}`);
@@ -147,6 +157,9 @@ describe("Token Setup", () => {
         ).to.not.be.reverted;
 
         await mineBlock();
+
+
+        
         
     });
 });

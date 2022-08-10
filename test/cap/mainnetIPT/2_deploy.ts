@@ -51,7 +51,7 @@ describe("Check Interest Protocol contracts", () => {
       expect(await s.USDI.symbol()).to.equal("USDI");
       expect(await s.USDI.decimals()).to.equal(18);
       //expect(await s.USDI.owner()).to.equal(s.Frank.address);
-      s.owner = await s.USDI.owner()
+      //s.owner = await s.USDI.owner()
       s.pauser = await s.USDI.pauser()
     });
   });
@@ -70,11 +70,10 @@ describe("Check Interest Protocol contracts", () => {
 describe("Deploy cappedToken contract and infastructure", () => {
 
   const cap = utils.parseEther("100000")//100K 
-  const owner = ethers.provider.getSigner(s.IP_OWNER)
 
   const ethAmount = BN("1e18")
   let tx = {
-    to: owner._address,
+    to: s.owner._address,
     value: ethAmount
   }
 
@@ -94,10 +93,10 @@ describe("Deploy cappedToken contract and infastructure", () => {
     expect(await toNumber(result)).to.eq(0.5, "Relay is returning the correct price")
 
 
-    await impersonateAccount(owner._address)
-    await s.Oracle.connect(owner).setRelay(s.cIPT.address, BogusRelay.address)
+    await impersonateAccount(s.owner._address)
+    await s.Oracle.connect(s.owner).setRelay(s.cIPT.address, BogusRelay.address)
     await mineBlock()
-    await ceaseImpersonation(owner._address)
+    await ceaseImpersonation(s.owner._address)
 
     let price = await s.Oracle.getLivePrice(s.cIPT.address)
     expect(await toNumber(price)).to.eq(0.5, "Oracle is returning the correct price")
@@ -109,9 +108,9 @@ describe("Deploy cappedToken contract and infastructure", () => {
    
   it("Register Capped token on VaultController", async () => {
 
-    await impersonateAccount(owner._address)
+    await impersonateAccount(s.owner._address)
 
-    await s.VaultController.connect(owner).registerErc20(
+    await s.VaultController.connect(s.owner).registerErc20(
       s.cIPT.address,
       s.UNI_LTV,
       s.cIPT.address,
@@ -119,7 +118,7 @@ describe("Deploy cappedToken contract and infastructure", () => {
     )
     await mineBlock()
 
-    await ceaseImpersonation(owner._address)
+    await ceaseImpersonation(s.owner._address)
 
   })
 
@@ -191,8 +190,22 @@ describe("Deploy cappedToken contract and infastructure", () => {
   })
 
   it("Sanity check", async () => {
-    expect(await s.cIPT.getCap()).to.eq(100)
+    expect(await s.cIPT.getCap()).to.eq(100, "Original cap that was set")
     expect(await (await s.cIPT._underlying()).toUpperCase()).to.eq(s.IPT.address.toUpperCase())
   })
+
+  it("Set a higher cap for testing", async () => {
+
+    await impersonateAccount(s.DEPLOYER._address)
+    await s.cIPT.connect(s.DEPLOYER).setCap(BN("500e18").add(69))
+    await mineBlock()
+    await ceaseImpersonation(s.DEPLOYER._address)
+    expect(await s.cIPT.getCap()).to.eq(BN("500e18").add(69), "New Cap Set")
+
+  })
+
+
+
+
    
 })
