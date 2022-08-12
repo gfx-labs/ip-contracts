@@ -12,23 +12,44 @@ import { BigNumber } from "ethers";
 import { BN } from "../../util/number";
 import Decimal from "decimal.js";
 import { BlockRounds } from "./q1_data";
+import { showBody } from "../../util/format";
+import { ethers } from "hardhat";
+
+import { reset, mineBlock } from "../../util/block"
 dotenv.config();
 
-const rpc_url = process.env.POLYGON_URL;
+const rpc_url = process.env.MAINNET_URL;
 
 const main = async () => {
-  const cl = new AlchemyWebSocketProvider(137, rpc_url);
+
+  if (ethers.provider.connection.url == 'http://localhost:8545') {
+    //reset to current block, otherwise default block from hardhat config is used, and VC does not exist yet
+    //ONLY FOR TESTING
+    await reset(15323286)
+    await mineBlock()
+  }
+
+  const accounts = await ethers.getSigners();
+  const deployer = accounts[0];
+
+  //const cl = new AlchemyWebSocketProvider(1, rpc_url );
+  const cl = new ethers.providers.JsonRpcProvider(rpc_url)
+
   const vc = VaultController__factory.connect(
-    "0x385E2C6b5777Bc5ED960508E774E4807DDe6618c",
-    cl
+    "0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3",
+    deployer
   );
-  const blockStart = 29130325 - 1000;
-  const blockEnd = 29130325;
+  const blockEnd = 15328790;
+  const blockStart = blockEnd - 10000;
 
   const totalLiabilities = new Map<string, Decimal>();
   let totalLiability = new Decimal(0);
-  const vaultCount = await vc.vaultsMinted();
+
+  const vaultCount = await vc._vaultsMinted();
+
   const mc = new Multicall({ ethersProvider: cl });
+
+  console.log("LOOPING")
 
   let blocks = 0;
   for (let b = blockStart; b <= blockEnd; b++) {

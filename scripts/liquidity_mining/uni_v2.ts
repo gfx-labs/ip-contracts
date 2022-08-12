@@ -12,16 +12,21 @@ import { BigNumber } from "ethers";
 import { BN } from "../../util/number";
 import Decimal from "decimal.js";
 import { BlockRounds } from "./q1_data";
+import { ethers } from "hardhat";
+
 dotenv.config();
 
-const POLYGON_POOL = "0x203c05ACb6FC02F5fA31bd7bE371E7B213e59Ff7";
-const rpc_url = process.env.POLYGON_URL;
+//const POLYGON_POOL = "0x203c05ACb6FC02F5fA31bd7bE371E7B213e59Ff7";
+const POOL = "0x63aac74200ba1737f81beeaeda64a539d9883922"
+const rpc_url = process.env.MAINNET_URL;
 
 const main = async () => {
-  const cl = new AlchemyWebSocketProvider(137, rpc_url);
-  const tk = ERC20Detailed__factory.connect(POLYGON_POOL, cl);
-  const blockStart = 29130325 - 100;
-  const blockEnd = 29130325;
+  
+  //const cl = new AlchemyWebSocketProvider(1, rpc_url);
+  const cl = new ethers.providers.JsonRpcProvider(rpc_url)
+  const tk = ERC20Detailed__factory.connect(POOL, cl);
+  const blockEnd = 15328790;
+  const blockStart = blockEnd - 10000;
 
   const totalBalances = new Map<string, Decimal>();
   let totalBalance = new Decimal(0);
