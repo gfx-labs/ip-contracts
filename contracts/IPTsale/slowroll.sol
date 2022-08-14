@@ -47,7 +47,7 @@ contract SlowRoll {
   // the token used to claim points, USDC
   IERC20 public _pointsToken = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // usdc
   // the token to be rewarded, IPT
-  IERC20 public immutable _rewardToken; //= IERC20(0xd909C5862Cdb164aDB949D92622082f0092eFC3d); // IPT
+  IERC20 public immutable _rewardToken = IERC20(0xd909C5862Cdb164aDB949D92622082f0092eFC3d); // IPT
   // light ownership
   address public _owner;
 
@@ -56,14 +56,12 @@ contract SlowRoll {
     _;
   }
 
-  constructor(address _ipt) {
+  constructor() {
     _owner = msg.sender; // creator of contracto
-    _maxQuantity = 500_000 * 1e18; // 500_000 IPT, in wei - max IPT sold per day 
+    _maxQuantity = 1_000_000 * 1e18; // 1_00_000 IPT, in wei - max IPT sold per day
     _startPrice = 250_000; // 25 cents
     _maxPrice = 500_000; // 50 cents
-    _waveDuration = 86400; // one day in seconds
-
-    _rewardToken = IERC20(_ipt);
+    _waveDuration = 60*60*22; // 22 hours in seconds
   }
 
   function setMaxQuantity(uint256 maxQuantity_) external onlyOwner {
