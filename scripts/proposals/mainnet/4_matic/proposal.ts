@@ -117,12 +117,6 @@ const main = async () => {
     "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
   );
 
-  x.sendTransaction({
-      to: uniswap_pool_address,
-      data: "0x32148f670000000000000000000000000000000000000000000000000000000000000256"
-    })
-
-
   console.log(description)
   console.log(out)
   console.log("PLEASE CHECK PROPOSAL! PROPOSING IN 10 seconds")
