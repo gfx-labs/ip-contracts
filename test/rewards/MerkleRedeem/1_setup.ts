@@ -1,7 +1,7 @@
 import { expect, assert } from "chai";
 import { ethers, network, tenderly } from "hardhat";
 import { stealMoney } from "../../../util/money";
-import { showBody } from "../../../util/format";
+import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { d } from "../DeploymentInfo";
@@ -40,6 +40,48 @@ if (process.env.TENDERLY_KEY) {
     }
 }
 
+/**
+ * expected merge length should be: 
+ * borrowerList + uniList - dupes
+ * 29 + 18 - 8 = 39
+ */
+const mergeLists = async () => {
+
+    type thing = {
+        minter: string
+        amount: number
+    }
+
+    let merged: thing[] = []
+    merged = s.borrowList
+
+    let dupes: any[] = []
+
+    for(let i=0; i<merged.length; i++){
+        for(let j=0; j<s.uniList.length; j++){
+            if(s.uniList[j].minter == merged[i].minter){
+                merged[i].amount += s.uniList[j].amount
+                //showBodyCyan("Merged: ", merged[i])
+                dupes.push(s.uniList[j])
+            }
+        }
+    }
+    for(let i=0; i<s.uniList.length; i++){
+        let dupe = false
+        for(let j=0; j<dupes.length; j++){
+            if(s.uniList[i] == dupes[j]){
+                dupe = true                
+            }
+        }
+        if(!dupe){
+            merged.push(s.uniList[i])
+        }
+    }
+    s.mergedList = merged
+
+
+}
+
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
         expect(await reset(15328790)).to.not.throw;//14940917
@@ -51,6 +93,9 @@ describe("hardhat settings", () => {
 });
 
 describe("Token Setup", () => {
+    before(async () => {
+        await mergeLists()
+    })
     it("connect to signers", async () => {
         let accounts = await ethers.getSigners();
         s.Frank = accounts[0];

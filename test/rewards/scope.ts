@@ -5,11 +5,16 @@ import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRela
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 import { uniMinters, borrowerMinters } from "./data"
-
+type thing = {
+    minter: string
+    amount: number
+}
 export class TestScope extends MainnetAddresses {
 
     uniList = Array.from(uniMinters)
     borrowList = Array.from(borrowerMinters)
+    
+    mergedList: thing[] = []
 
     USDI!: USDI;
     USDC!: IERC20;
