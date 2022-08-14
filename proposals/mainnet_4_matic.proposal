@@ -1,0 +1,9 @@
+{
+    "deploys": {
+        "capped_matic": "0xf6DCb35F91f740236803635EECa5825Cb537E7c0",
+        "capped_matic_proxy": "0x5aC39Ed42e14Cf330A864d7D1B82690B4D1B9E61",
+        "new_chainlink": "0xFC6b554818466A53806Bb7eb319621D97b851D94",
+        "new_uniswap": "0xfE1cb3221f13A9c2AA67D29a2b7198e59de2F3b2",
+        "new_anchored": "0x8BfE7aE486250dBf2901843Cc73B91843c2879de"
+    }
+}
