@@ -217,9 +217,6 @@ describe("Testing CappedToken functions", () => {
 
 })
 
-
-
-
 describe("More checks", () => {
     it("Try to retrieveUnderlying", async () => {
         await expect(s.VotingVaultController.connect(s.Dave).retrieveUnderlying(BN("1e18"), s.BobVotingVault.address, s.Dave.address)).to.be.revertedWith("only capped token")

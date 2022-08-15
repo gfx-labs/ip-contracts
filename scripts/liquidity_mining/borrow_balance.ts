@@ -39,8 +39,14 @@ const main = async () => {
     "0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3",
     deployer
   );
+  const blockEnd = 15346983;
+  const blockStart = blockEnd - 1;
+
+  /**
   const blockEnd = 15328790;
   const blockStart = blockEnd - 10000;
+   */
+
 
   const totalLiabilities = new Map<string, Decimal>();
   let totalLiability = new Decimal(0);
@@ -48,9 +54,7 @@ const main = async () => {
   const vaultCount = await vc._vaultsMinted();
 
   const mc = new Multicall({ ethersProvider: cl });
-
-  console.log("LOOPING")
-
+  
   let blocks = 0;
   for (let b = blockStart; b <= blockEnd; b++) {
     const addrCalls: CallContext[] = [];

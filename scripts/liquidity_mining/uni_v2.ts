@@ -18,18 +18,20 @@ dotenv.config();
 
 //const POLYGON_POOL = "0x203c05ACb6FC02F5fA31bd7bE371E7B213e59Ff7";
 const POOL = "0x63aac74200ba1737f81beeaeda64a539d9883922"
-const rpc_url = process.env.MAINNET_URL;
+const rpc_url = process.env.X;
 
 const main = async () => {
   
   //const cl = new AlchemyWebSocketProvider(1, rpc_url);
   const cl = new ethers.providers.JsonRpcProvider(rpc_url)
   const tk = ERC20Detailed__factory.connect(POOL, cl);
-  const blockEnd = 15328790;
-  const blockStart = blockEnd - 10000;
+  const blockEnd = 15346983;
+  const blockStart = blockEnd - 1000;
 
   const totalBalances = new Map<string, Decimal>();
   let totalBalance = new Decimal(0);
+
+  console.log("SETUP")
 
   const addrs: string[] = ["0x50818e936aB61377A18bCAEc0f1C32cA27E38923"];
   const mc = new Multicall({ ethersProvider: cl });
@@ -46,6 +48,7 @@ const main = async () => {
       addrs.push(x.args[1]);
     }
   });
+  console.log("LOOPING")
 
   let blocks = 0;
   for (let b = blockStart; b <= blockEnd; b++) {
