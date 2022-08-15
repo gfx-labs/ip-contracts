@@ -46,7 +46,6 @@ const main = async () => {
   p.AddDeploy("capped_matic", ()=> {
     return new CappedGovToken__factory(x).deploy();
   });
-  await p.DeployAll();
   p.AddDeploy("capped_matic_proxy", () => {
     return new TransparentUpgradeableProxy__factory(x).deploy(
       p.db.getData(".deploys.capped_matic"),
@@ -55,6 +54,8 @@ const main = async () => {
     )
   });
   await p.DeployAll();
+
+  ///
   new CappedGovToken__factory(x).attach(
     p.db.getData(".deploys.capped_matic_proxy")
   ).initialize(
@@ -63,6 +64,7 @@ const main = async () => {
   "0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3",
   "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2",
   ).catch(()=>{});
+
   // chainlink
   p.AddDeploy("new_chainlink", () => {
     return new ChainlinkOracleRelay__factory(x).deploy(
@@ -122,7 +124,7 @@ const main = async () => {
   console.log("PLEASE CHECK PROPOSAL! PROPOSING IN 10 seconds")
   await countdownSeconds(10)
   console.log("sending transaction....")
-  //await p.sendProposal(charlie, description, true);
+  await p.sendProposal(charlie, description, true);
 
   return "success";
 };

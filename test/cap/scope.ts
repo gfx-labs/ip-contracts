@@ -79,7 +79,7 @@ export class TestScope extends MainnetAddresses {
 
     IP_DEPLOYER = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
     DEPLOYER =  ethers.provider.getSigner(this.IP_DEPLOYER)
-    
+
 
 
     AMPL_ADDR = "0xD46bA6D942050d489DBd938a2C909A5d5039A161"
@@ -88,10 +88,12 @@ export class TestScope extends MainnetAddresses {
     AMPL!: IERC20
 
     PAXG_ADDR = "0x45804880De22913dAFE09f4980848ECE6EcbAf78"
-    PAXG_WHALE = "0xFfec0067F5a79CFf07527f63D83dD5462cCf8BA4"
-    PAXG_AMOUNT = BN("10e18")//10 PAXG
-    PAXG_CAP = BN("300e18")//300 PAXG or ~500k USD
     PAXG!: IERC20
+
+    MATIC_ADDR = "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0"
+    MATIC_WHALE = "0xf977814e90da44bfa03b6295a0616a897441acec"
+    MATIC_AMOUNT = BN("100000000e18")
+    MATIC!: IERC20
 
     ST_ORACLE!: ILidoOracle
     CappedSTETH!: CappedSTETH
@@ -105,9 +107,13 @@ export class TestScope extends MainnetAddresses {
 
     IPT!: InterestProtocolTokenDelegate;
     cIPT!: CappedGovToken
+
     CappedAave!: CappedGovToken
     AaveCap = BN("500e18")
     aaveAmount = BN("1000e18")
+
+    CappedMatic!: CappedGovToken
+    MaticCap = BN("50000000e18")
 
     USDC_AMOUNT = BN("1000e6")
 

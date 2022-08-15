@@ -5,5 +5,8 @@
         "new_chainlink": "0xFC6b554818466A53806Bb7eb319621D97b851D94",
         "new_uniswap": "0xfE1cb3221f13A9c2AA67D29a2b7198e59de2F3b2",
         "new_anchored": "0x8BfE7aE486250dBf2901843Cc73B91843c2879de"
+    },
+    "proposal": {
+        "proposeTxn": "0x05e75f922a369e34cdfe2b1eb5356a3586d5783348d71dea3b962a91e93b01d9"
     }
 }
