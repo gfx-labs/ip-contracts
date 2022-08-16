@@ -9,7 +9,7 @@ import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
-import { toNumber, minter, mergeLists } from "../../../util/math"
+import { toNumber, minter, mergeLists, getGas } from "../../../util/math"
 import {
     MerkleRedeem__factory
 } from "../../../typechain-types"
@@ -24,7 +24,6 @@ import { start } from "repl";
 require("chai").should();
 
 const initMerkle = async (list: minter[]) => {
-
 
     let leafNodes = list.map((obj) =>
         solidityKeccak256(["address", "uint256"], [obj.minter, utils.parseEther(obj.amount.toFixed(18).toString())])
@@ -72,6 +71,9 @@ describe("Merkle Redeem", () => {
         LP1 = s.mergedList[1]
         LP2 = s.mergedList[2]
         LP = LP1.minter
+
+        showBody("ToFixed toString: ", utils.parseEther(LP2.amount.toFixed(18).toString()))
+        showBody("Attempt 2       : ", utils.parseEther("0.000210831814646832"))
 
         _claimedBalance = utils.parseEther(LP1.amount.toFixed(18).toString())
 
@@ -146,8 +148,10 @@ describe("Merkle Redeem", () => {
 
         expect(s.MerkleRedeem.claimWeek(LP2.minter, week, _claimedBalance, proof)).to.be.revertedWith("Incorrect merkle proof")
 
-        await s.MerkleRedeem.claimWeek(LP, week, _claimedBalance, proof)
+        const result = await s.MerkleRedeem.claimWeek(LP, week, _claimedBalance, proof)
         await mineBlock()
+        const gas = await getGas(result)
+        showBodyCyan("Gas to claimWeek: ", gas)
 
         let balance = await s.IPT.balanceOf(LP)
         expect(await toNumber(balance)).to.eq(LP1.amount)
@@ -307,13 +311,61 @@ describe("Claim Weeks", () => {
         const claim3 = await s.MerkleRedeem.verifyClaim(LP2.minter, 3, utils.parseEther(week3Data[1].amount.toFixed(18).toString()), claims[2].merkleProof)
         expect(claim3).to.eq(true)
 
-        await s.MerkleRedeem.claimWeeks(LP2.minter, claims)
+        const result = await s.MerkleRedeem.claimWeeks(LP2.minter, claims)
         await mineBlock()
+        const gas = await getGas(result)
+        showBodyCyan("Gas to claim 3 weeks: ", gas)
 
         let balance = await s.IPT.balanceOf(LP2.minter)
         let expected = LP2.amount + borrowWeek2[2].amount + week3Data[1].amount
 
         expect(await toNumber(balance)).to.be.closeTo(expected, 0.0000001, "Expected IPT received")//not exact due differing decimal lengths
 
+        //check claim status
+        const status = await s.MerkleRedeem.claimStatus(LP2.minter, 1, 3)
+        expect(status[0]).to.eq(true, "Claimed week 1")
+        expect(status[1]).to.eq(true, "Claimed week 2")
+        expect(status[2]).to.eq(true, "Claimed week 3")
+
+
     })
+
+    it("Check gas for claimWeeks for only 1 week", async () => {
+        const LP3 = s.mergedList[3]
+        const status = await s.MerkleRedeem.claimStatus(LP3.minter, 1, 3)
+        expect(status[0]).to.eq(false, "Not Claimed week 1")
+        expect(status[1]).to.eq(false, "Not Claimed week 2")
+        expect(status[2]).to.eq(false, "Not Claimed week 3")
+
+
+        //Verify claim
+        let leaf = solidityKeccak256(["address", "uint256"], [LP3.minter, utils.parseEther(LP3.amount.toFixed(18).toString())])
+        let proof = merkleTree1.getHexProof(leaf)
+
+        const verification = await s.MerkleRedeem.verifyClaim(LP3.minter, 1, utils.parseEther(LP3.amount.toFixed(18).toString()), proof)
+        expect(verification).to.eq(true, "Claim verified")
+
+        //claimWeeks for just week 1
+
+        const claims = [
+            {
+                week: 1,
+                balance: utils.parseEther(LP3.amount.toFixed(18).toString()),
+                merkleProof: proof
+            }
+        ]
+
+        const result = await s.MerkleRedeem.claimWeeks(LP3.minter, claims)
+        await mineBlock()
+        const gas = await getGas(result)
+        showBodyCyan("Gas to claim 1 week using claimWeeks: ", gas)
+
+        const merkleWeekRoots = await s.MerkleRedeem.weekMerkleRoots(57)
+        showBody(merkleWeekRoots)
+
+
+
+
+    })
+
 })
