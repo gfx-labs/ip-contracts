@@ -23,17 +23,20 @@ const main = async ()=>{
     if(splt[0] == '') {
       continue
     }
-    if(obj[splt[0]] == undefined) {
-      obj[splt[0]] = BigNumber.from(0)
+    let a = splt[0]
+    a = "0x"+a.substring(a.indexOf("0x")+2).toLowerCase()
+    console.log(a)
+    if(obj[a] == undefined) {
+      obj[a] = BigNumber.from(0)
     }
-    obj[splt[0]] = obj[splt[0]].add(new Decimal(splt[1]).mul(new Decimal(10).pow(18)).toHex())
+    obj[a] = obj[a].add(new Decimal(splt[1]).mul(new Decimal(10).pow(18)).toHex())
   }
   for(const k of Object.keys(obj)) {
     obj[k] = obj[k].toString()
   }
   let leafNodes = Object.entries(obj).map(([addr, amount]:[string, any]) =>{
-    addr = addr.replaceAll("0x","")
-    return solidityKeccak256(["address", "uint256"], [hexToBytes(addr),amount])
+    //addr = addr.replaceAll("0x","")
+    return solidityKeccak256(["address", "uint256"], [ addr,amount])
   });
   const merkleTree1 = new MerkleTree(leafNodes, keccak256, { sortPairs: true });
   const root = merkleTree1.getHexRoot()
@@ -49,7 +52,7 @@ const main = async ()=>{
               now validating...
               `)
     for(const [addr, amount] of Object.entries(obj)) {
-      const key = solidityKeccak256(["address", "uint256"], [hexToBytes(addr),amount])
+      const key = solidityKeccak256(["address", "uint256"], [addr ,amount])
       const proof = merkleTree1.getProof(key)
       let verified = merkleTree1.verify(proof, key ,root)
       if(verified == false) {

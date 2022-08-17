@@ -32,7 +32,7 @@ let root1: string;
 let merkleTree1: MerkleTree;
 const initMerkle = async () => {
   const whitelist1 = {
-    '0xd37ca44e9c70bc155c0e7ab9c0cc4528f4734b96': '1528400833200000000000',
+    '0xd37ca44e9c70bc155c0e7ab9c0cc4528f4734b96': '1528400833198551000000',
     '0x71fa3775fe1ad35273eda0c1574a62fe597c358c': '27603239000000000000',
     '0xcfc50541c3deaf725ce738ef87ace2ad778ba0c5': '191838231962388000000000',
     '0xc16414ac1fedfdac4f8a09674d994e1bbb9d7113': '1325464117263954000000',
@@ -115,12 +115,12 @@ const initMerkle = async () => {
   let leafNodes = list.map((obj) =>
     solidityKeccak256(["address", "uint256"], [obj.minter, obj.amount])
   )
-  showBody("NODES: ", leafNodes)
+  //showBody("NODES: ", leafNodes)
   let merkleTree = new MerkleTree(leafNodes, keccak256, { sortPairs: true })
   let root = merkleTree.getHexRoot()
 
   showBody("ROOT: ", root)
- 
+
 };
 
 async function main() {
