@@ -55,16 +55,6 @@ const main = async () => {
   });
   await p.DeployAll();
 
-  ///
-  new CappedGovToken__factory(x).attach(
-    p.db.getData(".deploys.capped_matic_proxy")
-  ).initialize(
-  "Capped Matic", "cMATIC",
-  matic_token_address,
-  "0x4aae9823fb4c70490f1d802fc697f3fff8d5cbe3",
-  "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2",
-  ).catch(()=>{});
-
   // chainlink
   p.AddDeploy("new_chainlink", () => {
     return new ChainlinkOracleRelay__factory(x).deploy(
@@ -98,7 +88,7 @@ const main = async () => {
   const addOracle = await new OracleMaster__factory(x).
     attach("0xf4818813045e954f5dc55a40c9b60def0ba3d477")
   .populateTransaction.setRelay(
-    matic_token_address,
+    p.db.getData(".deploys.capped_matic_proxy"),
     p.db.getData(".deploys.new_anchored")
   )
   const listMatic = await  new VaultController__factory(x).
@@ -106,7 +96,7 @@ const main = async () => {
   populateTransaction.registerErc20(
     p.db.getData(".deploys.capped_matic_proxy"),
     BN("80e16"),
-    matic_token_address,
+    p.db.getData(".deploys.capped_matic_proxy"),
     BN("8e16")
   )
 

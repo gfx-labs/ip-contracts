@@ -13,23 +13,34 @@ import { BN } from "../../util/number";
 import Decimal from "decimal.js";
 import { BlockRounds } from "./q1_data";
 import { ethers } from "hardhat";
+import { writeFileSync } from "fs";
+import { sleep } from "../proposals/suite/proposal";
 
 dotenv.config();
 
 //const POLYGON_POOL = "0x203c05ACb6FC02F5fA31bd7bE371E7B213e59Ff7";
 const POOL = "0x63aac74200ba1737f81beeaeda64a539d9883922"
-const rpc_url = process.env.X;
+const rpc_url = process.env.ALCHEMY_API
 
 const main = async () => {
-  
-  //const cl = new AlchemyWebSocketProvider(1, rpc_url);
-  const cl = new ethers.providers.JsonRpcProvider(rpc_url)
+
+  const cl = new AlchemyWebSocketProvider(1, rpc_url);
+  //const cl = new ethers.providers.JsonRpcProvider(rpc_url)
   const tk = ERC20Detailed__factory.connect(POOL, cl);
   const blockEnd = 15346983;
   const blockStart = blockEnd - 1000;
 
-  const totalBalances = new Map<string, Decimal>();
-  let totalBalance = new Decimal(0);
+  let weekNum = 0
+  for(const week of BlockRounds.blockRanges) {
+    weekNum = weekNum + 1
+    if(weekNum == 1){
+      continue
+    }
+    const   blockStart = week.start
+    const   blockEnd = week.end
+    const totalBalances = new Map<string, Decimal>();
+    let totalBalance = new Decimal(0);
+
 
   console.log("SETUP")
 
@@ -49,70 +60,82 @@ const main = async () => {
     }
   });
   console.log("LOOPING")
+    console.log(blockStart, blockEnd)
+    let blocks = 0;
+    for (let b = (blockStart+30000); b <= blockEnd; b++) {
+      const addrCalls: CallContext[] = [];
+      const liabilityCalls: CallContext[] = [];
+      const addrCallContext: ContractCallContext[] = [];
+      blocks = blocks + 1;
+      for (let addr of addrs) {
+        addrCalls.push({
+          reference: addr,
+          methodName: "balanceOf",
+          methodParameters: [addr],
+        });
+      }
 
-  let blocks = 0;
-  for (let b = blockStart; b <= blockEnd; b++) {
-    const addrCalls: CallContext[] = [];
-    const liabilityCalls: CallContext[] = [];
-    const addrCallContext: ContractCallContext[] = [];
-    blocks = blocks + 1;
-    for (let addr of addrs) {
-      addrCalls.push({
-        reference: addr,
-        methodName: "balanceOf",
-        methodParameters: [addr],
+      let resp: any
+      try {
+        resp = await mc.call([
+          {
+            reference: "balance",
+            contractAddress: tk.address,
+            abi: ERC20Detailed__factory.abi,
+            calls: addrCalls,
+          },
+        ], {blockNumber: b.toString()});
+      }catch(e:any){
+        console.log("error",e,"SKIPPING BLOCK", b)
+        continue
+      }
+      const holderBal = resp.results.balance.callsReturnContext.map((x:any) => {
+        return {
+          holder: x.reference,
+          val: new Decimal(x.returnValues[0].hex),
+        };
       });
-    }
+      let totalBal = new Decimal(0);
+      holderBal.forEach((x:any) => {
+        totalBal = totalBal.add(x.val);
+      });
 
-    const resp = await mc.call([
-      {
-        reference: "balance",
-        contractAddress: tk.address,
-        abi: ERC20Detailed__factory.abi,
-        calls: addrCalls,
-      },
-    ]);
-    const holderBal = resp.results.balance.callsReturnContext.map((x) => {
+      holderBal.forEach((x:any) => {
+        if (!totalBalances.has(x.holder)) {
+          totalBalances.set(x.holder, new Decimal(0));
+        }
+        totalBalances.set(
+          x.holder,
+          totalBalances.get(x.holder)!.add(x.val.div(totalBal))
+        );
+        totalBalance = totalBalance.add(x.val);
+      });
+      console.log(`block ${b} done, ${blockEnd - b} to go`, totalBal.div(1e9).div(1e9));
+      console.log(totalBalances)
+    }
+    const totals = Array.from(totalBalances.entries()).map(([k, v]) => {
       return {
-        holder: x.reference,
-        val: new Decimal(x.returnValues[0].hex),
+        minter: k,
+        share: v.div(blocks),
       };
     });
-    let totalBal = new Decimal(0);
-    holderBal.forEach((x) => {
-      totalBal = totalBal.add(x.val);
-    });
-
-    holderBal.forEach((x) => {
-      if (!totalBalances.has(x.holder)) {
-        totalBalances.set(x.holder, new Decimal(0));
+    let treeJson =  totals
+    .filter((x) => {
+      return x.share.gt(0);
+    })
+    .map((v) => {
+      let extra = 1
+      if(weekNum == 1) {
+        extra = 7
       }
-      totalBalances.set(
-        x.holder,
-        totalBalances.get(x.holder)!.add(x.val.div(totalBal))
-      );
-      totalBalance = totalBalance.add(x.val);
-    });
-    console.log(`block ${b} done, ${blockEnd - b} to go`);
-  }
-  const totals = Array.from(totalBalances.entries()).map(([k, v]) => {
-    return {
-      minter: k,
-      share: v.div(blocks),
-    };
-  });
-  console.log(
-    totals
-      .filter((x) => {
-        return x.share.gt(0);
-      })
-      .map((v) => {
-        return {
-          minter: v.minter,
-          amount: v.share.mul(BlockRounds.rewardForBorrower),
-        };
-      })
-  );
+      return {
+        minter: v.minter,
+        amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
+      };
+    })
+    console.log(treeJson)
+    writeFileSync(`rewardtree/lps_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
+  };
 };
 
 main().then(console.log);
