@@ -96,10 +96,6 @@ describe("Liquidations", () => {
     before(async () => {
         borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
     })
-
-
-
-  
      it("Borrow max", async () => {
 
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)
