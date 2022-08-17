@@ -1,67 +1,35 @@
 import { VaultController__factory } from "../../typechain-types/factories/lending/VaultController__factory";
 import * as dotenv from "dotenv";
-import { AlchemyWebSocketProvider } from "@ethersproject/providers";
 import {
   Multicall,
-  ContractCallResults,
   ContractCallContext,
 } from "ethereum-multicall";
 import { CallContext } from "ethereum-multicall/dist/esm/models";
 import { Vault__factory } from "../../typechain-types";
-import { BigNumber } from "ethers";
-import { BN } from "../../util/number";
 import Decimal from "decimal.js";
 import { BlockRounds } from "./q1_data";
-import { showBody } from "../../util/format";
-import { ethers } from "hardhat";
 
-import { reset, mineBlock } from "../../util/block"
+import { writeFileSync } from "fs";
+import { sleep } from "../proposals/suite/proposal";
+import { AlchemyWebSocketProvider } from "@ethersproject/providers";
 dotenv.config();
 
-const rpc_url = process.env.MAINNET_URL;
+//const rpc_url = process.env.ALCHEMY_API
 
+const rpc_url = "lKYDN6KsCKFgktSpMnFiVyx6oxVEoyX3"
 const main = async () => {
 
-  if (ethers.provider.connection.url == 'http://localhost:8545') {
-    //reset to current block, otherwise default block from hardhat config is used, and VC does not exist yet
-    //ONLY FOR TESTING
-    await reset(15323286)
-    await mineBlock()
-  }
 
-  const accounts = await ethers.getSigners();
-  const deployer = accounts[0];
-
-  //const cl = new AlchemyWebSocketProvider(1, rpc_url );
-  const cl = new ethers.providers.JsonRpcProvider(rpc_url)
+  const cl = new AlchemyWebSocketProvider(1, rpc_url );
+ // const cl = new ethers.providers.JsonRpcProvider(rpc_url)
 
   const vc = VaultController__factory.connect(
     "0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3",
-    deployer
+    cl
   );
-  const blockEnd = 15328790;
-  const blockStart = blockEnd - 10000;
-
-  const totalLiabilities = new Map<string, Decimal>();
-  let totalLiability = new Decimal(0);
-
-  const vaultCount = await vc._vaultsMinted();
-
-  const mc = new Multicall({ ethersProvider: cl });
-
-  console.log("LOOPING")
-
-  let blocks = 0;
-  for (let b = blockStart; b <= blockEnd; b++) {
+   const mc = new Multicall({ ethersProvider: cl });
+    const vaultCount = await vc._vaultsMinted();
     const addrCalls: CallContext[] = [];
-    const liabilityCalls: CallContext[] = [];
-    for (let i = 1; i <= vaultCount.toNumber(); i++) {
-      liabilityCalls.push({
-        reference: i.toString(),
-        methodName: "vaultLiability",
-        methodParameters: [i],
-      });
-    }
     for (let i = 1; i <= vaultCount.toNumber(); i++) {
       addrCalls.push({
         reference: i.toString(),
@@ -69,13 +37,8 @@ const main = async () => {
         methodParameters: [i],
       });
     }
-    const idCallContext: ContractCallContext[] = [
-      {
-        reference: "lib",
-        contractAddress: vc.address,
-        abi: VaultController__factory.abi,
-        calls: liabilityCalls,
-      },
+
+     const idCallContext: ContractCallContext[] = [
       {
         reference: "address",
         contractAddress: vc.address,
@@ -83,13 +46,12 @@ const main = async () => {
         calls: addrCalls,
       },
     ];
+
     const ans = await mc.call(idCallContext);
-    const vals = ans.results.lib.callsReturnContext.map((x) => {
-      return new Decimal(x.returnValues[0].hex).div(1e12);
-    });
     const addrs = ans.results.address.callsReturnContext.map(
       (x) => x.returnValues[0]
     );
+
     const addrCallContext: ContractCallContext[] = [];
     for (let addr of addrs) {
       addrCallContext.push({
@@ -111,45 +73,73 @@ const main = async () => {
     ).map(([k, v]) => {
       return v.callsReturnContext[0].returnValues[0];
     });
+    console.log(minters)
 
-    let totalMinted = new Decimal(0);
-    addrs.forEach((v, i) => {
-      let val = vals[i];
-      totalMinted = totalMinted.add(val);
-    });
 
-    addrs.forEach((v, i) => {
-      let minter = minters[i];
-      let val = vals[i];
-      if (!totalLiabilities.has(minter)) {
-        totalLiabilities.set(minter, new Decimal(0));
+  let weekNum = 0
+  for(const week of BlockRounds.blockRanges) {
+    weekNum = weekNum + 1
+    const    blockStart = week.start
+    const   blockEnd = week.end
+    const totalLiabilities = new Map<string, Decimal>();
+
+    console.log("LOOPING")
+
+    let blocks = 0;
+    for (let b = blockStart; b <= blockEnd; b++) {
+      let summaries;
+      try{
+      const vaultCount = await vc._vaultsMinted({blockTag: b});
+      summaries = await vc.vaultSummaries(1, vaultCount, {blockTag: b})
+      }catch(e){
+        console.log("ERROR ON BLOCK", b)
+        continue
       }
-      totalLiabilities.set(
-        minter,
-        totalLiabilities.get(minter)!.add(val.div(totalMinted))
-      );
+      let totalMinted = new Decimal(0);
+      summaries.forEach((v) => {
+        let val = new Decimal(v.vaultLiability.toString());
+        totalMinted = totalMinted.add(val);
+      });
+      summaries.forEach((v, idx) => {
+        let minter = minters[idx];
+        let val = new Decimal(v.vaultLiability.toString());
+        if (!totalLiabilities.has(minter)) {
+          totalLiabilities.set(minter, new Decimal(0));
+        }
+        totalLiabilities.set(
+          minter,
+          totalLiabilities.get(minter)!.add(val.div(totalMinted))
+        );
+      });
+      blocks = blocks + 1;
+      console.log(`block ${b} done, ${blockEnd - b} to go`, totalMinted.div(1e9).div(1e9));
+      console.log(totalLiabilities)
+    }
+    const totals = Array.from(totalLiabilities.entries()).map(([k, v]) => {
+      return {
+        minter: k,
+        share: v.div(blocks),
+      };
     });
-    blocks = blocks + 1;
-    console.log(`block ${b} done, ${blockEnd - b} to go`);
-  }
-  const totals = Array.from(totalLiabilities.entries()).map(([k, v]) => {
-    return {
-      minter: k,
-      share: v.div(blocks),
-    };
-  });
-  console.log(
-    totals
-      .filter((x) => {
-        return x.share.gt(0);
-      })
-      .map((v) => {
-        return {
-          minter: v.minter,
-          amount: v.share.mul(BlockRounds.rewardForLM),
-        };
-      })
-  );
-};
+    let treeJson =  totals
+    .filter((x) => {
+      return x.share.gt(0);
+    })
+    .map((v) => {
+      let extra = 1
+      if(weekNum == 1) {
+        extra = 7
+      }
+      return {
+        minter: v.minter,
+        amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
+      };
+    })
+    console.log("done with block range", blockStart, blockEnd)
+    console.log(treeJson)
+    writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
+  };
+  // all done
+}
 
 main().then(console.log);
