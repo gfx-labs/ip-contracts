@@ -198,15 +198,20 @@ describe("Merkle Redeem", () => {
 
             let balance = await s.IPT.balanceOf(minter)
             expect(await toNumber(balance.sub(startingIPT))).to.eq(await toNumber(BN(claim)))
-
-
         }
-
-
-
     })
 
     it("Check end state", async () => {
+
+        //start from 0 this time, check everyont
+        for (let i = 0; i < s.mergedList.length; i++) {
+
+            let minter = s.mergedList[i].minter
+
+            let status = await s.MerkleRedeem.claimStatus(minter, week, week)
+            expect(status[0]).to.eq(true, `${minter} has claimed`)
+
+        }
 
         let balance = await s.IPT.balanceOf(s.MerkleRedeem.address)
         expect(balance).to.eq(0, "All redemptions done, remaining IPT is exactly 0, calculations correct")
