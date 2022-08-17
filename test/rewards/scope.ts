@@ -6,6 +6,7 @@ import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 import { minter } from "../../util/math"
 import { uniMinters, borrowerMinters } from "./data"
+import MerkleTree from "merkletreejs";
 
 export class TestScope extends MainnetAddresses {
 
@@ -13,6 +14,9 @@ export class TestScope extends MainnetAddresses {
     borrowList = Array.from(borrowerMinters)
     
     mergedList: minter[] = []
+
+    MERKLE_TREE!: MerkleTree
+    ROOT!: string
 
     USDI!: USDI;
     USDC!: IERC20;
