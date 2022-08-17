@@ -216,11 +216,9 @@ describe("Liquidations", () => {
         const startSupply = await s.cIPT.totalSupply()
         //expect(startSupply).to.eq(borrowAmount.mul(2).add(69), "Starting supply unchanged")
 
-
         await s.USDC.connect(s.Dave).approve(s.USDI.address, await s.USDC.balanceOf(s.Dave.address))
         await s.USDI.connect(s.Dave).deposit(await s.USDC.balanceOf(s.Dave.address))
         await mineBlock()
-
       
         const startingUSDI = await s.USDI.balanceOf(s.Dave.address)
         expect(startingUSDI).to.eq(s.Dave_USDC.mul(BN("1e12")))

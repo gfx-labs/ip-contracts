@@ -28,7 +28,6 @@ const main = async () => {
   //const cl = new ethers.providers.JsonRpcProvider(rpc_url)
   const tk = ERC20Detailed__factory.connect(POOL, cl);
 
-
   let weekNum = 0
   for(const week of BlockRounds.blockRanges) {
     weekNum = weekNum + 1

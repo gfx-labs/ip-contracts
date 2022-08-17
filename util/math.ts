@@ -12,7 +12,7 @@ import { IVault } from "../typechain-types";
  * @param interestFactor  - current interest factor read from contract
  * @returns new interest factor based on time elapsed and reserve ratio (read from contract atm)
  */
- export const payInterestMath = async (interestFactor: BigNumber) => {
+export const payInterestMath = async (interestFactor: BigNumber) => {
     const nullAddr = "0x0000000000000000000000000000000000000000"
 
     /**
@@ -53,7 +53,7 @@ import { IVault } from "../typechain-types";
  * @param user whose balance to calculate interest on? 
  * @returns expected balance after pay_interest()
  */
- export const calculateBalance = async (interestFactor: BigNumber, user: SignerWithAddress) => {
+export const calculateBalance = async (interestFactor: BigNumber, user: SignerWithAddress) => {
     const totalBaseLiability = await s.VaultController.totalBaseLiability()
     const protocolFee = await s.VaultController.protocolFee()
 
@@ -88,7 +88,7 @@ import { IVault } from "../typechain-types";
  * @param user starting amount
  * @returns expected amount after interest is paid
  */
- export const changeInBalance = async (interestFactor: BigNumber, amount: BigNumber) => {
+export const changeInBalance = async (interestFactor: BigNumber, amount: BigNumber) => {
     const totalBaseLiability = await s.VaultController.totalBaseLiability()
     const protocolFee = await s.VaultController.protocolFee()
 
@@ -121,7 +121,7 @@ import { IVault } from "../typechain-types";
 /**
  * @note - need calculatedLiability - the liability at the time of liquidation (after interest is paid and before liquidation is finished)
  */
- export const calculatetokensToLiquidate = async (vault: IVault, asset: string, t2l: BigNumber, calculatedLiability:BigNumber) => {
+export const calculatetokensToLiquidate = async (vault: IVault, asset: string, t2l: BigNumber, calculatedLiability: BigNumber) => {
     //get price from oracle
     const rawPrice = await s.Oracle.getLivePrice(asset)
 
@@ -144,14 +144,14 @@ import { IVault } from "../typechain-types";
         t2l = max_tokens
     }
     let tokenBalance = await vault.tokenBalance(asset)
-    if(t2l > tokenBalance){
+    if (t2l > tokenBalance) {
         t2l = tokenBalance
     }
 
     return t2l
 }
 
-export const calculateUSDI2repurchase = async(asset: string, tokens2liquidate:BigNumber) => {
+export const calculateUSDI2repurchase = async (asset: string, tokens2liquidate: BigNumber) => {
     const rawPrice = await s.Oracle.getLivePrice(asset)
 
     const badFillPrice = await truncate(rawPrice.mul((BN("1e18").sub(s.LiquidationIncentive))))
@@ -171,7 +171,7 @@ export const calculateUSDI2repurchase = async(asset: string, tokens2liquidate:Bi
  * @param initialInterestFactor original interest factor from when borrow took place
  * @returns 
  */
- export const calculateAccountLiability = async (borrowAmount: BigNumber, currentInterestFactor: BigNumber, initialInterestFactor: BigNumber) => {
+export const calculateAccountLiability = async (borrowAmount: BigNumber, currentInterestFactor: BigNumber, initialInterestFactor: BigNumber) => {
 
     let baseAmount = borrowAmount.mul(BN("1e18"))
     baseAmount = baseAmount.div(initialInterestFactor)
@@ -214,6 +214,48 @@ export const getArgs = async (result: any) => {
 }
 
 
-export const toNumber = async (bigboi:BigNumber) => {
+export const toNumber = async (bigboi: BigNumber) => {
     return Number(utils.formatEther(bigboi.toString()))
+}
+
+export type minter = {
+    minter: string
+    amount: number
+}
+
+/**
+ * expected merge length should be: 
+ * borrowerList + uniList - dupes
+ * 29 + 18 - 8 = 39
+ */
+export const mergeLists = async (borrowList: minter[], uniList: minter[]) => {
+
+
+    let merged: minter[] = []
+    merged = borrowList
+
+    let dupes: any[] = []
+
+    for (let i = 0; i < merged.length; i++) {
+        for (let j = 0; j < uniList.length; j++) {
+            if (uniList[j].minter == merged[i].minter) {
+                merged[i].amount += uniList[j].amount
+                //showBodyCyan("Merged: ", merged[i])
+                dupes.push(uniList[j])
+            }
+        }
+    }
+    for (let i = 0; i < uniList.length; i++) {
+        let dupe = false
+        for (let j = 0; j < dupes.length; j++) {
+            if (uniList[i] == dupes[j]) {
+                dupe = true
+            }
+        }
+        if (!dupe) {
+            merged.push(uniList[i])
+        }
+    }
+    return merged
+
 }

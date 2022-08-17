@@ -126,14 +126,16 @@ describe("Liquidations", () => {
     })
 
     it("Elapse time to put vault underwater", async () => {
+        let solvency = await s.VaultController.checkVault(s.BobVaultID)
+        expect(solvency).to.eq(true, "Bob's vault is not yet underwater")
 
         await fastForward(OneWeek)
         await mineBlock()
         await s.VaultController.calculateInterest()
         await mineBlock()
 
-        const solvency = await s.VaultController.checkVault(s.BobVaultID)
-        expect(solvency).to.eq(false, "Bob's vault is now underwater")
+        solvency = await s.VaultController.checkVault(s.BobVaultID)
+        expect(solvency).to.eq(false, "Bob's vault is underwater")
 
     })
 
@@ -164,7 +166,7 @@ describe("Liquidations", () => {
         expect(price).to.be.gt(0, "Valid price")
 
         const liquidationValue = (price.mul(tokensToLiquidate)).div(BN("1e18"))
-
+        
         const startSupply = await s.CappedMatic.totalSupply()
         //expect(startSupply).to.eq(borrowAmount.mul(2).add(69), "Starting supply unchanged")
 

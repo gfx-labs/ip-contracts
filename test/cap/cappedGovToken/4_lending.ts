@@ -46,6 +46,9 @@ describe("Check starting values", () => {
         let totalValue = (balance.mul(price)).div(BN("1e18"))
         let expectedBorrowPower = (totalValue.mul(s.UNI_LTV)).div(BN("1e18"))
 
+        showBody("Total Value: ", await toNumber(totalValue))
+        showBody("Borrow Power: ", await toNumber(borrowPower))
+
         expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 0.0001, "Borrow power is correct")
     })
 })
