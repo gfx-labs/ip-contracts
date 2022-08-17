@@ -19,7 +19,7 @@ contract MerkleRedeem is Ownable {
 
     constructor(
         address _token
-    ) public {
+    ) {
         token = IERC20(_token);
     }
 
