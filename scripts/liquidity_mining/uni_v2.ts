@@ -27,6 +27,8 @@ const main = async () => {
   const cl = new AlchemyWebSocketProvider(1, rpc_url);
   //const cl = new ethers.providers.JsonRpcProvider(rpc_url)
   const tk = ERC20Detailed__factory.connect(POOL, cl);
+  const blockEnd = 15346983;
+  const blockStart = blockEnd - 1000;
 
   let weekNum = 0
   for(const week of BlockRounds.blockRanges) {
@@ -39,22 +41,25 @@ const main = async () => {
     const totalBalances = new Map<string, Decimal>();
     let totalBalance = new Decimal(0);
 
-    const addrs: string[] = ["0x50818e936aB61377A18bCAEc0f1C32cA27E38923"];
-    const mc = new Multicall({ ethersProvider: cl });
-    (
-      await tk.queryFilter(
-        tk.filters["Transfer(address,address,uint256)"](
-          undefined,
-          undefined,
-          undefined
-        )
-      )
-    ).map((x) => {
-      if (!addrs.includes(x.args[1])) {
-        addrs.push(x.args[1]);
-      }
-    });
 
+  console.log("SETUP")
+
+  const addrs: string[] = ["0x50818e936aB61377A18bCAEc0f1C32cA27E38923"];
+  const mc = new Multicall({ ethersProvider: cl });
+  (
+    await tk.queryFilter(
+      tk.filters["Transfer(address,address,uint256)"](
+        undefined,
+        undefined,
+        undefined
+      )
+    )
+  ).map((x) => {
+    if (!addrs.includes(x.args[1])) {
+      addrs.push(x.args[1]);
+    }
+  });
+  console.log("LOOPING")
     console.log(blockStart, blockEnd)
     let blocks = 0;
     for (let b = (blockStart+30000); b <= blockEnd; b++) {

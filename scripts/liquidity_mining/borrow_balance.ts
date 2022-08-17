@@ -21,7 +21,7 @@ const main = async () => {
 
 
   const cl = new AlchemyWebSocketProvider(1, rpc_url );
- // const cl = new ethers.providers.JsonRpcProvider(rpc_url)
+  // const cl = new ethers.providers.JsonRpcProvider(rpc_url)
 
   const vc = VaultController__factory.connect(
     "0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3",
@@ -37,7 +37,6 @@ const main = async () => {
   const vaultCount = await vc._vaultsMinted();
 
   const mc = new Multicall({ ethersProvider: cl });
-
   let blocks = 0;
   for (let b = blockStart; b <= blockEnd; b++) {
     const addrCalls: CallContext[] = [];
@@ -49,7 +48,7 @@ const main = async () => {
       });
     }
 
-     const idCallContext: ContractCallContext[] = [
+    const idCallContext: ContractCallContext[] = [
       {
         reference: "address",
         contractAddress: vc.address,
@@ -87,69 +86,70 @@ const main = async () => {
     console.log(minters)
 
 
-  let weekNum = 0
-  for(const week of BlockRounds.blockRanges) {
-    weekNum = weekNum + 1
-    const    blockStart = week.start
-    const   blockEnd = week.end
-    const totalLiabilities = new Map<string, Decimal>();
+    let weekNum = 0
+    for(const week of BlockRounds.blockRanges) {
+      weekNum = weekNum + 1
+      const    blockStart = week.start
+      const   blockEnd = week.end
+      const totalLiabilities = new Map<string, Decimal>();
 
-    console.log("LOOPING")
+      console.log("LOOPING")
 
-    let blocks = 0;
-    for (let b = blockStart; b <= blockEnd; b++) {
-      let summaries;
-      try{
-      const vaultCount = await vc._vaultsMinted({blockTag: b});
-      summaries = await vc.vaultSummaries(1, vaultCount, {blockTag: b})
-      }catch(e){
-        console.log("ERROR ON BLOCK", b)
-        continue
-      }
-      let totalMinted = new Decimal(0);
-      summaries.forEach((v) => {
-        let val = new Decimal(v.vaultLiability.toString());
-        totalMinted = totalMinted.add(val);
-      });
-      summaries.forEach((v, idx) => {
-        let minter = minters[idx];
-        let val = new Decimal(v.vaultLiability.toString());
-        if (!totalLiabilities.has(minter)) {
-          totalLiabilities.set(minter, new Decimal(0));
+      let blocks = 0;
+      for (let b = blockStart; b <= blockEnd; b++) {
+        let summaries;
+        try{
+          const vaultCount = await vc._vaultsMinted({blockTag: b});
+          summaries = await vc.vaultSummaries(1, vaultCount, {blockTag: b})
+        }catch(e){
+          console.log("ERROR ON BLOCK", b)
+          continue
         }
-        totalLiabilities.set(
-          minter,
-          totalLiabilities.get(minter)!.add(val.div(totalMinted))
-        );
-      });
-      blocks = blocks + 1;
-      console.log(`block ${b} done, ${blockEnd - b} to go`, totalMinted.div(1e9).div(1e9));
-      console.log(totalLiabilities)
-    }
-    const totals = Array.from(totalLiabilities.entries()).map(([k, v]) => {
-      return {
-        minter: k,
-        share: v.div(blocks),
-      };
-    });
-    let treeJson =  totals
-    .filter((x) => {
-      return x.share.gt(0);
-    })
-    .map((v) => {
-      let extra = 1
-      if(weekNum == 1) {
-        extra = 7
+        let totalMinted = new Decimal(0);
+        summaries.forEach((v) => {
+          let val = new Decimal(v.vaultLiability.toString());
+          totalMinted = totalMinted.add(val);
+        });
+        summaries.forEach((v, idx) => {
+          let minter = minters[idx];
+          let val = new Decimal(v.vaultLiability.toString());
+          if (!totalLiabilities.has(minter)) {
+            totalLiabilities.set(minter, new Decimal(0));
+          }
+          totalLiabilities.set(
+            minter,
+            totalLiabilities.get(minter)!.add(val.div(totalMinted))
+          );
+        });
+        blocks = blocks + 1;
+        console.log(`block ${b} done, ${blockEnd - b} to go`, totalMinted.div(1e9).div(1e9));
+        console.log(totalLiabilities)
       }
-      return {
-        minter: v.minter,
-        amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
-      };
-    })
-    console.log("done with block range", blockStart, blockEnd)
-    console.log(treeJson)
-    writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
-  };
+      const totals = Array.from(totalLiabilities.entries()).map(([k, v]) => {
+        return {
+          minter: k,
+          share: v.div(blocks),
+        };
+      });
+      let treeJson =  totals
+      .filter((x) => {
+        return x.share.gt(0);
+      })
+      .map((v) => {
+        let extra = 1
+        if(weekNum == 1) {
+          extra = 7
+        }
+        return {
+          minter: v.minter,
+          amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
+        };
+      })
+      console.log("done with block range", blockStart, blockEnd)
+      console.log(treeJson)
+      writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
+    };
+  }
   // all done
 }
 
