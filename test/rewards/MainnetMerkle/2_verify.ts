@@ -39,8 +39,8 @@ describe("Merkle Redeem", () => {
     const week = 7
 
     before(async () => {
-        LP1 = s.mergedList[1]
-        LP2 = s.mergedList[2]
+        LP1 = s.mergedList[0]
+        LP2 = s.mergedList[1]
 
         claim1 = BN(LP1.amount)
         claim2 = BN(LP2.amount)
@@ -78,7 +78,7 @@ describe("Merkle Redeem", () => {
 
         await impersonateAccount(s.DEPLOYER._address)
         s.mergedList.map((obj) =>
-            total = total.add(obj.amount)
+            total = total.add(BN(obj.amount))
         )
         await s.IPT.connect(s.DEPLOYER).approve(s.MerkleRedeem.address, total)
         await s.MerkleRedeem.connect(s.DEPLOYER).seedAllocations(
@@ -151,4 +151,68 @@ describe("Merkle Redeem", () => {
         expect(await toNumber(balance.sub(startingIPT))).to.eq(await toNumber(BN(LP2.amount)))
 
     })
+
+    it("Check all verifications", async () => {
+
+        //start from 2 since LP1 and LP2 claimed already above
+        for (let i = 2; i < s.mergedList.length; i++) {
+
+
+            let claim = BN(s.mergedList[i].amount)
+            let minter = s.mergedList[i].minter
+
+            let leaf = solidityKeccak256(["address", "uint256"], [minter, claim])
+            let proof = s.MERKLE_TREE.getHexProof(leaf)
+
+            let result = await s.MerkleRedeem.verifyClaim(minter, week, claim, proof)
+            expect(result).to.eq(true, `${minter} verified`)
+
+
+            let status = await s.MerkleRedeem.claimStatus(minter, week, week)
+            expect(status[0]).to.eq(false, `${minter} has not claimed`)
+
+        }
+    })
+
+
+    it("Everyone else redeems", async () => {
+        let balance = await s.IPT.balanceOf(s.MerkleRedeem.address)
+        expect(balance).to.be.gt(0, "MerkleRedeem still holds IPT, sanity check")
+    
+
+        showBodyCyan("Redeeming...")
+        //start from 2 since LP1 and LP2 claimed already above
+        for (let i = 2; i < s.mergedList.length; i++) {
+            let claim = BN(s.mergedList[i].amount)
+            let minter = s.mergedList[i].minter
+
+            let leaf = solidityKeccak256(["address", "uint256"], [minter, claim])
+            let proof = s.MERKLE_TREE.getHexProof(leaf)
+
+            const startingIPT = await s.IPT.balanceOf(minter)
+
+            const result = await s.MerkleRedeem.claimWeek(minter, week, claim, proof)
+            await mineBlock()
+            //const gas = await getGas(result)
+            //showBodyCyan("Gas to claimWeek: ", gas)
+
+            let balance = await s.IPT.balanceOf(minter)
+            expect(await toNumber(balance.sub(startingIPT))).to.eq(await toNumber(BN(claim)))
+
+
+        }
+
+
+
+    })
+
+    it("Check end state", async () => {
+
+        let balance = await s.IPT.balanceOf(s.MerkleRedeem.address)
+        expect(balance).to.eq(0, "All redemptions done, remaining IPT is exactly 0, calculations correct")
+
+    })
+
+
 })
+
