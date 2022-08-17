@@ -3,7 +3,6 @@ import { BigNumber } from "ethers";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { readFileSync } from "fs";
 import MerkleTree from "merkletreejs";
-import { BN } from "../../util/number";
 
 
 
@@ -29,6 +28,9 @@ const main = async ()=>{
     }
     obj[splt[0]] = obj[splt[0]].add(new Decimal(splt[1]).mul(new Decimal(10).pow(18)).toHex())
   }
+  for(const k of Object.keys(obj)) {
+    obj[k] = obj[k].toString()
+  }
   let leafNodes = Object.entries(obj).map(([addr, amount]:[string, any]) =>{
     addr = addr.replaceAll("0x","")
     return solidityKeccak256(["address", "uint256"], [hexToBytes(addr),amount])
@@ -51,7 +53,7 @@ const main = async ()=>{
       const proof = merkleTree1.getProof(key)
       let verified = merkleTree1.verify(proof, key ,root)
       if(verified == false) {
-        console.log("failed validation for", addr, (amount as any).toString())
+        console.log("failed validation for", addr, amount)
       }
     }
     console.log("validation done. If no failures, then passed")
