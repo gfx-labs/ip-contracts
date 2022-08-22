@@ -20,7 +20,7 @@ const rpc_url = "lKYDN6KsCKFgktSpMnFiVyx6oxVEoyX3"
 const main = async () => {
 
 
-  const cl = new AlchemyWebSocketProvider(1, rpc_url );
+  const cl = new AlchemyWebSocketProvider(1, rpc_url);
   // const cl = new ethers.providers.JsonRpcProvider(rpc_url)
 
   const vc = VaultController__factory.connect(
@@ -83,14 +83,14 @@ const main = async () => {
     ).map(([k, v]) => {
       return v.callsReturnContext[0].returnValues[0];
     });
-    console.log(minters)
+    //console.log(minters)
 
 
-    let weekNum = 0
-    for(const week of BlockRounds.blockRanges) {
-      weekNum = weekNum + 1
-      const    blockStart = week.start
-      const   blockEnd = week.end
+    const weekNum = 1
+    for (const week of [BlockRounds.blockRanges[weekNum]]) {
+      //weekNum = weekNum + 1
+      const blockStart = week.start
+      const blockEnd = week.end
       const totalLiabilities = new Map<string, Decimal>();
 
       console.log("LOOPING")
@@ -98,10 +98,10 @@ const main = async () => {
       let blocks = 0;
       for (let b = blockStart; b <= blockEnd; b++) {
         let summaries;
-        try{
-          const vaultCount = await vc._vaultsMinted({blockTag: b});
-          summaries = await vc.vaultSummaries(1, vaultCount, {blockTag: b})
-        }catch(e){
+        try {
+          const vaultCount = await vc._vaultsMinted({ blockTag: b });
+          summaries = await vc.vaultSummaries(1, vaultCount, { blockTag: b })
+        } catch (e) {
           console.log("ERROR ON BLOCK", b)
           continue
         }
@@ -123,7 +123,7 @@ const main = async () => {
         });
         blocks = blocks + 1;
         console.log(`block ${b} done, ${blockEnd - b} to go`, totalMinted.div(1e9).div(1e9));
-        console.log(totalLiabilities)
+        //console.log(totalLiabilities)
       }
       const totals = Array.from(totalLiabilities.entries()).map(([k, v]) => {
         return {
@@ -131,22 +131,22 @@ const main = async () => {
           share: v.div(blocks),
         };
       });
-      let treeJson =  totals
-      .filter((x) => {
-        return x.share.gt(0);
-      })
-      .map((v) => {
-        let extra = 1
-        if(weekNum == 1) {
-          extra = 7
-        }
-        return {
-          minter: v.minter,
-          amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
-        };
-      })
-      console.log("done with block range", blockStart, blockEnd)
-      console.log(treeJson)
+      let treeJson = totals
+        .filter((x) => {
+          return x.share.gt(0);
+        })
+        .map((v) => {
+          let extra = 1
+          if (weekNum == 1) {
+            extra = 7
+          }
+          return {
+            minter: v.minter,
+            amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
+          };
+        })
+      //console.log("done with block range", blockStart, blockEnd)
+      //console.log(treeJson)
       writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
     };
   }

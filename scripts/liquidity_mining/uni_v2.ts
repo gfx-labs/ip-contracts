@@ -30,39 +30,35 @@ const main = async () => {
   const blockEnd = 15346983;
   const blockStart = blockEnd - 1000;
 
-  let weekNum = 0
-  for(const week of BlockRounds.blockRanges) {
-    weekNum = weekNum + 1
-    if(weekNum == 1){
-      continue
-    }
-    const   blockStart = week.start
-    const   blockEnd = week.end
+  const weekNum = 1
+  for (const week of [BlockRounds.blockRanges[weekNum]]) {
+    const blockStart = week.start
+    const blockEnd = week.end
     const totalBalances = new Map<string, Decimal>();
     let totalBalance = new Decimal(0);
 
 
-  console.log("SETUP")
+    console.log("SETUP")
 
-  const addrs: string[] = ["0x50818e936aB61377A18bCAEc0f1C32cA27E38923"];
-  const mc = new Multicall({ ethersProvider: cl });
-  (
-    await tk.queryFilter(
-      tk.filters["Transfer(address,address,uint256)"](
-        undefined,
-        undefined,
-        undefined
+    const addrs: string[] = ["0x50818e936aB61377A18bCAEc0f1C32cA27E38923"];
+    const mc = new Multicall({ ethersProvider: cl });
+    (
+      await tk.queryFilter(
+        tk.filters["Transfer(address,address,uint256)"](
+          undefined,
+          undefined,
+          undefined
+        )
       )
-    )
-  ).map((x) => {
-    if (!addrs.includes(x.args[1])) {
-      addrs.push(x.args[1]);
-    }
-  });
-  console.log("LOOPING")
-    console.log(blockStart, blockEnd)
+    ).map((x) => {
+      if (!addrs.includes(x.args[1])) {
+        addrs.push(x.args[1]);
+      }
+    });
+    console.log("LOOPING")
+    //console.log(blockStart, blockEnd)
     let blocks = 0;
-    for (let b = (blockStart+30000); b <= blockEnd; b++) {
+    for (let b = (blockStart + 30000); b <= blockEnd; b++) {
       const addrCalls: CallContext[] = [];
       const liabilityCalls: CallContext[] = [];
       const addrCallContext: ContractCallContext[] = [];
@@ -84,23 +80,23 @@ const main = async () => {
             abi: ERC20Detailed__factory.abi,
             calls: addrCalls,
           },
-        ], {blockNumber: b.toString()});
-      }catch(e:any){
-        console.log("error",e,"SKIPPING BLOCK", b)
+        ]);
+      } catch (e: any) {
+        console.log("error", e, "SKIPPING BLOCK", b)
         continue
       }
-      const holderBal = resp.results.balance.callsReturnContext.map((x:any) => {
+      const holderBal = resp.results.balance.callsReturnContext.map((x: any) => {
         return {
           holder: x.reference,
           val: new Decimal(x.returnValues[0].hex),
         };
       });
       let totalBal = new Decimal(0);
-      holderBal.forEach((x:any) => {
+      holderBal.forEach((x: any) => {
         totalBal = totalBal.add(x.val);
       });
 
-      holderBal.forEach((x:any) => {
+      holderBal.forEach((x: any) => {
         if (!totalBalances.has(x.holder)) {
           totalBalances.set(x.holder, new Decimal(0));
         }
@@ -111,7 +107,7 @@ const main = async () => {
         totalBalance = totalBalance.add(x.val);
       });
       console.log(`block ${b} done, ${blockEnd - b} to go`, totalBal.div(1e9).div(1e9));
-      console.log(totalBalances)
+      //console.log(totalBalances)
     }
     const totals = Array.from(totalBalances.entries()).map(([k, v]) => {
       return {
@@ -119,21 +115,19 @@ const main = async () => {
         share: v.div(blocks),
       };
     });
-    let treeJson =  totals
-    .filter((x) => {
-      return x.share.gt(0);
-    })
-    .map((v) => {
-      let extra = 1
-      if(weekNum == 1) {
-        extra = 7
-      }
-      return {
-        minter: v.minter,
-        amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
-      };
-    })
-    console.log(treeJson)
+    let treeJson = totals
+      .filter((x) => {
+        return x.share.gt(0);
+      })
+      .map((v) => {
+        let extra = 1
+        
+        return {
+          minter: v.minter,
+          amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
+        };
+      })
+    //console.log(treeJson)
     writeFileSync(`rewardtree/lps_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
   };
 };

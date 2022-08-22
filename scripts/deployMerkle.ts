@@ -23,7 +23,7 @@ const { ethers, network, upgrades } = require("hardhat");
 async function main() {
 
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await network.provider.send("evm_setAutomine", [true])
+    //await network.provider.send("evm_setAutomine", [true])
 
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
