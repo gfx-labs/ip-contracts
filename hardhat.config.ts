@@ -124,7 +124,8 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      mainnet: "6I23UXVXWXB4RM8QTDWKSVIWZF7V1ZDMNU",
+      mainnet: process.env.API_KEY!,//"6I23UXVXWXB4RM8QTDWKSVIWZF7V1ZDMNU",
+      ropsten: process.env.API_KEY!,
       polygon: process.env.ETHERSCAN_POLYGON_KEY!,
     },
   },

@@ -18,21 +18,26 @@ import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { showBody } from "../util/format";
 import { reset, currentBlock } from "../util/block"
 import { stealMoney } from "../util/money"
+import exp from "constants";
+import { expect } from "chai";
 
 const { ethers, network, upgrades } = require("hardhat");
 
 async function main() {
 
 
-    await reset(15367344)
     const accounts = await ethers.getSigners();
 
     const deployer = accounts[0];
 
-    const net = ethers.provider.connection.url
-    if (net == "http://localhost:8545") {
-        await network.provider.send("evm_setAutomine", [true])
+    const net = ethers.provider._network
 
+    console.log("net", net)
+
+    if (net == 31337) {
+        console.log("NETWORK: LOCAL")
+        await reset(15367344)
+        await network.provider.send("evm_setAutomine", [true])
     }
 
     /**
@@ -55,27 +60,52 @@ async function main() {
     }
      */
 
-    const contractAddr = "0xfE1cb3221f13A9c2AA67D29a2b7198e59de2F3b2"
 
-    const relay = UniswapV3OracleRelay__factory.connect(contractAddr, deployer)
+    const expected = {
+        Lookback: 14400,
+        Pool: "0x07A6E955bA4345BAe83Ac2A6fAa771fddd8A2011",
+        quote_token_is_token0: false,
+        mul: 1000000000000,
+        div: 1
+    }
 
-    console.log("Reading Original Params")
-    const lookback = await relay._lookback()
-    console.log("Lookback: ", lookback)
-    const Pool = await relay._pool()
-    console.log("Pool: ", Pool)
-    const quote_token_is_token0 = await relay._quoteTokenIsToken0()
-    console.log("quote_token_is_token0: ", quote_token_is_token0)
-    const mul = await relay._mul()
-    console.log("mul: ", mul.toNumber())
-    const div = await relay._div()
-    console.log("div: ", div.toNumber())
+    if (network == 1 || network == 31337) {
+        const contractAddr = "0xfE1cb3221f13A9c2AA67D29a2b7198e59de2F3b2"
+
+        const relay = UniswapV3OracleRelay__factory.connect(contractAddr, deployer)
+
+        console.log("Reading Original Params")
+        const lookback = await relay._lookback()
+        console.log("Lookback: ", lookback)
+        const Pool = await relay._pool()
+        console.log("Pool: ", Pool)
+        const quote_token_is_token0 = await relay._quoteTokenIsToken0()
+        console.log("quote_token_is_token0: ", quote_token_is_token0)
+        const mul = await relay._mul()
+        console.log("mul: ", mul.toNumber())
+        const div = await relay._div()
+        console.log("div: ", div.toNumber())
+
+        if (lookback == expected.Lookback && Pool == expected.Pool && quote_token_is_token0 == expected.quote_token_is_token0 && mul.toNumber() == expected.mul && div.toNumber() == expected.div) {
+            console.log("MATCH")
+        }else{
+            console.log("MISMATCH")
+        }
+    }
+
+
+
 
     const factory = await ethers.getContractFactory("UniswapV3OracleRelay")
-    const newRelay = await factory.deploy(lookback, Pool, quote_token_is_token0, mul, div)
+    const newRelay = await factory.deploy(expected.Lookback, expected.Pool, expected.quote_token_is_token0, expected.mul, expected.div)
     await newRelay.deployed()
 
     console.log("New relay deployed with the above params to: ", newRelay.address)
+
+    /**
+     hh verify 0x17388E51Cc7aC57dA91a74e878b576b245D23d21 14400, 0x07A6E955bA4345BAe83Ac2A6fAa771fddd8A2011, false, 1000000000000, 1
+     */
+
 
 
 }
