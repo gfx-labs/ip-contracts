@@ -139,7 +139,7 @@ const main = async () => {
           let extra = 1
           return {
             minter: v.minter,
-            amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
+            amount: v.share.mul(BlockRounds.rewardForBorrower).mul(extra),
           };
         })
       //console.log("done with block range", blockStart, blockEnd)
