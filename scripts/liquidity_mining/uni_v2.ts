@@ -58,7 +58,7 @@ const main = async () => {
     console.log("LOOPING")
     //console.log(blockStart, blockEnd)
     let blocks = 0;
-    for (let b = (blockStart + 30000); b <= blockEnd; b++) {
+    for (let b = (blockStart); b <= blockEnd; b++) {
       const addrCalls: CallContext[] = [];
       const liabilityCalls: CallContext[] = [];
       const addrCallContext: ContractCallContext[] = [];
