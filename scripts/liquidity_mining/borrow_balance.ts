@@ -137,9 +137,6 @@ const main = async () => {
         })
         .map((v) => {
           let extra = 1
-          if (weekNum == 1) {
-            extra = 7
-          }
           return {
             minter: v.minter,
             amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
