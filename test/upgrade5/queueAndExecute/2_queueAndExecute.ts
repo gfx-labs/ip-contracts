@@ -118,9 +118,9 @@ describe("Execute proposal", () => {
   it("Execute, proposal already queued ", async () => {
     const prop = ethers.provider.getSigner(proposer)
     proposal = Number(await gov.proposalCount())
-    showBodyCyan("Proposal ID: ", proposal)
 
     const votingPeriod = await gov.votingPeriod()
+    const votingDelay = await gov.votingDelay()
     const timelock = await gov.proposalTimelockDelay()
 
     const block = await currentBlock()
@@ -130,10 +130,7 @@ describe("Execute proposal", () => {
     await impersonateAccount(proposer)
 
     showBody("Advancing a lot of blocks...")
-    await advanceBlockHeight(votingPeriod.toNumber());
-
-    let state = await gov.state(proposal)
-    showBody("State: ", state)
+    await advanceBlockHeight(votingDelay.toNumber());
 
     await gov.connect(prop).castVote(proposal, 1)
 

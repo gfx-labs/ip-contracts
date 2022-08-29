@@ -26,11 +26,12 @@ import { mergeLists } from "../util/math"
 import { each } from "underscore";
 import { min } from "bn.js";
 import { writeFileSync } from "fs";
+import { json } from "stream/consumers";
 
 const { ethers, network, upgrades } = require("hardhat");
 
-const LPS = require('../rewardtree/lps_15320238-15365038.json')
-const BORROWERS = require('../rewardtree/borrowers_15320238-15365038.json')
+const LPS = require('../rewardtree/lps_15365039-15409839.json')
+const BORROWERS = require('../rewardtree/borrowers_15365039-15409839.json')
 
 
 //for format minter:amount  ===>> {minter: minter, amount: amount}
@@ -77,6 +78,7 @@ async function main() {
 
         //console.log(minter.amount.toString())
 
+
         valueAdjusted.push({
             minter: minter.minter,
             amount: utils.parseEther(minter.amount.toFixed(18).toString()).toString()
@@ -84,7 +86,18 @@ async function main() {
 
     }
 
-    writeFileSync(`rewardtree/mergedAndFormatWeek8.json`, JSON.stringify(valueAdjusted), 'utf8')
+    //console.log(valueAdjusted)
+
+    let formatObject: Record<string, string> = {}
+
+
+    for(const object of valueAdjusted){
+        formatObject[object.minter] = object.amount
+    }
+
+    writeFileSync(`rewardtree/mergedAndFormatWeek9.json`, JSON.stringify(valueAdjusted), 'utf8')
+    writeFileSync(`rewardtree/week9Object.json`, JSON.stringify(formatObject), 'utf8')
+
 }
 
 
