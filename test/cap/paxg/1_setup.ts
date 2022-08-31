@@ -92,10 +92,10 @@ describe("Token Setup", () => {
 
         for(let i=0; i<s.accounts.length; i++){
             await expect(
-                stealMoney(s.PAXG_WHALE, s.accounts[i].address, s.PAXG_ADDR, s.PAXG_AMOUNT)
+                stealMoney(s.PAXG_WHALE, s.accounts[i].address, s.PAXG_ADDR, s.PAXG_AMOUNT.add(BN("5e17")))//a little extra to cover fee
             ).to.not.be.reverted;
             await mineBlock()
-            expect(await toNumber(await s.PAXG.balanceOf(s.accounts[i].address))).to.be.closeTo(await toNumber(s.PAXG_AMOUNT), 0.0021,  "PAXG balance correct, accounting for fee on transfer")
+            expect(await toNumber(await s.PAXG.balanceOf(s.accounts[i].address))).to.be.closeTo(await toNumber(s.PAXG_AMOUNT.add(BN("5e17"))), 0.0021,  "PAXG balance correct, accounting for fee on transfer")
         }
         
     });

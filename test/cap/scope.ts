@@ -89,6 +89,9 @@ export class TestScope extends MainnetAddresses {
 
     PAXG_ADDR = "0x45804880De22913dAFE09f4980848ECE6EcbAf78"
     PAXG!: IERC20
+    PAXG_AMOUNT = BN("5e18")
+    PAXG_CAP = BN("5e18")
+    PAXG_WHALE = "0x2FAF487A4414Fe77e2327F0bf4AE2a264a776AD2"
 
     MATIC_ADDR = "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0"
     MATIC_WHALE = "0xf977814e90da44bfa03b6295a0616a897441acec"

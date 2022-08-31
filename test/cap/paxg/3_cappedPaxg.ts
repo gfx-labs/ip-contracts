@@ -20,15 +20,17 @@ require("chai").should();
 //147 040 
 
 describe("Testing CappedToken functions", () => {
-    const PAXGamount = BN("5e18")//5 PAXGs
+    
     it("Deposit underlying", async () => {
         let balance = await s.CappedPAXG.balanceOf(s.Bob.address)
         expect(balance).to.eq(0, "Bob holds no capped paxg before deposit")
 
-        await s.PAXG.connect(s.Bob).approve(s.CappedPAXG.address, PAXGamount)
+        await s.PAXG.connect(s.Bob).approve(s.CappedPAXG.address, s.PAXG_AMOUNT)
         await mineBlock()
 
-        const result = await s.CappedPAXG.connect(s.Bob).deposit(PAXGamount, s.BobVaultID)
+        showBody("Paxg amount: ", await s.PAXG.balanceOf(s.Bob.address))
+
+        const result = await s.CappedPAXG.connect(s.Bob).deposit(s.PAXG_AMOUNT, s.BobVaultID)
         await mineBlock()
         showBodyCyan("Gas to deposit: ", await getGas(result))
         //check event receipt? 
@@ -39,11 +41,11 @@ describe("Testing CappedToken functions", () => {
 
     it("Check things", async () => {
         let balance = await s.CappedPAXG.balanceOf(s.BobVault.address)
-        expect(await toNumber(balance)).to.be.closeTo(await toNumber(PAXGamount), 0.002, "CappedToken balance is correct on Bob's vault")
-        expect(await toNumber(await s.PAXG.balanceOf(s.Bob.address))).to.be.closeTo(await toNumber(s.PAXG_AMOUNT.sub(PAXGamount)), 0.003, "PAXG balance after deposit correct")
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.PAXG_AMOUNT), 0.002, "CappedToken balance is correct on Bob's vault")
+        expect(await toNumber(await s.PAXG.balanceOf(s.Bob.address))).to.be.closeTo(await toNumber(s.PAXG_AMOUNT.sub(s.PAXG_AMOUNT).add(BN("5e17"))), 0.003, "PAXG balance after deposit correct")
 
         balance = await s.PAXG.balanceOf(s.CappedPAXG.address)
-        expect(await toNumber(balance)).to.be.closeTo(await toNumber(PAXGamount), 0.002, "Capped PAXG contract holds the paxg")
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.PAXG_AMOUNT), 0.002, "Capped PAXG contract holds the paxg")
 
 
         const borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
@@ -54,11 +56,17 @@ describe("Testing CappedToken functions", () => {
 
     it("Borrow maximum against paxg", async () => {
         const borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
+        showBody("BorrowPower: ", await toNumber(borrowPower))
 
-        await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower)
+        const result = await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower.sub(500))
         await mineBlock()
+        const receipt = await result.wait()
+
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
+
+        showBody("Borrowed: ", await toNumber(balance))
+
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(borrowPower), 0.001, "Borrow amount correct")
 
     })
@@ -216,7 +224,7 @@ describe("More oracle tests", async () => {
     const router02 = ro2[0].abi
     const routerV2 = new ethers.Contract(Router02Address, router02, ethers.provider)
 
-    const largePAXGamount = BN("2000e18")
+    const largePaxgAmount = BN("2000e18")
     let whaleStartingPAXG: BigNumber
     let wethReceived: BigNumber
 
@@ -231,7 +239,7 @@ describe("More oracle tests", async () => {
         await mineBlock()
         whaleStartingPAXG = await s.PAXG.balanceOf(megaWhale)
 
-        expect(whaleStartingPAXG).to.be.gt(largePAXGamount, "Enough PAXG")
+        expect(whaleStartingPAXG).to.be.gt(largePaxgAmount, "Enough PAXG")
 
     })
 
@@ -247,7 +255,7 @@ describe("More oracle tests", async () => {
         await impersonateAccount(whale._address)
 
         //approve
-        await s.PAXG.connect(whale).approve(routerV2.address, largePAXGamount)
+        await s.PAXG.connect(whale).approve(routerV2.address, largePaxgAmount)
         await mineBlock()
 
         const block = await currentBlock()
@@ -255,8 +263,8 @@ describe("More oracle tests", async () => {
 
         //swap exact tokens for tokens
         await routerV2.connect(whale).swapExactTokensForTokensSupportingFeeOnTransferTokens(
-            largePAXGamount,
-            largePAXGamount.div(2),//amountOutMin - PAXG is worth slightly less than ETH
+            largePaxgAmount,
+            largePaxgAmount.div(2),//amountOutMin - PAXG is worth slightly less than ETH
             [s.PAXG.address, s.WETH.address],
             whale._address,
             deadline
@@ -266,7 +274,7 @@ describe("More oracle tests", async () => {
 
 
         wethReceived = await s.WETH.balanceOf(whale._address)
-        expect(wethReceived.sub(wethBalance)).to.be.gt(largePAXGamount.div(2), "Received weth from swap")
+        expect(wethReceived.sub(wethBalance)).to.be.gt(largePaxgAmount.div(2), "Received weth from swap")
         //showBody("WETH received: ", await toNumber(wethReceived.sub(wethBalance)))
 
         const startPrice = await s.UniV2Relay.currentValue()

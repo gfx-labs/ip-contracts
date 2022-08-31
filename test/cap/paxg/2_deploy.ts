@@ -31,7 +31,7 @@ describe("Check Interest Protocol contracts", () => {
       expect(await s.USDI.symbol()).to.equal("USDI");
       expect(await s.USDI.decimals()).to.equal(18);
       //expect(await s.USDI.owner()).to.equal(s.Frank.address);
-      s.owner = await s.USDI.owner()
+      //s.owner = await s.USDI.owner()
       s.pauser = await s.USDI.pauser()
     });
   });
@@ -201,56 +201,58 @@ describe("Check oracle", () => {
     await stealMoney(s.PAXG_WHALE, s.Gus.address, s.PAXG_ADDR, largePAXGamount)
     await mineBlock()
   })
-
-  it("Do a big swap on uniswap to change the price", async () => {
-
-    const startBalance = await s.PAXG.balanceOf(s.Gus.address)
-
-    //approve
-    await s.PAXG.connect(s.Gus).approve(routerV2.address, largePAXGamount)
-    await mineBlock()
-
-    const block = await currentBlock()
-    const deadline = block.timestamp + 500
-
-    //swap exact tokens for tokens
-    await routerV2.connect(s.Gus).swapExactTokensForTokensSupportingFeeOnTransferTokens(
-      largePAXGamount,
-      largePAXGamount,//amountOutMin - PAXG is worth slightly less than ETH
-      [s.PAXG.address, s.WETH.address],
-      s.Gus.address,
-      deadline
-    )
-    await mineBlock()
-
-    let balance = await s.PAXG.balanceOf(s.Gus.address)
-    expect(await toNumber(balance)).to.be.closeTo(await toNumber(startBalance.sub(largePAXGamount)), 0.0021, "Correct amount of PAXG deducted from Gus")
-
-
-  })
-
-  it(`Selling ~248 PAXG is not enough to move the price on the anchor by the buffer amount`, async () => {
-
-    const startPrice = await s.UniV2Relay.currentValue()
-
-    const oraclePrice = await s.Oracle.getLivePrice(s.CappedPAXG.address)
-    expect(oraclePrice).to.be.gt(0, "Valid oracle price returned")
-
-    await fastForward(OneWeek)
-    await mineBlock()
-    await s.UniV2Relay.update()
-    await mineBlock()
-
-    let newEthPrice = await s.UniV2Relay.currentValue()
-    expect(await toNumber(newEthPrice)).to.be.gt(await toNumber(startPrice) * 0.9, "Price is still in the expected bounds, update was not needed")
-
-    const percentMoved = (1 - (await toNumber(newEthPrice) / await toNumber(startPrice))) * 100
-
-    expect(percentMoved).to.be.lt(10, `Selling ${await toNumber(largePAXGamount)} PAXG moved the price by less than 10%, no need to call update`)
-
-  })
-
+  /**
+   
+    it("Do a big swap on uniswap to change the price", async () => {
   
+      const startBalance = await s.PAXG.balanceOf(s.Gus.address)
+  
+      //approve
+      await s.PAXG.connect(s.Gus).approve(routerV2.address, largePAXGamount)
+      await mineBlock()
+  
+      const block = await currentBlock()
+      const deadline = block.timestamp + 500
+  
+      //swap exact tokens for tokens
+      await routerV2.connect(s.Gus).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        largePAXGamount,
+        largePAXGamount,//amountOutMin - PAXG is worth slightly less than ETH
+        [s.PAXG.address, s.WETH.address],
+        s.Gus.address,
+        deadline
+      )
+      await mineBlock()
+  
+      let balance = await s.PAXG.balanceOf(s.Gus.address)
+      expect(await toNumber(balance)).to.be.closeTo(await toNumber(startBalance.sub(largePAXGamount)), 0.0021, "Correct amount of PAXG deducted from Gus")
+  
+  
+    })
+  
+    it(`Selling ~248 PAXG is not enough to move the price on the anchor by the buffer amount`, async () => {
+  
+      const startPrice = await s.UniV2Relay.currentValue()
+  
+      const oraclePrice = await s.Oracle.getLivePrice(s.CappedPAXG.address)
+      expect(oraclePrice).to.be.gt(0, "Valid oracle price returned")
+  
+      await fastForward(OneWeek)
+      await mineBlock()
+      await s.UniV2Relay.update()
+      await mineBlock()
+  
+      let newEthPrice = await s.UniV2Relay.currentValue()
+      expect(await toNumber(newEthPrice)).to.be.gt(await toNumber(startPrice) * 0.9, "Price is still in the expected bounds, update was not needed")
+  
+      const percentMoved = (1 - (await toNumber(newEthPrice) / await toNumber(startPrice))) * 100
+  
+      expect(percentMoved).to.be.lt(10, `Selling ${await toNumber(largePAXGamount)} PAXG moved the price by less than 10%, no need to call update`)
+  
+    })
+   */
+
+
 
 
 })
