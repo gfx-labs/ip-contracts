@@ -15,7 +15,11 @@ import { toNumber } from "../../../util/math"
 import {
   AnchoredViewV2__factory,
   IVault__factory,
-  CappedFeeOnTransferToken__factory, ChainlinkOracleRelay__factory, UniswapV2OracleRelay__factory
+  CappedFeeOnTransferToken__factory,
+  ChainlinkOracleRelay__factory,
+  UniswapV2OracleRelay__factory,
+  VotingVault__factory,
+  VotingVaultController__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
@@ -49,7 +53,31 @@ describe("Check Interest Protocol contracts", () => {
 
 
 
-describe("Deploy CappedPAXG contract", () => {
+describe("Deploy CappedPAXG contract and infastructure", () => {
+
+  const ethAmount = BN("1e18")
+  let tx = {
+    to: s.owner._address,
+    value: ethAmount
+  }
+  before(async () => {
+    await s.Frank.sendTransaction(tx)
+    await mineBlock()
+  })
+
+  it("Deploy Voting Vault Controller", async () => {
+
+    s.VotingVaultController = await DeployContractWithProxy(
+      new VotingVaultController__factory(s.Frank),
+      s.Frank,
+      s.ProxyAdmin,
+      s.VaultController.address
+    )
+    await mineBlock()
+    await s.VotingVaultController.deployed()
+    await mineBlock()
+  })
+
   it("Deploy CappedPAXG", async () => {
     s.CappedPAXG = await DeployContractWithProxy(
       new CappedFeeOnTransferToken__factory(s.Frank),
@@ -58,10 +86,12 @@ describe("Deploy CappedPAXG contract", () => {
       "CappedPAXG",
       "cpPAXG",
       s.PAXG_ADDR,
-      d.VaultController
+      d.VaultController,
+      s.VotingVaultController.address
     )
     await mineBlock();
     await s.CappedPAXG.deployed()
+
   })
 
   it("Set Cap", async () => {
@@ -163,6 +193,27 @@ describe("Deploy and stup oracle system", () => {
 
   })
 
+  it("Register Underlying on voting vault controller", async () => {
+
+    /**
+      //impersonate? 
+     await impersonateAccount(s.owner._address)
+ 
+     await s.VotingVaultController.connect(s.owner).registerUnderlying(s.PAXG.address, s.CappedPAXG.address)
+     await mineBlock()
+     await ceaseImpersonation(s.owner._address)
+     */
+    await s.VotingVaultController.connect(s.Frank).registerUnderlying(s.PAXG.address, s.CappedPAXG.address)
+    await mineBlock()
+
+    const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.PAXG_ADDR)
+    const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedPAXG.address)
+
+    expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedPAXG.address.toUpperCase(), "Capped token registered correctly")
+    expect(_CappedToken_underlying.toUpperCase()).to.eq(s.PAXG.address.toUpperCase(), "Underlying token registered correctly")
+
+  })
+
   it("Mint vault from vault controller", async () => {
     //showBody("bob mint vault")
     await expect(s.VaultController.connect(s.Bob).mintVault()).to.not
@@ -182,6 +233,20 @@ describe("Deploy and stup oracle system", () => {
     s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
     expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
   })
+
+  it("Mint voting vault", async () => {
+
+    let _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVaultID)
+    expect(_vaultId_votingVaultAddress).to.eq("0x0000000000000000000000000000000000000000", "Voting vault not yet minted")
+
+    const result = await s.VotingVaultController.connect(s.Bob).mintVault(s.BobVaultID)
+    await mineBlock()
+
+    let vaultAddr = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVaultID)
+    s.BobVotingVault = VotingVault__factory.connect(vaultAddr, s.Bob)
+
+    expect(s.BobVotingVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Bob's voting vault setup complete")
+  })
 })
 
 describe("Check oracle", () => {
@@ -200,6 +265,11 @@ describe("Check oracle", () => {
     //fund Gus with a large amount of PAXG to do a swap
     await stealMoney(s.PAXG_WHALE, s.Gus.address, s.PAXG_ADDR, largePAXGamount)
     await mineBlock()
+  })
+
+  it("Check oracle", async () => {
+    const price = await s.Oracle.getLivePrice(s.CappedPAXG.address)
+    expect(await toNumber(price)).to.be.closeTo(1700, 100, "Price is correct")
   })
   /**
    

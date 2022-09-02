@@ -7,7 +7,7 @@ import { s } from "../scope";
 import { d } from "../DeploymentInfo";
 
 import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
-import { IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory } from "../../../typechain-types";
+import { VotingVaultController__factory, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory } from "../../../typechain-types";
 import { toNumber } from "../../../util/math";
 //import { assert } from "console";
 
@@ -46,7 +46,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(15265252)).to.not.throw;//14940917
+        expect(await reset(15461026)).to.not.throw;//14940917
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -82,12 +82,15 @@ describe("Token Setup", () => {
         s.Oracle = OracleMaster__factory.connect(d.Oracle, s.Frank)
 
         s.ProxyAdmin = ProxyAdmin__factory.connect(d.ProxyAdmin, s.Frank)
+
+        const vvc = "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2"
+        //s.VotingVaultController = VotingVaultController__factory.connect(vvc, s.Frank)
        
 
     })
     it("Should succesfully transfer PAXG to all users", async () => {
 
-        await stealMoney(usdc_minter, s.Dave.address, s.USDC.address, BN("5000e6"))
+        await stealMoney(usdc_minter, s.Dave.address, s.USDC.address, BN("20000e6"))
         await mineBlock()
 
         for(let i=0; i<s.accounts.length; i++){

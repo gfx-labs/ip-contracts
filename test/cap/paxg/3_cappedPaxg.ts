@@ -15,12 +15,13 @@ import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { start } from "repl";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
+//import { providers } from "web3";
 require("chai").should();
 
 //147 040 
 
 describe("Testing CappedToken functions", () => {
-    
+
     it("Deposit underlying", async () => {
         let balance = await s.CappedPAXG.balanceOf(s.Bob.address)
         expect(balance).to.eq(0, "Bob holds no capped paxg before deposit")
@@ -28,7 +29,12 @@ describe("Testing CappedToken functions", () => {
         await s.PAXG.connect(s.Bob).approve(s.CappedPAXG.address, s.PAXG_AMOUNT)
         await mineBlock()
 
-        showBody("Paxg amount: ", await s.PAXG.balanceOf(s.Bob.address))
+        //("Paxg amount: ", await s.PAXG.balanceOf(s.Bob.address))
+
+        showBody("startSupply: ", await toNumber(await s.CappedPAXG.totalSupply()))
+
+        showBody("Cap: ", await toNumber(await s.CappedPAXG._cap()))
+        showBody("Amt: ", await toNumber(s.PAXG_AMOUNT))
 
         const result = await s.CappedPAXG.connect(s.Bob).deposit(s.PAXG_AMOUNT, s.BobVaultID)
         await mineBlock()
@@ -39,7 +45,8 @@ describe("Testing CappedToken functions", () => {
 
     })
 
-    it("Check things", async () => {
+    /**
+      it("Check things", async () => {
         let balance = await s.CappedPAXG.balanceOf(s.BobVault.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.PAXG_AMOUNT), 0.002, "CappedToken balance is correct on Bob's vault")
         expect(await toNumber(await s.PAXG.balanceOf(s.Bob.address))).to.be.closeTo(await toNumber(s.PAXG_AMOUNT.sub(s.PAXG_AMOUNT).add(BN("5e17"))), 0.003, "PAXG balance after deposit correct")
@@ -53,88 +60,41 @@ describe("Testing CappedToken functions", () => {
 
 
     })
+     */
 
-    it("Borrow maximum against paxg", async () => {
-        const borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
-        showBody("BorrowPower: ", await toNumber(borrowPower))
+   
+    it("Check token destinations", async () => {
 
-        const result = await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower.sub(500))
-        await mineBlock()
-        const receipt = await result.wait()
+        let balance = await s.PAXG.balanceOf(s.BobVotingVault.address)
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.PAXG_AMOUNT), 0.003, "Voting vault holds the underlying")
 
-
-        let balance = await s.USDI.balanceOf(s.Bob.address)
-
-        showBody("Borrowed: ", await toNumber(balance))
-
-        expect(await toNumber(balance)).to.be.closeTo(await toNumber(borrowPower), 0.001, "Borrow amount correct")
+        balance = await s.CappedPAXG.balanceOf(s.BobVault.address)
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.PAXG_AMOUNT), 0.003, "Regular vault holds the wrapped cap token")
 
     })
 
-    it("Advance time to put vault underwater", async () => {
-
-        let solvency = await s.VaultController.checkVault(s.BobVaultID)
-        expect(solvency).to.eq(true, "Bob's vault is solvent")
-
-        await fastForward(OneWeek * 6)
-        await s.VaultController.calculateInterest()
-        await mineBlock()
-
-        solvency = await s.VaultController.checkVault(s.BobVaultID)
-        expect(solvency).to.eq(false, "Bob's vault is insolvent")
+    it("Try to transfer", async () => {
+        expect(s.CappedPAXG.connect(s.Bob).transfer(s.Carol.address, BN("1e18"))).to.be.revertedWith("only vaults")
     })
 
-
-    it("Liquidate", async () => {
-        //fund dave for liquidation
-        await s.USDC.connect(s.Dave).approve(s.USDI.address, BN("1000e6"))
-        await s.USDI.connect(s.Dave).deposit(BN("1000e6"))
-        await mineBlock()
-
-        const startingPAXG = await s.PAXG.balanceOf(s.Dave.address)
-        expect(await toNumber(startingPAXG)).to.be.closeTo(await toNumber(s.PAXG_AMOUNT), 0.003, "Dave has starting paxg amount minus fee on transfer")
-
-        const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedPAXG.address, BN("9999e18"))
-        await mineBlock()
-        const gas = await getGas(result)
-        showBodyCyan("Gas to liquidate a capped token and receive underlying: ", gas)
-
-        let balance = await s.PAXG.balanceOf(s.Dave.address)
-        expect(balance).to.be.gt(startingPAXG, "Dave received PAXG for liquidating CappedPAXG")
-
-    })
-
-    it("Check end state", async () => {
-
-        let remianingPAXG = await s.PAXG.balanceOf(s.CappedPAXG.address)
-        let remainingCapped = await s.CappedPAXG.balanceOf(s.BobVault.address)
-
-        expect(remianingPAXG).to.eq(remainingCapped, "Accounting is correct")
-    })
-    it("Repay all", async () => {
-
-        //Fund Bob to repayAll
-        await s.USDC.connect(s.Dave).approve(s.USDI.address, await s.USDC.balanceOf(s.Dave.address))
-        await s.USDI.connect(s.Dave).depositTo(BN("500e6"), s.Bob.address)
-        await mineBlock()
-
-        await s.VaultController.connect(s.Bob).repayAllUSDi(s.BobVaultID)
-        await mineBlock()
-
-        let liability = await s.VaultController.vaultLiability(s.BobVaultID)
-        expect(liability).to.eq(0, "Vault completely repaid")
-
-    })
-    it("Withdraw underlying", async () => {
-
+    it("Test withdraw", async () => {
         const startPAXG = await s.PAXG.balanceOf(s.Bob.address)
         const startSupply = await s.CappedPAXG.totalSupply()
         expect(startSupply).to.be.gt(0, "Some amount in use")
 
-        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPAXG.address, await s.CappedPAXG.balanceOf(s.BobVault.address))
-        await mineBlock()
+        let paxgAmount = await s.CappedPAXG.balanceOf(s.BobVault.address)
+        showBody("Balance: ", await toNumber(paxgAmount))
 
-        let Supply = await s.CappedPAXG.totalSupply()
+        let underlyingAmount = await s.PAXG.balanceOf(s.BobVotingVault.address)
+        showBody("UnderlyingAmount: ", await toNumber(underlyingAmount))
+
+        showBody("About to withdraw")
+        //await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPAXG.address, await s.CappedPAXG.balanceOf(s.BobVault.address))
+        await mineBlock()
+        showBody("Done with withdraw")
+
+        /**
+         let Supply = await s.CappedPAXG.totalSupply()
         expect(Supply).to.eq(0, "All Capped PAXG burned")
 
         let balance = await s.PAXG.balanceOf(s.CappedPAXG.address)
@@ -142,9 +102,142 @@ describe("Testing CappedToken functions", () => {
 
         balance = await s.PAXG.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(startSupply.add(startPAXG)), 0.0021, "Bob received the correct amount of PAXG")
+         */
     })
+
+    /**
+        it("Borrow maximum against paxg", async () => {
+           const borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
+           showBody("BorrowPower: ", await toNumber(borrowPower))
+   
+           const result = await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower.sub(500))
+           await mineBlock()
+           const receipt = await result.wait()
+   
+   
+           let balance = await s.USDI.balanceOf(s.Bob.address)
+   
+           showBody("Borrowed: ", await toNumber(balance))
+   
+           expect(await toNumber(balance)).to.be.closeTo(await toNumber(borrowPower), 0.001, "Borrow amount correct")
+   
+       })
+    
+       it("Advance time to put vault underwater", async () => {
+   
+           let solvency = await s.VaultController.checkVault(s.BobVaultID)
+           expect(solvency).to.eq(true, "Bob's vault is solvent")
+   
+           await fastForward(OneWeek * 6)
+           await s.VaultController.calculateInterest()
+           await mineBlock()
+   
+           solvency = await s.VaultController.checkVault(s.BobVaultID)
+           expect(solvency).to.eq(false, "Bob's vault is insolvent")
+       })
+   
+   
+       it("Liquidate", async () => {
+           //fund dave for liquidation
+           await s.USDC.connect(s.Dave).approve(s.USDI.address, BN("10000e6"))
+           await s.USDI.connect(s.Dave).deposit(BN("10000e6"))
+           await mineBlock()
+   
+   
+           const startingPAXG = await s.PAXG.balanceOf(s.Dave.address)
+           expect(await toNumber(startingPAXG)).to.be.closeTo(await toNumber(s.PAXG_AMOUNT.add(BN("5e17"))), 0.003, "Dave has starting paxg amount minus fee on transfer")
+   
+           
+           let solvency = await s.VaultController.checkVault(s.BobVaultID)
+           expect(solvency).to.eq(false, "Bob's vault is insolvent")
+   
+           let amountToSolvency = await s.VaultController.amountToSolvency(s.BobVaultID)
+           expect(amountToSolvency).to.be.gt(0, "Amount to solvency")
+   
+           const t2l = await s.VaultController.tokensToLiquidate(s.BobVaultID, s.CappedPAXG.address)
+           expect(t2l).to.be.gt(0, "Tokens to liquidate")
+   
+           let balance = await s.USDI.balanceOf(s.Dave.address)
+           expect(await toNumber(balance)).to.be.gt(((await toNumber(t2l)) * 1700), "Dave has enough funds to liquidate")
+   
+           balance = await ethers.provider.getBalance(s.Dave.address)
+           showBody("Balance: ", await toNumber(balance))
+   
+           await s.USDI.connect(s.Dave).approve(s.VaultController.address, await s.USDI.balanceOf(s.Dave.address))
+           await mineBlock()
+   
+           //const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedPAXG.address, BN("50e50"))
+           await mineBlock()
+           //const receipt = await result.wait()
+   
+   
+   
+   
+   
+   
+            showBody("Dave Deposit", await toNumber(await s.USDI.balanceOf(s.Dave.address)))
+   
+   
+           const t2l = await s.VaultController.tokensToLiquidate(s.BobVaultID, s.CappedPAXG.address)
+           showBody(await toNumber(t2l))
+   
+           const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedPAXG.address, 1)
+           await mineBlock()
+           const gas = await getGas(result)
+           showBodyCyan("Gas to liquidate a capped token and receive underlying: ", gas)
+   
+           let balance = await s.PAXG.balanceOf(s.Dave.address)
+           expect(balance).to.be.gt(startingPAXG, "Dave received PAXG for liquidating CappedPAXG")
+   
+   
+       })
+   
+       it("Check end state", async () => {
+   
+           let remianingPAXG = await s.PAXG.balanceOf(s.CappedPAXG.address)
+           let remainingCapped = await s.CappedPAXG.balanceOf(s.BobVault.address)
+   
+           expect(remianingPAXG).to.eq(remainingCapped, "Accounting is correct")
+       })
+       it("Repay all", async () => {
+   
+           //Fund Bob to repayAll
+           await s.USDC.connect(s.Dave).approve(s.USDI.address, await s.USDC.balanceOf(s.Dave.address))
+           await s.USDI.connect(s.Dave).depositTo(BN("500e6"), s.Bob.address)
+           await mineBlock()
+   
+           await s.VaultController.connect(s.Bob).repayAllUSDi(s.BobVaultID)
+           await mineBlock()
+   
+           let liability = await s.VaultController.vaultLiability(s.BobVaultID)
+           expect(liability).to.eq(0, "Vault completely repaid")
+   
+       })
+        */
+    /**
+      it("Withdraw underlying", async () => {
+ 
+         const startPAXG = await s.PAXG.balanceOf(s.Bob.address)
+         const startSupply = await s.CappedPAXG.totalSupply()
+         expect(startSupply).to.be.gt(0, "Some amount in use")
+ 
+         await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPAXG.address, await s.CappedPAXG.balanceOf(s.BobVault.address))
+         await mineBlock()
+ 
+         let Supply = await s.CappedPAXG.totalSupply()
+         expect(Supply).to.eq(0, "All Capped PAXG burned")
+ 
+         let balance = await s.PAXG.balanceOf(s.CappedPAXG.address)
+         expect(balance).to.eq(0, "All PAXG have been withdrawn from the cap contract")
+ 
+         balance = await s.PAXG.balanceOf(s.Bob.address)
+         expect(await toNumber(balance)).to.be.closeTo(await toNumber(startSupply.add(startPAXG)), 0.0021, "Bob received the correct amount of PAXG")
+     })
+     */
+
 })
-describe("Hitting the cap", () => {
+/**
+ describe("Hitting the cap", () => {
     const lowCap = BN("5e18")
     const lowerCap = BN("2e18")
     it("Admin sets a low cap", async () => {
@@ -243,12 +336,8 @@ describe("More oracle tests", async () => {
 
     })
 
-    /**
-     * In order to simulate what it might look like when we need to call update() on the relay, 
-     * we need the reported prices between the UniV3Relay and Chainlink price feed to deviate.
-     * We will achieve this by way of a giant swap
-     */
-    it("Do enormous swap on uni v2 to simulate a the main price deviating from the anchor", async () => {
+  
+     it("Do enormous swap on uni v2 to simulate a the main price deviating from the anchor", async () => {
 
         const wethBalance = await s.WETH.balanceOf(whale._address)
 
@@ -295,10 +384,7 @@ describe("More oracle tests", async () => {
 
     })
 
-    /**
-     * As of this point, we have simulated what it might look like if the chainlink feed price rises faster than the uniswap v2 pool
-     * The currentValue() reported from the UniV2Relay should be less than the main price reported by chainlink by at least 10% 
-     */
+ 
     it("Return to equilibrium", async () => {
 
         await impersonateAccount(whale._address)
@@ -327,11 +413,7 @@ describe("More oracle tests", async () => {
 
     })
 
-    /**
-     * As of this point, the effective price of the pool should be within bounds of the main relay (chainlink)
-     * In our simulation, think of this as the Uniswap v2 pool price catching up with the chainlink price
-     * However, update() has not been called, so the reported price is still too low
-     */
+   
     it("Updating price restores oracle functionality", async () => {
         //try to get oraclePrice - error because we have not updated the price yet
         expect(s.Oracle.getLivePrice(s.CappedPAXG.address)).to.be.revertedWith("anchor too low")
@@ -350,3 +432,23 @@ describe("More oracle tests", async () => {
 
     })
 })
+ */
+
+/**
+   * In order to simulate what it might look like when we need to call update() on the relay, 
+   * we need the reported prices between the UniV3Relay and Chainlink price feed to deviate.
+   * We will achieve this by way of a giant swap
+   */
+
+/**
+  * As of this point, we have simulated what it might look like if the chainlink feed price rises faster than the uniswap v2 pool
+  * The currentValue() reported from the UniV2Relay should be less than the main price reported by chainlink by at least 10% 
+  */
+
+/**
+    * As of this point, the effective price of the pool should be within bounds of the main relay (chainlink)
+    * In our simulation, think of this as the Uniswap v2 pool price catching up with the chainlink price
+    * However, update() has not been called, so the reported price is still too low
+    * 
+    * UPDATING PRICE RESTORES
+    */

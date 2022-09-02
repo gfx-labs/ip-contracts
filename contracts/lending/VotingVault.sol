@@ -14,6 +14,8 @@ import "../_external/IERC20.sol";
 import "../_external/Context.sol";
 import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
+import "hardhat/console.sol";
+
 contract VotingVault is Context {
   using SafeERC20Upgradeable for IERC20;
 
@@ -21,7 +23,6 @@ contract VotingVault is Context {
   /// @notice This vault holds the underlying token
   /// @notice The Capped token is held by the parent vault
   /// @notice Withdrawls must be initiated by the withdrawErc20() function on the parent vault
-
 
   /// @notice this struct is used to store the vault metadata
   /// this should reduce the cost of minting by ~15,000
@@ -46,7 +47,7 @@ contract VotingVault is Context {
     require(_msgSender() == address(_controller), "sender not VaultController");
     _;
   }
- /// @notice checks if _msgSender is the minter of the vault
+  /// @notice checks if _msgSender is the minter of the vault
   modifier onlyMinter() {
     require(_msgSender() == IVault(_vaultInfo.vault_address).minter(), "sender not minter");
     _;
@@ -74,7 +75,7 @@ contract VotingVault is Context {
 
   /// @notice id of the vault
   /// @return address of minter
-  function id() external view  returns (uint96) {
+  function id() external view returns (uint96) {
     return _vaultInfo.id;
   }
 
@@ -97,6 +98,7 @@ contract VotingVault is Context {
   ) external onlyVaultController {
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
+
   /// @notice function used by the VotingVaultController to transfer tokens
   /// callable by the VotingVaultController only
   /// @param _token token to transfer
@@ -107,6 +109,11 @@ contract VotingVault is Context {
     address _to,
     uint256 _amount
   ) external onlyVotingVaultController {
+    console.log("VVC TRANS");
+    console.log("_token", _token);
+    console.log("_to", _to);
+    console.log("_amount", _amount);
+
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
 }
