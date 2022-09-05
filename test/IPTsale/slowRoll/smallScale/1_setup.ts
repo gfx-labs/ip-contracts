@@ -8,7 +8,7 @@ import { advanceBlockHeight, reset, mineBlock } from "../../../../util/block";
 import { IERC20__factory, IVOTE__factory } from "../../../../typechain-types";
 
 require("chai").should();
-let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
+let usdc_minter = "0x2FAF487A4414Fe77e2327F0bf4AE2a264a776AD2";
 
 if (process.env.TENDERLY_KEY) {
     if (process.env.TENDERLY_ENABLE == "true") {
@@ -19,7 +19,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("reset hardhat network each run", async () => {
-        expect(await reset(0)).to.not.throw;
+        expect(await reset(15480666)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not

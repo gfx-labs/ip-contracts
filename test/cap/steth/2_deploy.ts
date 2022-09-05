@@ -24,7 +24,7 @@ describe("Check Interest Protocol contracts", () => {
       expect(await s.USDI.symbol()).to.equal("USDI");
       expect(await s.USDI.decimals()).to.equal(18);
       //expect(await s.USDI.owner()).to.equal(s.Frank.address);
-      s.owner = await s.USDI.owner()
+      //s.owner = await s.USDI.owner()
       s.pauser = await s.USDI.pauser()
     });
   });

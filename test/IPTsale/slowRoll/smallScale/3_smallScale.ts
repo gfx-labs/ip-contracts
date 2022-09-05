@@ -26,10 +26,14 @@ import {
   SlowRoll,
   SlowRoll__factory
 } from "../../../../typechain-types"
-import { randomBytes } from "crypto"
+import { upgrades, ethers } from "hardhat";
+import { ceaseImpersonation, impersonateAccount } from "../../../../util/impersonator";
+import { InterestProtocolTokenDelegate__factory } from "../../../../typechain-types/factories/governance/token/TokenDelegate.sol/InterestProtocolTokenDelegate__factory"
 
 
-
+const hours22 = 79200
+const ownerAddr = "0x958892b4a0512b28aaac890fc938868bbd42f064"
+const owner = ethers.provider.getSigner(ownerAddr)
 let disableTime: number
 let whitelist1: string[]
 let whitelist2: string[]
@@ -40,32 +44,41 @@ const totalReward = utils.parseEther("30000000")//30,000,000 IPT
 
 let SlowRoll: SlowRoll
 
-const IPTamount = BN("500000e18")
+const IPTamount = BN("1000000e18")
 
 //todo - what happens if not all is redeemed, IPT stuck on Wave? Redeem deadline?
 require("chai").should()
 describe("Deploy wave - OVERSATURATION", () => {
 
+  it("Connect to IPT", async () => {
 
-  it("deploys wave", async () => {
+    s.IPT = InterestProtocolTokenDelegate__factory.connect("0xd909C5862Cdb164aDB949D92622082f0092eFC3d", s.Frank)
+
+  })
+
+
+  it("deploys wave and transfers IPT", async () => {
     SlowRoll = await DeployContract(
       new SlowRoll__factory(s.Frank),
-      s.Frank,
-      s.IPT.address
+      s.Frank
     )
     await mineBlock()
     await SlowRoll.deployed()
 
-    await s.IPT.connect(s.Frank).transfer(SlowRoll.address, IPTamount)
+    await impersonateAccount(owner._address)
+
+    await s.IPT.connect(owner).transfer(SlowRoll.address, IPTamount)
     await mineBlock()
+
+    await ceaseImpersonation(owner._address)
   })
   it("Sanity check state of Wave contract", async () => {
     expect(await SlowRoll._owner()).to.eq(s.Frank.address)
-    expect(await toNumber(await SlowRoll._maxQuantity())).to.eq(500000, "Starting IPT is correct")
+    expect(await toNumber(await SlowRoll._maxQuantity())).to.eq(1000000, "Starting IPT is correct")
     expect(await SlowRoll._owner()).to.eq(s.Frank.address)
     expect(await SlowRoll._startPrice()).to.eq(.25 * BN("1e6").toNumber(), "Start price is .25 USDC")
     expect(await SlowRoll._maxPrice()).to.eq(.50 * BN("1e6").toNumber(), "Max price is .25 USDC")
-    expect(await SlowRoll._waveDuration()).to.eq(OneDay, "Wave duration is correct")
+    expect(await SlowRoll._waveDuration()).to.eq(hours22, "Wave duration is correct")
   })
 })
 
@@ -81,13 +94,12 @@ describe("Wave 1 claims", () => {
   const testMaxQ = BN("10000e18")//10k IPT
   const testStartPrice = BN("100000")//0.10 USDC
   const testMaxPrice = BN("250000")//0.25 USDC
-  const testWaveDuration = OneDay - 1
+  const testWaveDuration = hours22 - 1
 
   it("Check starting values", async () => {
 
     let startIPT = await s.IPT.balanceOf(s.Dave.address)
     expect(startIPT).to.eq(0, "Dave holds 0 IPT at the start")
-
     startIPT = await s.IPT.balanceOf(SlowRoll.address)
     expect(startIPT).to.eq(IPTamount, "Starting IPT balance is correct")
 
@@ -130,7 +142,7 @@ describe("Wave 1 claims", () => {
 
   it("Day 2 claims", async () => {
 
-    await fastForward(OneDay)
+    await fastForward(hours22)
     await mineBlock()
 
     //Carol can now claim, daily cap should reset
@@ -144,7 +156,7 @@ describe("Wave 1 claims", () => {
 
   it("Claim up to price maximum", async () => {
 
-    await fastForward(OneDay)
+    await fastForward(hours22)
     await mineBlock()
 
     await SlowRoll.connect(s.Frank).forceNewDay()
@@ -162,7 +174,7 @@ describe("Wave 1 claims", () => {
   })
 
   it("Fast forward to next day", async () => {
-    await fastForward(OneDay)
+    await fastForward(hours22)
     await mineBlock()
   })
 

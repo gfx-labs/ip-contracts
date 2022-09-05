@@ -11,8 +11,6 @@ import "./IVault.sol";
 import "./VotingVault.sol";
 import "./VotingVaultController.sol";
 
-import "hardhat/console.sol";
-
 /// @title CappedFeeOnTransferToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
@@ -100,7 +98,6 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
 
     ERC20Upgradeable._mint(address(vault), amountReceived);
 
-    console.log("AMOUNT RECEIVED: ", amountReceived);
 
     // check cap
     checkCap();
@@ -152,12 +149,10 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
 
     // burn the collateral tokens from the sender, which is the vault that holds the collateral tokens
     ERC20Upgradeable._burn(_msgSender(), amount);
-    console.log("About to retrieveUnderlying");
 
     // move the underlying tokens from voting vault to the target
     _votingVaultController.retrieveUnderlying(amount, voting_vault_address, recipient);
 
-    console.log("END TRANSFER");
 
     return true;
   }
@@ -166,9 +161,7 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
     address, /*sender*/
     address, /*recipient*/
     uint256 /*amount*/
-  ) public view override returns (bool) {
-    console.log("TRANSFER FROM");
-
+  ) public pure override returns (bool) {
     // allowances are never granted, as the VotingVault does not grant allowances.
     // this function is therefore always uncallable and so we will just return false
     return false;

@@ -14,8 +14,6 @@ import "../_external/IERC20.sol";
 import "../_external/Context.sol";
 import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
-import "hardhat/console.sol";
-
 contract VotingVault is Context {
   using SafeERC20Upgradeable for IERC20;
 
@@ -109,11 +107,6 @@ contract VotingVault is Context {
     address _to,
     uint256 _amount
   ) external onlyVotingVaultController {
-    console.log("VVC TRANS");
-    console.log("_token", _token);
-    console.log("_to", _to);
-    console.log("_amount", _amount);
-
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
 }
