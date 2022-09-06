@@ -72,9 +72,6 @@ describe("Merkle Redeem", () => {
         LP2 = s.mergedList[2]
         LP = LP1.minter
 
-        showBody("ToFixed toString: ", utils.parseEther(LP2.amount.toFixed(18).toString()))
-        showBody("Attempt 2       : ", utils.parseEther("0.000210831814646832"))
-
         _claimedBalance = utils.parseEther(LP1.amount.toFixed(18).toString())
 
         merkleTree1 = await initMerkle(s.mergedList)
@@ -361,11 +358,7 @@ describe("Claim Weeks", () => {
         showBodyCyan("Gas to claim 1 week using claimWeeks: ", gas)
 
         const merkleWeekRoots = await s.MerkleRedeem.weekMerkleRoots(57)
-        showBody(merkleWeekRoots)
-
-
-
-
+        //showBody(merkleWeekRoots)
     })
 
 })
