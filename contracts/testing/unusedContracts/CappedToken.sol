@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "../_external/IERC20Metadata.sol";
-import "../_external/openzeppelin/ERC20Upgradeable.sol";
-import "../_external/openzeppelin/OwnableUpgradeable.sol";
-import "../_external/openzeppelin/Initializable.sol";
+import "../../_external/IERC20Metadata.sol";
+import "../../_external/openzeppelin/ERC20Upgradeable.sol";
+import "../../_external/openzeppelin/OwnableUpgradeable.sol";
+import "../../_external/openzeppelin/Initializable.sol";
 
 /// @title CappedToken
 /// @notice handles all minting/burning of underlying

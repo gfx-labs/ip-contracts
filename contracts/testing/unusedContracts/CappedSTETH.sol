@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "../_external/IERC20Metadata.sol";
-import "../_external/openzeppelin/ERC20Upgradeable.sol";
-import "../_external/openzeppelin/OwnableUpgradeable.sol";
-import "../_external/openzeppelin/Initializable.sol";
+import "../../_external/IERC20Metadata.sol";
+import "../../_external/openzeppelin/ERC20Upgradeable.sol";
+import "../../_external/openzeppelin/OwnableUpgradeable.sol";
+import "../../_external/openzeppelin/Initializable.sol";
 
-import "./IStETH.sol";
+import "../../lending/IStETH.sol";
 
-import {SafeERC20} from "../_external/extensions/SafeERC20.sol";
+import {SafeERC20} from "../../_external/extensions/SafeERC20.sol";
 
 /**
  * @title StETH token wrapper with static balances.

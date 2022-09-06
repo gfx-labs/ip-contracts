@@ -44,7 +44,7 @@ describe("Verify setup", () => {
 })
 
 //mint voting vault from an account that does not yet have a regular vault
-describe("Testing CappedToken functions", () => {
+describe("Testing CappedToken functions using Aave", () => {
     const depositAmount = BN("500e18")
     let gusVaultId: BigNumber
     let gusVault: IVault

@@ -45,15 +45,11 @@ describe("Check starting values", () => {
         const price = await s.Oracle.getLivePrice(s.CappedAave.address)
         let totalValue = (balance.mul(price)).div(BN("1e18"))
         let expectedBorrowPower = (totalValue.mul(s.UNI_LTV)).div(BN("1e18"))
-
-        showBody("Total Value: ", await toNumber(totalValue))
-        showBody("Borrow Power: ", await toNumber(borrowPower))
-
         expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 0.0001, "Borrow power is correct")
     })
 })
 
-describe("Lending", () => {
+describe("Lending with capped Aave", () => {
     it("Borrow a small amount against capped token", async () => {
 
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)
@@ -116,6 +112,8 @@ describe("Lending", () => {
         const startPower = await s.AAVE.getPowerCurrent(s.Carol.address, 0)
         expect(startPower).to.eq(0, "Carol holds 0 Aave and has no delegated voting power")
 
+        expect(s.CarolVotingVault.connect(s.Bob).delegateCompLikeTo(s.Bob.address, s.aaveAddress)).to.be.revertedWith("sender not minter")
+
         await s.CarolVotingVault.connect(s.Carol).delegateCompLikeTo(s.Carol.address, s.aaveAddress)
         await mineBlock()
 
@@ -149,7 +147,7 @@ describe("Lending", () => {
     })
 })
 
-describe("Liquidations", () => {
+describe("Liquidations - Aave", () => {
 
     let borrowPower: BigNumber
     let T2L: BigNumber
@@ -246,7 +244,6 @@ describe("Liquidations", () => {
         const expected = (liquidationValue.mul(s.LiquidationIncentive)).div(BN("1e18"))
 
         expect(await toNumber(profit)).to.be.closeTo(await toNumber(expected), 0.1, "Expected profit achieved")
-
 
     })
 
