@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "../_external/Ownable.sol";
-import "./ICurveMaster.sol";
-import "./ICurveSlave.sol";
-import "../lending/IVaultController.sol";
+import "../../_external/Ownable.sol";
+import "../../curve/ICurveMaster.sol";
+import "../../curve/ICurveSlave.sol";
+import "../../lending/IVaultController.sol";
 
 /// @title Curve Master
 /// @notice Curve master keeps a record of CurveSlave contracts and links it with an address
