@@ -86,6 +86,7 @@ contract VotingVault is Context {
 
   /// @notice function used by the VaultController to transfer tokens
   /// callable by the VaultController only
+  /// not currently in use, available for future upgrades 
   /// @param _token token to transfer
   /// @param _to person to send the coins to
   /// @param _amount amount of coins to move
