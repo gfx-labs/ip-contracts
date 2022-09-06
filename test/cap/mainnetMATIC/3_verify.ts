@@ -45,7 +45,7 @@ describe("Verify setup", () => {
     })
 })
 
-describe("Testing CappedToken functions", () => {
+describe("Testing Capped MATIC functions", () => {
     const depositAmount = BN("50e24")
     let gusVaultId: BigNumber
     let gusVault: IVault

@@ -50,7 +50,7 @@ describe("Check starting values", () => {
     })
 })
 
-describe("Lending", () => {
+describe("Lending with mainnet IPT", () => {
     it("Borrow a small amount against capped token", async () => {
 
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)

@@ -35,7 +35,6 @@ describe("Testing CappedToken functions", () => {
 
         expect(await s.USDC.balanceOf(s.Bob.address)).to.eq(s.Bob_USDC.sub(USDCamount))
 
-
     })
 
     it("Deposit underlying to another address", async () => {
@@ -51,7 +50,6 @@ describe("Testing CappedToken functions", () => {
         let balance = await s.CappedToken.balanceOf(s.Dave.address)
         expect(await toNumber(balance)).to.eq(USDCamount.div(BN("1e6")), "CappedToken scaled correctly to receiver")
 
-
     })
 
     it("Check things", async () => {
@@ -62,8 +60,6 @@ describe("Testing CappedToken functions", () => {
         let previewDeposit = await s.CappedToken.previewDeposit(balance)
         let previewMint = await s.CappedToken.previewMint(balance)
 
-
-        
         let maxWithdraw = await s.CappedToken.maxWithdraw(s.Bob.address)
         expect(maxWithdraw).to.eq(BN("1e6").mul(await toNumber(bobCT)), "Max withdraw is correct")
         //todo check maxWithdraw when reserve is low - can reserve even ever be too low? 

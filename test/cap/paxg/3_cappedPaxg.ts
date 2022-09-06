@@ -17,8 +17,7 @@ import { start } from "repl";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
 //import { providers } from "web3";
 require("chai").should();
-describe("Testing CappedToken functions", () => {
-
+describe("Testing Capped PAXG functions", () => {
     it("Deposit underlying", async () => {
         let balance = await s.CappedPAXG.balanceOf(s.Bob.address)
         expect(balance).to.eq(0, "Bob holds no capped paxg before deposit")
@@ -29,8 +28,6 @@ describe("Testing CappedToken functions", () => {
         const result = await s.CappedPAXG.connect(s.Bob).deposit(s.PAXG_AMOUNT, s.BobVaultID)
         await mineBlock()
         showBodyCyan("Gas to deposit cap token: ", await getGas(result))
-
-
     })
 
     it("Check token destinations", async () => {
@@ -40,7 +37,6 @@ describe("Testing CappedToken functions", () => {
 
         balance = await s.CappedPAXG.balanceOf(s.BobVault.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.PAXG_AMOUNT), 0.003, "Regular vault holds the wrapped cap token")
-
     })
 
     it("Try to transfer", async () => {
@@ -49,8 +45,9 @@ describe("Testing CappedToken functions", () => {
 
     it("Borrow maximum against paxg", async () => {
         const borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
+        expect(borrowPower).to.be.gt(0, "Borrow power exists for capped PAXG")
 
-        const result = await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower.sub(500))
+        await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower)
         await mineBlock()
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
@@ -70,7 +67,6 @@ describe("Testing CappedToken functions", () => {
         solvency = await s.VaultController.checkVault(s.BobVaultID)
         expect(solvency).to.eq(false, "Bob's vault is insolvent")
     })
-
 
     it("Liquidate", async () => {
         //fund dave for liquidation
@@ -94,7 +90,7 @@ describe("Testing CappedToken functions", () => {
         expect(await toNumber(balance)).to.be.gt(((await toNumber(tokensToLiq)) * 1700), "Dave has enough funds to liquidate")
 
         balance = await ethers.provider.getBalance(s.Dave.address)
-         
+
         await s.USDI.connect(s.Dave).approve(s.VaultController.address, await s.USDI.balanceOf(s.Dave.address))
         await mineBlock()
 
@@ -105,7 +101,6 @@ describe("Testing CappedToken functions", () => {
 
         balance = await s.PAXG.balanceOf(s.Dave.address)
         expect(balance).to.be.gt(startingPAXG, "Dave received PAXG for liquidating CappedPAXG")
-
     })
 
     it("Check end state", async () => {
@@ -115,6 +110,7 @@ describe("Testing CappedToken functions", () => {
 
         expect(await toNumber(remianingPAXG)).to.be.closeTo(await toNumber(remainingCapped), 0.002, "Accounting is correct")
     })
+
     it("Repay all", async () => {
 
         //Fund Bob to repayAll
@@ -127,9 +123,7 @@ describe("Testing CappedToken functions", () => {
 
         let liability = await s.VaultController.vaultLiability(s.BobVaultID)
         expect(liability).to.eq(0, "Vault completely repaid")
-
     })
-
 
     it("Withdraw underlying", async () => {
 
@@ -160,7 +154,6 @@ describe("Hitting the cap", () => {
         await mineBlock()
 
         expect(await s.CappedPAXG.getCap()).to.eq(lowCap, "Cap has been set correctly")
-
     })
 
     it("Deposit exactly up to cap", async () => {
@@ -173,7 +166,6 @@ describe("Hitting the cap", () => {
 
         let supply = await s.CappedPAXG.totalSupply()
         expect(await toNumber(supply)).to.be.closeTo(await toNumber(lowCap), 0.0021, "Cap has been reached minus fee-on-transfer")
-
     })
 
     it("Try to deposit more than cap", async () => {
@@ -196,7 +188,6 @@ describe("Hitting the cap", () => {
 
         let bp = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
         expect(bp).to.eq(startBorrowPower, "Borrow power did not change when cap was lowered")
-
     })
 
     it("Reduced cap does not prevent withdraw", async () => {
@@ -216,7 +207,6 @@ describe("Hitting the cap", () => {
         balance = await s.PAXG.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(startSupply.add(startPAXG)), 0.0021, "Bob received the correct amount of PAXG")
     })
-
 })
 
 describe("More oracle tests", async () => {
@@ -240,13 +230,12 @@ describe("More oracle tests", async () => {
         value: BN("1e18")
     }
 
-
     it("Setup", async () => {
 
         await s.Frank.sendTransaction(tx)
         await mineBlock()
-       
-         whaleStartingPAXG = await s.PAXG.balanceOf(megaWhale)
+
+        whaleStartingPAXG = await s.PAXG.balanceOf(megaWhale)
         expect(whaleStartingPAXG).to.be.gt(largePaxgAmount, "Enough PAXG")
 
     })
@@ -358,11 +347,5 @@ describe("More oracle tests", async () => {
 
         const oraclePrice = await s.Oracle.getLivePrice(s.CappedPAXG.address)
         expect(oraclePrice).to.be.gt(0, "Valid oracle price returned, update restored functionality")
-
     })
 })
-
-
-
-
-

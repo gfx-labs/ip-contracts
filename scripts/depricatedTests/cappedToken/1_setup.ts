@@ -11,21 +11,7 @@ import { IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factor
 //import { assert } from "console";
 
 require("chai").should();
-//*
-// Initial Balances:
-// Andy: 100,000,000 usdc ($100) 6dec
-// Bob: 10,000,000,000,000,000,000 weth (10 weth) 18dec
-// Carol: 100,000,000,000,000,000,000 (100 comp), 18dec
-// Dave: 10,000,000,000 usdc ($10,000) 6dec
-//
-// andy is a usdc holder. he wishes to deposit USDC to hold USDI
-// bob is an eth holder. He wishes to deposit his eth and borrow USDI
-// carol is a comp holder. she wishes to deposit her comp and then vote
-// dave is a liquidator. he enjoys liquidating, so he's going to try to liquidate Bob
-
-// configurable variables
 let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
-let comp_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
 let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
 let dydx_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
