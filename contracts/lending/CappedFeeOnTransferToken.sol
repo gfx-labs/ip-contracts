@@ -79,6 +79,8 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
   /// @param vaultId recipient vault of tokens
   function deposit(uint256 amount, uint96 vaultId) public nonReentrant {
     require(amount > 0, "Cannot deposit 0");
+
+    //gather vault information
     VotingVault votingVault = VotingVault(_votingVaultController.votingVaultAddress(vaultId));
     require(address(votingVault) != address(0x0), "invalid voting vault");
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
@@ -87,59 +89,26 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
     // check allowance and ensure transfer success
     uint256 allowance = _underlying.allowance(_msgSender(), address(this));
     require(allowance >= amount, "Insufficient Allowance");
-    // mint this token, the collateral token, to the vault
 
     uint256 startingUnderlying = _underlying.balanceOf(address(votingVault));
 
-    // send the actual underlying to the voting vault for the vault
+    // send the actual underlying from the caller to the voting vault for the vault
     require(_underlying.transferFrom(_msgSender(), address(votingVault), amount), "transfer failed");
 
+    //verify the actual amount received
     uint256 amountReceived = _underlying.balanceOf(address(votingVault)) - startingUnderlying;
 
+    //mint amountReceived new capTokens to the vault
     ERC20Upgradeable._mint(address(vault), amountReceived);
 
-
-    // check cap
+    // check cap to make sure we didn't exceed it
     checkCap();
-
-    /**
-
-    console.log("deposit");
-
-    // scale the decimals to THIS token decimals, or 1e18. see underlyingToCappedAmount
-    require(amount > 0, "Cannot deposit 0");
-
-    VotingVault votingVault = VotingVault(_votingVaultController.votingVaultAddress(vaultId));
-    require(address(votingVault) != address(0x0), "invalid voting vault");
-
-    /// NOTE Fee on transfer specific - check how many underlying tokens we have before transfer
-    uint256 startingUnderlying = _underlying.balanceOf(address(votingVault));
-
-    IVault vault = IVault(_vaultController.vaultAddress(vaultId));
-    require(address(vault) != address(0x0), "invalid vault");
-
-    // check allowance and ensure transfer success
-    uint256 allowance = _underlying.allowance(_msgSender(), address(this));
-    require(allowance >= amount, "Insufficient Allowance");
-
-    // transfer underlying from SENDER to THIS
-    require(_underlying.transferFrom(_msgSender(), address(votingVault), amount), "transfer failed");
-
-    /// NOTE Fee on transfer specific - determine exact amount received to account for fee-on-transfer
-    uint256 amountReceived = _underlying.balanceOf(address(votingVault)) - startingUnderlying;
-
-    // check cap against amountReceived
-    checkCap(amountReceived);
-
-    // mint the scaled amount of tokens to the TARGET
-    ERC20Upgradeable._mint(address(vault), amountReceived);
- */
   }
 
   function transfer(address recipient, uint256 amount) public override returns (bool) {
     uint96 vault_id = _votingVaultController.vaultId(_msgSender());
 
-    // only vaults will ever send this. only vaults will ever hold this token.
+    // only vaults should call this. only vaults will ever hold this token.
     require(vault_id > 0, "only vaults");
 
     // get the corresponding voting vault
@@ -152,7 +121,6 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
 
     // move the underlying tokens from voting vault to the target
     _votingVaultController.retrieveUnderlying(amount, voting_vault_address, recipient);
-
 
     return true;
   }
