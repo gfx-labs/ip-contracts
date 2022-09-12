@@ -92,14 +92,14 @@ describe("Testing CappedToken functions", () => {
 
     it("Deposit underlying", async () => {
 
-        expect(await s.ENS.balanceOf(s.Bob.address)).to.eq(s.ENS_AMOUNT, "Bob has the expected amount of MATIC")
-        //expect(await s.ENS.balanceOf(s.Bob.address)).to.be.gt(depositAmount, "Bob has enough MATIC")
+        expect(await s.ENS.balanceOf(s.Bob.address)).to.eq(s.ENS_AMOUNT, "Bob has the expected amount of ENS")
+        //expect(await s.ENS.balanceOf(s.Bob.address)).to.be.gt(depositAmount, "Bob has enough ENS")
 
         let caBalance = await s.CappedENS.balanceOf(s.Bob.address)
-        expect(caBalance).to.eq(0, "Bob holds 0 capped MATIC at the start")
+        expect(caBalance).to.eq(0, "Bob holds 0 capped ENS at the start")
 
         caBalance = await s.CappedENS.balanceOf(s.BobVault.address)
-        expect(caBalance).to.eq(0, "Bob's vault holds 0 capped MATIC at the start")
+        expect(caBalance).to.eq(0, "Bob's vault holds 0 capped ENS at the start")
 
 
         await s.ENS.connect(s.Bob).approve(s.CappedENS.address, depositAmount)
@@ -108,10 +108,10 @@ describe("Testing CappedToken functions", () => {
 
 
         caBalance = await s.CappedENS.balanceOf(s.Bob.address)
-        expect(caBalance).to.eq(0, "Bob holds 0 capped MATIC after deposit")
+        expect(caBalance).to.eq(0, "Bob holds 0 capped ENS after deposit")
 
         caBalance = await s.CappedENS.balanceOf(s.BobVault.address)
-        expect(caBalance).to.eq(depositAmount, "Bob's vault received the capped MATIC tokens")
+        expect(caBalance).to.eq(depositAmount, "Bob's vault received the capped ENS tokens")
 
 
     })
@@ -163,7 +163,7 @@ describe("Testing CappedToken functions", () => {
         //transfer some underlying to cap contract instead of deposit?
         const transferAmount = BN("5e18")
         let balance = await s.ENS.balanceOf(s.Gus.address)
-        expect(balance).to.eq(s.ENS_AMOUNT, "Starting MATIC amount correct")
+        expect(balance).to.eq(s.ENS_AMOUNT, "Starting ENS amount correct")
         await s.ENS.connect(s.Gus).transfer(s.CappedENS.address, transferAmount)
         await mineBlock()
 
@@ -187,8 +187,6 @@ describe("Testing CappedToken functions", () => {
 
         await s.CappedENS.connect(s.Frank).setCap(BN("51e24"))
         await mineBlock()
-
-
 
         await s.CappedENS.connect(s.Gus).deposit(BN("1e18"), gusVaultId)
         await mineBlock()
@@ -221,19 +219,19 @@ describe("Testing CappedToken functions", () => {
 
         const amount = BN("250e18")
 
-        const startMATIC = await s.ENS.balanceOf(s.Bob.address)
-        const startCapMATIC = await s.CappedENS.balanceOf(s.BobVault.address)
+        const startENS = await s.ENS.balanceOf(s.Bob.address)
+        const startCapENS = await s.CappedENS.balanceOf(s.BobVault.address)
 
-        expect(startCapMATIC).to.be.gt(amount, "Enough Capped MATIC")
+        expect(startCapENS).to.be.gt(amount, "Enough Capped ENS")
 
         await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedENS.address, amount).catch(console.log)
         await mineBlock()
 
         let balance = await s.ENS.balanceOf(s.Bob.address).catch(console.log)
-        expect(balance).to.eq(startMATIC.add(amount), "MATIC balance changed as expected")
+        expect(balance).to.eq(startENS.add(amount), "ENS balance changed as expected")
 
         balance = await s.CappedENS.balanceOf(s.BobVault.address).catch(console.log)
-        expect(balance).to.eq(startCapMATIC.sub(amount), "CappedMatic balance changed as expected")
+        expect(balance).to.eq(startCapENS.sub(amount), "CappedENS balance changed as expected")
 
         //Deposit again to reset for further tests
         await s.ENS.connect(s.Bob).approve(s.CappedENS.address, amount)

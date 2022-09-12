@@ -16,7 +16,9 @@ import {
   AnchoredViewRelay__factory,
   OracleMaster__factory,
   VaultController__factory,
-  VotingVaultController__factory
+  VotingVaultController__factory,
+  ChainlinkOracleRelay,
+  ChainlinkOracleRelay__factory
 } from "../../../typechain-types";
 import {
   advanceBlockHeight,
@@ -71,27 +73,9 @@ describe("Verify Contracts", () => {
     s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
     expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
   });
-  /**
-   
-  it("vault deposits", async () => {
-    await expect(s.WETH.connect(s.Bob).transfer(s.BobVault.address, s.Bob_WETH))
-      .to.not.reverted;
-    await expect(
-      s.UNI.connect(s.Carol).transfer(s.CarolVault.address, s.Carol_UNI)
-    ).to.not.reverted;
-    await mineBlock();
-
-    //showBody("bob transfer weth")
-    expect(await s.BobVault.tokenBalance(s.wethAddress)).to.eq(s.Bob_WETH)
-
-    //showBody("carol transfer uni")
-    expect(await s.CarolVault.tokenBalance(s.uniAddress)).to.eq(s.Carol_UNI)
-
-  });
-  */
 });
 
-describe("Execute proposal", () => {
+describe("Setup, Queue, and Execute proposal", () => {
   const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
   const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
   const prop = ethers.provider.getSigner(proposer)
@@ -109,8 +93,9 @@ describe("Execute proposal", () => {
   const weth3k = "0x92560C178cE069CC014138eD3C2F5221Ba71f58a"//good liquidity - 910 weth, ~$3.4mm TVL 
   const weth10k = "0xb9C4a5522a2f8bA9E2fF7063Df8C02ed443337A3"//reasonable liquidity - 100 weth, ~$440k TVL 
 
-  const chainLinkDataFeed = "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419"
+  const chainLinkDataFeed = "0x5C00128d4d1c2F4f652C267d7bcdD7aC99C16E16"
   let anchor: UniswapV3TokenOracleRelay
+  let main: ChainlinkOracleRelay
   let anchorView: AnchoredViewRelay
 
   let out: any
@@ -149,11 +134,24 @@ describe("Execute proposal", () => {
     await anchor.deployed()
     await mineBlock()
 
+    main = await DeployContract(
+      new ChainlinkOracleRelay__factory(s.Frank),
+      s.Frank,
+      chainLinkDataFeed,
+      BN("1e10"),
+      BN("1")
+    )
+    await mineBlock()
+    await main.deployed()
+    await mineBlock()
+    let price = await main.currentValue()
+    //showBody("price: ", await toNumber(price))
+
     anchorView = await DeployContract(
       new AnchoredViewRelay__factory(s.Frank),
       s.Frank,
       anchor.address,
-      anchor.address,
+      main.address,
       BN("10"),
       BN("100")
     )
@@ -162,7 +160,7 @@ describe("Execute proposal", () => {
     await mineBlock()
 
     let result = await anchorView.currentValue()
-    showBody("Result: ", await toNumber(result))
+    //showBody("Result: ", await toNumber(result))
 
   })
 
