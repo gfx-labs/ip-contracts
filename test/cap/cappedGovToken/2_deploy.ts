@@ -116,14 +116,14 @@ describe("Deploy cappedToken contract and infastructure", () => {
       s.Frank,
       60,
       uniV3AaveWETHfeed,
-      false,
+      false,//weth is not token0
       BN("1"),
       BN("1")
     )
     await mineBlock()
 
     let result = await UniRelay.currentValue()
-    //showBody("Result: ", await toNumber(result))
+    showBody("Result: ", await toNumber(result))
 
     //Chainlink relay
     const chainlinkAaveUSDfeed = "0x547a514d5e3769680ce22b2361c10ea13619e8a9"
