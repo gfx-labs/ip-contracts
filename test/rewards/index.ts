@@ -8,4 +8,4 @@ export * from "./MerkleRedeem/index"
 export * from "./MainnetMerkle/index"
 export * from "./MainnetMerkleWeek8/index"
 export * from "./MainnetMerkleWeek9/index"
-
+export * from "./MainnetMerkleWeek10/index"

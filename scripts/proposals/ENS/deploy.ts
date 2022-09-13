@@ -35,6 +35,7 @@ const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 
 let anchor: UniswapV3TokenOracleRelay
 let mainRelay: ChainlinkOracleRelay
+let anchorView: AnchoredViewRelay
 let CappedENS: CappedGovToken
 
 const deploy = async (deployer: SignerWithAddress) => {
@@ -61,6 +62,17 @@ const deploy = async (deployer: SignerWithAddress) => {
     )
     await mainRelay.deployed()
     console.log("Chainlink main relay deployed to: ", mainRelay.address)
+
+    anchorView = await DeployContract(
+        new AnchoredViewRelay__factory(deployer),
+        deployer,
+        anchor.address,
+        mainRelay.address,
+        BN("10"),
+        BN("100")
+    )
+    await anchorView.deployed()
+    console.log("AnchorView relay deployed to: ", anchorView.address)
 
     const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
 

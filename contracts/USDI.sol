@@ -10,8 +10,6 @@ import "./_external/IERC20.sol";
 import "./_external/compound/ExponentialNoError.sol";
 import "./_external/openzeppelin/PausableUpgradeable.sol";
 
-import "hardhat/console.sol";
-
 /// @title USDI token contract
 /// @notice handles all minting/burning of usdi
 /// @dev extends UFragments
