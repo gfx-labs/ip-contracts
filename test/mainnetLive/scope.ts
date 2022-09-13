@@ -46,6 +46,9 @@ export class TestScope extends MainnetAddresses {
     Curve!: ICurveMaster;
     ThreeLines!: ThreeLines0_100;
 
+    NEW_CURVE = "0x16Ac44B1e161c735D7E372169d3573d920a23906"
+    newThreeLines!: ThreeLines0_100
+
     Frank!: SignerWithAddress  // frank is the Frank and master of USDI, and symbolizes the power of governance
     Andy!: SignerWithAddress   // andy is a usdc holder. He wishes to deposit his USDC to hold USDI
     Bob!: SignerWithAddress    // bob is an eth holder. He wishes to deposit his eth and borrow USDI

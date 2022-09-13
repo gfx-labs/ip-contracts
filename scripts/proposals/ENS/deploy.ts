@@ -23,6 +23,7 @@ import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
 import { toNumber } from "../../../util/math";
 import { d } from "../DeploymentInfo"
 import { showBody } from "../../../util/format";
+import { reset } from "../../../util/block";
 
 const { ethers, network, upgrades } = require("hardhat");
 
@@ -56,7 +57,8 @@ const deploy = async (deployer: SignerWithAddress) => {
 
      */
 
-    anchor = new UniswapV3TokenOracleRelay__factory(deployer).attach("0x81f66181AB16FAa6f24FAc2593Fda31bC19FFffa")//deployed already
+    /**
+     anchor = new UniswapV3TokenOracleRelay__factory(deployer).attach("0x81f66181AB16FAa6f24FAc2593Fda31bC19FFffa")//deployed already
     console.log("Anchor already deployed to: ", anchor.address)
 
     let factory = await ethers.getContractFactory("ChainlinkOracleRelay")
@@ -79,13 +81,16 @@ const deploy = async (deployer: SignerWithAddress) => {
     await anchorView.deployed()
     console.log("AnchorView relay deployed to: ", anchorView.address)
 
+     */
+
+    //await reset(15528706)
     const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
 
     const ensFactory = new CappedGovToken__factory(deployer)
-    const ucENS = await ensFactory.deploy()
+    //const ucENS = await ensFactory.deploy()
 
     const cENS = await new TransparentUpgradeableProxy__factory(deployer).deploy(
-        ucENS.address,
+        "0x0F0767402A2d4399f2649c885ed3BF47099B461b",//ucENS.address,
         proxy.address,
         "0x"
     )
