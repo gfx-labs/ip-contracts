@@ -64,7 +64,7 @@ async function main() {
         attach(d.VaultController).
         populateTransaction.registerErc20(
             d.CappedENS,
-            BN("75e16"),
+            BN("70e16"),
             d.CappedENS,
             BN("10e16")
         )
