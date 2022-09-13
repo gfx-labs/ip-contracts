@@ -80,9 +80,6 @@ describe("Setup, Queue, and Execute proposal", () => {
   const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
   const prop = ethers.provider.getSigner(proposer)
 
-  const voteBlocks = 6570;
-  const timelockDelay = 43200;
-  const owner = ethers.provider.getSigner(s.IP_OWNER)
   let gov: GovernorCharlieDelegate;
 
   let proposal: number

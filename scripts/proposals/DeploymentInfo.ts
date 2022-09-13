@@ -34,6 +34,8 @@ export class deployInfo extends MainnetAddresses {
     WBTCOracle = "0x0f2f7aa507d153aC04431a617840d1fF28A960AC"
 
     VotingVaultController = "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2"
+    CappedENS = "0xfb42f5AFb722d2b01548F77C31AC05bf80e03381"
+    ENS_AnchorView = "0x6DB54416CBB28C6a78F606947df53E83Dd69eb70"
 
 }
 
