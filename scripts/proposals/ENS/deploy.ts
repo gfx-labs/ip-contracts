@@ -15,7 +15,8 @@ import {
     VotingVaultController__factory,
     ChainlinkOracleRelay,
     ChainlinkOracleRelay__factory,
-    ProxyAdmin__factory
+    ProxyAdmin__factory,
+    TransparentUpgradeableProxy__factory
 } from "../../../typechain-types";
 import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
 import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
@@ -26,7 +27,7 @@ import { showBody } from "../../../util/format";
 const { ethers, network, upgrades } = require("hardhat");
 
 const ensAddress = "0xc18360217d8f7ab5e7c516566761ea12ce7f9d72"
-const ENS_CAP = BN("100000e18")//100k ENS tokens - ~$1.5mm USD
+const ENS_CAP = BN("400000e18")//100k ENS tokens - ~$1.5mm USD
 
 const weth3k = "0x92560C178cE069CC014138eD3C2F5221Ba71f58a"//good liquidity - 910 weth, ~$3.4mm TVL 
 const chainLinkDataFeed = "0x5C00128d4d1c2F4f652C267d7bcdD7aC99C16E16"
@@ -39,11 +40,12 @@ let anchorView: AnchoredViewRelay
 let CappedENS: CappedGovToken
 
 const deploy = async (deployer: SignerWithAddress) => {
-    //uniV3Relay
-    anchor = await DeployContract(
-        new UniswapV3TokenOracleRelay__factory(deployer),
-        deployer,
-        60,
+    
+
+    /**
+     let factory = await ethers.getContractFactory("UniswapV3TokenOracleRelay")
+    anchor = await factory.deploy(
+        14400,
         weth3k,
         true,//weth is token0
         BN("1"),
@@ -52,10 +54,10 @@ const deploy = async (deployer: SignerWithAddress) => {
     await anchor.deployed()
     console.log("Uniswap V3 Anchor deployed to: ", anchor.address)
 
-    //chainlink relay
-    mainRelay = await DeployContract(
-        new ChainlinkOracleRelay__factory(deployer),
-        deployer,
+     */
+
+    let factory = await ethers.getContractFactory("ChainlinkOracleRelay")
+    mainRelay = await factory.deploy(
         chainLinkDataFeed,
         BN("1e10"),
         BN("1")
@@ -63,12 +65,12 @@ const deploy = async (deployer: SignerWithAddress) => {
     await mainRelay.deployed()
     console.log("Chainlink main relay deployed to: ", mainRelay.address)
 
-    anchorView = await DeployContract(
-        new AnchoredViewRelay__factory(deployer),
-        deployer,
+  
+    factory = await ethers.getContractFactory("AnchoredViewRelay")
+    anchorView = await factory.deploy(
         anchor.address,
         mainRelay.address,
-        BN("10"),
+        BN("25"),
         BN("100")
     )
     await anchorView.deployed()
@@ -76,18 +78,27 @@ const deploy = async (deployer: SignerWithAddress) => {
 
     const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
 
-    CappedENS = await DeployContractWithProxy(
-        new CappedGovToken__factory(deployer),
-        deployer,
-        proxy,
-        "CappedENS",
+    const ensFactory = new CappedGovToken__factory(deployer)
+    const ucENS = await ensFactory.deploy()
+
+    const cENS = await new TransparentUpgradeableProxy__factory(deployer).deploy(
+        ucENS.address,
+        proxy.address,
+        "0x"
+    )
+    await cENS.deployed()
+    CappedENS = ensFactory.attach(cENS.address)
+    console.log("Capped ENS deployed to: ", cENS.address)
+    const txn = await CappedENS.initialize(
+        "Capped ENS",
         "cENS",
         ensAddress,
         d.VaultController,
         d.VotingVaultController
     )
-    await CappedENS.deployed()
-    console.log("Capped ENS deployed to: ", CappedENS.address)
+    await txn.wait()
+    console.log("Capped ENS Initialized", CappedENS.address)
+
 
     await CappedENS.setCap(ENS_CAP)
     console.log("Set CappedENS cap to: ", ENS_CAP.toString())

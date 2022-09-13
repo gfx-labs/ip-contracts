@@ -134,6 +134,9 @@ describe("Setup, Queue, and Execute proposal", () => {
     await anchor.deployed()
     await mineBlock()
 
+    showBody("Format: ", await toNumber(await anchor.currentValue()))
+    showBody("Raw   : ", await anchor.currentValue())
+
     main = await DeployContract(
       new ChainlinkOracleRelay__factory(s.Frank),
       s.Frank,
@@ -159,7 +162,7 @@ describe("Setup, Queue, and Execute proposal", () => {
     await anchorView.deployed()
     await mineBlock()
 
-    let result = await anchorView.currentValue()
+    //let result = await anchorView.currentValue()
     //showBody("Result: ", await toNumber(result))
 
   })
