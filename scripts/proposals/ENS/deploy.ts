@@ -56,6 +56,9 @@ const deploy = async (deployer: SignerWithAddress) => {
 
      */
 
+    anchor = new UniswapV3TokenOracleRelay__factory(deployer).attach("0x81f66181AB16FAa6f24FAc2593Fda31bC19FFffa")//deployed already
+    console.log("Anchor already deployed to: ", anchor.address)
+
     let factory = await ethers.getContractFactory("ChainlinkOracleRelay")
     mainRelay = await factory.deploy(
         chainLinkDataFeed,
