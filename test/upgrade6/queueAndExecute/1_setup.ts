@@ -124,5 +124,10 @@ describe("Initial Setup - ENS", () => {
         //Eric should not hold any USDC for the tests
         await s.USDC.connect(s.Eric).transfer(usdc_minter, await s.USDC.balanceOf(s.Eric.address))
         await mineBlock()
+
+        //Dave should not hold any ENS for the tests
+        await s.ENS.connect(s.Dave).transfer(ens_minter, await s.ENS.balanceOf(s.Dave.address))
+        await mineBlock()
+
     });
 });

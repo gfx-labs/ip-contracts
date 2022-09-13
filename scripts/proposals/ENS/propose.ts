@@ -24,6 +24,7 @@ import { toNumber } from "../../../util/math";
 import { d } from "../DeploymentInfo"
 import { showBody } from "../../../util/format";
 import { reset } from "../../../util/block";
+import * as fs from 'fs';
 
 const { ethers, network, upgrades } = require("hardhat");
 
@@ -86,8 +87,23 @@ async function main() {
     let out = proposal.populateProposal()
 
     console.log(out)
+    const proposalText = fs.readFileSync('test/upgrade6/queueAndExecute/proposal.md', 'utf8');
 
+    let gov: GovernorCharlieDelegate;
+    gov = new GovernorCharlieDelegate__factory(deployer).attach(
+        govAddress
+    );
 
+    const data = await gov.connect(deployer).populateTransaction.propose(
+        out.targets,
+        out.values,
+        out.signatures,
+        out.calldatas,
+        proposalText,
+        false
+    )
+
+    fs.writeFileSync('./proposalHexData.txt', JSON.stringify(data));
 
 }
 

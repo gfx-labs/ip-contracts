@@ -3,6 +3,7 @@ import { upgrades, ethers } from "hardhat";
 import { expect, assert } from "chai";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
+import * as fs from 'fs';
 
 import { BN } from "../../../util/number";
 import {
@@ -31,6 +32,8 @@ import {
 import { toNumber } from "../../../util/math";
 import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
 import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
+
+const proposalText = fs.readFileSync('test/upgrade6/queueAndExecute/proposal.md', 'utf8');
 
 
 require("chai").should();
@@ -185,7 +188,7 @@ describe("Setup, Queue, and Execute proposal", () => {
       attach(s.VaultController.address).
       populateTransaction.registerErc20(
         s.CappedENS.address,
-        BN("75e16"),
+        BN("70e16"),
         s.CappedENS.address,
         BN("10e16")
       )
@@ -238,6 +241,21 @@ describe("Setup, Queue, and Execute proposal", () => {
     expect(await toNumber(votes)).to.eq(45000000, "Correct number of votes delegated")
 
     await impersonateAccount(proposer)
+
+    /**
+     const data = await gov.connect(prop).populateTransaction.propose(
+      out.targets,
+      out.values,
+      out.signatures,
+      out.calldatas,
+      proposalText,
+      false
+    )
+    fs.writeFileSync('./proposalHexData.txt', JSON.stringify(data));
+     */
+
+
+
     await gov.connect(prop).propose(
       out.targets,
       out.values,
