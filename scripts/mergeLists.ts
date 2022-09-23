@@ -30,8 +30,8 @@ import { json } from "stream/consumers";
 
 const { ethers, network, upgrades } = require("hardhat");
 
-const LPS = require('../rewardtree/lps_15499442-15544242.json')
-const BORROWERS = require('../rewardtree/borrowers_15499442-15544242.json')
+const LPS = require('../rewardtree/lps_15544243-15589043.json')
+const BORROWERS = require('../rewardtree/borrowers_15544243-15589043.json')
 
 
 //for format minter:amount  ===>> {minter: minter, amount: amount}
@@ -95,8 +95,8 @@ async function main() {
         formatObject[object.minter] = object.amount
     }
 
-    writeFileSync(`rewardtree/mergedAndFormatWeek12.json`, JSON.stringify(valueAdjusted), 'utf8')
-    writeFileSync(`rewardtree/week12Object.json`, JSON.stringify(formatObject), 'utf8')
+    writeFileSync(`rewardtree/mergedAndFormatWeek13.json`, JSON.stringify(valueAdjusted), 'utf8')
+    writeFileSync(`rewardtree/week13Object.json`, JSON.stringify(formatObject), 'utf8')
 
 }
 

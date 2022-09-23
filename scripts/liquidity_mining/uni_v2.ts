@@ -11,7 +11,7 @@ import { ERC20Detailed__factory, Vault__factory } from "../../typechain-types";
 import { BigNumber } from "ethers";
 import { BN } from "../../util/number";
 import Decimal from "decimal.js";
-import { BlockRounds } from "./q1_data";
+import { BlockRounds } from "./q2_data";
 import { ethers } from "hardhat";
 import { writeFileSync } from "fs";
 import { sleep } from "../proposals/suite/proposal";
@@ -30,7 +30,7 @@ const main = async () => {
   const blockEnd = 15346983;
   const blockStart = blockEnd - 1000;
 
-  const weekNum = 5
+  const weekNum = 0
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     const blockStart = week.start
     const blockEnd = week.end
