@@ -378,7 +378,4 @@ describe("Setup, Queue, and Execute proposal", () => {
     await ceaseImpersonation(proposer)
 
   })
-
-   
-
 })
