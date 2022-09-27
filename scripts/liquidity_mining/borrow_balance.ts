@@ -85,7 +85,7 @@ const main = async () => {
   //console.log(minters)
 
   //console.log("BLOCKROUNDS: ", BlockRounds.blockRanges)
-  const weekNum = 0
+  const weekNum = 1
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     //weekNum = weekNum + 1
     const blockStart = week.start
@@ -103,7 +103,7 @@ const main = async () => {
         const vaultCount = await vc._vaultsMinted({ blockTag: b });
         summaries = await vc.vaultSummaries(1, vaultCount, { blockTag: b })
       } catch (e) {
-        console.log("ERROR ON BLOCK", b)
+        console.log("ERROR ON BLOCK", b, e)
         continue
       }
       let totalMinted = new Decimal(0);
