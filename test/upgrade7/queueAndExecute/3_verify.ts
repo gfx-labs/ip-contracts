@@ -113,7 +113,7 @@ describe("Testing CappedToken functions", () => {
 
 
         caBalance = await s.CappedBal.balanceOf(s.Bob.address)
-        expect(caBalance).to.eq(0, "Bob holds 0 capped ENS after deposit")
+        expect(caBalance).to.eq(0, "Bob holds 0 capped BAL after deposit")
 
         caBalance = await s.CappedBal.balanceOf(s.BobVault.address)
         expect(caBalance).to.eq(s.balAmount, "Bob's vault received the capped Bal tokens")
@@ -158,122 +158,199 @@ describe("Testing CappedToken functions", () => {
         await mineBlock()
     })
 
-        it("No vault", async () => {
-            const amount = BN("5e18")
-            const startBal = await s.BAL.balanceOf(s.Gus.address)
-            expect(startBal).to.eq(s.balAmount, "Balance correct")
+    it("No vault", async () => {
+        const amount = BN("5e18")
+        const startBal = await s.BAL.balanceOf(s.Gus.address)
+        expect(startBal).to.eq(s.balAmount, "Balance correct")
+
+        await s.BAL.connect(s.Gus).approve(s.CappedBal.address, amount)
+        expect(s.CappedBal.connect(s.Gus).deposit(amount, 99999)).to.be.revertedWith("invalid vault")
+    })
     
-            await s.BAL.connect(s.Gus).approve(s.CappedBal.address, amount)
-            expect(s.CappedBal.connect(s.Gus).deposit(amount, 99999)).to.be.revertedWith("invalid vault")
-        })
-        /**
-        it("Deposit with no voting vault", async () => {
-            const amount = BN("5e18")
-    
-            const startBal = await s.ENS.balanceOf(s.Gus.address)
-            expect(startBal).to.eq(s.ENS_AMOUNT, "Balance correct")
-    
-    
-            //mint regular vault for gus
-            await expect(s.VaultController.connect(s.Gus).mintVault()).to.not
-                .reverted;
-            await mineBlock();
-            gusVaultId = await s.VaultController.vaultsMinted()
-            let vaultAddress = await s.VaultController.vaultAddress(gusVaultId)
-            gusVault = IVault__factory.connect(vaultAddress, s.Gus);
-            expect(await gusVault.minter()).to.eq(s.Gus.address);
-    
-            await s.ENS.connect(s.Gus).approve(s.CappedENS.address, amount)
-            expect(s.CappedENS.connect(s.Gus).deposit(amount, gusVaultId)).to.be.revertedWith("invalid voting vault")
-        })
-    
-        it("Eronious transfer and then withdraw with no voting vault", async () => {
-            //transfer some underlying to cap contract instead of deposit?
-            const transferAmount = BN("5e18")
-            let balance = await s.ENS.balanceOf(s.Gus.address)
-            expect(balance).to.eq(s.ENS_AMOUNT, "Starting ENS amount correct")
-            await s.ENS.connect(s.Gus).transfer(s.CappedENS.address, transferAmount)
-            await mineBlock()
-    
-            //try to withdraw - no voting vault
-            expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedENS.address, transferAmount)).to.be.revertedWith("only vaults")
-    
-        })
-    
-        it("Try to withdraw eronious transfer after minting a voting vault", async () => {
-            const transferAmount = BN("5e18")
-    
-            //mint a voting vault
-            await s.VotingVaultController.connect(s.Gus).mintVault(gusVaultId)
-            await mineBlock()
-    
-            expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedENS.address, transferAmount)).to.be.revertedWith("ERC20: burn amount exceeds balance")
-        })
-    
-        it("Try to withdraw more than is possible given some cap tokens", async () => {
-    
-    
-            await s.CappedENS.connect(s.Frank).setCap(BN("51e24"))
-            await mineBlock()
-    
-            await s.CappedENS.connect(s.Gus).deposit(BN("1e18"), gusVaultId)
-            await mineBlock()
-    
-            let balance = await s.CappedENS.balanceOf(gusVault.address)
-            expect(balance).to.eq(BN("1e18"), "Balance is correct")
-    
-            expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedENS.address, BN("5e18"))).to.be.revertedWith("only cap token")
-    
-            //Withdraw the amount that was deposited
-            await gusVault.connect(s.Gus).withdrawErc20(s.CappedENS.address, BN("1e18"))
-            await mineBlock()
-    
-            //return cap to expected amount
-            await s.CappedENS.connect(s.Frank).setCap(s.ENS_CAP)
-            await mineBlock()
-    
-    
-    
-        })
-    
-        it("Try to withdraw from a vault that is not yours", async () => {
-            const amount = BN("250e18")
-    
-            await expect(s.BobVault.connect(s.Carol).withdrawErc20(s.CappedENS.address, amount)).to.be.revertedWith("sender not minter")
-        })
-    
-    
-        it("Withdraw Underlying", async () => {
-    
-            const amount = BN("250e18")
-    
-            const startENS = await s.ENS.balanceOf(s.Bob.address)
-            const startCapENS = await s.CappedENS.balanceOf(s.BobVault.address)
-    
-            expect(startCapENS).to.be.gt(amount, "Enough Capped ENS")
-    
-            await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedENS.address, amount).catch(console.log)
-            await mineBlock()
-    
-            let balance = await s.ENS.balanceOf(s.Bob.address).catch(console.log)
-            expect(balance).to.eq(startENS.add(amount), "ENS balance changed as expected")
-    
-            balance = await s.CappedENS.balanceOf(s.BobVault.address).catch(console.log)
-            expect(balance).to.eq(startCapENS.sub(amount), "CappedENS balance changed as expected")
-    
-            //Deposit again to reset for further tests
-            await s.ENS.connect(s.Bob).approve(s.CappedENS.address, amount)
-            await s.CappedENS.connect(s.Bob).deposit(amount, s.BobVaultID)
-            await mineBlock()
-        })
-         
-     */
+    it("Deposit BAL with no voting vault", async () => {
+        const amount = BN("5e18")
+ 
+        const startBal = await s.BAL.balanceOf(s.Gus.address)
+        expect(startBal).to.eq(s.balAmount, "Balance correct")
+ 
+ 
+        //mint regular vault for gus
+        await expect(s.VaultController.connect(s.Gus).mintVault()).to.not
+            .reverted;
+        await mineBlock();
+        gusVaultId = await s.VaultController.vaultsMinted()
+        let vaultAddress = await s.VaultController.vaultAddress(gusVaultId)
+        gusVault = IVault__factory.connect(vaultAddress, s.Gus);
+        expect(await gusVault.minter()).to.eq(s.Gus.address);
+ 
+        await s.BAL.connect(s.Gus).approve(s.CappedBal.address, amount)
+        expect(s.CappedBal.connect(s.Gus).deposit(amount, gusVaultId)).to.be.revertedWith("invalid voting vault")
+    })
+    it("Deposit Aave with no voting vault", async () => {
+        const amount = BN("5e18")
+ 
+        const startBal = await s.AAVE.balanceOf(s.Gus.address)
+        expect(startBal).to.eq(s.aaveAmount, "Balance correct")
+ 
+ 
+        //mint regular vault for gus
+        await expect(s.VaultController.connect(s.Gus).mintVault()).to.not
+            .reverted;
+        await mineBlock();
+        gusVaultId = await s.VaultController.vaultsMinted()
+        let vaultAddress = await s.VaultController.vaultAddress(gusVaultId)
+        gusVault = IVault__factory.connect(vaultAddress, s.Gus);
+        expect(await gusVault.minter()).to.eq(s.Gus.address);
+ 
+        await s.AAVE.connect(s.Gus).approve(s.CappedAave.address, amount)
+        expect(s.CappedAave.connect(s.Gus).deposit(amount, gusVaultId)).to.be.revertedWith("invalid voting vault")
+    })
+ 
+    it("Eronious transfer of BAL and then withdraw with no voting vault", async () => {
+        //transfer some underlying to cap contract instead of deposit?
+        const transferAmount = BN("5e18")
+        let balance = await s.BAL.balanceOf(s.Gus.address)
+        expect(balance).to.eq(s.balAmount, "Starting BAL amount correct")
+        await s.BAL.connect(s.Gus).transfer(s.CappedBal.address, transferAmount)
+        await mineBlock()
+ 
+        //try to withdraw - no voting vault
+        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedBal.address, transferAmount)).to.be.revertedWith("only vaults")
+ 
+    })
+    it("Eronious transfer of AAVE and then withdraw with no voting vault", async () => {
+        //transfer some underlying to cap contract instead of deposit?
+        const transferAmount = BN("5e18")
+        let balance = await s.AAVE.balanceOf(s.Gus.address)
+        expect(balance).to.eq(s.aaveAmount, "Starting Aave amount correct")
+        await s.BAL.connect(s.Gus).transfer(s.CappedAave.address, transferAmount)
+        await mineBlock()
+ 
+        //try to withdraw - no voting vault
+        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedAave.address, transferAmount)).to.be.revertedWith("only vaults")
+ 
+    })
+
+    it("Try to withdraw eronious transfer after minting a voting vault", async () => {
+        const transferAmount = BN("5e18")
+ 
+        //mint a voting vault
+        await s.VotingVaultController.connect(s.Gus).mintVault(gusVaultId)
+        await mineBlock()
+ 
+        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedBal.address, transferAmount)).to.be.revertedWith("ERC20: burn amount exceeds balance")
+    })
+    it("Try to withdraw eronious transfer after minting a voting vault", async () => {
+        const transferAmount = BN("5e18")
+ 
+        //mint a voting vault
+        await s.VotingVaultController.connect(s.Gus).mintVault(gusVaultId)
+        await mineBlock()
+ 
+        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedAave.address, transferAmount)).to.be.revertedWith("ERC20: burn amount exceeds balance")
+    })
+
+    it("Try to withdraw more capped BAL than is possible given some cap tokens", async () => {
+ 
+ 
+        await s.CappedBal.connect(s.Frank).setCap(BN("51e24"))
+        await mineBlock()
+ 
+        await s.CappedBal.connect(s.Gus).deposit(BN("1e18"), gusVaultId)
+        await mineBlock()
+ 
+        let balance = await s.CappedBal.balanceOf(gusVault.address)
+        expect(balance).to.eq(BN("1e18"), "Balance is correct")
+ 
+        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedBal.address, BN("5e18"))).to.be.revertedWith("only cap token")
+ 
+        //Withdraw the amount that was deposited
+        await gusVault.connect(s.Gus).withdrawErc20(s.CappedBal.address, BN("1e18"))
+        await mineBlock()
+ 
+        //return cap to expected amount
+        await s.CappedBal.connect(s.Frank).setCap(s.BalCap)
+        await mineBlock()
+ 
+ 
+ 
+    })
+    it("Try to withdraw more capped Aave than is possible given some cap tokens", async () => {
+ 
+ 
+        await s.CappedAave.connect(s.Frank).setCap(BN("51e24"))
+        await mineBlock()
+ 
+        await s.CappedAave.connect(s.Gus).deposit(BN("1e18"), gusVaultId)
+        await mineBlock()
+ 
+        let balance = await s.CappedAave.balanceOf(gusVault.address)
+        expect(balance).to.eq(BN("1e18"), "Balance is correct")
+ 
+        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedAave.address, BN("5e18"))).to.be.revertedWith("only cap token")
+ 
+        //Withdraw the amount that was deposited
+        await gusVault.connect(s.Gus).withdrawErc20(s.CappedAave.address, BN("1e18"))
+        await mineBlock()
+ 
+        //return cap to expected amount
+        await s.CappedAave.connect(s.Frank).setCap(s.AaveCap)
+        await mineBlock()
+ 
+    })
+   
+    it("Try to withdraw from a vault that is not yours", async () => {
+        const amount = BN("250e18")
+ 
+        await expect(s.BobVault.connect(s.Carol).withdrawErc20(s.CappedBal.address, amount)).to.be.revertedWith("sender not minter")
+    })
+ 
+ 
+    it("Withdraw Underlying BAL", async () => {
+ 
+        const amount = BN("250e18")
+ 
+        const startBal = await s.BAL.balanceOf(s.Bob.address)
+        const startCapBal = await s.CappedBal.balanceOf(s.BobVault.address)
+ 
+        expect(startCapBal).to.be.gt(amount, "Enough Capped BAL")
+ 
+        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedBal.address, amount).catch(console.log)
+        await mineBlock()
+ 
+        let balance = await s.BAL.balanceOf(s.Bob.address).catch(console.log)
+        expect(balance).to.eq(startBal.add(amount), "BAL balance changed as expected")
+ 
+        balance = await s.CappedBal.balanceOf(s.BobVault.address).catch(console.log)
+        expect(balance).to.eq(startCapBal.sub(amount), "CappedBal balance changed as expected")
+ 
+        //Deposit again to reset for further tests
+        await s.BAL.connect(s.Bob).approve(s.CappedBal.address, amount)
+        await s.CappedBal.connect(s.Bob).deposit(amount, s.BobVaultID)
+        await mineBlock()
+    })
+     
+    it("Withdraw Underlying Aave", async () => {
+ 
+        const amount = BN("250e18")
+ 
+        const startAave = await s.BAL.balanceOf(s.Bob.address)
+        const startCapAave = await s.CappedAave.balanceOf(s.BobVault.address)
+ 
+        expect(startCapAave).to.be.gt(amount, "Enough Capped AAVE")
+ 
+        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAave.address, amount).catch(console.log)
+        await mineBlock()
+ 
+        let balance = await s.AAVE.balanceOf(s.Bob.address).catch(console.log)
+        expect(balance).to.eq(startAave.add(amount), "AAVE balance changed as expected")
+ 
+        balance = await s.CappedAave.balanceOf(s.BobVault.address).catch(console.log)
+        expect(balance).to.eq(startCapAave.sub(amount), "CappedAave balance changed as expected")
+ 
+        //Deposit again to reset for further tests
+        await s.AAVE.connect(s.Bob).approve(s.CappedAave.address, amount)
+        await s.CappedAave.connect(s.Bob).deposit(amount, s.BobVaultID)
+        await mineBlock()
+    })
 })
-
-
-
-
-
-
-
-

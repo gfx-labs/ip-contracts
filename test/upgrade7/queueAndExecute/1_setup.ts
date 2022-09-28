@@ -132,6 +132,9 @@ describe("Initial Setup - Bal and Aave", () => {
         await s.USDC.connect(s.Eric).transfer(usdc_minter, await s.USDC.balanceOf(s.Eric.address))
         await mineBlock()
 
+        //Dave should not hold BAL for future tests
+        await s.BAL.connect(s.Dave).transfer(ens_minter, await s.BAL.balanceOf(s.Dave.address))
+        await mineBlock()
 
 
     });
