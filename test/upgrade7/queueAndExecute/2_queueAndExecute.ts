@@ -246,7 +246,7 @@ describe("Setup, Queue, and Execute proposal", () => {
       governorAddress
     );
 
-    const proposal = new ProposalContext("ENS")
+    const proposal = new ProposalContext("BAL&AAVE")
 
     const addOracleBal = await new OracleMaster__factory(prop).
       attach(s.Oracle.address).
