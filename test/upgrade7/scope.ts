@@ -88,6 +88,8 @@ export class TestScope extends MainnetAddresses {
     CarolVault!: IVault
     CaroLVaultID!: BigNumber
 
+    deployer = ethers.provider.getSigner("0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89")
+
     IP_OWNER = "0x266d1020a84b9e8b0ed320831838152075f8c4ca"
     owner = ethers.provider.getSigner(this.IP_OWNER)
 

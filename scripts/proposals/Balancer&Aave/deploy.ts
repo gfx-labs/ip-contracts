@@ -22,7 +22,7 @@ import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
 import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
 import { toNumber } from "../../../util/math";
 import { d } from "../DeploymentInfo"
-import { showBody } from "../../../util/format";
+import { showBody, showBodyCyan } from "../../../util/format";
 import { reset } from "../../../util/block";
 
 const { ethers, network, upgrades } = require("hardhat");
@@ -56,9 +56,9 @@ const deployCapTokens = async (deployer: SignerWithAddress) => {
     const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
 
     const CappedGovFactory = await ethers.getContractFactory("CappedGovToken")
-    const ucBAL = await CappedGovFactory.deploy()
+    //const ucBAL = await CappedGovFactory.deploy()
     const cBal = await new TransparentUpgradeableProxy__factory(deployer).deploy(
-        ucBAL.address,
+        "0xE565E118e75304dD3cF83dff409c90034b7EA18a",//already deployed
         proxy.address,
         "0x"
     )
@@ -80,6 +80,8 @@ const deployCapTokens = async (deployer: SignerWithAddress) => {
 
     //const aaveFactory = await ethers.getContractFactory("CappedGovToken")
     const ucAAVE = await CappedGovFactory.deploy()
+    await ucAAVE.deployed()
+    console.log("ucAAVE deployed: ", ucAAVE.address)
     const cAAVE = await new TransparentUpgradeableProxy__factory(deployer).deploy(
         ucAAVE.address,
         proxy.address,
@@ -106,17 +108,19 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     let anchorViewFactory = new AnchoredViewRelay__factory(deployer)
 
     anchorBal = await anchorFactory.deploy(
-        1440,
+        14400,
         bal3k,
         false,
         BN("1"),
         BN('1')
     )
     await anchorBal.deployed()
+
     console.log("Balancer Uniswap V3 anchor deployed: ", anchorBal.address)
+    //showBodyCyan("Balancer anchor relay price: ", await toNumber(await anchorBal.currentValue()))
 
     anchorAave = await anchorFactory.deploy(
-        1440,
+        14400,
         aave3k,
         false,
         BN("1"),
@@ -124,40 +128,49 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     )
     await anchorAave.deployed()
     console.log("Aave Uniswap V3 anchor deployed: ", anchorAave.address)
+    //showBodyCyan("Aave anchor relay price: ", await toNumber(await anchorAave.currentValue()))
 
-    mainBal = await mainFactory.deploy(
+    /**
+     mainBal = await mainFactory.deploy(
         balDataFeed,
         BN("1e10"),
         BN("1")
     )
     await mainBal.deployed()
     console.log("Balancer chainlink data relay deployed: ", mainBal.address)
+     */
+    //showBodyCyan("Balancer chainlink data feed price: ", await toNumber(await mainBal.currentValue()))
 
-    mainAave = await mainFactory.deploy(
+    /**
+     mainAave = await mainFactory.deploy(
         aaveDataFeed,
         BN("1e10"),
         BN("1")
     )
     await mainAave.deployed()
     console.log("Aave chainlink data relay deployed: ", mainAave.address)
+     */
+    //showBodyCyan("Aave chainlink data feed price: ", await toNumber(await mainAave.currentValue()))
 
     anchorViewBal = await anchorViewFactory.deploy(
         anchorBal.address,
-        mainBal.address,
+        "0xe53B24294F74018D974F7e47b7d49B6dF195387F",//already deployed
         BN("25"),
         BN("100")
     )
     await anchorViewBal.deployed()
     console.log("Anchor View Balancer deployed: ", anchorViewBal.address)
+    //showBodyCyan("Balancer Anchor view price: ", await toNumber(await anchorViewBal.currentValue()))
 
     anchorViewAave = await anchorViewFactory.deploy(
         anchorAave.address,
-        mainAave.address,
-        BN("10"),
+        "0x706d1bb99d8ed5B0c02c5e235D8E3f2a406Ad429",//already deployed
+        BN("25"),
         BN("100")
     )
     await anchorViewAave.deployed()
     console.log("Anchor View Aave deployed: ", anchorViewAave.address)
+    //showBodyCyan("Aave Anchor view price: ", await toNumber(await anchorViewAave.currentValue()))
 
 
 
@@ -165,7 +178,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
 
 const deploy = async (deployer: SignerWithAddress) => {
 
-    await deployCapTokens(deployer)
+    //await deployCapTokens(deployer)
     await deployOracles(deployer)
 
     console.log("Cap tokens and oracles have all been deployed successfully")
@@ -187,7 +200,7 @@ const deploy = async (deployer: SignerWithAddress) => {
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
     //await network.provider.send("evm_setAutomine", [true])
-    //await reset(15633927)
+    //await reset(15640474)
 
 
     const accounts = await ethers.getSigners();
