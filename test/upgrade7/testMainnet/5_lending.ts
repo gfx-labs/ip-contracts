@@ -70,6 +70,25 @@ describe("Lending", () => {
         expect(await toNumber(liability)).to.be.closeTo(await toNumber(borrowAmount.mul(2)), 0.001, "Liability is correct")
 
     })
+    
+    it("Check governance vote delegation for Aave", async () => {
+        const startPower = await s.AAVE.getPowerCurrent(s.Bob.address, 0)
+
+        //Unable to delegate gov tokens in a vault that you don't own
+        expect(s.BobVotingVault.connect(s.Carol).delegateCompLikeTo(s.Bob.address, s.aaveAddress)).to.be.revertedWith("sender not minter")
+
+        //delegate
+        await s.BobVotingVault.connect(s.Bob).delegateCompLikeTo(s.Bob.address, s.aaveAddress)
+        await mineBlock()
+
+        let power = await s.AAVE.getPowerCurrent(s.Bob.address, 0)
+
+        const expected = (await s.AAVE.balanceOf(s.Bob.address)).add(await s.AAVE.balanceOf(s.BobVotingVault.address))
+
+        expect(power).to.be.gt(startPower, "Voting power increased")
+        expect(power).to.eq(expected, "Expected voting power achieved")
+
+    })
 
     it("Repay loan", async () => {
         expect(await s.USDC.balanceOf(s.Bob.address)).to.eq(s.Bob_USDC, "Bob still holds starting USDC")
