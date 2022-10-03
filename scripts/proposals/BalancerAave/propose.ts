@@ -118,7 +118,7 @@ async function main() {
     let out = proposal.populateProposal()
 
     console.log(out)
-    const proposalText = fs.readFileSync('test/upgrade6/queueAndExecute/proposal.md', 'utf8');
+    const proposalText = fs.readFileSync('./scripts/proposals/BalancerAave/proposal.md', 'utf8');
 
     let gov: GovernorCharlieDelegate;
     gov = new GovernorCharlieDelegate__factory(deployer).attach(
@@ -134,7 +134,7 @@ async function main() {
         false
     )
 
-    fs.writeFileSync('./proposalHexData.txt', JSON.stringify(data));
+    fs.writeFileSync('./scripts/proposals/BalancerAave/proposalHexData.txt', JSON.stringify(data));
 
 }
 
