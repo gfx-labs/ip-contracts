@@ -37,6 +37,13 @@ export class deployInfo extends MainnetAddresses {
     CappedENS = "0xfb42f5AFb722d2b01548F77C31AC05bf80e03381"
     ENS_AnchorView = "0x6DB54416CBB28C6a78F606947df53E83Dd69eb70"
 
+    CappedBalancer = "0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85"
+    BalancerAnchorView = "0xf5E0e2827F60580304522E2C38177DFeC7a428a4"
+    balancerAddress = "0xba100000625a3754423978a60c9317c58a424e3D"
+    
+    CappedAave = "0xd3bd7a8777c042De830965de1C1BCC9784135DD2"
+    AaveAnchorView = "0x27FC4059860F3d9758DCC9a871838F06333fc6ed"
+    aaveAddress = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"
 }
 
 const di = new deployInfo();

@@ -45,76 +45,80 @@ let CappedENS: CappedGovToken
 
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await reset(15529257)
+    await reset(15668790)
     await network.provider.send("evm_setAutomine", [true])
 
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
 
-    const proposal = new ProposalContext("BAL&AAVE")
+    const proposal = new ProposalContext("Balancer and Aave")
 
-    const addOracleBal = await new OracleMaster__factory(prop).
+    const addBalOracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            s.CappedBal.address,
-            anchorViewBal.address
+            d.CappedBalancer,
+            d.BalancerAnchorView
         )
-    const addOracleAave = await new OracleMaster__factory(prop).
+
+    const addAaveOracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            s.CappedAave.address,
-            anchorViewAave.address
+            d.CappedAave,
+            d.AaveAnchorView
         )
 
 
-    const listBAL = await new VaultController__factory(prop).
+
+    const listBal = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            s.CappedBal.address,
-            s.BalLTV,
-            s.CappedBal.address,
-            s.BalLiqInc
+            d.CappedBalancer,
+            BN("70e16"),
+            d.CappedBalancer,
+            BN("10e16")
         )
 
-    const listAave = await new VaultController__factory(prop).
+    const listAave = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            s.CappedAave.address,
-            s.AaveLTV,
-            s.CappedBal.address,
-            s.AaveLiqInc
+            d.CappedAave,
+            BN("70e16"),
+            d.CappedAave,
+            BN("10e16")
         )
 
     //register on voting vault controller
-    const registerBAL_VVC = await new VotingVaultController__factory(prop).
+    const registerBalVVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            s.BAL.address,
-            s.CappedBal.address
+            d.balancerAddress,
+            d.CappedBalancer
         )
-
-    const registerAave_VVC = await new VotingVaultController__factory(prop).
+    const registerAaveVVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            s.AAVE.address,
-            s.CappedAave.address
+            d.aaveAddress,
+            d.CappedAave
         )
 
 
-    proposal.addStep(addOracleBal, "setRelay(address,address)")
-    proposal.addStep(addOracleAave, "setRelay(address,address)")
+    proposal.addStep(addBalOracle, "setRelay(address,address)")
+    proposal.addStep(addAaveOracle, "setRelay(address,address)")
 
-    proposal.addStep(listBAL, "registerErc20(address,uint256,address,uint256)")
+
+    proposal.addStep(listBal, "registerErc20(address,uint256,address,uint256)")
     proposal.addStep(listAave, "registerErc20(address,uint256,address,uint256)")
 
-    proposal.addStep(registerBAL_VVC, "registerUnderlying(address,address)")
-    proposal.addStep(registerAave_VVC, "registerUnderlying(address,address)")
+
+    proposal.addStep(registerBalVVC, "registerUnderlying(address,address)")
+    proposal.addStep(registerAaveVVC, "registerUnderlying(address,address)")
+
 
 
     let out = proposal.populateProposal()
 
     console.log(out)
-    const proposalText = fs.readFileSync('test/upgrade7/queueAndExecute/proposal.md', 'utf8');
+    const proposalText = fs.readFileSync('test/upgrade6/queueAndExecute/proposal.md', 'utf8');
 
     let gov: GovernorCharlieDelegate;
     gov = new GovernorCharlieDelegate__factory(deployer).attach(
@@ -130,7 +134,7 @@ async function main() {
         false
     )
 
-    fs.writeFileSync('./scripts/proposals/Balancer&Aave/proposalHexData.txt', JSON.stringify(data));
+    fs.writeFileSync('./proposalHexData.txt', JSON.stringify(data));
 
 }
 
