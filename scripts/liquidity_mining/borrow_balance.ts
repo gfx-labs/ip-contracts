@@ -85,17 +85,18 @@ const main = async () => {
   //console.log(minters)
 
   //console.log("BLOCKROUNDS: ", BlockRounds.blockRanges)
-  const weekNum = 1
+  const weekNum = 2
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     //weekNum = weekNum + 1
     const blockStart = week.start
     const blockEnd = week.end
     const totalLiabilities = new Map<string, Decimal>();
 
-    console.log("LOOPING")
+    console.log(`LOOPING from ${blockStart} to ${blockEnd}`)
 
 
     let blocks = 0;
+
     for (let b = blockStart; b <= blockEnd; b++) {
 
       let summaries;
