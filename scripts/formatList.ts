@@ -71,7 +71,8 @@ async function main() {
     let formatBORROW = await prepareList(BORROWERS)
 
 
-    let mergedList = await mergeLists(formatBORROW, formatLPS)
+    //let mergedList = await mergeLists(formatBORROW, formatLPS)
+    let mergedList = formatLPS
 
     let valueAdjusted: any[] = []
 
@@ -87,7 +88,7 @@ async function main() {
 
     }
 
-    //console.log(valueAdjusted)
+    console.log(valueAdjusted)
 
     let formatObject: Record<string, string> = {}
 

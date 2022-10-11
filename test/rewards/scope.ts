@@ -14,9 +14,12 @@ export class TestScope extends MainnetAddresses {
     borrowList = Array.from(borrowerMinters)
     
     mergedList: minter[] = []
+    mergedList2: minter[] = []
 
     MERKLE_TREE!: MerkleTree
+    MERKLE_TREE2!: MerkleTree
     ROOT!: string
+    ROOT2!: string
 
     USDI!: USDI;
     USDC!: IERC20;
