@@ -404,10 +404,10 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     bytes32 structHash = keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, support));
 
     bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
-    
+
     require(uint256(s) < 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "castVoteBySig: invalid signature");
     address signatory = ecrecover(digest, v, r, s);
-    require(signatory != address(0), "castVoteBySig: invalid signature");
+    require(signatory != address(0x0), "castVoteBySig: invalid signature");
     emit VoteCast(signatory, proposalId, support, castVoteInternal(signatory, proposalId, support), "");
   }
 
