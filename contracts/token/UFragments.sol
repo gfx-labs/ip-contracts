@@ -56,7 +56,7 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
   }
 
   uint256 private constant DECIMALS = 18;
-  uint256 private MAX_UINT256 = 2**256 - 1;
+  uint256 private constant MAX_UINT256 = 2**256 - 1;
   uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 1 * 10**DECIMALS;
 
   // _totalGons is a multiple of INITIAL_FRAGMENTS_SUPPLY so that _gonsPerFragment is an integer.
