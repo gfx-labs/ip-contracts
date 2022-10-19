@@ -22,6 +22,8 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
   mapping(address => address) public _underlying_CappedToken;
   mapping(address => address) public _CappedToken_underlying;
 
+  event NewVotingVault(address voting_vault_address, uint256 vaultId);
+
   /// @notice initializer for contract
   /// @param vaultController_ the address of the vault controller
   function initialize(address vaultController_) public initializer {
@@ -38,6 +40,10 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
     _CappedToken_underlying[capped_token] = underlying_address;
   }
 
+  /// @notice retrieve underlying asset for the cap token
+  /// @param amount of underlying asset to retrieve by burning cap tokens
+  /// @param voting_vault holding the underlying
+  /// @param target to receive the underlying
   function retrieveUnderlying(
     uint256 amount,
     address voting_vault,
@@ -51,8 +57,6 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
     VotingVault votingVault = VotingVault(voting_vault);
     votingVault.votingVaultControllerTransfer(underlying_address, target, amount);
   }
-
-  event NewVotingVault(address voting_vault_address, uint256 vaultId);
 
   /// @notice create a new vault
   /// @param id of an existing vault

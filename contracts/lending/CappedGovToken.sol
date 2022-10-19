@@ -5,18 +5,20 @@ import "../_external/IERC20Metadata.sol";
 import "../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
+import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
 import "./IVaultController.sol";
 import "./IVault.sol";
 import "./VotingVault.sol";
 import "./VotingVaultController.sol";
 
-
 /// @title CappedGovToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
 contract CappedGovToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
-  IERC20Metadata public _underlying;
+  using SafeERC20Upgradeable for ERC20Upgradeable;
+
+  ERC20Upgradeable public _underlying;
   IVaultController public _vaultController;
   VotingVaultController public _votingVaultController;
 
@@ -38,7 +40,7 @@ contract CappedGovToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   ) public initializer {
     __Ownable_init();
     __ERC20_init(name_, symbol_);
-    _underlying = IERC20Metadata(underlying_);
+    _underlying = ERC20Upgradeable(underlying_);
 
     _vaultController = IVaultController(vaultController_);
     _votingVaultController = VotingVaultController(votingVaultController_);
@@ -81,7 +83,7 @@ contract CappedGovToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     // mint this token, the collateral token, to the vault
     ERC20Upgradeable._mint(address(vault), amount);
     // send the actual underlying to the voting vault for the vault
-    require(_underlying.transferFrom(_msgSender(), address(votingVault), amount), "transfer failed");
+    _underlying.safeTransferFrom(_msgSender(), address(votingVault), amount);
   }
 
   function transfer(address recipient, uint256 amount) public override returns (bool) {
@@ -99,8 +101,8 @@ contract CappedGovToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   }
 
   function transferFrom(
-    address /*sender*/,
-    address /*recipient*/,
+    address, /*sender*/
+    address, /*recipient*/
     uint256 /*amount*/
   ) public pure override returns (bool) {
     // allowances are never granted, as the VotingVault does not grant allowances.

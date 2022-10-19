@@ -54,7 +54,7 @@ interface IUSDI is IERC20Metadata, USDIEvents {
 
   function unpause() external;
 
-  function mint(uint256 usdc_amount) external;
+  //function mint(uint256 usdc_amount) external;
 
   function burn(uint256 usdc_amount) external;
 

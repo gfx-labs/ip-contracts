@@ -46,7 +46,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     initialized = true;
   }
 
-  /// @notice any function with this modifier will call the pay_interest() function before
+  /// @notice any function with this modifier can only be called by governance
   modifier onlyGov() {
     require(_msgSender() == address(this), "must come from the gov.");
     _;
@@ -59,6 +59,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @param signatures Function signatures for proposal calls
    * @param calldatas Calldatas for proposal calls
    * @param description String description of the proposal
+   * @param emergency Bool to determine if proposal an emergency proposal
    * @return Proposal id of new proposal
    */
   function propose(
@@ -86,8 +87,8 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     uint256 latestProposalId = latestProposalIds[_msgSender()];
     if (latestProposalId != 0) {
       ProposalState proposersLatestProposalState = state(latestProposalId);
-      require(proposersLatestProposalState != ProposalState.Active, "one live proposal per proposer");
-      require(proposersLatestProposalState != ProposalState.Pending, "one live proposal per proposer");
+      require(proposersLatestProposalState != ProposalState.Active, "one active proposal per proposer");
+      require(proposersLatestProposalState != ProposalState.Pending, "one pending proposal per proposer");
     }
 
     proposalCount++;
@@ -217,6 +218,9 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     bytes memory data,
     uint256 eta
   ) external payable override {
+
+    require(msg.sender == address(this), "execute must come from this address");
+
     bytes32 txHash = keccak256(abi.encode(target, value, signature, data, eta));
     require(queuedTransactions[txHash], "tx hasn't been queued.");
     require(getBlockTimestamp() >= eta, "tx hasn't surpassed timelock.");
@@ -244,6 +248,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
 
   /**
    * @notice Cancels a proposal only if sender is the proposer, or proposer delegates dropped below proposal threshold
+   * @notice whitelistGuardian can cancel proposals from whitelisted addresses
    * @param proposalId The id of the proposal to cancel
    */
   function cancel(uint256 proposalId) external override {

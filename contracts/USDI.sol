@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "./IUSDI.sol";
 
 import "./token/UFragments.sol";
-import "./lending/Vault.sol";
+import "./lending/IVaultController.sol";
 
 import "./_external/IERC20.sol";
 import "./_external/compound/ExponentialNoError.sol";
@@ -175,7 +175,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - amount * _gonsPerFragment;
     // emit both a Withdraw and transfer event
-    emit Transfer(target, address(0), amount);
+    emit Transfer(_msgSender(), address(0), amount);
     emit Withdraw(target, amount);
   }
 
@@ -211,22 +211,8 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
     _totalSupply = _totalSupply - amount;
     _totalGons = _totalGons - (amount * _gonsPerFragment);
     // emit both a Withdraw and transfer event
-    emit Transfer(target, address(0), amount);
+    emit Transfer(_msgSender(), address(0), amount);
     emit Withdraw(target, amount);
-  }
-
-  /// @notice admin function to mint USDi
-  /// @param usdc_amount the amount of USDi to mint, denominated in USDC
-  function mint(uint256 usdc_amount) external override paysInterest onlyOwner {
-    require(usdc_amount != 0, "Cannot mint 0");
-    uint256 amount = usdc_amount * 1e12;
-    // see comments in the deposit function for an explaination of this math
-    _gonBalances[_msgSender()] = _gonBalances[_msgSender()] + amount * _gonsPerFragment;
-    _totalSupply = _totalSupply + amount;
-    _totalGons = _totalGons + amount * _gonsPerFragment;
-    // emit both a mint and transfer event
-    emit Transfer(address(0), _msgSender(), amount);
-    emit Mint(_msgSender(), amount);
   }
 
   /// @notice admin function to burn USDi
@@ -291,7 +277,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   }
 
   /// @notice Allows VaultController to send USDC from the reserve
-  /// @param target whom to burn the USDi from
+  /// @param target whom to receive the USDC from reserve
   /// @param usdc_amount the amount of USDC to send
   function vaultControllerTransfer(address target, uint256 usdc_amount) external override onlyVaultController {
     // ensure transfer success
