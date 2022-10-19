@@ -32,6 +32,8 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
 
     totalSupply = initialSupply_;
 
+    require(initialSupply_ < 2**96, "initialSupply_ overflow uint96");
+
     balances[account_] = uint96(totalSupply);
     emit Transfer(address(0), account_, totalSupply);
   }
@@ -168,7 +170,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
   ) external override returns (bool) {
     address spender = msg.sender;
     uint96 spenderAllowance = allowances[src][spender];
-    uint96 amount = safe96(rawAmount, "approve: amount exceeds 96 bits");
+    uint96 amount = safe96(rawAmount, "transferFrom: amount exceeds 96 bits");
 
     if (spender != src && spenderAllowance != UINT96_MAX) {
       uint96 newAllowance = sub96(spenderAllowance, amount, "transferFrom: transfer amount exceeds spender allowance");

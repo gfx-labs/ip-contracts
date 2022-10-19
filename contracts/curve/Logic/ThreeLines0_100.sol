@@ -9,16 +9,16 @@ import "../ICurveSlave.sol";
 /// graph of function appears below code
 // solhint-disable-next-line contract-name-camelcase
 contract ThreeLines0_100 is ICurveSlave {
-  int256 public _r0;
-  int256 public _r1;
-  int256 public _r2;
-  int256 public _s1;
-  int256 public _s2;
+  int256 public immutable _r0;
+  int256 public immutable _r1;
+  int256 public immutable _r2;
+  int256 public immutable _s1;
+  int256 public immutable _s2;
 
   /// @notice curve is constructed on deploy and may not be modified
   /// @param r0 y value at x=0
   /// @param r1 y value at the x=s1
-  /// @param r2 y value at x > s2 && x < 1e18
+  /// @param r2 y value at x >= s2 && x < 1e18
   /// @param s1 x value of first breakpoint
   /// @param s2 x value of second breakpoint
   constructor(
@@ -48,7 +48,7 @@ contract ThreeLines0_100 is ICurveSlave {
     if (x_value > 1e18) {
       x_value = 1e18;
     }
-    //require(x_value <= 1e18, "too large");
+
     // first piece of the piece wise function
     if (x_value < _s1) {
       int256 rise = _r1 - _r0;

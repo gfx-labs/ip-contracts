@@ -32,7 +32,8 @@ describe("TESTING USDI CONTRACT", async () => {
         await mineBlock()
     })
 
-    //check admin functions
+    /**
+       //check admin functions
     it("check admin mint", async () => {
         await mineBlock()
         const smallAmount = utils.parseEther("100")
@@ -60,6 +61,7 @@ describe("TESTING USDI CONTRACT", async () => {
         expect(difference).to.be.gt(smallAmount)
 
     })
+     */
     it("check admin burn", async () => {
         const smallAmount = utils.parseEther("100")
         const smallAmount_e6 = smallAmount.div(BN("1e12"))
@@ -70,7 +72,8 @@ describe("TESTING USDI CONTRACT", async () => {
         await expect(s.USDI.connect(s.Bob).burn(smallAmount_e6)).to.be.reverted
         await expect(s.USDI.connect(s.Frank).burn(0)).to.be.reverted
 
-        //should revert if not the admin
+        /**
+         //should revert if not the admin
         const burnResult = await s.USDI.connect(s.Frank).mint(smallAmount_e6)
         await advanceBlockHeight(1)
         const burnArgs = await getArgs(burnResult)
@@ -81,6 +84,7 @@ describe("TESTING USDI CONTRACT", async () => {
 
         //expect balance to be decreased by smallAmount - interest
         expect(difference).to.be.gt(smallAmount)
+         */
     })
 
     it("check starting balance and deposit USDC", async () => {
@@ -194,11 +198,8 @@ describe("TESTING USDI CONTRACT", async () => {
         const reserve_e18 = reserve.mul(BN("1e12"))
         let formatReserve = utils.formatEther(reserve_e18.toString())
 
-        //Frank mints enough USDC to cover the withdrawl
-        await s.USDI.connect(s.Frank).mint(reserve)
-        await mineBlock()
-
-        await s.USDI.connect(s.Frank).transfer(s.Dave.address, reserve_e18)
+        //Bob gives enough USDC to cover the withdrawl
+        await s.USDI.connect(s.Bob).transfer(s.Dave.address, reserve_e18)
         await mineBlock()
 
         const usdcBalance = await s.USDC.balanceOf(s.Dave.address)

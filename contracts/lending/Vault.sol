@@ -119,10 +119,10 @@ contract Vault is IVault, Context {
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
 
-  /// @notice function used by the VaultController to reduce a vaults liability
+  /// @notice function used by the VaultController to reduce a vault's liability
   /// callable by the VaultController only
-  /// @param increase true to increase, false to decerase
-  /// @param base_amount amount to reduce base liability by
+  /// @param increase true to increase, false to decrease
+  /// @param base_amount change in base liability
   function modifyLiability(bool increase, uint256 base_amount) external override onlyVaultController returns (uint256) {
     if (increase) {
       _baseLiability = _baseLiability + base_amount;

@@ -57,7 +57,7 @@ contract SlowRoll {
   }
 
   constructor() {
-    _owner = msg.sender; // creator of contracto
+    _owner = msg.sender; // creator of contract
     _maxQuantity = 1_000_000 * 1e18; // 1_00_000 IPT, in wei - max IPT sold per day
     _startPrice = 250_000; // 25 cents
     _maxPrice = 500_000; // 50 cents

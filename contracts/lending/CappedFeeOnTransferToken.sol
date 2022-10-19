@@ -5,6 +5,7 @@ import "../_external/IERC20Metadata.sol";
 import "../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../_external/openzeppelin/Initializable.sol";
+import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
 import "./IVaultController.sol";
 import "./IVault.sol";
@@ -15,7 +16,9 @@ import "./VotingVaultController.sol";
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
 contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
-  IERC20Metadata public _underlying;
+  using SafeERC20Upgradeable for ERC20Upgradeable;
+
+  ERC20Upgradeable public _underlying;
   IVaultController public _vaultController;
   VotingVaultController public _votingVaultController;
 
@@ -45,7 +48,7 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
   ) public initializer {
     __Ownable_init();
     __ERC20_init(name_, symbol_);
-    _underlying = IERC20Metadata(underlying_);
+    _underlying = ERC20Upgradeable(underlying_);
 
     _vaultController = IVaultController(vaultController_);
     _votingVaultController = VotingVaultController(votingVaultController_);
@@ -93,8 +96,8 @@ contract CappedFeeOnTransferToken is Initializable, OwnableUpgradeable, ERC20Upg
     uint256 startingUnderlying = _underlying.balanceOf(address(votingVault));
 
     // send the actual underlying from the caller to the voting vault for the vault
-    require(_underlying.transferFrom(_msgSender(), address(votingVault), amount), "transfer failed");
-
+    _underlying.safeTransferFrom(_msgSender(), address(votingVault), amount);
+    
     //verify the actual amount received
     uint256 amountReceived = _underlying.balanceOf(address(votingVault)) - startingUnderlying;
 

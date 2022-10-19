@@ -56,7 +56,7 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
   }
 
   uint256 private constant DECIMALS = 18;
-  uint256 private constant MAX_UINT256 = 2**256 - 1;
+  uint256 private MAX_UINT256 = 2**256 - 1;
   uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 1 * 10**DECIMALS;
 
   // _totalGons is a multiple of INITIAL_FRAGMENTS_SUPPLY so that _gonsPerFragment is an integer.
@@ -106,49 +106,6 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
   function setMonetaryPolicy(address monetaryPolicy_) external onlyOwner {
     monetaryPolicy = monetaryPolicy_;
     emit LogMonetaryPolicyUpdated(monetaryPolicy_);
-  }
-
-  /**
-   * @dev Notifies Fragments contract about a new rebase cycle.
-   * @param supplyAdd The number of new fragment tokens to add into circulation via expansion.
-   * @param supplyRemove The number of new fragment tokens to remove into circulation via expansion.
-   * @return The total number of fragments after the supply adjustment.
-   */
-  function rebase(
-    uint256 epoch,
-    uint256 supplyAdd,
-    uint256 supplyRemove
-  ) external onlyMonetaryPolicy returns (uint256) {
-    if (supplyAdd == 0 && supplyRemove == 0) {
-      emit LogRebase(epoch, _totalSupply);
-      return _totalSupply;
-    }
-
-    if (supplyAdd > 0) {
-      _totalSupply = _totalSupply + supplyAdd;
-    } else {
-      _totalSupply = _totalSupply - supplyRemove;
-    }
-
-    if (_totalSupply > MAX_SUPPLY) {
-      _totalSupply = MAX_SUPPLY;
-    }
-
-    _gonsPerFragment = _totalGons / _totalSupply;
-
-    // From this point forward, _gonsPerFragment is taken as the source of truth.
-    // We recalculate a new _totalSupply to be in agreement with the _gonsPerFragment
-    // conversion rate.
-    // This means our applied Deltas can deviate from the requested Deltas,
-    // but this deviation is guaranteed to be < (_totalSupply^2)/(_totalGons - _totalSupply).
-    //
-    // In the case of _totalSupply <= MAX_UINT128 (our current supply cap), this
-    // deviation is guaranteed to be < 1, so we can omit this step. If the supply cap is
-    // ever increased, it must be re-included.
-    // _totalSupply = _totalGons - _gonsPerFragment
-
-    emit LogRebase(epoch, _totalSupply);
-    return _totalSupply;
   }
 
   /**

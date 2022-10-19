@@ -52,7 +52,7 @@ contract VotingVault is Context {
   }
 
   /// @notice must be called by VotingVaultController, else it will not be registered as a vault in system
-  /// @param id_ unique id of the vault, ever increasing and tracked by VaultController
+  /// @param id_ is the shared ID of both the voting vault and the standard vault
   /// @param vault_address address of the vault this is attached to
   /// @param controller_address address of the vault controller
   /// @param voting_controller_address address of the voting vault controller
