@@ -91,7 +91,6 @@ describe("Verify Contracts", () => {
 
 describe("Deploy Cap Tokens and Oracles", () => {
 
-  const chainlinkEthFeed = "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419"
   const chainlinkLDOFeed = "0x4e844125952d32acdf339be976c98e22f6f318db"
   const LDO_USDC = "0x78235D08B2aE7a3E00184329212a4d7AcD2F9985"
   const LDO_WETH_3k = "0xa3f558aebAecAf0e11cA4b2199cC5Ed341edfd74"
@@ -307,8 +306,8 @@ describe("Deploy Cap Tokens and Oracles", () => {
   })
 })
 
-/**
- describe("Setup, Queue, and Execute proposal", () => {
+
+describe("Setup, Queue, and Execute proposal", () => {
   const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
   const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
   const prop = ethers.provider.getSigner(proposer)
@@ -327,125 +326,6 @@ describe("Deploy Cap Tokens and Oracles", () => {
 
 
   let out: any
-  it("Deploy Capped Aave", async () => {
-   
-  })
-  it("Deploy Capped Bal", async () => {
-    s.CappedBal = await DeployContractWithProxy(
-      new CappedGovToken__factory(s.Frank),
-      s.Frank,
-      s.ProxyAdmin,
-      "CappedBalancer",
-      "cBAL",
-      s.BAL.address,
-      s.VaultController.address,
-      s.VotingVaultController.address
-    )
-    await mineBlock()
-    await s.CappedBal.deployed()
-    await mineBlock()
-
-    await s.CappedBal.connect(s.Frank).setCap(s.BalCap)
-    await mineBlock()
-  })
-
-
-  it("Deploy Oracle system for Bal", async () => {
-
-    //uniV3Relay
-    anchorBal = await DeployContract(
-      new UniswapV3TokenOracleRelay__factory(s.Frank),
-      s.Frank,
-      10000,
-      bal3k,
-      false,
-      BN("1"),
-      BN("1")
-    )
-    await mineBlock()
-    await anchorBal.deployed()
-    await mineBlock()
-
-    showBody("Format BAL price from anchor: ", await toNumber(await anchorBal.currentValue()))
-    //showBody("Raw   : ", await anchorBal.currentValue())
-
-    mainBal = await DeployContract(
-      new ChainlinkOracleRelay__factory(s.Frank),
-      s.Frank,
-      balDataFeed,
-      BN("1e10"),
-      BN("1")
-    )
-    await mineBlock()
-    await mainBal.deployed()
-    await mineBlock()
-    let price = await mainBal.currentValue()
-    showBody("price: ", await toNumber(price))
-
-    anchorViewBal = await DeployContract(
-      new AnchoredViewRelay__factory(s.Frank),
-      s.Frank,
-      anchorBal.address,
-      mainBal.address,
-      BN("10"),
-      BN("100")
-    )
-    await mineBlock()
-    await anchorViewBal.deployed()
-    await mineBlock()
-
-    let result = await anchorViewBal.currentValue()
-    showBody("BAL Result: ", await toNumber(result))
-  })
-
-  it("Deploy Oracle system for Aave", async () => {
-
-    //uniV3Relay
-    anchorAave = await DeployContract(
-      new UniswapV3TokenOracleRelay__factory(s.Frank),
-      s.Frank,
-      14400,
-      aave3k,
-      false,
-      BN("1"),
-      BN("1")
-    )
-    await mineBlock()
-    await anchorAave.deployed()
-    await mineBlock()
-
-    showBody("Format: ", await toNumber(await anchorAave.currentValue()))
-    //showBody("Raw   : ", await anchorAave.currentValue())
-
-    mainAave = await DeployContract(
-      new ChainlinkOracleRelay__factory(s.Frank),
-      s.Frank,
-      aaveDataFeed,
-      BN("1e10"),
-      BN("1")
-    )
-    await mineBlock()
-    await mainAave.deployed()
-    await mineBlock()
-    let price = await mainAave.currentValue()
-    showBody("price: ", await toNumber(price))
-
-    anchorViewAave = await DeployContract(
-      new AnchoredViewRelay__factory(s.Frank),
-      s.Frank,
-      anchorAave.address,
-      mainAave.address,
-      BN("10"),
-      BN("100")
-    )
-    await mineBlock()
-    await anchorViewAave.deployed()
-    await mineBlock()
-
-    let result = await anchorViewAave.currentValue()
-    showBody("AAVE Result: ", await toNumber(result))
-  })
-
 
   it("Makes the new proposal", async () => {
 
@@ -457,72 +337,103 @@ describe("Deploy Cap Tokens and Oracles", () => {
 
     const proposal = new ProposalContext("BAL&AAVE")
 
-    const addOracleBal = await new OracleMaster__factory(prop).
+    const addOracleLDO = await new OracleMaster__factory(prop).
       attach(s.Oracle.address).
       populateTransaction.setRelay(
-        s.CappedBal.address,
-        anchorViewBal.address
+        s.CappedLDO.address,
+        anchorViewLDO.address
       )
-    const addOracleAave = await new OracleMaster__factory(prop).
+
+    const addOracleDYDX = await new OracleMaster__factory(prop).
       attach(s.Oracle.address).
       populateTransaction.setRelay(
-        s.CappedAave.address,
-        anchorViewAave.address
+        s.CappedDYDX.address,
+        anchorViewDYDX.address
       )
 
-
-    const listBAL = await new VaultController__factory(prop).
-      attach(s.VaultController.address).
-      populateTransaction.registerErc20(
-        s.CappedBal.address,
-        s.BalLTV,
-        s.CappedBal.address,
-        s.BalLiqInc
+    const addOracleCRV = await new OracleMaster__factory(prop).
+      attach(s.Oracle.address).
+      populateTransaction.setRelay(
+        s.CappedCRV.address,
+        anchorViewCRV.address
       )
 
-    const listAave = await new VaultController__factory(prop).
+    const listLDO = await new VaultController__factory(prop).
       attach(s.VaultController.address).
       populateTransaction.registerErc20(
-        s.CappedAave.address,
-        s.AaveLTV,
-        s.CappedBal.address,
-        s.AaveLiqInc
+        s.CappedLDO.address,
+        s.CRV_LTV,
+        s.CappedLDO.address,
+        s.CRV_LiqInc
+      )
+    const listDYDX = await new VaultController__factory(prop).
+      attach(s.VaultController.address).
+      populateTransaction.registerErc20(
+        s.CappedDYDX.address,
+        s.DYDX_LTV,
+        s.CappedDYDX.address,
+        s.DYDX_LiqInc
+      )
+    const ListCRV = await new VaultController__factory(prop).
+      attach(s.VaultController.address).
+      populateTransaction.registerErc20(
+        s.CappedCRV.address,
+        s.CRV_LTV,
+        s.CappedCRV.address,
+        s.CRV_LiqInc
       )
 
     //register on voting vault controller
-    const registerBAL_VVC = await new VotingVaultController__factory(prop).
+    const registerLDO_VVC = await new VotingVaultController__factory(prop).
       attach(s.VotingVaultController.address).
       populateTransaction.registerUnderlying(
-        s.BAL.address,
-        s.CappedBal.address
+        s.LDO.address,
+        s.CappedLDO.address
       )
 
-    const registerAave_VVC = await new VotingVaultController__factory(prop).
+    const registerDYDX_VVC = await new VotingVaultController__factory(prop).
       attach(s.VotingVaultController.address).
       populateTransaction.registerUnderlying(
-        s.AAVE.address,
-        s.CappedAave.address
+        s.DYDX.address,
+        s.CappedDYDX.address
+      )
+
+    const registerCRV_VVC = await new VotingVaultController__factory(prop).
+      attach(s.VotingVaultController.address).
+      populateTransaction.registerUnderlying(
+        s.CRV.address,
+        s.CappedCRV.address
       )
 
 
-    proposal.addStep(addOracleBal, "setRelay(address,address)")
-    proposal.addStep(addOracleAave, "setRelay(address,address)")
+    //set relays
+    proposal.addStep(addOracleLDO, "setRelay(address,address)")
+    proposal.addStep(addOracleDYDX, "setRelay(address,address)")
+    proposal.addStep(addOracleCRV, "setRelay(address,address)")
 
-    proposal.addStep(listBAL, "registerErc20(address,uint256,address,uint256)")
-    proposal.addStep(listAave, "registerErc20(address,uint256,address,uint256)")
 
-    proposal.addStep(registerBAL_VVC, "registerUnderlying(address,address)")
-    proposal.addStep(registerAave_VVC, "registerUnderlying(address,address)")
+    //register tokens
+    proposal.addStep(listLDO, "registerErc20(address,uint256,address,uint256)")
+    proposal.addStep(listDYDX, "registerErc20(address,uint256,address,uint256)")
+    proposal.addStep(ListCRV, "registerErc20(address,uint256,address,uint256)")
 
+    //register underlying on VVC
+    proposal.addStep(registerLDO_VVC, "registerUnderlying(address,address)")
+    proposal.addStep(registerDYDX_VVC, "registerUnderlying(address,address)")
+    proposal.addStep(registerCRV_VVC, "registerUnderlying(address,address)")
 
 
     out = proposal.populateProposal()
     //showBody(out)
-
   })
 
 
-   
+
+
+
+
+
+
   it("queue and execute", async () => {
     const votingPeriod = await gov.votingPeriod()
     const votingDelay = await gov.votingDelay()
@@ -533,18 +444,16 @@ describe("Deploy Cap Tokens and Oracles", () => {
     expect(await toNumber(votes)).to.eq(45000000, "Correct number of votes delegated")
 
     await impersonateAccount(proposer)
-
     await gov.connect(prop).propose(
       out.targets,
       out.values,
       out.signatures,
       out.calldatas,
-      "List Bal & Aave",
+      "List LDO, DYDX, & CRV",
       false
     )
     await mineBlock()
     proposal = Number(await gov.proposalCount())
-
     showBodyCyan("Advancing a lot of blocks...")
     await advanceBlockHeight(votingDelay.toNumber());
 
@@ -563,9 +472,9 @@ describe("Deploy Cap Tokens and Oracles", () => {
 
     await gov.connect(prop).execute(proposal);
     await mineBlock();
-
+    
     await ceaseImpersonation(proposer)
 
   })
+
 })
- */
