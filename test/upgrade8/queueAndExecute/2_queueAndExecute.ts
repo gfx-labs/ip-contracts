@@ -19,7 +19,8 @@ import {
   VaultController__factory,
   VotingVaultController__factory,
   ChainlinkOracleRelay,
-  ChainlinkOracleRelay__factory
+  ChainlinkOracleRelay__factory,
+  ChainlinkTokenOracleRelay__factory
 } from "../../../typechain-types";
 import {
   advanceBlockHeight,
@@ -79,6 +80,20 @@ describe("Verify Contracts", () => {
 });
 
 describe("Deploy Cap Tokens and Oracles", () => {
+
+
+
+  const chainlinkEthFeed = "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419"
+  const chainlinkLDOFeed = "0x4e844125952d32acdf339be976c98e22f6f318db"
+  const LDO_USDC = "0x78235D08B2aE7a3E00184329212a4d7AcD2F9985"
+  const LDO_WETH_3k = "0xa3f558aebAecAf0e11cA4b2199cC5Ed341edfd74"
+  const LDO_WETH_10k = "0xf4aD61dB72f114Be877E87d62DC5e7bd52DF4d9B"
+
+
+
+
+
+
   let anchorLDO: UniswapV3TokenOracleRelay
   let mainLDO: ChainlinkOracleRelay
   let anchorViewLDO: AnchoredViewRelay
@@ -148,6 +163,56 @@ describe("Deploy Cap Tokens and Oracles", () => {
     await mineBlock()
   })
 
+  it("Deploy Oracle system for LDO", async () => {
+
+    //uniV3Relay
+    anchorLDO = await DeployContract(
+      new UniswapV3TokenOracleRelay__factory(s.Frank),
+      s.Frank,
+      10000,
+      LDO_WETH_10k,
+      false,
+      BN("1"),
+      BN("1")
+    )
+    await mineBlock()
+    await anchorLDO.deployed()
+    await mineBlock()
+
+    showBody("Format BAL price from anchor: ", await toNumber(await anchorLDO.currentValue()))
+    //showBody("Raw   : ", await anchorBal.currentValue())
+
+   
+     mainLDO = await DeployContract(
+      new ChainlinkTokenOracleRelay__factory(s.Frank),
+      s.Frank,
+      chainlinkLDOFeed,
+      BN("1e10"),
+      BN("1")
+    )
+    await mineBlock()
+    await mainLDO.deployed()
+    showBody("Deployed main")
+    await mineBlock()
+    let price = await mainLDO.currentValue()
+    showBody("price: ", await toNumber(price))
+ /**
+    anchorViewBal = await DeployContract(
+      new AnchoredViewRelay__factory(s.Frank),
+      s.Frank,
+      anchorBal.address,
+      mainBal.address,
+      BN("10"),
+      BN("100")
+    )
+    await mineBlock()
+    await anchorViewBal.deployed()
+    await mineBlock()
+
+    let result = await anchorViewBal.currentValue()
+    showBody("BAL Result: ", await toNumber(result))
+     */
+  })
   
 
 
