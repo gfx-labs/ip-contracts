@@ -35,7 +35,17 @@ import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
 import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
 
 const proposalText = fs.readFileSync('test/upgrade6/queueAndExecute/proposal.md', 'utf8');
+let anchorLDO: UniswapV3TokenOracleRelay
+let mainLDO: ChainlinkOracleRelay
+let anchorViewLDO: AnchoredViewRelay
 
+let anchorDYDX: UniswapV3TokenOracleRelay
+let mainDYDX: ChainlinkOracleRelay
+let anchorViewDYDX: AnchoredViewRelay
+
+let anchorCRV: UniswapV3TokenOracleRelay
+let mainCRV: ChainlinkOracleRelay
+let anchorViewCRV: AnchoredViewRelay
 
 require("chai").should();
 describe("Verify Contracts", () => {
@@ -81,30 +91,19 @@ describe("Verify Contracts", () => {
 
 describe("Deploy Cap Tokens and Oracles", () => {
 
-
-
   const chainlinkEthFeed = "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419"
   const chainlinkLDOFeed = "0x4e844125952d32acdf339be976c98e22f6f318db"
   const LDO_USDC = "0x78235D08B2aE7a3E00184329212a4d7AcD2F9985"
   const LDO_WETH_3k = "0xa3f558aebAecAf0e11cA4b2199cC5Ed341edfd74"
   const LDO_WETH_10k = "0xf4aD61dB72f114Be877E87d62DC5e7bd52DF4d9B"
 
+  const chainlinkDYDXfeed = "0x478909D4D798f3a1F11fFB25E4920C959B4aDe0b"
+  const DYDX_WETH_10k = "0xe0CfA17aa9B8f930Fd936633c0252d5cB745C2C3"
+
+  const chainlinkCRVfeed = "0xCd627aA160A6fA45Eb793D19Ef54f5062F20f33f"
+  const CRV_WETH_10k = "0x4c83A7f819A5c37D64B4c5A2f8238Ea082fA1f4e"
 
 
-
-
-
-  let anchorLDO: UniswapV3TokenOracleRelay
-  let mainLDO: ChainlinkOracleRelay
-  let anchorViewLDO: AnchoredViewRelay
-
-  let anchorDYDX: UniswapV3TokenOracleRelay
-  let mainDYDX: ChainlinkOracleRelay
-  let anchorViewDYDX: AnchoredViewRelay
-
-  let anchorCRV: UniswapV3TokenOracleRelay
-  let mainCRV: ChainlinkOracleRelay
-  let anchorViewCRV: AnchoredViewRelay
 
   it("Deploy capped LDO", async () => {
     s.CappedLDO = await DeployContractWithProxy(
@@ -179,43 +178,133 @@ describe("Deploy Cap Tokens and Oracles", () => {
     await anchorLDO.deployed()
     await mineBlock()
 
-    showBody("Format BAL price from anchor: ", await toNumber(await anchorLDO.currentValue()))
-    //showBody("Raw   : ", await anchorBal.currentValue())
+    //showBody("Format price from anchor: ", await toNumber(await anchorLDO.currentValue()))
+    //showBody("Raw   : ", await anchorLDO.currentValue())
 
-   
-     mainLDO = await DeployContract(
+    mainLDO = await DeployContract(
       new ChainlinkTokenOracleRelay__factory(s.Frank),
       s.Frank,
       chainlinkLDOFeed,
-      BN("1e10"),
+      BN("1"),
       BN("1")
     )
     await mineBlock()
     await mainLDO.deployed()
-    showBody("Deployed main")
     await mineBlock()
     let price = await mainLDO.currentValue()
-    showBody("price: ", await toNumber(price))
- /**
-    anchorViewBal = await DeployContract(
+    //showBody("price: ", await toNumber(price))
+
+    anchorViewLDO = await DeployContract(
       new AnchoredViewRelay__factory(s.Frank),
       s.Frank,
-      anchorBal.address,
-      mainBal.address,
+      anchorLDO.address,
+      mainLDO.address,
       BN("10"),
       BN("100")
     )
     await mineBlock()
-    await anchorViewBal.deployed()
+    await anchorViewLDO.deployed()
     await mineBlock()
 
-    let result = await anchorViewBal.currentValue()
-    showBody("BAL Result: ", await toNumber(result))
-     */
+    let result = await anchorViewLDO.currentValue()
+    showBodyCyan("LDO Oracle Result: ", await toNumber(result))
+
   })
-  
+
+  it("Deploy Oracle system for DYDX", async () => {
+
+    //uniV3Relay
+    anchorDYDX = await DeployContract(
+      new UniswapV3TokenOracleRelay__factory(s.Frank),
+      s.Frank,
+      10000,
+      DYDX_WETH_10k,
+      false,
+      BN("1"),
+      BN("1")
+    )
+    await mineBlock()
+    await anchorDYDX.deployed()
+    await mineBlock()
+
+    //showBody("Format price from anchor: ", await toNumber(await anchorDYDX.currentValue()))
+    //showBody("Raw   : ", await anchorDYDX.currentValue())
+
+    mainDYDX = await DeployContract(
+      new ChainlinkOracleRelay__factory(s.Frank),
+      s.Frank,
+      chainlinkDYDXfeed,
+      BN("1e10"),
+      BN("1")
+    )
+    await mineBlock()
+    await mainDYDX.deployed()
+    await mineBlock()
+    //showBody("price: ", await toNumber(await mainDYDX.currentValue()))
+
+    anchorViewDYDX = await DeployContract(
+      new AnchoredViewRelay__factory(s.Frank),
+      s.Frank,
+      anchorDYDX.address,
+      mainDYDX.address,
+      BN("10"),
+      BN("100")
+    )
+    await mineBlock()
+    await anchorViewDYDX.deployed()
+    await mineBlock()
+
+    let result = await anchorViewDYDX.currentValue()
+    showBodyCyan("DYDX Oracle Result: ", await toNumber(result))
+  })
+
+  it("Deploy Oracle system for CRV", async () => {
+
+    //uniV3Relay
+    anchorCRV = await DeployContract(
+      new UniswapV3TokenOracleRelay__factory(s.Frank),
+      s.Frank,
+      10000,
+      CRV_WETH_10k,
+      true,
+      BN("1"),
+      BN("1")
+    )
+    await mineBlock()
+    await anchorCRV.deployed()
+    await mineBlock()
+
+    //showBody("Format price from anchor: ", await toNumber(await anchorCRV.currentValue()))
+    //showBody("Raw   : ", await anchorCRV.currentValue())
+
+    mainCRV = await DeployContract(
+      new ChainlinkOracleRelay__factory(s.Frank),
+      s.Frank,
+      chainlinkCRVfeed,
+      BN("1e10"),
+      BN("1")
+    )
+    await mineBlock()
+    await mainCRV.deployed()
+    await mineBlock()
+    //showBody("price: ", await toNumber(await mainCRV.currentValue()))
 
 
+    anchorViewCRV = await DeployContract(
+      new AnchoredViewRelay__factory(s.Frank),
+      s.Frank,
+      anchorCRV.address,
+      mainCRV.address,
+      BN("10"),
+      BN("100")
+    )
+    await mineBlock()
+    await anchorViewCRV.deployed()
+    await mineBlock()
+
+    let result = await anchorViewCRV.currentValue()
+    showBodyCyan("CRV Oracle Result: ", await toNumber(result))
+  })
 })
 
 /**
