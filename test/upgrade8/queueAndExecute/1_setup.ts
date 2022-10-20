@@ -134,13 +134,9 @@ describe("Initial Setup - Bal and Aave", () => {
         //Eric should not hold any USDC for the tests
         await s.USDC.connect(s.Eric).transfer(bank, await s.USDC.balanceOf(s.Eric.address))
         await mineBlock()
-        /**
-            
-               //Dave should not hold BAL for future tests
-               await s.BAL.connect(s.Dave).transfer(ens_minter, await s.BAL.balanceOf(s.Dave.address))
-               await mineBlock()
-       
-         */
 
+        //Dave should not hold LDO for future tests
+        await s.LDO.connect(s.Dave).transfer(bank, await s.LDO.balanceOf(s.Dave.address))
+        await mineBlock()
     });
 });
