@@ -167,7 +167,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
     anchorLDO = await DeployContract(
       new UniswapV3TokenOracleRelay__factory(s.Frank),
       s.Frank,
-      10000,
+      14400,
       LDO_WETH_10k,
       false,
       BN("1"),
@@ -198,7 +198,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
       s.Frank,
       anchorLDO.address,
       mainLDO.address,
-      BN("10"),
+      BN("20"),
       BN("100")
     )
     await mineBlock()
@@ -216,7 +216,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
     anchorDYDX = await DeployContract(
       new UniswapV3TokenOracleRelay__factory(s.Frank),
       s.Frank,
-      10000,
+      14400,
       DYDX_WETH_10k,
       false,
       BN("1"),
@@ -246,7 +246,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
       s.Frank,
       anchorDYDX.address,
       mainDYDX.address,
-      BN("10"),
+      BN("20"),
       BN("100")
     )
     await mineBlock()
@@ -263,7 +263,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
     anchorCRV = await DeployContract(
       new UniswapV3TokenOracleRelay__factory(s.Frank),
       s.Frank,
-      10000,
+      14400,
       CRV_WETH_10k,
       true,
       BN("1"),
@@ -294,7 +294,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
       s.Frank,
       anchorCRV.address,
       mainCRV.address,
-      BN("10"),
+      BN("20"),
       BN("100")
     )
     await mineBlock()
@@ -472,7 +472,7 @@ describe("Setup, Queue, and Execute proposal", () => {
 
     await gov.connect(prop).execute(proposal);
     await mineBlock();
-    
+
     await ceaseImpersonation(proposer)
 
   })

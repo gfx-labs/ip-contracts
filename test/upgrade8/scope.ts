@@ -29,21 +29,21 @@ export class TestScope extends MainnetAddresses {
     CappedLDO!: CappedGovToken
     LDO_LiqInc = BN("1e17")
     LDO_LTV = BN("7e17")
-    LDO_Cap = BN("230000e18")
+    LDO_Cap = BN("4000000e18")
     LDO_Amount = BN("500e18")
 
 
     CappedDYDX!: CappedGovToken
     DYDX_LiqInc = BN("1e17")
     DYDX_LTV = BN("7e17")
-    DYDX_Cap = BN("770000e18")
+    DYDX_Cap = BN("3300000e18")
     DYDX_Amount = BN("1000e18")
 
     
     CappedCRV!: CappedGovToken
     CRV_LiqInc = BN("1e17")
     CRV_LTV = BN("7e17")
-    CRV_Cap = BN("230000e18")
+    CRV_Cap = BN("6000000e18")
     CRV_Amount = BN("500e18")
  
 
