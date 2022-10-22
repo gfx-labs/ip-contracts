@@ -45,80 +45,103 @@ let CappedENS: CappedGovToken
 
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await reset(15668790)
+    await reset(15799536)
     await network.provider.send("evm_setAutomine", [true])
 
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
 
-    const proposal = new ProposalContext("Balancer and Aave")
+    const proposal = new ProposalContext("LDO, DYDX, & CRV")
 
-    const addBalOracle = await new OracleMaster__factory().
+    const addLDOoracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedBalancer,
-            d.BalancerAnchorView
+            d.CappedLDO,
+            d.anchorViewLDO
         )
 
-    const addAaveOracle = await new OracleMaster__factory().
+    const addDYDXoracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedAave,
-            d.AaveAnchorView
+            d.CappedDYDX,
+            d.anchorViewDYDX
+        )
+
+    const addCRVoracle = await new OracleMaster__factory().
+        attach(d.Oracle).
+        populateTransaction.setRelay(
+            d.CappedCRV,
+            d.anchorViewCRV
         )
 
 
 
-    const listBal = await new VaultController__factory().
+    const listLDO = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedBalancer,
-            BN("70e16"),
-            d.CappedBalancer,
-            BN("10e16")
+            d.CappedLDO,
+            BN("7e17"),
+            d.CappedLDO,
+            BN("1e17")
         )
 
-    const listAave = await new VaultController__factory().
+    const listDYDX = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedAave,
-            BN("70e16"),
-            d.CappedAave,
-            BN("10e16")
+            d.CappedDYDX,
+            BN("7e17"),
+            d.CappedDYDX,
+            BN("1e17")
+        )
+
+    const listCRV = await new VaultController__factory().
+        attach(d.VaultController).
+        populateTransaction.registerErc20(
+            d.CappedCRV,
+            BN("7e17"),
+            d.CappedCRV,
+            BN("1e17")
         )
 
     //register on voting vault controller
-    const registerBalVVC = await new VotingVaultController__factory().
+    const registerLDO_VVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            d.balancerAddress,
-            d.CappedBalancer
+            d.LDOaddress,
+            d.CappedLDO
         )
-    const registerAaveVVC = await new VotingVaultController__factory().
+    const registerDYDX_VVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            d.aaveAddress,
-            d.CappedAave
+            d.DYDXaddress,
+            d.CappedDYDX
+        )
+    const registerCRV_VVC = await new VotingVaultController__factory().
+        attach(d.VotingVaultController).
+        populateTransaction.registerUnderlying(
+            d.CRVaddress,
+            d.CappedCRV
         )
 
 
-    proposal.addStep(addBalOracle, "setRelay(address,address)")
-    proposal.addStep(addAaveOracle, "setRelay(address,address)")
+    proposal.addStep(addLDOoracle, "setRelay(address,address)")
+    proposal.addStep(addDYDXoracle, "setRelay(address,address)")
+    proposal.addStep(addCRVoracle, "setRelay(address,address)")
+
+    proposal.addStep(listLDO, "registerErc20(address,uint256,address,uint256)")
+    proposal.addStep(listDYDX, "registerErc20(address,uint256,address,uint256)")
+    proposal.addStep(listCRV, "registerErc20(address,uint256,address,uint256)")
 
 
-    proposal.addStep(listBal, "registerErc20(address,uint256,address,uint256)")
-    proposal.addStep(listAave, "registerErc20(address,uint256,address,uint256)")
-
-
-    proposal.addStep(registerBalVVC, "registerUnderlying(address,address)")
-    proposal.addStep(registerAaveVVC, "registerUnderlying(address,address)")
-
+    proposal.addStep(registerLDO_VVC, "registerUnderlying(address,address)")
+    proposal.addStep(registerDYDX_VVC, "registerUnderlying(address,address)")
+    proposal.addStep(registerCRV_VVC, "registerUnderlying(address,address)")
 
 
     let out = proposal.populateProposal()
 
     console.log(out)
-    const proposalText = fs.readFileSync('./scripts/proposals/BalancerAave/proposal.md', 'utf8');
+    const proposalText = fs.readFileSync('./scripts/proposals/LDO_DYDX_CRV/proposal.md', 'utf8');
 
     let gov: GovernorCharlieDelegate;
     gov = new GovernorCharlieDelegate__factory(deployer).attach(
@@ -134,7 +157,7 @@ async function main() {
         false
     )
 
-    fs.writeFileSync('./scripts/proposals/BalancerAave/proposalHexData.txt', JSON.stringify(data));
+    fs.writeFileSync('./scripts/proposals/LDO_DYDX_CRV/proposalHexData.txt', JSON.stringify(data));
 
 }
 

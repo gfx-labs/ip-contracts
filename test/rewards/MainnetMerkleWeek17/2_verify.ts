@@ -30,7 +30,7 @@ describe("Merkle Redeem", () => {
 
 
     let total = BN(0)
-    const week = 16
+    const week = 17
 
     let startingIPT: BigNumber
 

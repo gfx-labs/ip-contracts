@@ -151,7 +151,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     await anchorLDO.deployed()
 
     console.log("LDO Uniswap V3 anchor deployed: ", anchorLDO.address)
-    showBodyCyan("LDO anchor relay price: ", await toNumber(await anchorLDO.currentValue()))
+    //showBodyCyan("LDO anchor relay price: ", await toNumber(await anchorLDO.currentValue()))
 
     anchorDYDX = await anchorFactory.deploy(
         14400,
@@ -162,7 +162,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     )
     await anchorDYDX.deployed()
     console.log("DYDX Uniswap V3 anchor deployed: ", anchorDYDX.address)
-    showBodyCyan("DYDX anchor relay price: ", await toNumber(await anchorDYDX.currentValue()))
+    //showBodyCyan("DYDX anchor relay price: ", await toNumber(await anchorDYDX.currentValue()))
 
     anchorCRV = await anchorFactory.deploy(
         14400,
@@ -173,7 +173,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     )
     await anchorCRV.deployed()
     console.log("CRV Uniswap V3 anchor deployed: ", anchorCRV.address)
-    showBodyCyan("CRV anchor relay price: ", await toNumber(await anchorCRV.currentValue()))
+    //showBodyCyan("CRV anchor relay price: ", await toNumber(await anchorCRV.currentValue()))
 
     mainLDO = await mainTokenFactory.deploy(
         chainlinkLDOFeed,
@@ -182,7 +182,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     )
     await mainLDO.deployed()
     console.log("LDO chainlink data relay deployed: ", mainLDO.address)
-    showBodyCyan("LDO chainlink data feed price: ", await toNumber(await mainLDO.currentValue()))
+    //showBodyCyan("LDO chainlink data feed price: ", await toNumber(await mainLDO.currentValue()))
 
 
     mainDYDX = await mainFactory.deploy(
@@ -192,7 +192,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     )
     await mainDYDX.deployed()
     console.log("DYDX chainlink data relay deployed: ", mainDYDX.address)
-    showBodyCyan("DYDX chainlink data feed price: ", await toNumber(await mainDYDX.currentValue()))
+    //showBodyCyan("DYDX chainlink data feed price: ", await toNumber(await mainDYDX.currentValue()))
 
     mainCRV = await mainFactory.deploy(
         chainlinkCRVfeed,
@@ -201,7 +201,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     )
     await mainCRV.deployed()
     console.log("CRV chainlink data relay deployed: ", mainCRV.address)
-    showBodyCyan("CRV chainlink data feed price: ", await toNumber(await mainCRV.currentValue()))
+    //showBodyCyan("CRV chainlink data feed price: ", await toNumber(await mainCRV.currentValue()))
 
     anchorViewLDO = await anchorViewFactory.deploy(
         anchorLDO.address,
@@ -211,7 +211,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     )
     await anchorViewLDO.deployed()
     console.log("Anchor View LDO deployed: ", anchorViewLDO.address)
-    showBodyCyan("LDO Anchor view price: ", await toNumber(await anchorViewLDO.currentValue()))
+    //showBodyCyan("LDO Anchor view price: ", await toNumber(await anchorViewLDO.currentValue()))
 
     anchorViewDYDX = await anchorViewFactory.deploy(
         anchorDYDX.address,
@@ -221,7 +221,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     )
     await anchorViewDYDX.deployed()
     console.log("Anchor View DYDX deployed: ", anchorViewDYDX.address)
-    showBodyCyan("DYDX Anchor view price: ", await toNumber(await anchorViewDYDX.currentValue()))
+    //showBodyCyan("DYDX Anchor view price: ", await toNumber(await anchorViewDYDX.currentValue()))
 
     anchorViewCRV = await anchorViewFactory.deploy(
         anchorCRV.address,
@@ -230,8 +230,8 @@ const deployOracles = async (deployer: SignerWithAddress) => {
         BN("100")
     )
     await anchorViewCRV.deployed()
-    console.log("Anchor View DYDX deployed: ", anchorViewCRV.address)
-    showBodyCyan("DYDX Anchor view price: ", await toNumber(await anchorViewCRV.currentValue()))
+    console.log("Anchor View CRV deployed: ", anchorViewCRV.address)
+    //showBodyCyan("DYDX Anchor view price: ", await toNumber(await anchorViewCRV.currentValue()))
 
 
 
@@ -239,7 +239,8 @@ const deployOracles = async (deployer: SignerWithAddress) => {
 
 const deploy = async (deployer: SignerWithAddress) => {
 
-    await deployCapTokens(deployer)
+    /**
+     await deployCapTokens(deployer)
 
     console.log("All Cap Tokens deployed")
 
@@ -251,20 +252,27 @@ const deploy = async (deployer: SignerWithAddress) => {
     await CappedLDO.setCap(BN("4000000e18"))
     console.log("Set LDO cap to: ", BN("4000000e18").toString())
 
+   
+     */
+
+    CappedDYDX = CappedGovToken__factory.connect("0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a", deployer)
+    CappedCRV = CappedGovToken__factory.connect("0x9d878eC06F628e883D2F9F1D793adbcfd52822A8", deployer)
+
+
     await CappedDYDX.setCap(BN("3300000e18"))
     console.log("Set DYDX cap to: ", BN("3300000e18").toString())
 
     await CappedCRV.setCap(BN("6000000e18"))
     console.log("Set CRV cap to: ", BN("6000000e18").toString())
 
-    await CappedLDO.transferOwnership(govAddress)
-    console.log("Transferred ownership of Capped LDO to: ", govAddress)
+    //await CappedLDO.transferOwnership(govAddress)
+    //console.log("Transferred ownership of Capped LDO to: ", govAddress)
 
-    await CappedDYDX.transferOwnership(govAddress)
-    console.log("Transferred ownership of Capped DYDX to: ", govAddress)
+    //await CappedDYDX.transferOwnership(govAddress)
+    //console.log("Transferred ownership of Capped DYDX to: ", govAddress)
 
-    await CappedCRV.transferOwnership(govAddress)
-    console.log("Transferred ownership of Capped DYDX to: ", govAddress)
+    //await CappedCRV.transferOwnership(govAddress)
+    //console.log("Transferred ownership of Capped DYDX to: ", govAddress)
 
 
 };
@@ -272,7 +280,7 @@ const deploy = async (deployer: SignerWithAddress) => {
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
     //await network.provider.send("evm_setAutomine", [true])
-    await reset(15798742)
+    //await reset(15798742)
 
 
     const accounts = await ethers.getSigners();
@@ -288,3 +296,26 @@ main()
         console.error(error);
         process.exit(1);
     });
+
+    /**
+    Capped LDO deployed to:  0x7C1Caa71943Ef43e9b203B02678000755a4eCdE9
+    Capped LDO Initialized 0x7C1Caa71943Ef43e9b203B02678000755a4eCdE9
+    Capped DYDX deployed to:  0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a
+    Capped DYDX Initialized 0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a
+    Capped CRV deployed to:  0x9d878eC06F628e883D2F9F1D793adbcfd52822A8
+    Capped CRV Initialized 0x9d878eC06F628e883D2F9F1D793adbcfd52822A8
+    All Cap Tokens deployed
+    LDO Uniswap V3 anchor deployed:  0xcD17f6766Cdff24a4642b99f0DE481c3E704EA39
+    DYDX Uniswap V3 anchor deployed:  0x7FFF1525B560cf5Da9e9c72736bCC7A908b140D4
+    CRV Uniswap V3 anchor deployed:  0xfD76D7EcbF91b2bF7F225af29C1cb7f213fA71b6
+    LDO chainlink data relay deployed:  0x9816d7C448f79CdD4aF18c4Ae1726A14299E8C75
+    DYDX chainlink data relay deployed:  0x8C8AE22fea16C43743C846902eC7E34204894189
+    CRV chainlink data relay deployed:  0xb549c8cc8011CA0d023A73DAD54d725125b25F31
+    Anchor View LDO deployed:  0x610d4DFAC3EC32e0be98D18DDb280DACD76A1889
+    Anchor View DYDX deployed:  0x93A3411c9518D9c85054693137c87C5F14E7ECF9
+    Anchor View CRV deployed:  0x864991b13691806be077E7Ca9ef566FE7762F908
+    All oracles have been deployed successfully
+    Set LDO cap to:  4000000000000000000000000
+    Set DYDX cap to:  3300000000000000000000000
+    Set CRV cap to:  6000000000000000000000000
+     */

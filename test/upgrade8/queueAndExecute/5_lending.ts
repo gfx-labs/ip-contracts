@@ -11,11 +11,11 @@ import { IVault__factory } from "../../../typechain-types";
 let firstBorrowIF: BigNumber
 describe("Check starting values", () => {
     it("Check starting balance", async () => {
-        const startCapBal = await s.CappedLDO.balanceOf(s.BobVault.address)
-        expect(startCapBal).to.eq(s.LDO_Amount, "Starting balance is correct")
+        const startCappedLDO = await s.CappedLDO.balanceOf(s.BobVault.address)
+        expect(startCappedLDO).to.eq(s.LDO_Amount, "Starting balance is correct")
 
-        const startCapaAVE = await s.CappedDYDX.balanceOf(s.BobVault.address)
-        expect(startCapaAVE).to.eq(s.DYDX_Amount, "Starting balance is correct")
+        const startCappedDYDX = await s.CappedDYDX.balanceOf(s.BobVault.address)
+        expect(startCappedDYDX).to.eq(s.DYDX_Amount, "Starting balance is correct")
 
         let balance = await s.WETH.balanceOf(s.BobVault.address)
         expect(balance).to.eq(0, "Bob's vault holds 0")
@@ -74,6 +74,26 @@ describe("Lending", () => {
 
         const liability = await s.VaultController.vaultLiability(s.BobVaultID)
         expect(await toNumber(liability)).to.be.closeTo(await toNumber(borrowAmount.mul(2)), 0.001, "Liability is correct")
+
+    })
+
+      
+    it("Check governance vote delegation", async () => {
+        const startPower = await s.DYDX.getPowerCurrent(s.Bob.address, 0)
+
+        //Unable to delegate gov tokens in a vault that you don't own
+        expect(s.BobVotingVault.connect(s.Carol).delegateCompLikeTo(s.Bob.address, s.DYDX.address)).to.be.revertedWith("sender not minter")
+
+        //delegate
+        await s.BobVotingVault.connect(s.Bob).delegateCompLikeTo(s.Bob.address, s.DYDX.address)
+        await mineBlock()
+
+        let power = await s.DYDX.getPowerCurrent(s.Bob.address, 0)
+
+        const expected = (await s.DYDX.balanceOf(s.Bob.address)).add(await s.DYDX.balanceOf(s.BobVotingVault.address))
+
+        expect(power).to.be.gt(startPower, "Voting power increased")
+        expect(power).to.eq(expected, "Expected voting power achieved")
 
     })
 
@@ -178,22 +198,22 @@ describe("Liquidations", () => {
         const startingUSDI = await s.USDI.balanceOf(s.Dave.address)
         //expect(startingUSDI).to.eq(s.Dave_USDC.add(BN("200e12")).mul(BN("1e12")))
 
-        const startingCappedBAL = await s.CappedLDO.balanceOf(s.BobVault.address)
-        const startBAL = await s.LDO.balanceOf(s.Dave.address)
-        expect(startBAL).to.eq(0, "Dave holds 0 BAL")
+        const startingCappedLDO = await s.CappedLDO.balanceOf(s.BobVault.address)
+        const startLDO = await s.LDO.balanceOf(s.Dave.address)
+        expect(startLDO).to.eq(0, "Dave holds 0 BAL")
 
         const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedLDO.address, BN("1e50"))
         await mineBlock()
 
         let supply = await s.CappedLDO.totalSupply()
 
-        expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 2, "Total supply reduced as Capped BAL is liquidated")
+        expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 2, "Total supply reduced as Capped LDO is liquidated")
 
-        let endCapBAL = await s.CappedLDO.balanceOf(s.BobVault.address)
-        expect(await toNumber(endCapBAL)).to.be.closeTo(await toNumber(startingCappedBAL.sub(tokensToLiquidate)), 2, "Expected amount liquidated")
+        let endCapLDO = await s.CappedLDO.balanceOf(s.BobVault.address)
+        expect(await toNumber(endCapLDO)).to.be.closeTo(await toNumber(startingCappedLDO.sub(tokensToLiquidate)), 2, "Expected amount liquidated")
 
-        let endBAL = await s.LDO.balanceOf(s.Dave.address)
-        expect(await toNumber(endBAL)).to.be.closeTo(await toNumber(tokensToLiquidate), 2, "Dave received the underlying BAL")
+        let endLDO = await s.LDO.balanceOf(s.Dave.address)
+        expect(await toNumber(endLDO)).to.be.closeTo(await toNumber(tokensToLiquidate), 2, "Dave received the underlying LDO")
 
         const usdiSpent = startingUSDI.sub(await s.USDI.balanceOf(s.Dave.address))
 
@@ -224,21 +244,21 @@ describe("Liquidations", () => {
 
 
     it("Withdraw after loan", async () => {
-        const voteVaultBAL = await s.LDO.balanceOf(s.BobVotingVault.address)
-        expect(voteVaultBAL).to.be.gt(0, "Vote vault holds BAL")
-        const vaultCappedBAL = await s.CappedLDO.balanceOf(s.BobVault.address)
+        const voteVaultLDO = await s.LDO.balanceOf(s.BobVotingVault.address)
+        expect(voteVaultLDO).to.be.gt(0, "Vote vault holds BAL")
+        const vaultCappedLDO = await s.CappedLDO.balanceOf(s.BobVault.address)
 
-        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedLDO.address, vaultCappedBAL)
+        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedLDO.address, vaultCappedLDO)
         await mineBlock()
 
         let balance = await s.LDO.balanceOf(s.BobVotingVault.address)
-        expect(await toNumber(balance)).to.eq(0, "All BAL withdrawn")
+        expect(await toNumber(balance)).to.eq(0, "All LDO withdrawn")
 
         balance = await s.CappedLDO.balanceOf(s.BobVault.address)
-        expect(await toNumber(balance)).to.eq(0, "All CappedBAL removed from vault")
+        expect(await toNumber(balance)).to.eq(0, "All CappedLDO removed from vault")
 
         const supply = await s.CappedLDO.totalSupply()
-        expect(supply).to.eq(0, "All New CappedBAL Burned")
+        expect(supply).to.eq(0, "All New CappedLDO Burned")
 
         balance = await s.LDO.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.LDO_Amount.sub(T2L)), 5, "Bob received collateral - liquidated amount")
