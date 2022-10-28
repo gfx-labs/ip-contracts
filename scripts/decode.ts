@@ -32,19 +32,22 @@ const { ethers, network, upgrades } = require("hardhat");
 
 //LPS: JSON, borrowers: JSON
 async function main() {
+    await reset(15365039)//15826522
+    console.log("Reset")
+    const addr = "0xe669dD0860b5A1dCc3804AdA746d56C07DA33D47"
+    const accounts = await ethers.getSigners();
+    const deployer = accounts[0];
+    const VC = VaultController__factory.connect("0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3", deployer)
 
-    const abi = ethers.utils.defaultAbiCoder;
+    const vID = await VC.vaultIDs(addr)
 
-    const data = "0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000034f4c440000000000000000000000000000000000000000000000000000000000"
-    const data2 = "0x90b7649900000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000055"
-    const result = abi.decode(["uint96", "uint96"], data) //ethers.utils.hexDataSlice(data2, 2))
-
-    console.log(result)
+    console.log(vID)
 
 }
 
 
 /**
+hh verify --network mainnet 0x9627d50b96d1bd5e2afEADA1CCD1637d22AD172e "86" "0x696607447225f6690883e718fd0Db0Abaf36B6E2" "0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3"
  {
   reason: 'OLD',
   code: 'CALL_EXCEPTION',

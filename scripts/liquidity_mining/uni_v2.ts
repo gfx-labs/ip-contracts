@@ -27,10 +27,10 @@ const main = async () => {
   const cl = new AlchemyWebSocketProvider(1, rpc_url);
   //const cl = new ethers.providers.JsonRpcProvider(rpc_url)
   const tk = ERC20Detailed__factory.connect(POOL, cl);
-  const blockEnd = 15346983;
-  const blockStart = blockEnd - 1000;
+  //const blockEnd = 15346983;
+  //const blockStart = blockEnd - 1000;
 
-  const weekNum = 4
+  const weekNum = 5
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     const blockStart = week.start
     const blockEnd = week.end
