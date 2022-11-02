@@ -37,11 +37,8 @@ import {
 require("chai").should();
 
 // configurable variables
-let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
-let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
-let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
-let ens_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
+const weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
+const bank = "0x2FAF487A4414Fe77e2327F0bf4AE2a264a776AD2"
 
 
 if (process.env.TENDERLY_KEY) {
@@ -53,7 +50,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(15668790)).to.not.throw;
+        expect(await reset(15878552)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -75,9 +72,10 @@ describe("Initial Setup - Bal and Aave", () => {
     it("Connect to existing contracts", async () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
         s.WETH = IERC20__factory.connect(s.wethAddress, s.Frank);
-        s.AAVE = IVOTE__factory.connect(s.aaveAddress, s.Frank);
-        s.BAL = IVOTE__factory.connect("0xba100000625a3754423978a60c9317c58a424e3D", s.Frank)
-        
+        s.LDO = IERC20__factory.connect(d.LDOaddress, s.Frank);
+        s.DYDX = IVOTE__factory.connect(d.DYDXaddress, s.Frank)
+        s.CRV = IERC20__factory.connect(d.CRVaddress, s.Frank)
+
 
     });
 
@@ -93,49 +91,52 @@ describe("Initial Setup - Bal and Aave", () => {
 
         const vvc = "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2"
         s.VotingVaultController = VotingVaultController__factory.connect(vvc, s.Frank)
-        
+
 
     })
     it("Should succesfully transfer money", async () => {
-
- 
         //showBody(`stealing ${s.Bob_WETH} weth to bob from ${s.wethAddress}`);
         await expect(
             stealMoney(weth_minter, s.Bob.address, s.wethAddress, s.Bob_WETH)
         ).to.not.be.reverted;
-            
+
         //for some reason at this block, account 1 has 1 USDC, need to burn so all accounts are equal
-        await s.USDC.connect(s.accounts[1]).transfer(usdc_minter, await s.USDC.balanceOf(s.accounts[1].address))
+        await s.USDC.connect(s.accounts[1]).transfer(bank, await s.USDC.balanceOf(s.accounts[1].address))
         await mineBlock()
 
         for (let i = 0; i < s.accounts.length; i++) {
             await expect(
-                stealMoney(usdc_minter, s.accounts[i].address, s.USDC.address, s.USDC_AMOUNT)
+                stealMoney(bank, s.accounts[i].address, s.USDC.address, s.USDC_AMOUNT)
             ).to.not.be.reverted;
             await mineBlock()
             expect(await s.USDC.balanceOf(s.accounts[i].address)).to.eq(s.USDC_AMOUNT, "USDC received")
 
             await expect(
-                stealMoney(ens_minter, s.accounts[i].address, s.AAVE.address, s.aaveAmount)
+                stealMoney(bank, s.accounts[i].address, s.LDO.address, s.LDO_Amount)
             ).to.not.be.reverted;
             await mineBlock()
-            expect(await s.AAVE.balanceOf(s.accounts[i].address)).to.eq(s.aaveAmount, "AAVE received")
+            expect(await s.LDO.balanceOf(s.accounts[i].address)).to.eq(s.LDO_Amount, "LDO received")
 
             await expect(
-                stealMoney(ens_minter, s.accounts[i].address, s.BAL.address, s.balAmount)
+                stealMoney(bank, s.accounts[i].address, s.DYDX.address, s.DYDX_Amount)
             ).to.not.be.reverted;
             await mineBlock()
-            expect(await s.BAL.balanceOf(s.accounts[i].address)).to.eq(s.balAmount, "BAL received")
+            expect(await s.DYDX.balanceOf(s.accounts[i].address)).to.eq(s.DYDX_Amount, "DYDX received")
+
+            await expect(
+                stealMoney(bank, s.accounts[i].address, s.CRV.address, s.CRV_Amount)
+            ).to.not.be.reverted;
+            await mineBlock()
+            expect(await s.CRV.balanceOf(s.accounts[i].address)).to.eq(s.CRV_Amount, "CRV received")
         }
 
+
         //Eric should not hold any USDC for the tests
-        await s.USDC.connect(s.Eric).transfer(usdc_minter, await s.USDC.balanceOf(s.Eric.address))
+        await s.USDC.connect(s.Eric).transfer(bank, await s.USDC.balanceOf(s.Eric.address))
         await mineBlock()
 
-        //Dave should not hold BAL for future tests
-        await s.BAL.connect(s.Dave).transfer(ens_minter, await s.BAL.balanceOf(s.Dave.address))
+        //Dave should not hold LDO for future tests
+        await s.LDO.connect(s.Dave).transfer(bank, await s.LDO.balanceOf(s.Dave.address))
         await mineBlock()
-
-
     });
 });
