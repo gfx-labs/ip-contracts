@@ -1,11 +1,11 @@
 import { s } from "../scope";
 import { upgrades, ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
+import { showBody, showBodyCyan } from "../../../../util/format";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
 import * as fs from 'fs';
 
-import { BN } from "../../../util/number";
+import { BN } from "../../../../util/number";
 import {
   IVault__factory,
   GovernorCharlieDelegate,
@@ -21,7 +21,7 @@ import {
   ChainlinkOracleRelay,
   ChainlinkOracleRelay__factory,
   ChainlinkTokenOracleRelay__factory
-} from "../../../typechain-types";
+} from "../../../../typechain-types";
 import {
   advanceBlockHeight,
   fastForward,
@@ -29,12 +29,11 @@ import {
   OneWeek,
   OneYear,
   currentBlock
-} from "../../../util/block";
-import { toNumber } from "../../../util/math";
-import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
-import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
+} from "../../../../util/block";
+import { toNumber } from "../../../../util/math";
+import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
+import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
 
-const proposalText = fs.readFileSync('test/upgrade6/queueAndExecute/proposal.md', 'utf8');
 let anchorLDO: UniswapV3TokenOracleRelay
 let mainLDO: ChainlinkOracleRelay
 let anchorViewLDO: AnchoredViewRelay
