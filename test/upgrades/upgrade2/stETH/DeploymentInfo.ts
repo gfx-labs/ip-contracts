@@ -1,9 +1,9 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import {  IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../../typechain-types";
-import { Addresser, MainnetAddresses } from "../../../util/addresser";
-import { BN } from "../../../util/number";
+import {  IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../../../typechain-types";
+import { Addresser, MainnetAddresses } from "../../../../util/addresser";
+import { BN } from "../../../../util/number";
 
 
 export class deployInfo extends MainnetAddresses {

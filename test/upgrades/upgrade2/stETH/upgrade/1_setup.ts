@@ -1,11 +1,11 @@
 import { expect, assert } from "chai";
 import { ethers, network, tenderly } from "hardhat";
-import { stealMoney } from "../../../util/money";
-import { showBody } from "../../../util/format";
-import { BN } from "../../../util/number";
-import { s } from "./scope";
-import { d } from "./DeploymentInfo";
-import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
+import { stealMoney } from "../../../../../util/money";
+import { showBody } from "../../../../../util/format";
+import { BN } from "../../../../../util/number";
+import { s } from "../scope";
+import { d } from "../DeploymentInfo";
+import { advanceBlockHeight, reset, mineBlock } from "../../../../../util/block";
 import {
     AnchoredViewRelay,
     AnchoredViewRelay__factory,
@@ -29,10 +29,10 @@ import {
     Vault,
     VaultController,
     VaultController__factory,
-    IVaultController__factory,
+    InterestProtocolTokenDelegate__factory,
     IVOTE,
     IVOTE__factory,
-} from "../../../typechain-types";
+} from "../../../../../typechain-types";
 
 require("chai").should();
 
@@ -54,7 +54,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(15127785)).to.not.throw;
+        expect(await reset(15181871)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -78,12 +78,7 @@ describe("Initial Setup", () => {
         s.WETH = IERC20__factory.connect(s.wethAddress, s.Frank);
         s.UNI = IVOTE__factory.connect(s.uniAddress, s.Frank);
         s.WBTC = IERC20__factory.connect(s.wbtcAddress, s.Frank);
-        s.COMP = IVOTE__factory.connect(s.compAddress, s.Frank);
-        s.ENS = IVOTE__factory.connect(s.ensAddress, s.Frank);
-        s.DYDX = IVOTE__factory.connect(s.dydxAddress, s.Frank);
-        s.AAVE = IVOTE__factory.connect(s.aaveAddress, s.Frank);
-        s.TRIBE = IVOTE__factory.connect(s.tribeAddress, s.Frank);
-
+ 
         s.STETH = ILido__factory.connect(s.STETH_ADDRESS, s.Frank)
 
         let oracle = await s.STETH.getOracle()
@@ -100,8 +95,10 @@ describe("Initial Setup", () => {
 
         s.ProxyAdmin = ProxyAdmin__factory.connect(d.ProxyAdmin, s.Frank)
 
-        
 
+        s.IPT = InterestProtocolTokenDelegate__factory.connect(d.IPTDelegator, s.Frank)
+
+        
 
     })
     it("Should succesfully transfer money", async () => {

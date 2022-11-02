@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { IGovernorCharlieDelegate } from "../../../typechain-types";
+import { IGovernorCharlieDelegate } from "../../../../typechain-types";
 import { 
     InterestProtocolTokenDelegate, 
     USDI, 
@@ -23,9 +23,9 @@ import {
     GovernorCharlieDelegate, 
     IGovernorCharlieDelegator,
     IGovernorCharlieDelegate__factory
- } from "../../../typechain-types";
-import { Addresser, MainnetAddresses } from "../../../util/addresser";
-import { BN } from "../../../util/number";
+ } from "../../../../typechain-types";
+import { Addresser, MainnetAddresses } from "../../../../util/addresser";
+import { BN } from "../../../../util/number";
 
 export class TestScope extends MainnetAddresses {
     USDI!: USDI;

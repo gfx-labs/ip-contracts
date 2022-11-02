@@ -1,14 +1,14 @@
 import { expect, assert } from "chai";
 import { ethers, network, tenderly } from "hardhat";
-import { stealMoney } from "../../../../util/money";
-import { showBody } from "../../../../util/format";
-import { BN } from "../../../../util/number";
-import { toNumber } from "../../../../util/math";
-import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
+import { stealMoney } from "../../../../../util/money";
+import { showBody } from "../../../../../util/format";
+import { BN } from "../../../../../util/number";
+import { toNumber } from "../../../../../util/math";
+import { impersonateAccount, ceaseImpersonation } from "../../../../../util/impersonator"
 
 import { s } from "../scope";
 import { d } from "../DeploymentInfo";
-import { advanceBlockHeight, fastForward, currentBlock, mineBlock } from "../../../../util/block";
+import { advanceBlockHeight, fastForward, currentBlock, mineBlock } from "../../../../../util/block";
 import {
     IVault__factory,
     ChainlinkOracleRelay__factory,
@@ -17,11 +17,10 @@ import {
     OracleMaster__factory,
     VaultController__factory,
     AnchoredViewRelay__factory
-} from "../../../../typechain-types";
+} from "../../../../../typechain-types";
 
 
-import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
-import { DeployContract } from "../../../../util/deploy";
+import { ProposalContext } from "../../../../../scripts/proposals/suite/proposal";
 
 require("chai").should();
 describe("Verify Contracts", () => {

@@ -2,10 +2,10 @@ import { s } from "./scope";
 import { upgrades, ethers } from "hardhat";
 import { BigNumber, utils } from "ethers";
 import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
+import { showBody, showBodyCyan } from "../../../../util/format";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
 
-import { BN } from "../../../util/number";
+import { BN } from "../../../../util/number";
 import {
     AnchoredViewRelay,
     AnchoredViewRelay__factory,
@@ -15,16 +15,16 @@ import {
     StEthOracleRelay__factory,
     GovernorCharlieDelegate__factory,
     GovernorCharlieDelegate
-} from "../../../typechain-types";
+} from "../../../../typechain-types";
 import {
     advanceBlockHeight,
     fastForward,
     mineBlock,
     OneWeek,
     OneYear,
-} from "../../../util/block";
-import { toNumber, getGas } from "../../../util/math";
-import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
+} from "../../../../util/block";
+import { toNumber, getGas } from "../../../../util/math";
+import { DeployContract, DeployContractWithProxy } from "../../../../util/deploy";
 
 
 const usdcAmount = BN("50e6")
