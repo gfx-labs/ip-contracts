@@ -2,24 +2,24 @@ import { s } from "../scope";
 import { upgrades, ethers } from "hardhat";
 import { BigNumber, utils } from "ethers";
 import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
+import { showBody, showBodyCyan } from "../../../../util/format";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
 
-import { BN } from "../../../util/number";
+import { BN } from "../../../../util/number";
 import {
     IVault__factory,
     VotingVault,
     IVault,
     VotingVault__factory
-} from "../../../typechain-types";
+} from "../../../../typechain-types";
 import {
     advanceBlockHeight,
     fastForward,
     mineBlock,
     OneWeek,
     OneYear,
-} from "../../../util/block";
-import { toNumber, getGas } from "../../../util/math";
+} from "../../../../util/block";
+import { toNumber, getGas } from "../../../../util/math";
 
 const usdcAmount = BN("50e6")
 const usdiAmount = BN("50e18")

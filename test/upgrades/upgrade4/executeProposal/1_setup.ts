@@ -1,11 +1,11 @@
 import { expect, assert } from "chai";
 import { ethers, network, tenderly } from "hardhat";
-import { stealMoney } from "../../../util/money";
-import { showBody } from "../../../util/format";
-import { BN } from "../../../util/number";
+import { stealMoney } from "../../../../util/money";
+import { showBody } from "../../../../util/format";
+import { BN } from "../../../../util/number";
 import { s } from "../scope";
 import { d } from "../DeploymentInfo";
-import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
+import { advanceBlockHeight, reset, mineBlock } from "../../../../util/block";
 import {
     AnchoredViewRelay,
     AnchoredViewRelay__factory,
@@ -32,7 +32,7 @@ import {
     CappedGovToken__factory,
     IVOTE,
     IVOTE__factory,
-} from "../../../typechain-types";
+} from "../../../../typechain-types";
 
 require("chai").should();
 
