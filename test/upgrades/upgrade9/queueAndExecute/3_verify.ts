@@ -160,7 +160,7 @@ describe("Testing CappedToken functions", () => {
 
         const cap = await s.CappedDYDX.getCap()
         expect(cap).to.eq(s.DYDX_Amount, "Cap is still correct")
-        expect(await s.CappedDYDX.totalSupply()).to.eq(cap, "Cap reached")
+        expect(await s.CappedDYDX.totalSupply()).to.be.gt(cap.sub(1), "Cap reached")
 
         await s.DYDX.connect(s.Gus).approve(s.CappedDYDX.address, 1)
         await mineBlock()

@@ -16,7 +16,8 @@ import {
     ChainlinkOracleRelay,
     ChainlinkOracleRelay__factory,
     ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory
+    TransparentUpgradeableProxy__factory,
+    CurveMaster__factory
 } from "../../../typechain-types";
 import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
 import { ProposalContext } from "../suite/proposal";
@@ -41,32 +42,33 @@ let mainRelay: ChainlinkOracleRelay
 let anchorView: AnchoredViewRelay
 let CappedENS: CappedGovToken
 
-
+const ZER0 = "0x0000000000000000000000000000000000000000"
+const newLinesAddress = "0x482855c43a0869D93C5cA6d9dc9EDdF3DAE031Ea"
 
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await reset(15668790)
+    await reset(15885327)
     await network.provider.send("evm_setAutomine", [true])
 
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
 
-    const proposal = new ProposalContext("Balancer and Aave")
+    const proposal = new ProposalContext("New Curve")
 
-    const addBalOracle = await new OracleMaster__factory().
-        attach(d.Oracle).
-        populateTransaction.setRelay(
-            d.CappedBalancer,
-            d.BalancerAnchorView
+    const registerNewCUrve = await new CurveMaster__factory().
+        attach(d.Curve).
+        populateTransaction.setCurve(
+            ZER0,
+            newLinesAddress
         )
 
     
-    proposal.addStep(addBalOracle, "setRelay(address,address)")
+    proposal.addStep(registerNewCUrve, "setCurve(address,address)")
   
     let out = proposal.populateProposal()
 
     console.log(out)
-    const proposalText = fs.readFileSync('./scripts/proposals/BalancerAave/proposal.md', 'utf8');
+    const proposalText = fs.readFileSync('./scripts/proposals/NewCurve/proposal.md', 'utf8');
 
     let gov: GovernorCharlieDelegate;
     gov = new GovernorCharlieDelegate__factory(deployer).attach(
@@ -81,8 +83,9 @@ async function main() {
         proposalText,
         false
     )
-
-    fs.writeFileSync('./scripts/proposals/BalancerAave/proposalHexData.txt', JSON.stringify(data));
+    
+    //showBody(JSON.stringify(data))
+    fs.writeFileSync('./scripts/proposals/NewCurve/proposalHexData.txt', JSON.stringify(data));
 
 }
 

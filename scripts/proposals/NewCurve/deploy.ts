@@ -42,8 +42,8 @@ const newCurveData = {
 
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await network.provider.send("evm_setAutomine", [true])
-    await reset(15884974)
+    //await network.provider.send("evm_setAutomine", [true])
+    //await reset(15884974)
 
 
     const accounts = await ethers.getSigners();
@@ -58,8 +58,10 @@ async function main() {
         newCurveData.s2
     )
     await newCurve.deployed()
+    console.log("Curve deployed to: ", newCurve.address)
 
-    
+    //hh verify --network mainnet 0x482855c43a0869D93C5cA6d9dc9EDdF3DAE031Ea "2000000000000000000" "100000000000000000" "5000000000000000" "250000000000000000" "500000000000000000"
+
 }
 
 main()

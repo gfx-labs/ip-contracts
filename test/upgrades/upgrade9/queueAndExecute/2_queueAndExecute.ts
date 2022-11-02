@@ -169,40 +169,11 @@ describe("Deploy and setup new curve", () => {
 
   })
 
-  it("Deploy the new curve", async () => {
-    s.newLines = await DeployContract(
-      new ThreeLines0_100__factory(s.Frank),
-      s.Frank,
-      newCurveData.r0,
-      newCurveData.r1,
-      newCurveData.r2,
-      newCurveData.s1,
-      newCurveData.s2
-    )
-    await mineBlock()
-    await s.newLines.deployed()
-    await mineBlock()
+  it("Connect to new curve", async () => {
+
+    //already deployed
+    s.newLines = ThreeLines0_100__factory.connect("0x482855c43a0869D93C5cA6d9dc9EDdF3DAE031Ea", s.Frank)
   })
-  /** 
-    it("Deploy new curve", async () => {
-      s.CappedLDO = await DeployContractWithProxy(
-        new CappedGovToken__factory(s.Frank),
-        s.Frank,
-        s.ProxyAdmin,
-        "CappedLDO",
-        "cLDO",
-        s.LDO.address,
-        s.VaultController.address,
-        s.VotingVaultController.address
-      )
-      await mineBlock()
-      await s.CappedLDO.deployed()
-      await mineBlock()
-  
-      await s.CappedLDO.connect(s.Frank).setCap(s.LDO_Cap)
-      await mineBlock()
-    })
-     */
 })
 
 
