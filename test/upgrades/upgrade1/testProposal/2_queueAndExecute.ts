@@ -1,24 +1,23 @@
-import { s } from "./scope";
+import { s } from "../scope";
 import { upgrades, ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../util/impersonator"
+import { showBody, showBodyCyan } from "../../../../util/format";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
 
-import { BN } from "../../util/number";
+import { BN } from "../../../../util/number";
 import {
-  ProxyAdmin,
-  ProxyAdmin__factory,
-  USDI__factory,
-  IVault__factory
-} from "../../typechain-types";
+  IVault__factory,
+  GovernorCharlieDelegate,
+  GovernorCharlieDelegate__factory
+} from "../../../../typechain-types";
 import {
   advanceBlockHeight,
   fastForward,
   mineBlock,
   OneWeek,
   OneYear,
-} from "../../util/block";
-import { toNumber } from "../../util/math";
+} from "../../../../util/block";
+import { toNumber } from "../../../../util/math";
 
 
 require("chai").should();
@@ -107,38 +106,31 @@ describe("Verify Contracts", () => {
   })
 });
 
-describe("Deploy upgrades and point proxy to new implementation", () => {
-
+describe("Queue and Execute proposal", () => {
+  const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
+  const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064";
+  const voteBlocks = 6570;
+  const timelockDelay = 43200;
   const owner = ethers.provider.getSigner(s.IP_OWNER)
+  let gov: GovernorCharlieDelegate;
+  
+  it("Queue and Execute", async () => {
 
-  it("Deploy and upgrade", async () => {
+    await impersonateAccount(proposer)
+    const prop = ethers.provider.getSigner(proposer)
 
-    const VC_factory = await ethers.getContractFactory("VaultController")
-    const VC_imp = await VC_factory.deploy()
+    gov = GovernorCharlieDelegate__factory.connect(governorAddress, prop);
+
+    await gov.castVote(3, 1)
+    await advanceBlockHeight(voteBlocks);
+    await gov.queue(3);
     await mineBlock()
-    await VC_imp.deployed()
+    await fastForward(timelockDelay);
+    await gov.execute(3);
+    await mineBlock();
 
-    const USDI_factory = await ethers.getContractFactory("USDI")
-    const USDI_imp = await USDI_factory.deploy()
-    await mineBlock()
-    await USDI_imp.deployed()
+    await ceaseImpersonation(proposer)
 
-    const ethAmount = BN("1e18")
-    let tx = {
-      to: owner._address,
-      value: ethAmount
-    }
-    await s.Frank.sendTransaction(tx)
-    await mineBlock()
 
-    await impersonateAccount(owner._address)
-
-    await s.ProxyAdmin.connect(owner).upgrade(s.VaultController.address, VC_imp.address)
-    await mineBlock()
-
-    await s.ProxyAdmin.connect(owner).upgrade(s.USDI.address, USDI_imp.address)
-    await mineBlock()
-
-    await ceaseImpersonation(owner._address)
   })
 })

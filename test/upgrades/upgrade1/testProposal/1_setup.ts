@@ -1,11 +1,11 @@
 import { expect, assert } from "chai";
 import { ethers, network, tenderly } from "hardhat";
-import { stealMoney } from "../../util/money";
-import { showBody } from "../../util/format";
-import { BN } from "../../util/number";
-import { s } from "./scope";
-import { d } from "./DeploymentInfo";
-import { advanceBlockHeight, reset, mineBlock } from "../../util/block";
+import { stealMoney } from "../../../../util/money";
+import { showBody } from "../../../../util/format";
+import { BN } from "../../../../util/number";
+import { s } from "../scope";
+import { d } from "../DeploymentInfo";
+import { advanceBlockHeight, reset, mineBlock } from "../../../../util/block";
 import {
     AnchoredViewRelay,
     AnchoredViewRelay__factory,
@@ -32,7 +32,7 @@ import {
     IVaultController__factory,
     IVOTE,
     IVOTE__factory,
-} from "../../typechain-types";
+} from "../../../../typechain-types";
 
 require("chai").should();
 
@@ -56,7 +56,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(15142500)).to.not.throw;
+        expect(await reset(15168448)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
