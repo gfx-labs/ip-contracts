@@ -1,15 +1,15 @@
 import { s } from "../scope";
 import { upgrades, ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
+import { showBody, showBodyCyan } from "../../../../util/format";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
 
-import { BN } from "../../../util/number";
+import { BN } from "../../../../util/number";
 import {
   IVault__factory,
   GovernorCharlieDelegate,
   GovernorCharlieDelegate__factory
-} from "../../../typechain-types";
+} from "../../../../typechain-types";
 import {
   advanceBlockHeight,
   fastForward,
@@ -17,9 +17,9 @@ import {
   OneWeek,
   OneYear,
   currentBlock
-} from "../../../util/block";
-import { toNumber } from "../../../util/math";
-import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
+} from "../../../../util/block";
+import { toNumber } from "../../../../util/math";
+import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
 
 
 require("chai").should();

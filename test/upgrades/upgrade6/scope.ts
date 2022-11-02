@@ -1,9 +1,9 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, ThreeLines0_100__factory } from "../../typechain-types";
-import { Addresser, MainnetAddresses } from "../../util/addresser";
-import { BN } from "../../util/number";
+import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, ThreeLines0_100__factory } from "../../../typechain-types";
+import { Addresser, MainnetAddresses } from "../../../util/addresser";
+import { BN } from "../../../util/number";
 
 export class TestScope extends MainnetAddresses {
     USDI!: USDI;
@@ -26,9 +26,9 @@ export class TestScope extends MainnetAddresses {
     ProxyAdmin!: ProxyAdmin;
     VaultController!: IVaultController;
 
-    CappedToken!: CappedToken;
-    CappedAMPL!: CappedRebaseToken;
-    CappedPAXG!: CappedFeeOnTransferToken;
+    CappedENS!: CappedGovToken
+    ENS_CAP = BN("750e18")
+    ENS_AMOUNT = this.ENS_CAP
     CAP = BN("100000e18")//100k
 
     //owner!: String
@@ -79,32 +79,6 @@ export class TestScope extends MainnetAddresses {
 
     IP_DEPLOYER = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
     DEPLOYER =  ethers.provider.getSigner(this.IP_DEPLOYER)
-
-    NEW_CURVE = "0x16Ac44B1e161c735D7E372169d3573d920a23906"
-    newThreeLines!: ThreeLines0_100
-
-
-    AMPL_ADDR = "0xD46bA6D942050d489DBd938a2C909A5d5039A161"
-    AMPL_AMOUNT = BN("1000e9")//AMPL is e9
-    AMPL_CAP = BN("10000e9")//Max AMPL, not wrapped tokens
-    AMPL!: IERC20
-
-    PAXG_ADDR = "0x45804880De22913dAFE09f4980848ECE6EcbAf78"
-    PAXG!: IERC20
-
-    MATIC_ADDR = "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0"
-    MATIC_WHALE = "0xf977814e90da44bfa03b6295a0616a897441acec"
-    MATIC_AMOUNT = BN("100000000e18")
-    MATIC!: IERC20
-
-    ST_ORACLE!: ILidoOracle
-    CappedSTETH!: CappedSTETH
-    STETH!: ILido
-    STETH_AMOUNT = BN("10e18")
-    STETH_ADDRESS = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84"
-    STETH_CAP = BN("1000e18")
-
-
     VotingVaultController!: VotingVaultController
 
     IPT!: InterestProtocolTokenDelegate;
