@@ -235,8 +235,13 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
     );
     bytes32 structHash = keccak256(abi.encode(DELEGATION_TYPEHASH, delegatee, nonce, expiry));
     bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+    require(
+      uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0,
+      "delegateBySig: invalid signature"
+    );
     address signatory = ecrecover(digest, v, r, s);
-    require(signatory != address(0), "delegateBySig: invalid signature");
+    require(signatory != address(0x0), "delegateBySig: invalid signature");
+
     require(nonce == nonces[signatory]++, "delegateBySig: invalid nonce");
     require(block.timestamp <= expiry, "delegateBySig: signature expired");
     return _delegate(signatory, delegatee);
