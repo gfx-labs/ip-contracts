@@ -1,12 +1,12 @@
 import { s } from "../scope";
 import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../util/format";
-import { BN } from "../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneDay } from "../../../util/block";
+import { showBody, showBodyCyan } from "../../../../util/format";
+import { BN } from "../../../../util/number";
+import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneDay } from "../../../../util/block";
 import { utils, BigNumber } from "ethers";
-import { getGas, getArgs, truncate, getEvent, toNumber } from "../../../util/math";
-import { stealMoney } from "../../../util/money"
-import { IVault__factory } from "../../../typechain-types";
+import { getGas, getArgs, truncate, getEvent, toNumber } from "../../../../util/math";
+import { stealMoney } from "../../../../util/money"
+import { IVault__factory } from "../../../../typechain-types";
 
 let firstBorrowIF: BigNumber
 describe("Check starting values", () => {
@@ -68,6 +68,25 @@ describe("Lending", () => {
 
         const liability = await s.VaultController.vaultLiability(s.BobVaultID)
         expect(await toNumber(liability)).to.be.closeTo(await toNumber(borrowAmount.mul(2)), 0.001, "Liability is correct")
+
+    })
+    
+    it("Check governance vote delegation for Aave", async () => {
+        const startPower = await s.AAVE.getPowerCurrent(s.Bob.address, 0)
+
+        //Unable to delegate gov tokens in a vault that you don't own
+        expect(s.BobVotingVault.connect(s.Carol).delegateCompLikeTo(s.Bob.address, s.aaveAddress)).to.be.revertedWith("sender not minter")
+
+        //delegate
+        await s.BobVotingVault.connect(s.Bob).delegateCompLikeTo(s.Bob.address, s.aaveAddress)
+        await mineBlock()
+
+        let power = await s.AAVE.getPowerCurrent(s.Bob.address, 0)
+
+        const expected = (await s.AAVE.balanceOf(s.Bob.address)).add(await s.AAVE.balanceOf(s.BobVotingVault.address))
+
+        expect(power).to.be.gt(startPower, "Voting power increased")
+        expect(power).to.eq(expected, "Expected voting power achieved")
 
     })
 

@@ -1,11 +1,11 @@
 import { s } from "../scope";
 import { upgrades, ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
+import { showBody, showBodyCyan } from "../../../../util/format";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
 import * as fs from 'fs';
 
-import { BN } from "../../../util/number";
+import { BN } from "../../../../util/number";
 import {
   IVault__factory,
   GovernorCharlieDelegate,
@@ -20,7 +20,7 @@ import {
   VotingVaultController__factory,
   ChainlinkOracleRelay,
   ChainlinkOracleRelay__factory
-} from "../../../typechain-types";
+} from "../../../../typechain-types";
 import {
   advanceBlockHeight,
   fastForward,
@@ -28,12 +28,11 @@ import {
   OneWeek,
   OneYear,
   currentBlock
-} from "../../../util/block";
-import { toNumber } from "../../../util/math";
-import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
-import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
+} from "../../../../util/block";
+import { toNumber } from "../../../../util/math";
+import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
+import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
 
-const proposalText = fs.readFileSync('test/upgrade6/queueAndExecute/proposal.md', 'utf8');
 
 
 require("chai").should();
@@ -103,14 +102,138 @@ describe("Setup, Queue, and Execute proposal", () => {
   let anchorViewAave: AnchoredViewRelay
 
   let out: any
+  it("Deploy Capped Aave", async () => {
+    s.CappedAave = await DeployContractWithProxy(
+      new CappedGovToken__factory(s.Frank),
+      s.Frank,
+      s.ProxyAdmin,
+      "CappedAave",
+      "cAAVE",
+      s.AAVE.address,
+      s.VaultController.address,
+      s.VotingVaultController.address
+    )
+    await mineBlock()
+    await s.CappedAave.deployed()
+    await mineBlock()
 
-  it("Connect to deployed contracts", async () => {
-    s.CappedBal = CappedGovToken__factory.connect("0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85", s.Frank)
-    s.CappedAave = CappedGovToken__factory.connect("0xd3bd7a8777c042De830965de1C1BCC9784135DD2", s.Frank)
+    await s.CappedAave.connect(s.Frank).setCap(s.AaveCap)
+    await mineBlock()
+  })
+  it("Deploy Capped Bal", async () => {
+    s.CappedBal = await DeployContractWithProxy(
+      new CappedGovToken__factory(s.Frank),
+      s.Frank,
+      s.ProxyAdmin,
+      "CappedBalancer",
+      "cBAL",
+      s.BAL.address,
+      s.VaultController.address,
+      s.VotingVaultController.address
+    )
+    await mineBlock()
+    await s.CappedBal.deployed()
+    await mineBlock()
 
-    anchorViewBal = AnchoredViewRelay__factory.connect("0xf5E0e2827F60580304522E2C38177DFeC7a428a4", s.Frank)
-    anchorViewAave = AnchoredViewRelay__factory.connect("0x27FC4059860F3d9758DCC9a871838F06333fc6ed", s.Frank)
-    
+    await s.CappedBal.connect(s.Frank).setCap(s.BalCap)
+    await mineBlock()
+  })
+
+
+  it("Deploy Oracle system for Bal", async () => {
+
+    //uniV3Relay
+    anchorBal = await DeployContract(
+      new UniswapV3TokenOracleRelay__factory(s.Frank),
+      s.Frank,
+      10000,
+      bal3k,
+      false,
+      BN("1"),
+      BN("1")
+    )
+    await mineBlock()
+    await anchorBal.deployed()
+    await mineBlock()
+
+    showBody("Format BAL price from anchor: ", await toNumber(await anchorBal.currentValue()))
+    //showBody("Raw   : ", await anchorBal.currentValue())
+
+    mainBal = await DeployContract(
+      new ChainlinkOracleRelay__factory(s.Frank),
+      s.Frank,
+      balDataFeed,
+      BN("1e10"),
+      BN("1")
+    )
+    await mineBlock()
+    await mainBal.deployed()
+    await mineBlock()
+    let price = await mainBal.currentValue()
+    showBody("price: ", await toNumber(price))
+
+    anchorViewBal = await DeployContract(
+      new AnchoredViewRelay__factory(s.Frank),
+      s.Frank,
+      anchorBal.address,
+      mainBal.address,
+      BN("10"),
+      BN("100")
+    )
+    await mineBlock()
+    await anchorViewBal.deployed()
+    await mineBlock()
+
+    let result = await anchorViewBal.currentValue()
+    showBody("BAL Result: ", await toNumber(result))
+  })
+
+  it("Deploy Oracle system for Aave", async () => {
+
+    //uniV3Relay
+    anchorAave = await DeployContract(
+      new UniswapV3TokenOracleRelay__factory(s.Frank),
+      s.Frank,
+      14400,
+      aave3k,
+      false,
+      BN("1"),
+      BN("1")
+    )
+    await mineBlock()
+    await anchorAave.deployed()
+    await mineBlock()
+
+    showBody("Format: ", await toNumber(await anchorAave.currentValue()))
+    //showBody("Raw   : ", await anchorAave.currentValue())
+
+    mainAave = await DeployContract(
+      new ChainlinkOracleRelay__factory(s.Frank),
+      s.Frank,
+      aaveDataFeed,
+      BN("1e10"),
+      BN("1")
+    )
+    await mineBlock()
+    await mainAave.deployed()
+    await mineBlock()
+    let price = await mainAave.currentValue()
+    showBody("price: ", await toNumber(price))
+
+    anchorViewAave = await DeployContract(
+      new AnchoredViewRelay__factory(s.Frank),
+      s.Frank,
+      anchorAave.address,
+      mainAave.address,
+      BN("10"),
+      BN("100")
+    )
+    await mineBlock()
+    await anchorViewAave.deployed()
+    await mineBlock()
+
+    let result = await anchorViewAave.currentValue()
+    showBody("AAVE Result: ", await toNumber(result))
   })
 
 

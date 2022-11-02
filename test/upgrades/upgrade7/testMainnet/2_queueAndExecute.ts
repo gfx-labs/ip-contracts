@@ -1,11 +1,11 @@
 import { s } from "../scope";
 import { upgrades, ethers } from "hardhat";
 import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
+import { showBody, showBodyCyan } from "../../../../util/format";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
 import * as fs from 'fs';
 
-import { BN } from "../../../util/number";
+import { BN } from "../../../../util/number";
 import {
   IVault__factory,
   GovernorCharlieDelegate,
@@ -20,7 +20,7 @@ import {
   VotingVaultController__factory,
   ChainlinkOracleRelay,
   ChainlinkOracleRelay__factory
-} from "../../../typechain-types";
+} from "../../../../typechain-types";
 import {
   advanceBlockHeight,
   fastForward,
@@ -28,12 +28,11 @@ import {
   OneWeek,
   OneYear,
   currentBlock
-} from "../../../util/block";
-import { toNumber } from "../../../util/math";
-import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
-import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
+} from "../../../../util/block";
+import { toNumber } from "../../../../util/math";
+import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
+import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
 
-const proposalText = fs.readFileSync('test/upgrade6/queueAndExecute/proposal.md', 'utf8');
 
 
 require("chai").should();
@@ -110,13 +109,106 @@ describe("Setup, Queue, and Execute proposal", () => {
 
     anchorViewBal = AnchoredViewRelay__factory.connect("0xf5E0e2827F60580304522E2C38177DFeC7a428a4", s.Frank)
     anchorViewAave = AnchoredViewRelay__factory.connect("0x27FC4059860F3d9758DCC9a871838F06333fc6ed", s.Frank)
+    
+  })
+
+
+  it("Makes the new proposal", async () => {
+
+    await impersonateAccount(proposer)
 
     gov = new GovernorCharlieDelegate__factory(prop).attach(
       governorAddress
     );
+
+    const proposal = new ProposalContext("BAL&AAVE")
+
+    const addOracleBal = await new OracleMaster__factory(prop).
+      attach(s.Oracle.address).
+      populateTransaction.setRelay(
+        s.CappedBal.address,
+        anchorViewBal.address
+      )
+    const addOracleAave = await new OracleMaster__factory(prop).
+      attach(s.Oracle.address).
+      populateTransaction.setRelay(
+        s.CappedAave.address,
+        anchorViewAave.address
+      )
+
+
+    const listBAL = await new VaultController__factory(prop).
+      attach(s.VaultController.address).
+      populateTransaction.registerErc20(
+        s.CappedBal.address,
+        s.BalLTV,
+        s.CappedBal.address,
+        s.BalLiqInc
+      )
+
+    const listAave = await new VaultController__factory(prop).
+      attach(s.VaultController.address).
+      populateTransaction.registerErc20(
+        s.CappedAave.address,
+        s.AaveLTV,
+        s.CappedBal.address,
+        s.AaveLiqInc
+      )
+
+    //register on voting vault controller
+    const registerBAL_VVC = await new VotingVaultController__factory(prop).
+      attach(s.VotingVaultController.address).
+      populateTransaction.registerUnderlying(
+        s.BAL.address,
+        s.CappedBal.address
+      )
+
+    const registerAave_VVC = await new VotingVaultController__factory(prop).
+      attach(s.VotingVaultController.address).
+      populateTransaction.registerUnderlying(
+        s.AAVE.address,
+        s.CappedAave.address
+      )
+
+
+    proposal.addStep(addOracleBal, "setRelay(address,address)")
+    proposal.addStep(addOracleAave, "setRelay(address,address)")
+
+    proposal.addStep(listBAL, "registerErc20(address,uint256,address,uint256)")
+    proposal.addStep(listAave, "registerErc20(address,uint256,address,uint256)")
+
+    proposal.addStep(registerBAL_VVC, "registerUnderlying(address,address)")
+    proposal.addStep(registerAave_VVC, "registerUnderlying(address,address)")
+
+
+
+    out = proposal.populateProposal()
+    //showBody(out)
+    /** 
     
+    {
+      targets: [
+        '0xf4818813045E954f5Dc55a40c9B60Def0ba3D477',
+        '0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3',
+        '0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2'
+      ],
+      values: [ 0, 0, 0 ],
+      signatures: [
+        'setRelay(address,address)',
+        'registerErc20(address,uint256,address,uint256)',
+        'registerUnderlying(address,address)'
+      ],
+      calldatas: [
+        '0x000000000000000000000000286b8decd5ed79c962b2d8f4346cd97ff0e2c3520000000000000000000000009338ca7d556248055f5751d85cda7ad6ef254433',
+        '0x000000000000000000000000286b8decd5ed79c962b2d8f4346cd97ff0e2c3520000000000000000000000000000000000000000000000000a688906bd8b0000000000000000000000000000286b8decd5ed79c962b2d8f4346cd97ff0e2c352000000000000000000000000000000000000000000000000016345785d8a0000',
+        '0x000000000000000000000000c18360217d8f7ab5e7c516566761ea12ce7f9d72000000000000000000000000286b8decd5ed79c962b2d8f4346cd97ff0e2c352'
+      ]
+    }
+    */
   })
 
+
+   
   it("queue and execute", async () => {
     const votingPeriod = await gov.votingPeriod()
     const votingDelay = await gov.votingDelay()
@@ -128,9 +220,26 @@ describe("Setup, Queue, and Execute proposal", () => {
 
     await impersonateAccount(proposer)
 
+    await gov.connect(prop).propose(
+      out.targets,
+      out.values,
+      out.signatures,
+      out.calldatas,
+      "List Bal & Aave",
+      false
+    )
     await mineBlock()
     proposal = Number(await gov.proposalCount())
-    showBody("proposal num: ", proposal)
+
+    showBodyCyan("Advancing a lot of blocks...")
+    await advanceBlockHeight(votingDelay.toNumber());
+
+    await gov.connect(prop).castVote(proposal, 1)
+    await mineBlock()
+
+    showBodyCyan("Advancing a lot of blocks again...")
+    await advanceBlockHeight(votingPeriod.toNumber());
+    await mineBlock()
 
     await gov.connect(prop).queue(proposal);
     await mineBlock()
