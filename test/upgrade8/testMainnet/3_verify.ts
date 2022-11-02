@@ -133,9 +133,10 @@ describe("Testing CappedToken functions", () => {
 
     it("Try to exceed the LDO cap", async () => {
 
-
-        await s.CappedLDO.connect(s.Frank).setCap(s.LDO_Amount)
+        await impersonateAccount(s.owner._address)
+        await s.CappedLDO.connect(s.owner).setCap(s.LDO_Amount)
         await mineBlock()
+        await ceaseImpersonation(s.owner._address)
 
         const cap = await s.CappedLDO.getCap()
         expect(cap).to.eq(s.LDO_Amount, "Cap is still correct")
@@ -145,14 +146,17 @@ describe("Testing CappedToken functions", () => {
         await mineBlock()
         expect(s.CappedLDO.connect(s.Gus).deposit(1, s.BobVaultID)).to.be.revertedWith("cap reached")
 
-        await s.CappedLDO.connect(s.Frank).setCap(s.LDO_Cap)
+        await impersonateAccount(s.owner._address)
+        await s.CappedLDO.connect(s.owner).setCap(s.LDO_Cap)
         await mineBlock()
+        await ceaseImpersonation(s.owner._address)
     })
 
     it("Try to exceed the DYDX cap", async () => {
-
-        await s.CappedDYDX.connect(s.Frank).setCap(s.DYDX_Amount)
+        await impersonateAccount(s.owner._address)
+        await s.CappedDYDX.connect(s.owner).setCap(s.DYDX_Amount)
         await mineBlock()
+        await ceaseImpersonation(s.owner._address)
 
         const cap = await s.CappedDYDX.getCap()
         expect(cap).to.eq(s.DYDX_Amount, "Cap is still correct")
@@ -162,14 +166,17 @@ describe("Testing CappedToken functions", () => {
         await mineBlock()
         expect(s.CappedDYDX.connect(s.Gus).deposit(1, s.BobVaultID)).to.be.revertedWith("cap reached")
 
-        await s.CappedDYDX.connect(s.Frank).setCap(s.DYDX_Cap)
+        await impersonateAccount(s.owner._address)
+        await s.CappedDYDX.connect(s.owner).setCap(s.DYDX_Cap)
         await mineBlock()
+        await ceaseImpersonation(s.owner._address)
     })
 
     it("Try to exceed the CRV cap", async () => {
-
-        await s.CappedCRV.connect(s.Frank).setCap(s.CRV_Amount)
+        await impersonateAccount(s.owner._address)
+        await s.CappedCRV.connect(s.owner).setCap(s.CRV_Amount)
         await mineBlock()
+        await ceaseImpersonation(s.owner._address)
 
         const cap = await s.CappedCRV.getCap()
         expect(cap).to.eq(s.CRV_Amount, "Cap is still correct")
@@ -179,8 +186,10 @@ describe("Testing CappedToken functions", () => {
         await mineBlock()
         expect(s.CappedCRV.connect(s.Gus).deposit(1, s.BobVaultID)).to.be.revertedWith("cap reached")
 
-        await s.CappedDYDX.connect(s.Frank).setCap(s.CRV_Cap)
+        await impersonateAccount(s.owner._address)
+        await s.CappedCRV.connect(s.owner).setCap(s.CRV_Cap)
         await mineBlock()
+        await ceaseImpersonation(s.owner._address)
     })
 
     it("No vault", async () => {
@@ -372,9 +381,12 @@ describe("Testing CappedToken functions", () => {
 
     it("Try to withdraw more capped DYDX than is possible given some cap tokens", async () => {
 
+        await impersonateAccount(s.owner._address)
 
-        await s.CappedDYDX.connect(s.Frank).setCap(BN("51e24"))
+        await s.CappedDYDX.connect(s.owner).setCap(BN("51e24"))
         await mineBlock()
+        await ceaseImpersonation(s.owner._address)
+
 
         await s.CappedDYDX.connect(s.Gus).deposit(BN("1e18"), gusVaultId)
         await mineBlock()
@@ -389,8 +401,10 @@ describe("Testing CappedToken functions", () => {
         await mineBlock()
 
         //return cap to expected amount
-        await s.CappedDYDX.connect(s.Frank).setCap(s.DYDX_Cap)
+        await impersonateAccount(s.owner._address)
+        await s.CappedDYDX.connect(s.owner).setCap(s.DYDX_Cap)
         await mineBlock()
+        await ceaseImpersonation(s.owner._address)
 
     })
     it("Try to withdraw more capped CRV than is possible given some cap tokens", async () => {
@@ -406,8 +420,10 @@ describe("Testing CappedToken functions", () => {
         await s.VotingVaultController.connect(s.Andy).mintVault(andyVaultId)
         await mineBlock()
 
-        await s.CappedCRV.connect(s.Frank).setCap(BN("51e24"))
+        await impersonateAccount(s.owner._address)
+        await s.CappedCRV.connect(s.owner).setCap(BN("51e24"))
         await mineBlock()
+        await ceaseImpersonation(s.owner._address)
 
         await s.CRV.connect(s.Andy).approve(s.CappedCRV.address, BN("1e18"))
         await s.CappedCRV.connect(s.Andy).deposit(BN("1e18"), andyVaultId)
@@ -424,8 +440,10 @@ describe("Testing CappedToken functions", () => {
 
 
         //return cap to expected amount
-        await s.CappedCRV.connect(s.Frank).setCap(s.CRV_Cap)
+        await impersonateAccount(s.owner._address)
+        await s.CappedCRV.connect(s.owner).setCap(s.CRV_Cap)
         await mineBlock()
+        await ceaseImpersonation(s.owner._address)
 
     })
 

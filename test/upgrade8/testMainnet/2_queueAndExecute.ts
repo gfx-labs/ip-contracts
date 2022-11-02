@@ -112,7 +112,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
 })
 
 
-describe("Setup, Queue, and Execute proposal", () => {
+describe("Execute proposal", () => {
   const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
   const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
   const prop = ethers.provider.getSigner(proposer)
