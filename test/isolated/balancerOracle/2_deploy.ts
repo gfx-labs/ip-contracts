@@ -126,7 +126,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
     it("Deploy Oracle system for rETH", async () => {
 
         //balancer token anchor
-        const anchor = await DeployContract(
+        const main = await DeployContract(
             new GeneralizedBalancerOracle__factory(s.Frank),
             s.Frank,
             14400,
@@ -135,11 +135,11 @@ describe("Deploy Cap Tokens and Oracles", () => {
             BN("1")
         )
         await mineBlock()
-        await anchor.deployed()
+        await main.deployed()
         await mineBlock()
 
-        const anchorResult = await anchor.currentValue()
-        showBody("Value: ", await toNumber(anchorResult))
+        const mainResult = await main.currentValue()
+        showBody("Value: ", await toNumber(mainResult))
 
 
         /**
