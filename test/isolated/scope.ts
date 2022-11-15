@@ -5,8 +5,8 @@ import {
     USDI,
     IERC20, 
     IVOTE, 
-    VaultController, 
-    OracleMaster, 
+    CappedGovToken, 
+    InterestProtocolTokenDelegate, 
     AnchoredViewRelay, 
     ChainlinkOracleRelay, 
     IOracleRelay, 
@@ -20,11 +20,44 @@ import {
     ICurveMaster,
     IWUSDI,
     WUSDI__factory,
+    VotingVaultController,
 } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
 export class TestScope extends MainnetAddresses {
+
+    accounts!:SignerWithAddress[]
+    IPT!: InterestProtocolTokenDelegate;
+    cIPT!: CappedGovToken
+    VotingVaultController!: VotingVaultController
+
+    rETH!: IVOTE
+    CappedRETH!: CappedGovToken
+
+    
+    CappedLDO!: CappedGovToken
+    LDO_LiqInc = BN("1e17")
+    LDO_LTV = BN("7e17")
+    LDO_Cap = BN("4000000e18")
+    LDO_Amount = BN("500e18")
+
+
+    CappedDYDX!: CappedGovToken
+    DYDX_LiqInc = BN("1e17")
+    DYDX_LTV = BN("7e17")
+    DYDX_Cap = BN("3300000e18")
+    DYDX_Amount = BN("1000e18")
+
+    
+    CappedCRV!: CappedGovToken
+    CRV_LiqInc = BN("1e17")
+    CRV_LTV = BN("7e17")
+    CRV_Cap = BN("6000000e18")
+    CRV_Amount = BN("500e18")
+ 
+    USDC_AMOUNT = BN("1000e6")
+
 
     WUSDI!: IWUSDI;
 
@@ -77,7 +110,9 @@ export class TestScope extends MainnetAddresses {
     Hector!: SignerWithAddress // hector is also here
 
     BobVault!: IVault
+    BobVaultID!: BigNumber
     CarolVault!: IVault
+    CarolVaultID!: BigNumber
     GusVault!: IVault
 
     Andy_USDC = BN("1e8")
