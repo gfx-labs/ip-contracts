@@ -20,7 +20,7 @@ import {
     VotingVaultController__factory,
     ChainlinkOracleRelay,
     ChainlinkOracleRelay__factory,
-    ChainlinkTokenOracleRelay__factory,
+    ITestOracle__factory,
     GeneralizedBalancerOracle__factory
 } from "../../../typechain-types";
 import {
@@ -34,6 +34,7 @@ import {
 import { toNumber } from "../../../util/math";
 import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
 import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
+import { BigNumber } from "ethers";
 
 let anchorLDO: UniswapV3TokenOracleRelay
 let mainLDO: ChainlinkOracleRelay
@@ -86,6 +87,53 @@ describe("Verify Contracts", () => {
     });
 });
 
+describe("Testing balancer twap", () =>{
+
+  //etherscan - [{variable: 0, secs: 1400, ago: 0}]
+  it("Do the thing", async () => {
+      const testOracle = ITestOracle__factory.connect("0x1E19CF2D73a72Ef1332C882F20534B6519Be0276", s.Frank)
+      const auth = await testOracle.getAuthorizer()
+
+      showBody("Auth: ", auth)
+
+
+      type input = {
+          variable: BigNumber,
+          secs: BigNumber,
+          ago: BigNumber
+      }
+
+      let inp:input = {
+          variable:BN("0"),
+          secs:BN("14400"),
+          ago:BN("0")
+      }
+
+
+      let result = await testOracle.getTimeWeightedAverage([inp])
+      showBody("Var 0 : ", result.toString())
+
+      inp = {
+          variable:BN("1"),
+          secs:BN("14400"),
+          ago:BN("0")
+      }
+
+      result = await testOracle.getTimeWeightedAverage([inp])
+      showBody("Var 1 : ", result.toString())
+
+      inp = {
+          variable:BN("2"),
+          secs:BN("14400"),
+          ago:BN("0")
+      }
+
+      result = await testOracle.getTimeWeightedAverage([inp])
+      showBody("Var 2 : ", result.toString())
+  })
+
+})
+
 describe("Deploy Cap Tokens and Oracles", () => {
 
     const chainlinkLDOFeed = "0x4e844125952d32acdf339be976c98e22f6f318db"
@@ -99,38 +147,15 @@ describe("Deploy Cap Tokens and Oracles", () => {
     const chainlinkCRVfeed = "0xCd627aA160A6fA45Eb793D19Ef54f5062F20f33f"
     const CRV_WETH_10k = "0x4c83A7f819A5c37D64B4c5A2f8238Ea082fA1f4e"
 
-
-
-    it("Deploy capped rETH", async () => {
-
-        s.CappedRETH = await DeployContractWithProxy(
-            new CappedGovToken__factory(s.Frank),
-            s.Frank,
-            s.ProxyAdmin,
-            "CappedRETH",
-            "crETH",
-            s.rETH.address,
-            s.VaultController.address,
-            s.VotingVaultController.address
-        )
-        await mineBlock()
-        await s.CappedRETH.deployed()
-        await mineBlock()
-
-        await s.CappedRETH.connect(s.Frank).setCap(s.LDO_Cap)
-        await mineBlock()
-
-    })
-
-
-    it("Deploy Oracle system for rETH", async () => {
+    it("Deploy and test oracle system for rETH", async () => {
 
         //balancer token anchor
         const main = await DeployContract(
             new GeneralizedBalancerOracle__factory(s.Frank),
             s.Frank,
-            14400,
-            "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276",
+            999,
+            "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276",//rETH/wETH pool
+            false,
             BN("1"),
             BN("1")
         )
@@ -139,153 +164,65 @@ describe("Deploy Cap Tokens and Oracles", () => {
         await mineBlock()
 
         const mainResult = await main.currentValue()
-        showBody("Value: ", await toNumber(mainResult))
+        showBody("rETH Value from balancer oracle: ", await toNumber(mainResult))
 
-
-        /**
-         
-        //uniV3Relay
-        anchorLDO = await DeployContract(
+        const rETH500 = "0xa4e0faA58465A2D369aa21B3e42d43374c6F9613"
+        const anchor = await DeployContract(
           new UniswapV3TokenOracleRelay__factory(s.Frank),
           s.Frank,
           14400,
-          LDO_WETH_10k,
+          rETH500,
           false,
           BN("1"),
           BN("1")
         )
         await mineBlock()
-        await anchorLDO.deployed()
+        await anchor.deployed()
         await mineBlock()
-    
-        //showBody("Format price from anchor: ", await toNumber(await anchorLDO.currentValue()))
-        //showBody("Raw   : ", await anchorLDO.currentValue())
-    
-        mainLDO = await DeployContract(
-          new ChainlinkTokenOracleRelay__factory(s.Frank),
+
+        const anchorResult = await anchor.currentValue()
+        showBody("rETH Value from uni v3 oracle: ", await toNumber(anchorResult))
+
+        //expect(await toNumber(mainResult)).to.be.closeTo(await toNumber(anchorResult), 80, "Anchor and Main aggree +/- $80")
+    })
+
+    it("Deploy and test oracle system for balancer token", async () => {
+
+      //balancer token anchor
+      const main = await DeployContract(
+          new GeneralizedBalancerOracle__factory(s.Frank),
           s.Frank,
-          chainlinkLDOFeed,
+          14400,
+          "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56",//rETH/wETH pool
+          true,
           BN("1"),
           BN("1")
-        )
-        await mineBlock()
-        await mainLDO.deployed()
-        await mineBlock()
-        let price = await mainLDO.currentValue()
-        //showBody("price: ", await toNumber(price))
-    
-        anchorViewLDO = await DeployContract(
-          new AnchoredViewRelay__factory(s.Frank),
-          s.Frank,
-          anchorLDO.address,
-          mainLDO.address,
-          BN("20"),
-          BN("100")
-        )
-        await mineBlock()
-        await anchorViewLDO.deployed()
-        await mineBlock()
-    
-        let result = await anchorViewLDO.currentValue()
-        showBodyCyan("LDO Oracle Result: ", await toNumber(result))
-         */
+      )
+      await mineBlock()
+      await main.deployed()
+      await mineBlock()
 
-    })
-    /**
-    it("Deploy Oracle system for DYDX", async () => {
-  
-      //uniV3Relay
-      anchorDYDX = await DeployContract(
+      const mainResult = await main.currentValue()
+      showBody("Balancer Value from balancer oracle: ", await toNumber(mainResult))
+
+      const uniPool = "0xDC2c21F1B54dDaF39e944689a8f90cb844135cc9"
+      const anchor = await DeployContract(
         new UniswapV3TokenOracleRelay__factory(s.Frank),
         s.Frank,
         14400,
-        DYDX_WETH_10k,
+        uniPool,
         false,
         BN("1"),
         BN("1")
       )
       await mineBlock()
-      await anchorDYDX.deployed()
+      await anchor.deployed()
       await mineBlock()
+
+      const anchorResult = await anchor.currentValue()
+      showBody("Balancer Value from uni v3 oracle: ", await toNumber(anchorResult))
+
+      //expect(await toNumber(mainResult)).to.be.closeTo(await toNumber(anchorResult), 80, "Anchor and Main aggree +/- $80")
+  })
   
-      //showBody("Format price from anchor: ", await toNumber(await anchorDYDX.currentValue()))
-      //showBody("Raw   : ", await anchorDYDX.currentValue())
-  
-      mainDYDX = await DeployContract(
-        new ChainlinkOracleRelay__factory(s.Frank),
-        s.Frank,
-        chainlinkDYDXfeed,
-        BN("1e10"),
-        BN("1")
-      )
-      await mineBlock()
-      await mainDYDX.deployed()
-      await mineBlock()
-      //showBody("price: ", await toNumber(await mainDYDX.currentValue()))
-  
-      anchorViewDYDX = await DeployContract(
-        new AnchoredViewRelay__factory(s.Frank),
-        s.Frank,
-        anchorDYDX.address,
-        mainDYDX.address,
-        BN("20"),
-        BN("100")
-      )
-      await mineBlock()
-      await anchorViewDYDX.deployed()
-      await mineBlock()
-  
-      let result = await anchorViewDYDX.currentValue()
-      showBodyCyan("DYDX Oracle Result: ", await toNumber(result))
-    })
-  
-    it("Deploy Oracle system for CRV", async () => {
-  
-      //uniV3Relay
-      anchorCRV = await DeployContract(
-        new UniswapV3TokenOracleRelay__factory(s.Frank),
-        s.Frank,
-        14400,
-        CRV_WETH_10k,
-        true,
-        BN("1"),
-        BN("1")
-      )
-      await mineBlock()
-      await anchorCRV.deployed()
-      await mineBlock()
-  
-      //showBody("Format price from anchor: ", await toNumber(await anchorCRV.currentValue()))
-      //showBody("Raw   : ", await anchorCRV.currentValue())
-  
-      mainCRV = await DeployContract(
-        new ChainlinkOracleRelay__factory(s.Frank),
-        s.Frank,
-        chainlinkCRVfeed,
-        BN("1e10"),
-        BN("1")
-      )
-      await mineBlock()
-      await mainCRV.deployed()
-      await mineBlock()
-      //showBody("price: ", await toNumber(await mainCRV.currentValue()))
-  
-  
-      anchorViewCRV = await DeployContract(
-        new AnchoredViewRelay__factory(s.Frank),
-        s.Frank,
-        anchorCRV.address,
-        mainCRV.address,
-        BN("20"),
-        BN("100")
-      )
-      await mineBlock()
-      await anchorViewCRV.deployed()
-      await mineBlock()
-  
-      let result = await anchorViewCRV.currentValue()
-      showBodyCyan("CRV Oracle Result: ", await toNumber(result))
-    })
-  
-    */
 })

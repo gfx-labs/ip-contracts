@@ -50,7 +50,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(15971719)).to.not.throw;
+        expect(await reset(15978439)).to.not.throw;//15978276
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -125,49 +125,5 @@ describe("Initial Setup - Bal and Aave", () => {
 
 
 /**
- describe("Testing balancer twap", () =>{
-
-    it("Do the thing", async () => {
-        const testOracle = ITestOracle__factory.connect("0x1E19CF2D73a72Ef1332C882F20534B6519Be0276", s.Frank)
-        const auth = await testOracle.getAuthorizer()
-
-        showBody("Auth: ", auth)
-
-
-        type input = {
-            variable: BigNumber,
-            secs: BigNumber,
-            ago: BigNumber
-        }
-
-        let inp:input = {
-            variable:BN("0"),
-            secs:BN("14400"),
-            ago:BN("0")
-        }
-
-
-        let result = await testOracle.getTimeWeightedAverage([inp])
-        showBody("Var 0 : ", result)
-
-        inp = {
-            variable:BN("1"),
-            secs:BN("14400"),
-            ago:BN("0")
-        }
-
-        result = await testOracle.getTimeWeightedAverage([inp])
-        showBody("Var 1 : ", result)
-
-        inp = {
-            variable:BN("2"),
-            secs:BN("14400"),
-            ago:BN("0")
-        }
-
-        result = await testOracle.getTimeWeightedAverage([inp])
-        showBody("Var 2 : ", result)
-    })
-
-})
+ 
  */
