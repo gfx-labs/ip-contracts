@@ -49,15 +49,15 @@ contract GeneralizedBalancerOracle is IOracleRelay {
     uint256 priceInEth = getLastSecond();
     uint256 ethPrice = ethOracle.currentValue();
 
-    
-    ///@param refers to assets per 1 eth
+
+    ///ethPrice to assets per 1 eth
     if (_invert) {
-      console.log("INVERT == true");
+      //console.log("INVERT == true");
       return divide(ethPrice, priceInEth, 18);
     }
 
-    console.log("INVERT == false");
-    ///@param refers to eth per 1 asset
+    //console.log("INVERT == false");
+    ///ethPrice to eth per 1 asset
     return (ethPrice * priceInEth) / 1e18;
   }
 
@@ -77,8 +77,8 @@ contract GeneralizedBalancerOracle is IOracleRelay {
 
     uint256 result = _priceFeed.getTimeWeightedAverage(inputs)[0];
 
-    console.log("RAW PRICE IN ETH : ", result);
-    console.log("ADJ PRICE IN ETH : ", (result / 1e18));
+    //console.log("RAW PRICE IN ETH : ", result);
+    //console.log("ADJ PRICE IN ETH : ", (result / 1e18));
 
     return result;
   }
@@ -95,13 +95,3 @@ contract GeneralizedBalancerOracle is IOracleRelay {
   }
 }
 
-/**
-  228 bal tokens per 1 eth
-  1 bal = 0.0043943662 eth
-
-  eth is 100 and .1 eth each == 100 * .1 = price == 10 
-
-
-
-  eth is 100 and 1.01 eth each == 100 / 1.01 == 
- */
