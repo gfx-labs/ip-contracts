@@ -22,7 +22,8 @@ import {
   ChainlinkOracleRelay__factory,
   ChainlinkTokenOracleRelay__factory,
   GeneralizedBalancerOracle,
-  GeneralizedBalancerOracle__factory
+  GeneralizedBalancerOracle__factory,
+  OracleRETH
 } from "../../../../typechain-types";
 import {
   advanceBlockHeight,
@@ -35,9 +36,10 @@ import {
 import { toNumber } from "../../../../util/math";
 import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
 import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
-
-let anchorRETH: UniswapV3TokenOracleRelay
-let mainRETH: GeneralizedBalancerOracle
+import { OracleRETH__factory } from "../../../../typechain-types/factories/oracle/External/OracleRETH.sol/OracleRETH__factory";
+let rEthSelfRelay: OracleRETH
+let rEthUniRelay: UniswapV3TokenOracleRelay
+let rEthBalancerRelay: GeneralizedBalancerOracle
 let anchorViewRETH: AnchoredViewRelay
 
 let anchorCBETH: UniswapV3TokenOracleRelay
@@ -139,10 +141,23 @@ describe("Deploy Cap Tokens and Oracles", () => {
     await mineBlock()
   })
 
+  it("Test rETH self report oracle", async () => {
+    //deploy rETH oracle
+    rEthSelfRelay = await DeployContract(
+      new OracleRETH__factory(s.Frank),
+      s.Frank
+    )
+    await mineBlock()
+    await rEthSelfRelay.deployed()
+    await mineBlock()
+
+    showBody("EXP price: ", await toNumber(await rEthSelfRelay.currentValue()))
+  })
+
 
   it("Deploy Oracle system for rETH", async () => {
     //uniV3Relay
-    anchorRETH = await DeployContract(
+    rEthUniRelay = await DeployContract(
       new UniswapV3TokenOracleRelay__factory(s.Frank),
       s.Frank,
       14400,
@@ -152,13 +167,14 @@ describe("Deploy Cap Tokens and Oracles", () => {
       BN("1")
     )
     await mineBlock()
-    await anchorRETH.deployed()
+    await rEthUniRelay.deployed()
     await mineBlock()
 
-    showBody("Format price from anchor: ", await toNumber(await anchorRETH.currentValue()))
-    //showBody("Raw   : ", await anchorRETH.currentValue())
+    showBody("Format price from anchor: ", await toNumber(await rEthUniRelay.currentValue()))
+    //showBody("Raw   : ", await rEthUniRelay.currentValue())
 
-    mainRETH = await DeployContract(
+
+    rEthBalancerRelay = await DeployContract(
       new GeneralizedBalancerOracle__factory(s.Frank),
       s.Frank,
       14400,
@@ -168,16 +184,16 @@ describe("Deploy Cap Tokens and Oracles", () => {
       BN("1")
     )
     await mineBlock()
-    await mainRETH.deployed()
+    await rEthBalancerRelay.deployed()
     await mineBlock()
-    let price = await mainRETH.currentValue()
+    let price = await rEthBalancerRelay.currentValue()
     showBody("price: ", await toNumber(price))
 
     anchorViewRETH = await DeployContract(
       new AnchoredViewRelay__factory(s.Frank),
       s.Frank,
-      anchorRETH.address,
-      mainRETH.address,
+      rEthSelfRelay.address, //anchor
+      rEthUniRelay.address, //main
       BN("20"),
       BN("100")
     )
@@ -220,7 +236,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
     let price = await mainCBETH.currentValue()
     showBody("price: ", await toNumber(price))
 
-    anchorCBETH = await DeployContract(
+    anchorViewCBETH = await DeployContract(
       new AnchoredViewRelay__factory(s.Frank),
       s.Frank,
       anchorCBETH.address,
@@ -232,7 +248,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
     await anchorCBETH.deployed()
     await mineBlock()
 
-    let result = await anchorCBETH.currentValue()
+    let result = await anchorViewCBETH.currentValue()
     showBodyCyan("cbETH Oracle Result: ", await toNumber(result))
   })
 })
@@ -271,7 +287,7 @@ describe("Setup, Queue, and Execute proposal", () => {
       attach(s.Oracle.address).
       populateTransaction.setRelay(
         s.CappedCBETH.address,
-        anchorCBETH.address
+        anchorViewCBETH.address
       )
 
 
