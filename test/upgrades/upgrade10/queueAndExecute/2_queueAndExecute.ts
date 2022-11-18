@@ -165,7 +165,6 @@ describe("Deploy Cap Tokens and Oracles", () => {
       14400,
       rETH_balancerFeed,
       "0x1a8F81c256aee9C640e14bB0453ce247ea0DFE6F",
-      false,
       BN("1"),
       BN("1")
     )

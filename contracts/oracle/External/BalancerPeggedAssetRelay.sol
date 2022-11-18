@@ -35,14 +35,13 @@ contract BalancerPeggedAssetRelay is IOracleRelay {
   uint256 public immutable _multiply;
   uint256 public immutable _divide;
   uint256 public immutable _secs;
-  bool public immutable _invert;
 
   IBalancerFeed private immutable _priceFeed;
   IRateProvider private immutable _rateProvider;
   IOracleRelay public constant ethOracle = IOracleRelay(0x22B01826063564CBe01Ef47B96d623b739F82Bf2);
 
   /**
-  * @param loockback - How many seconds to look back when generating TWAP
+  * @param lookback - How many seconds to look back when generating TWAP
   * @param pool_address - Balancer MetaStablePool address
   * @param rateProvider - Provides the rate for the peg, typically can be found at @param pool_address.getRateProviders()
   */

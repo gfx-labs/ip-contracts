@@ -121,7 +121,6 @@ const deployOracles = async (deployer: SignerWithAddress) => {
         14400,
         rEthBalancerPool,
         rEthPegProvider,
-        false,
         BN("1"),
         BN("1")
     )
