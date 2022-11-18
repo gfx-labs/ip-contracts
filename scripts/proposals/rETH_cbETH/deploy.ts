@@ -18,37 +18,74 @@ import {
     ProxyAdmin__factory,
     TransparentUpgradeableProxy__factory,
     ChainlinkTokenOracleRelay,
-    ChainlinkTokenOracleRelay__factory
+    ChainlinkTokenOracleRelay__factory,
+    BalancerPeggedAssetRelay,
+    BalancerPeggedAssetRelay__factory
 } from "../../../typechain-types";
 import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
 import { ProposalContext } from "../suite/proposal";
-import { toNumber } from "../../../util/math";
+import { getGas, toNumber } from "../../../util/math";
 import { d } from "../DeploymentInfo"
 import { showBody, showBodyCyan } from "../../../util/format";
 import { reset } from "../../../util/block";
+import { BigNumber } from "ethers";
 
 const { ethers, network, upgrades } = require("hardhat");
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 
 
+
+const rEthPegProvider = "0x1a8F81c256aee9C640e14bB0453ce247ea0DFE6F"
+const rEthBalancerPool = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276"
+const rEthUniPool = "0xa4e0faA58465A2D369aa21B3e42d43374c6F9613"
+const rETHaddress = "0xae78736Cd615f374D3085123A210448E74Fc6393"
+
 const chainlinkCBETHfeed = "0x67eF3CAF8BeB93149F48e8d20920BEC9b4320510"
 const CBETH_POOL = "0x840DEEef2f115Cf50DA625F7368C24af6fE74410"
 const cbEthAddress = "0xBe9895146f7AF43049ca1c1AE358B0541Ea49704"
 
+const rEth_CAP = BN("3000e18")
 const cbETH_CAP = BN("4200e18")
-const cbETH_LiqInc = BN("1e17")
-const cbETH_LTV = BN("75e16")
+
 
 let anchorCBETH: UniswapV3TokenOracleRelay
 let mainCBETH: ChainlinkOracleRelay
 let anchorViewCBETH: AnchoredViewRelay
-let CappedCBETH: CappedGovToken
 
+let anchorRETH: BalancerPeggedAssetRelay
+let mainRETH: UniswapV3TokenOracleRelay
+let anchorViewRETH: AnchoredViewRelay
+
+let CappedCBETH: CappedGovToken
+let CappedRETH: CappedGovToken
 
 const deployCapTokens = async (deployer: SignerWithAddress) => {
     const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
-
     const CappedGovFactory = await ethers.getContractFactory("CappedGovToken")
+
+    //deploy capped rETH
+    const ucrETH = await CappedGovFactory.deploy()
+    
+    const crETH = await new TransparentUpgradeableProxy__factory(deployer).deploy(
+        ucrETH.address,
+        proxy.address,
+        "0x"
+    )
+    await crETH.deployed()
+
+    CappedRETH = CappedGovFactory.attach(crETH.address)
+    console.log("Capped rETH deployed to: ", crETH.address)
+    const initrETH = await CappedRETH.initialize(
+        "Capped rETH",
+        "crETH",
+        rETHaddress,
+        d.VaultController,
+        d.VotingVaultController
+    )
+    await initrETH.wait()
+    console.log("Capped rETH Initialized", CappedRETH.address)
+
+    //deploy capped cbETH
     const uccbETH = await CappedGovFactory.deploy()
     const ccbETH = await new TransparentUpgradeableProxy__factory(deployer).deploy(
         uccbETH.address,
@@ -69,16 +106,53 @@ const deployCapTokens = async (deployer: SignerWithAddress) => {
     await initcbETH.wait()
     console.log("Capped cbETH Initialized", CappedCBETH.address)
 
-
 }
 
 const deployOracles = async (deployer: SignerWithAddress) => {
-    let anchorFactory = new UniswapV3TokenOracleRelay__factory(deployer)
-    let mainFactory = new ChainlinkOracleRelay__factory(deployer)
+    let peggedBalancerFactory = new BalancerPeggedAssetRelay__factory(deployer)
+    let UniV3Factory = new UniswapV3TokenOracleRelay__factory(deployer)
+    let chainlinkFactory = new ChainlinkOracleRelay__factory(deployer)
     //let mainTokenFactory = new ChainlinkTokenOracleRelay__factory(deployer)
     let anchorViewFactory = new AnchoredViewRelay__factory(deployer)
 
-    anchorCBETH = await anchorFactory.deploy(
+
+
+    anchorRETH = await peggedBalancerFactory.deploy(
+        14400,
+        rEthBalancerPool,
+        rEthPegProvider,
+        false,
+        BN("1"),
+        BN("1")
+    )
+    await anchorRETH.deployed()
+    console.log("rETH Balancer Pegged anchor deployed: ", anchorRETH.address)
+    showBodyCyan("rETH Balancer Pegged relay price: ", await toNumber(await anchorRETH.currentValue()))
+
+    mainRETH = await UniV3Factory.deploy(
+        14400,
+        rEthUniPool,
+        false,
+        BN("1"),
+        BN('1')
+    )
+    await mainRETH.deployed()
+    console.log("rETH Uniswap V3 anchor deployed: ", mainRETH.address)
+    showBodyCyan("rETH Uni V3 relay price: ", await toNumber(await mainRETH.currentValue()))
+
+
+    anchorViewRETH = await anchorViewFactory.deploy(
+        anchorRETH.address, //Balancer pegged
+        mainRETH.address, //Uni V3
+        BN("10"),
+        BN("100")
+    )
+
+    await anchorViewRETH.deployed()
+    console.log("rETH anchor view deployed: ", anchorViewRETH.address)
+    showBodyCyan("rETH anchor view price: ", await toNumber(await anchorViewRETH.currentValue()))
+
+    anchorCBETH = await UniV3Factory.deploy(
         14400,
         CBETH_POOL,
         false,
@@ -91,7 +165,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     showBodyCyan("cbETH anchor relay price: ", await toNumber(await anchorCBETH.currentValue()))
 
 
-    mainCBETH = await mainFactory.deploy(
+    mainCBETH = await chainlinkFactory.deploy(
         chainlinkCBETHfeed,
         BN("1e10"),
         BN("1")
@@ -124,34 +198,11 @@ const deploy = async (deployer: SignerWithAddress) => {
 
     console.log("All oracles have been deployed successfully")
 
+    await CappedRETH.setCap(rEth_CAP)
+    console.log("Set rETH cap to: ", await toNumber(rEth_CAP))
 
     await CappedCBETH.setCap(cbETH_CAP)
     console.log("Set cbETH cap to: ", await toNumber(cbETH_CAP))
-
-
-
-
-    /**
-     CappedDYDX = CappedGovToken__factory.connect("0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a", deployer)
-    CappedCRV = CappedGovToken__factory.connect("0x9d878eC06F628e883D2F9F1D793adbcfd52822A8", deployer)
-
-
-    await CappedDYDX.setCap(BN("3300000e18"))
-    console.log("Set DYDX cap to: ", BN("3300000e18").toString())
-
-    await CappedCRV.setCap(BN("6000000e18"))
-    console.log("Set CRV cap to: ", BN("6000000e18").toString())
-
-    //await CappedCBETH.transferOwnership(govAddress)
-    //console.log("Transferred ownership of Capped cbETH to: ", govAddress)
-
-    //await CappedDYDX.transferOwnership(govAddress)
-    //console.log("Transferred ownership of Capped DYDX to: ", govAddress)
-
-    //await CappedCRV.transferOwnership(govAddress)
-    //console.log("Transferred ownership of Capped DYDX to: ", govAddress)
-
-     */
 
 };
 
