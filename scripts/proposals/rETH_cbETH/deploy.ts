@@ -224,26 +224,3 @@ main()
         console.error(error);
         process.exit(1);
     });
-
-/**
-Capped cbETH deployed to:  0x7C1Caa71943Ef43e9b203B02678000755a4eCdE9
-Capped cbETH Initialized 0x7C1Caa71943Ef43e9b203B02678000755a4eCdE9
-Capped DYDX deployed to:  0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a
-Capped DYDX Initialized 0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a
-Capped CRV deployed to:  0x9d878eC06F628e883D2F9F1D793adbcfd52822A8
-Capped CRV Initialized 0x9d878eC06F628e883D2F9F1D793adbcfd52822A8
-All Cap Tokens deployed
-cbETH Uniswap V3 anchor deployed:  0xcD17f6766Cdff24a4642b99f0DE481c3E704EA39
-DYDX Uniswap V3 anchor deployed:  0x7FFF1525B560cf5Da9e9c72736bCC7A908b140D4
-CRV Uniswap V3 anchor deployed:  0xfD76D7EcbF91b2bF7F225af29C1cb7f213fA71b6
-cbETH chainlink data relay deployed:  0x9816d7C448f79CdD4aF18c4Ae1726A14299E8C75
-DYDX chainlink data relay deployed:  0x8C8AE22fea16C43743C846902eC7E34204894189
-CRV chainlink data relay deployed:  0xb549c8cc8011CA0d023A73DAD54d725125b25F31
-Anchor View cbETH deployed:  0x610d4DFAC3EC32e0be98D18DDb280DACD76A1889
-Anchor View DYDX deployed:  0x93A3411c9518D9c85054693137c87C5F14E7ECF9
-Anchor View CRV deployed:  0x864991b13691806be077E7Ca9ef566FE7762F908
-All oracles have been deployed successfully
-Set cbETH cap to:  4000000000000000000000000
-Set DYDX cap to:  3300000000000000000000000
-Set CRV cap to:  6000000000000000000000000
- */
