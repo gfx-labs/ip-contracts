@@ -58,6 +58,8 @@ export class deployInfo extends MainnetAddresses {
     anchorViewCRV = "0x864991b13691806be077E7Ca9ef566FE7762F908"
     CRVaddress = "0xD533a949740bb3306d119CC777fa900bA034cd52"
 
+    CappedCBETH = "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"
+
 
 
 
