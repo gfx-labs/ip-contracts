@@ -65,7 +65,7 @@ async function main() {
     let out = proposal.populateProposal()
 
     console.log(out)
-    const proposalText = fs.readFileSync('./scripts/proposals/LDO_DYDX_CRV/proposal.md', 'utf8');
+    const proposalText = fs.readFileSync('./scripts/proposals/rETH_cbETH/updateOracles/proposal.md', 'utf8');
 
     let gov: GovernorCharlieDelegate;
     gov = new GovernorCharlieDelegate__factory(deployer).attach(
@@ -81,7 +81,7 @@ async function main() {
         false
     )
 
-    fs.writeFileSync('./scripts/proposals/LDO_DYDX_CRV/proposalHexData.txt', JSON.stringify(data));
+    fs.writeFileSync('./scripts/proposals/rETH_cbETH/updateOracles/proposalHexData.txt', JSON.stringify(data));
 
 }
 

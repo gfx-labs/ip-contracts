@@ -53,6 +53,10 @@ export const BlockRounds = {
     {
       start: 16042653,
       end: 16093053
+    },
+    {
+      start: 16093054,
+      end: 16143454
     }
   ],
 };
