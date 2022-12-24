@@ -42,7 +42,7 @@ const prepareList = async (list: any) => {
 
     for (let i = 0; i < list.length; i++) {
 
-        const ZERO = "0x0000000000000000000000000000000000000000"
+        const ZERO = "0x0000000000000000000000000000000000000001"
 
         if (list[i].minter != ZERO) {
             LIST.push(
@@ -95,8 +95,8 @@ async function main() {
         formatObject[object.minter] = object.amount
     }
 
-    writeFileSync(`rewardtree/mergedAndFormatWeek25.json`, JSON.stringify(valueAdjusted), 'utf8')
-    writeFileSync(`rewardtree/week25Object.json`, JSON.stringify(formatObject), 'utf8')
+    writeFileSync(`rewardtree/mergedAndFormatWeek26.json`, JSON.stringify(valueAdjusted), 'utf8')
+    writeFileSync(`rewardtree/week26Object.json`, JSON.stringify(formatObject), 'utf8')
 
     console.log("DONE")
 
