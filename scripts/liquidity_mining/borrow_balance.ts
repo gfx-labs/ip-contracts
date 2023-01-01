@@ -7,7 +7,7 @@ import {
 import { CallContext } from "ethereum-multicall/dist/esm/models";
 import { Vault__factory } from "../../typechain-types";
 import Decimal from "decimal.js";
-import { BlockRounds } from "./q2_data";
+import { BlockRounds } from "./q3_data";
 
 import { writeFileSync } from "fs";
 import { sleep } from "../proposals/suite/proposal";
@@ -85,7 +85,7 @@ const main = async () => {
   //console.log(minters)
 
   //console.log("BLOCKROUNDS: ", BlockRounds.blockRanges)
-  const weekNum = 12
+  const weekNum = 0
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     //weekNum = weekNum + 1
     const blockStart = week.start
