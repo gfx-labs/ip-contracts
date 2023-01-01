@@ -24,13 +24,13 @@ const rpc_url = "wss://brilliant.staging.gfx.town"
 
 const main = async () => {
 
- // const cl = new AlchemyWebSocketProvider(1, rpc_url);
+  // const cl = new AlchemyWebSocketProvider(1, rpc_url);
   const cl = new ethers.providers.WebSocketProvider(rpc_url)
   const tk = ERC20Detailed__factory.connect(POOL, cl);
   //const blockEnd = 15346983;
   //const blockStart = blockEnd - 1000;
 
-  const weekNum = 7
+  const weekNum = 13
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     const blockStart = week.start
     const blockEnd = week.end
@@ -44,13 +44,15 @@ const main = async () => {
           undefined,
           undefined,
           undefined
-        )
+        ),
+        14836125,
       )
     ).map((x) => {
       if (!addrs.includes(x.args[1])) {
         addrs.push(x.args[1]);
       }
     });
+    console.log(addrs)
     console.log("LOOPING")
     //console.log(blockStart, blockEnd)
     let blocks = 0;
@@ -93,17 +95,17 @@ const main = async () => {
           );
           totalBalance = totalBalance.add(x.val);
         });
-        console.log(`block ${b} done, ${blockEnd - b} to go`, totalBal.div(1e9).div(1e9));
+          console.log(`block ${b} done, ${blockEnd - b} to go`, totalBal.div(1e9).div(1e9));
       }).catch((e)=>{
         console.log("error", e, "SKIPPING BLOCK", b)
       })
       proms.push(prm)
       if(proms.length > 1000) {
-        await Promise.all(proms)
+        await Promise.all(proms).catch(console.log)
         proms = []
       }
     }
-    await Promise.all(proms)
+    await Promise.all(proms).catch(console.log)
     proms = []
     const totals = Array.from(totalBalances.entries()).map(([k, v]) => {
       return {

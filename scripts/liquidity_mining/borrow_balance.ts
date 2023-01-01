@@ -12,16 +12,17 @@ import { BlockRounds } from "./q3_data";
 import { writeFileSync } from "fs";
 import { sleep } from "../proposals/suite/proposal";
 import { AlchemyWebSocketProvider } from "@ethersproject/providers";
+import { ethers } from "hardhat";
 dotenv.config();
 
 //const rpc_url = process.env.ALCHEMY_API
 
-const rpc_url = "lKYDN6KsCKFgktSpMnFiVyx6oxVEoyX3"
+const rpc_url = "https://brilliant.staging.gfx.town"
 const main = async () => {
 
 
-  const cl = new AlchemyWebSocketProvider(1, rpc_url);
-  // const cl = new ethers.providers.JsonRpcProvider(rpc_url)
+  //const cl = new AlchemyWebSocketProvider(1, rpc_url);
+   const cl = new ethers.providers.JsonRpcProvider(rpc_url)
 
   const vc = VaultController__factory.connect(
     "0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3",
@@ -85,7 +86,11 @@ const main = async () => {
   //console.log(minters)
 
   //console.log("BLOCKROUNDS: ", BlockRounds.blockRanges)
+<<<<<<< HEAD
   const weekNum = 0
+=======
+  const weekNum = 13
+>>>>>>> 64a9411da05ead1857823ab9806e525c7a226899
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     //weekNum = weekNum + 1
     const blockStart = week.start
