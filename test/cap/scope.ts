@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController } from "../../typechain-types";
+import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault } from "../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
@@ -12,6 +12,10 @@ export class TestScope extends MainnetAddresses {
     WETH!: IERC20;
     UNI!: IVOTE;
     WBTC!: IERC20;
+
+    MTA!: IERC20;
+    BalancerVault!: IBalancerVault;
+    
 
     ENS!: IVOTE;
     DYDX!: IVOTE;
@@ -119,6 +123,8 @@ export class TestScope extends MainnetAddresses {
     MaticCap = BN("50000000e18")
 
     USDC_AMOUNT = BN("1000e6")
+    MTA_AMOUNT = BN("25000e18")//~1k USD
+    WETH_AMOUNT = BN("1e18")
 
     Andy_USDC = BN("1e8")
     Bob_USDC = BN("1000e6")
