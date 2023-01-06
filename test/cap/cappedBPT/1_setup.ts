@@ -36,8 +36,12 @@ let aave_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let tribe_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
 
-const poolAddr = "0xe2469f47aB58cf9CF59F9822e3C5De4950a41C49" // 80/20 MTA/WETH balancer pool
-const poolID = "0xe2469f47ab58cf9cf59f9822e3c5de4950a41c49000200000000000000000089"
+const mtaPool = "0xe2469f47aB58cf9CF59F9822e3C5De4950a41C49" // 80/20 MTA/WETH balancer pool BPT token
+const primaryPool = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
+const mtaPoolID = "0xe2469f47ab58cf9cf59f9822e3c5de4950a41c49000200000000000000000089"
+const primaryPoolID = "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014"
+const primaryPoolBPTaddr = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
+const veBALaddr = "0xC128a9954e6c874eA3d62ce62B468bA073093F25"
 
 
 if (process.env.TENDERLY_KEY) {
@@ -103,6 +107,12 @@ describe("Token Setup", () => {
 
     })
 
+    /**
+     * steal BPT
+     */
+
+
+
     //join pool request
     type jpr = {
         assets: string[],
@@ -114,13 +124,16 @@ describe("Token Setup", () => {
     /**
      * BPT == LP tokens received for depositing into a pool
      * 
-     * GUAGES == Stake BPTs to earn BAL
+     * gauges  == Stake BPTs to earn BAL
      * Boost up to 2.5x based on veBAL balance     * 
      * 
      * veBAL - voting escrow BAL - https://docs.balancer.fi/ecosystem/vebal-and-gauges/vebal/how-vebal-works
      * obtain by locking BPT from BAL/WETH 
+     * lock BPT ==> receive veBAL - not transferrable 
+     * 0.00877 veBAL
      * locked for 1-52 weeks
-     * NOT TRANSFERABLE
+     * 
+     * veBAL == gauges?
      * 
      * AUROA
      * Lock the same BPT for auraBAL which is liquid
@@ -129,6 +142,36 @@ describe("Token Setup", () => {
      * is this the BPT we are going to support, or others too? 
      * 
      * 
+     * 
+     * PLAN
+     * send BPT to special vault
+     * there you can stake on gauges and earn BAL
+     * need to claim? 
+     * 
+     * 
+     * 
+     */
+
+
+    /**
+     * BPT plan 
+     * 
+     * deposit BPT or staked BPT receipt token
+     * these exchange 1:1 for eachother at any time, no lock
+     * 
+     * BPT functionality only needs a deposit/withdraw support function
+     * 1 parameter, how much, uses msg.sender
+     * 
+     * Can't support the 'primary' BPT 80/20 BAL/WETH 0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56
+     * because this one is only locked for some amount of time for veBAL
+     * veBAL can't be transferred nor swapped for the BPT if locked, so liquidations won't work
+     * I think
+     */
+
+    /**
+     * AURA PLAN
+     * 
+     * TODO
      */
     it("Aquire BPT", async () => {
 
@@ -141,7 +184,7 @@ describe("Token Setup", () => {
         }
 
         await s.BalancerVault.connect(s.Bob).joinPool(
-            poolID,
+            mtaPoolID,
             s.Bob.address,
             s.Bob.address,
             request
