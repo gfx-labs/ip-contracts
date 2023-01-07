@@ -86,11 +86,7 @@ const main = async () => {
   //console.log(minters)
 
   //console.log("BLOCKROUNDS: ", BlockRounds.blockRanges)
-<<<<<<< HEAD
-  const weekNum = 0
-=======
-  const weekNum = 13
->>>>>>> 64a9411da05ead1857823ab9806e525c7a226899
+  const weekNum = 1
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     //weekNum = weekNum + 1
     const blockStart = week.start

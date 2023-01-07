@@ -1,7 +1,8 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault } from "../../typechain-types";
+import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT } from "../../typechain-types";
+import { BPT_VaultController } from "../../typechain-types/lending/BPT_VaultController";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
@@ -71,6 +72,7 @@ export class TestScope extends MainnetAddresses {
     BobVault!: IVault
     BobVaultID!: BigNumber
     BobVotingVault!: VotingVault
+    BobBptVault!: VaultBPT
     CarolVotingVault!: VotingVault
     DeployerVotingVault!: VotingVault
     DeployerVaultID = 1
@@ -110,7 +112,8 @@ export class TestScope extends MainnetAddresses {
     STETH_CAP = BN("1000e18")
 
 
-    VotingVaultController!: VotingVaultController
+    VotingVaultController!: BPT_VaultController
+    VotingVaultController_V2!: BPT_VaultController
 
     IPT!: InterestProtocolTokenDelegate;
     cIPT!: CappedGovToken

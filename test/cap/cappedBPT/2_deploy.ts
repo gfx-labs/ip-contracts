@@ -42,6 +42,7 @@ import {
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
+import { BPT_VaultController__factory } from "../../../typechain-types/factories/lending/BPT_VaultController__factory";
 require("chai").should();
 describe("Check Interest Protocol contracts", () => {
   describe("Sanity check USDi deploy", () => {
@@ -64,197 +65,55 @@ describe("Check Interest Protocol contracts", () => {
       expect(await toNumber(interestFactor)).to.be.gt(1)
 
     });
+
+    it("Mint vault for Bob", async () => {
+      await expect(s.VaultController.connect(s.Bob).mintVault()).to.not
+        .reverted;
+      await mineBlock();
+      s.BobVaultID = await s.VaultController.vaultsMinted()
+      let vaultAddress = await s.VaultController.vaultAddress(s.BobVaultID)
+      s.BobVault = IVault__factory.connect(vaultAddress, s.Bob);
+      expect(await s.BobVault.minter()).to.eq(s.Bob.address);
+    })
   });
 });
 
-describe("Deploy cappedToken contract and infastructure", () => {
-  const cap = utils.parseEther("100000")//100K 
-  const owner = ethers.provider.getSigner(s.IP_OWNER)
+describe("Upgrade Voting Vault Controller", () => {
 
-  const ethAmount = BN("1e18")
-  let tx = {
-    to: owner._address,
-    value: ethAmount
-  }
-  before(async () => {
+  it("Deploy new implementation", async () => {
+    const bptControllerFactory = await ethers.getContractFactory("testUpgrade")
+    const implementation = await bptControllerFactory.deploy()
+    await mineBlock()
+    await implementation.deployed()
+
+    const tx = {
+      to: s.owner._address,
+      value: BN("1e18")
+    }
     await s.Frank.sendTransaction(tx)
     await mineBlock()
 
-  })
-  it("Deploy Voting Vault Controller", async () => {
+    showBody("Before: ", await s.VotingVaultController._vaultController())
 
-    s.VotingVaultController = await DeployContractWithProxy(
-      new VotingVaultController__factory(s.Frank),
-      s.Frank,
-      s.ProxyAdmin,
-      s.VaultController.address
-    )
+    //upgrade
+    await impersonateAccount(s.owner._address)
+    await s.ProxyAdmin.connect(s.owner).upgrade(s.VotingVaultController.address, implementation.address)
     await mineBlock()
-    await s.VotingVaultController.deployed()
-    await mineBlock()
-  })
-  it("Deploy cappedToken", async () => {
-    s.CappedAave = await DeployContractWithProxy(
-      new CappedGovToken__factory(s.Frank),
-      s.Frank,
-      s.ProxyAdmin,
-      "CappedAave",
-      "cAave",
-      s.aaveAddress,
-      s.VaultController.address,
-      s.VotingVaultController.address
-    )
-    await mineBlock()
-  })
+    await ceaseImpersonation(s.owner._address)
 
-  it("Deploy new oracle system for Aave", async () => {
+    showBody("After: ", await s.VotingVaultController._vaultController())
 
-    //UniV3 Relay
-    const uniV3AaveWETHfeed = "0x5aB53EE1d50eeF2C1DD3d5402789cd27bB52c1bB"
-    const UniRelay = await DeployContract(
-      new UniswapV3TokenOracleRelay__factory(s.Frank),
-      s.Frank,
-      60,
-      uniV3AaveWETHfeed,
-      false,//weth is not token0
-      BN("1"),
-      BN("1")
-    )
-    await mineBlock()
-
-    let result = await UniRelay.currentValue()
-    showBody("Result: ", await toNumber(result))
-
-    //Chainlink relay
-    const chainlinkAaveUSDfeed = "0x547a514d5e3769680ce22b2361c10ea13619e8a9"
-    const LinkAaveRelay = await DeployContract(
-      new ChainlinkOracleRelay__factory(s.Frank),
-      s.Frank,
-      chainlinkAaveUSDfeed,
-      BN("1e10"),
-      BN("1")
-    )
-    await mineBlock()
-    result = await LinkAaveRelay.currentValue()
-    //showBody("Result: ", await toNumber(result))
-
-    s.AnchoredViewAave = await DeployContract(
-      new AnchoredViewRelay__factory(s.Frank),
-      s.Frank,
-      UniRelay.address,
-      LinkAaveRelay.address,
-      BN("10"),
-      BN("100")
-    )
-    await mineBlock()
-    result = await s.AnchoredViewAave.currentValue()
-    expect(result).to.not.eq(0, "Oracle is returning a price")
-    //showBody("Result: ", await toNumber(result))
-  })
-
-
-
-  it("Register on oracle master", async () => {
-
-
-    //Register CappedAave against Aave oracle, so Aave price is fetched for cappedAave
-
-    await impersonateAccount(owner._address)
-    await s.Oracle.connect(owner).setRelay(s.CappedAave.address, s.AnchoredViewAave.address)
-    await mineBlock()
-    await ceaseImpersonation(owner._address)
-
-    let price = await s.Oracle.getLivePrice(s.CappedAave.address)
-    expect(price).to.not.eq(0, "Getting a price")
 
   })
 
-  it("Register Capped token on VaultController", async () => {
+  it("Mint a BPT vault", async () => {
+    //showBody(s.BobVaultID)
+    //await s.VotingVaultController.connect(s.Bob).mintBptVault(s.BobVaultID)
+    // await mineBlock()
 
-    await impersonateAccount(owner._address)
-
-    await s.VaultController.connect(owner).registerErc20(
-      s.CappedAave.address,
-      s.UNI_LTV,
-      s.CappedAave.address,
-      s.LiquidationIncentive
-    )
-    await mineBlock()
-
-    await ceaseImpersonation(owner._address)
+    //showBody(s.BobBptVault.address)
 
   })
 
-  it("Register Underlying on voting vault controller", async () => {
-
-    await s.VotingVaultController.connect(s.Frank).registerUnderlying(s.aaveAddress, s.CappedAave.address)
-    await mineBlock()
-
-    const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.aaveAddress)
-    const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedAave.address)
-
-    expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedAave.address.toUpperCase(), "Capped token registered correctly")
-    expect(_CappedToken_underlying.toUpperCase()).to.eq(s.AAVE.address.toUpperCase(), "Underlying token registered correctly")
-
-  })
-
-  it("Mint vault from vault controller", async () => {
-    //showBody("bob mint vault")
-    await expect(s.VaultController.connect(s.Bob).mintVault()).to.not
-      .reverted;
-    await mineBlock();
-    s.BobVaultID = await s.VaultController.vaultsMinted()
-    let vaultAddress = await s.VaultController.vaultAddress(s.BobVaultID)
-    s.BobVault = IVault__factory.connect(vaultAddress, s.Bob);
-    expect(await s.BobVault.minter()).to.eq(s.Bob.address);
-
-    //showBody("carol mint vault")
-    await expect(s.VaultController.connect(s.Carol).mintVault()).to.not
-      .reverted;
-    await mineBlock();
-    s.CaroLVaultID = await s.VaultController.vaultsMinted()
-    vaultAddress = await s.VaultController.vaultAddress(s.CaroLVaultID)
-    s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
-    expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
-  })
-
-  it("Mint voting vault", async () => {
-
-    let _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVaultID)
-    expect(_vaultId_votingVaultAddress).to.eq("0x0000000000000000000000000000000000000000", "Voting vault not yet minted")
-    
-    const result = await s.VotingVaultController.connect(s.Bob).mintVault(s.BobVaultID)
-    await mineBlock()
-
-    let vaultAddr = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVaultID)
-    s.BobVotingVault = VotingVault__factory.connect(vaultAddr, s.Bob)
-
-    expect(s.BobVotingVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Bob's voting vault setup complete")
-  })
-
-  it("Mint a voting vault for a vault that you don't own", async () => {
-    //Bob mints a vault using Carol's vault ID
-    await s.VotingVaultController.connect(s.Bob).mintVault(s.CaroLVaultID)
-    await mineBlock()
-
-    let vaultAddr = await s.VotingVaultController._vaultId_votingVaultAddress(s.CaroLVaultID)
-    s.CarolVotingVault = VotingVault__factory.connect(vaultAddr, s.Bob)
-
-    expect(s.CarolVotingVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Carol's voting vault setup complete")
-
-    let info = await s.CarolVotingVault._vaultInfo()
-    let vault = IVault__factory.connect(info.vault_address, s.Bob)
-    let minter = await vault.minter()
-    expect(minter.toUpperCase()).to.eq(s.Carol.address.toUpperCase())
-  })
-
-  it("Set Cap", async () => {
-    await s.CappedAave.connect(s.Frank).setCap(s.AaveCap)//100K USDC
-    await mineBlock()
-  })
-
-  it("Sanity check", async () => {
-    expect(await s.CappedAave.getCap()).to.eq(s.AaveCap)
-    expect(await (await s.CappedAave._underlying()).toUpperCase()).to.eq(s.AAVE.address.toUpperCase())
-  })
 })
+

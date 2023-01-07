@@ -30,7 +30,7 @@ const main = async () => {
   //const blockEnd = 15346983;
   //const blockStart = blockEnd - 1000;
 
-  const weekNum = 0
+  const weekNum = 1
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     const blockStart = week.start
     const blockEnd = week.end

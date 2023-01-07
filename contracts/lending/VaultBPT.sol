@@ -14,6 +14,8 @@ import "../_external/IERC20.sol";
 import "../_external/Context.sol";
 import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
+import "../_external/balancer/IGauge.sol";
+
 contract VaultBPT is Context {
   using SafeERC20Upgradeable for IERC20;
 
@@ -77,16 +79,30 @@ contract VaultBPT is Context {
     return _vaultInfo.id;
   }
 
-  /// @notice delegate the voting power of a comp-like erc20 token to another address
-  /// @param delegatee address that will receive the votes
-  /// @param token_address address of comp-like erc20 token
-  function delegateCompLikeTo(address delegatee, address token_address) external onlyMinter {
-    CompLike(token_address).delegate(delegatee);
+  /**
+    deposit/withdraw function - stake vs unstake 
+    claim rewards
+   */
+  function deposit(uint256 amount, IGauge gauge) external {
+    gauge.deposit(amount);
+  }
+
+  function withdraw(
+    uint256 amount,
+    IGauge gauge,
+    bool claim
+  ) external {
+    gauge.withdraw(amount, claim);
+  }
+
+  ///@notice claim rewards to external wallet (I think)
+  function claimRewards(address recipient, IGauge gauge) external {
+    gauge.claim_rewards(recipient, _msgSender());
   }
 
   /// @notice function used by the VaultController to transfer tokens
   /// callable by the VaultController only
-  /// not currently in use, available for future upgrades 
+  /// not currently in use, available for future upgrades
   /// @param _token token to transfer
   /// @param _to person to send the coins to
   /// @param _amount amount of coins to move

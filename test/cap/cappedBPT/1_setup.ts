@@ -7,8 +7,9 @@ import { s } from "../scope";
 import { d } from "../DeploymentInfo";
 
 import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
-import { IERC20, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, IBalancerVault__factory } from "../../../typechain-types";
+import { IERC20, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, IBalancerVault__factory, VotingVaultController__factory } from "../../../typechain-types";
 import { BigNumber, BytesLike } from "ethers";
+import { BPT_VaultController__factory } from "../../../typechain-types/factories/lending/BPT_VaultController__factory";
 //import { assert } from "console";
 
 require("chai").should();
@@ -42,6 +43,7 @@ const mtaPoolID = "0xe2469f47ab58cf9cf59f9822e3c5de4950a41c490002000000000000000
 const primaryPoolID = "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014"
 const primaryPoolBPTaddr = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
 const veBALaddr = "0xC128a9954e6c874eA3d62ce62B468bA073093F25"
+const stETHstableGauge = "0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE"
 
 
 if (process.env.TENDERLY_KEY) {
@@ -93,6 +95,9 @@ describe("Token Setup", () => {
 
         s.ProxyAdmin = ProxyAdmin__factory.connect(d.ProxyAdmin, s.Frank)
 
+        const vvc = "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2"
+        s.VotingVaultController = BPT_VaultController__factory.connect(vvc, s.Frank)
+
 
     })
     it("Should succesfully transfer money", async () => {
@@ -107,25 +112,23 @@ describe("Token Setup", () => {
 
     })
 
+
+
+
+
     /**
      * steal BPT
      */
 
 
 
-    //join pool request
-    type jpr = {
-        assets: string[],
-        maxAmountsIn: BigNumber[],
-        userData: BytesLike,
-        fromInternalBalance: boolean
-    }
+
 
     /**
      * BPT == LP tokens received for depositing into a pool
      * 
      * gauges  == Stake BPTs to earn BAL
-     * Boost up to 2.5x based on veBAL balance     * 
+     * Boost up to 2.5x based on veBAL balance     
      * 
      * veBAL - voting escrow BAL - https://docs.balancer.fi/ecosystem/vebal-and-gauges/vebal/how-vebal-works
      * obtain by locking BPT from BAL/WETH 
@@ -173,25 +176,5 @@ describe("Token Setup", () => {
      * 
      * TODO
      */
-    it("Aquire BPT", async () => {
-
-        //join pool on balancer vault
-        const request: jpr = {
-            assets: [s.MTA.address, s.WETH.address],
-            maxAmountsIn: [BN("0"), BN("1e17")],
-            userData: "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000003d805e19d2c6371f0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000038d7ea4c68000",
-            fromInternalBalance: false
-        }
-
-        await s.BalancerVault.connect(s.Bob).joinPool(
-            mtaPoolID,
-            s.Bob.address,
-            s.Bob.address,
-            request
-        )
-        await mineBlock()
-
-    })
-
 
 });
