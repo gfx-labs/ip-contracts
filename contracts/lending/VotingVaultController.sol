@@ -13,6 +13,8 @@ import "./VotingVault.sol";
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
 contract VotingVaultController is Initializable, OwnableUpgradeable {
+  //this is unused but needs to stay or the storage will be off by 8 bits for future upgrades
+  uint8 private _underlying_decimals;
   IVaultController public _vaultController;
 
   mapping(address => uint96) public _vaultAddress_vaultId;

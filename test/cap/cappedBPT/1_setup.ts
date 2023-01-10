@@ -28,13 +28,9 @@ require("chai").should();
 let usdc_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
 let mta_minter = "0xE93381fB4c4F14bDa253907b18faD305D799241a"//huboi
 
+const stETH_BPT_minter = "0x4d73EF089CD9B59405eb303e08B76a4e8da3a1C9"
 
-let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
-let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
-let dydx_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let ens_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let aave_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let tribe_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
+
 let weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
 
 const mtaPool = "0xe2469f47aB58cf9CF59F9822e3C5De4950a41C49" // 80/20 MTA/WETH balancer pool BPT token
@@ -43,6 +39,7 @@ const mtaPoolID = "0xe2469f47ab58cf9cf59f9822e3c5de4950a41c490002000000000000000
 const primaryPoolID = "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014"
 const primaryPoolBPTaddr = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
 const veBALaddr = "0xC128a9954e6c874eA3d62ce62B468bA073093F25"
+const stETH_BPT = "0x32296969Ef14EB0c6d29669C550D4a0449130230"
 const stETHstableGauge = "0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE"
 
 

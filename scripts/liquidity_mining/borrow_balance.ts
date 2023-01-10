@@ -17,7 +17,7 @@ dotenv.config();
 
 //const rpc_url = process.env.ALCHEMY_API
 
-const rpc_url = "https://brilliant.staging.gfx.town"
+const rpc_url = "https://mainnet.rpc.gfx.xyz/" //"https://brilliant.staging.gfx.town"
 const main = async () => {
 
 

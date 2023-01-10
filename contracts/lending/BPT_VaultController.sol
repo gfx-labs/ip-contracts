@@ -9,7 +9,7 @@ import "../_external/openzeppelin/Initializable.sol";
 import "./IVaultController.sol";
 import "./VotingVault.sol";
 
-//import "./VaultBPT.sol";
+import "./VaultBPT.sol";
 
 //import "hardhat/console.sol";
 
@@ -17,6 +17,8 @@ import "./VotingVault.sol";
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
 contract BPT_VaultController is Initializable, OwnableUpgradeable {
+  //this is unused but needs to stay or the storage will be off by 8 bits for future upgrades
+  uint8 private _underlying_decimals;
   IVaultController public _vaultController;
 
   mapping(address => uint96) public _vaultAddress_vaultId; //standard vault addr
@@ -26,10 +28,8 @@ contract BPT_VaultController is Initializable, OwnableUpgradeable {
   mapping(address => address) public _underlying_CappedToken;
   mapping(address => address) public _CappedToken_underlying;
 
-  /**
-    mapping(uint96 => address) public _vaultId_vaultBPTaddress;
+  mapping(uint96 => address) public _vaultId_vaultBPTaddress;
   mapping(address => uint96) public _vaultBPTaddress_vaultId;
-   */
 
   event NewVotingVault(address voting_vault_address, uint256 vaultId);
   event NewVaultBPT(address vault_bpt_address, uint256 vaultId);
@@ -90,21 +90,15 @@ contract BPT_VaultController is Initializable, OwnableUpgradeable {
     return _vaultId_votingVaultAddress[id];
   }
 
-  /**
-function mintBptVault(uint96 id) public returns (address) {
-    console.log("MIT BPT VAULT");
+  function mintBptVault(uint96 id) public returns (address) {
     if (_vaultId_vaultBPTaddress[id] == address(0)) {
-      console.log("getting adr");
-      console.log(address(_vaultController));
       //standard vault address
       address vault_address = _vaultController.vaultAddress(id);
-      console.log("got adr");
 
       //if a standard vault exists already
       if (vault_address != address(0)) {
         // mint the vault itself, deploying the contract
         address bpt_vault_address = address(new VaultBPT(id, vault_address, address(_vaultController), address(this)));
-        console.log("MINTED");
         // add the vault to our system
         _vaultId_vaultBPTaddress[id] = bpt_vault_address;
         _vaultAddress_vaultId[vault_address] = id;
@@ -115,7 +109,6 @@ function mintBptVault(uint96 id) public returns (address) {
     }
     return _vaultId_vaultBPTaddress[id];
   }
-   */
 
   function votingVaultId(address voting_vault_address) public view returns (uint96) {
     return _votingVaultAddress_vaultId[voting_vault_address];
@@ -129,13 +122,11 @@ function mintBptVault(uint96 id) public returns (address) {
     return _vaultId_votingVaultAddress[vault_id];
   }
 
-  /**
-   function BPTvaultId(address vault_bpt_address) public view returns (uint96) {
+  function BPTvaultId(address vault_bpt_address) public view returns (uint96) {
     return _vaultBPTaddress_vaultId[vault_bpt_address];
   }
 
   function BPTvaultAddress(uint96 vault_id) public view returns (address) {
     return _vaultId_vaultBPTaddress[vault_id];
   }
- */
 }

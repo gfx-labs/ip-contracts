@@ -37,7 +37,8 @@ import {
   VotingVault__factory,
   UniswapV3TokenOracleRelay__factory,
   CappedGovToken__factory,
-  VotingVaultController__factory
+  VotingVaultController__factory,
+  VaultBPT__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
@@ -78,10 +79,11 @@ describe("Check Interest Protocol contracts", () => {
   });
 });
 
+
 describe("Upgrade Voting Vault Controller", () => {
 
   it("Deploy new implementation", async () => {
-    const bptControllerFactory = await ethers.getContractFactory("testUpgrade")
+    const bptControllerFactory = await ethers.getContractFactory("BPT_VaultController")
     const implementation = await bptControllerFactory.deploy()
     await mineBlock()
     await implementation.deployed()
@@ -93,25 +95,43 @@ describe("Upgrade Voting Vault Controller", () => {
     await s.Frank.sendTransaction(tx)
     await mineBlock()
 
-    showBody("Before: ", await s.VotingVaultController._vaultController())
-
     //upgrade
     await impersonateAccount(s.owner._address)
     await s.ProxyAdmin.connect(s.owner).upgrade(s.VotingVaultController.address, implementation.address)
     await mineBlock()
     await ceaseImpersonation(s.owner._address)
 
-    showBody("After: ", await s.VotingVaultController._vaultController())
-
+    expect(await s.VotingVaultController._vaultController()).to.eq(s.VaultController.address, "Upgrade successful")
 
   })
 
   it("Mint a BPT vault", async () => {
-    //showBody(s.BobVaultID)
-    //await s.VotingVaultController.connect(s.Bob).mintBptVault(s.BobVaultID)
-    // await mineBlock()
+    await s.VotingVaultController.connect(s.Bob).mintBptVault(s.BobVaultID)
+    await mineBlock()
+    s.BobBptVault = VaultBPT__factory.connect(await s.VotingVaultController.BPTvaultAddress(s.BobVaultID), s.Bob)
 
-    //showBody(s.BobBptVault.address)
+    const info = await s.BobBptVault._vaultInfo()
+    expect(info.id).to.eq(s.BobVaultID, "ID is correct, vault minted successfully")
+  })
+
+})
+
+/**
+ * Steal BPTs 
+ * Deposit
+ * Register cap token on VC
+ * --ORACLE PROBLEM
+ * Check voting power
+ * Check deposit/withdraw staking functions
+ */
+
+describe("Deploy and fund capped bpt", async () => {
+
+  it("Deposit stETH/ETH BPT", async () => {
+
+  })
+
+  it("Check destinations", async () => {
 
   })
 
