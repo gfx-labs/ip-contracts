@@ -10,6 +10,7 @@ import "./IVaultController.sol";
 import "./VotingVault.sol";
 
 import "./VaultBPT.sol";
+import "./CappedBptToken.sol";
 
 //import "hardhat/console.sol";
 
@@ -54,11 +55,7 @@ contract BPT_VaultController is Initializable, OwnableUpgradeable {
   /// @param amount of underlying asset to retrieve by burning cap tokens
   /// @param voting_vault holding the underlying
   /// @param target to receive the underlying
-  function retrieveUnderlying(
-    uint256 amount,
-    address voting_vault,
-    address target
-  ) public {
+  function retrieveUnderlying(uint256 amount, address voting_vault, address target) public {
     require(voting_vault != address(0x0), "invalid vault");
 
     address underlying_address = _CappedToken_underlying[_msgSender()];
@@ -66,6 +63,28 @@ contract BPT_VaultController is Initializable, OwnableUpgradeable {
     require(underlying_address != address(0x0), "only capped token");
     VotingVault votingVault = VotingVault(voting_vault);
     votingVault.votingVaultControllerTransfer(underlying_address, target, amount);
+  }
+
+  function retrieveUnderlyingBPT(uint256 amount, address vaultBPT, address target) public {
+    require(vaultBPT != address(0x0), "invalid vault");
+
+    //get BPT addr
+    address underlying_address = _CappedToken_underlying[_msgSender()];
+    require(underlying_address != address(0x0), "only capped token");
+    
+    VaultBPT bptVault = VaultBPT(vaultBPT);
+
+    //check balances
+    uint256 amountHad = IERC20(underlying_address).balanceOf(vaultBPT);
+    if (amountHad < amount) {
+      //todo
+      //withdraw by burning gaugeTokens
+    //bptVault.withdraw(amount-amountHad, )
+
+
+    }
+
+    bptVault.votingVaultControllerTransfer(underlying_address, target, amount);
   }
 
   /// @notice create a new vault

@@ -5,7 +5,7 @@ import { showBody } from "../../../util/format";
 import { BN } from "../../../util/number";
 import { s } from "../scope";
 import { d } from "../DeploymentInfo";
-
+import { toNumber } from "../../../util/math"
 import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
 import { IERC20, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, IBalancerVault__factory, VotingVaultController__factory } from "../../../typechain-types";
 import { BigNumber, BytesLike } from "ethers";
@@ -29,6 +29,7 @@ let usdc_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
 let mta_minter = "0xE93381fB4c4F14bDa253907b18faD305D799241a"//huboi
 
 const stETH_BPT_minter = "0x4d73EF089CD9B59405eb303e08B76a4e8da3a1C9"
+const stETH_Gauge_minter = "0xe8343fd029561289CF7359175EE84DA121817C71"
 
 
 let weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
@@ -52,7 +53,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(16328604)).to.not.throw;//14940917
+        expect(await reset(16379074)).to.not.throw;//14940917
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -81,6 +82,9 @@ describe("Token Setup", () => {
         s.MTA = IERC20__factory.connect(mtaAddr, s.Frank)
         s.BalancerVault = IBalancerVault__factory.connect(balVaultAddr, s.Frank)
 
+        s.stETH_BPT = IERC20__factory.connect(stETH_BPT, s.Frank)
+        s.stETH_Gauge = IERC20__factory.connect(stETHstableGauge, s.Frank)
+
 
     });
 
@@ -106,6 +110,9 @@ describe("Token Setup", () => {
         await stealMoney(weth_minter, s.Bob.address, s.WETH.address, s.WETH_AMOUNT)
 
         await stealMoney(mta_minter, s.Bob.address, s.MTA.address, s.MTA_AMOUNT)
+
+        await stealMoney(stETH_BPT_minter, s.Bob.address, stETH_BPT, s.stETH_BPT_Amount)
+        await stealMoney(stETH_Gauge_minter, s.Bob.address, stETHstableGauge, s.stETH_Gauge_Amount)
 
     })
 

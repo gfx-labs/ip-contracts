@@ -20,7 +20,7 @@ dotenv.config();
 const rpc_url = "https://mainnet.rpc.gfx.xyz/" //"https://brilliant.staging.gfx.town"
 const main = async () => {
 
-
+//base liab * IF
   //const cl = new AlchemyWebSocketProvider(1, rpc_url);
   const cl = new ethers.providers.JsonRpcProvider(rpc_url)
 

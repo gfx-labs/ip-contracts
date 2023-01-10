@@ -19,6 +19,7 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   using SafeERC20Upgradeable for ERC20Upgradeable;
 
   ERC20Upgradeable public _underlying;
+  ERC20Upgradeable public _gaugeToken;
   IVaultController public _vaultController;
   BPT_VaultController public _votingVaultController;
 
@@ -35,12 +36,14 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     string memory name_,
     string memory symbol_,
     address underlying_,
+    address gaugeToken_,
     address vaultController_,
     address votingVaultController_
   ) public initializer {
     __Ownable_init();
     __ERC20_init(name_, symbol_);
     _underlying = ERC20Upgradeable(underlying_);
+    _gaugeToken = ERC20Upgradeable(gaugeToken_);
 
     _vaultController = IVaultController(vaultController_);
     _votingVaultController = BPT_VaultController(votingVaultController_);
@@ -67,9 +70,11 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   }
 
   /// @notice deposit _underlying to mint CappedToken
+  /// @notice gaugeToken is fungible 1:1 with underlying BPT
   /// @param amount of underlying to deposit
+  /// @param gaugeToken determines if deposit is a gaugeToken or underlying BPT
   /// @param vaultId recipient vault of tokens
-  function deposit(uint256 amount, uint96 vaultId) public {
+  function deposit(uint256 amount, bool gaugeToken, uint96 vaultId) public {
     require(amount > 0, "Cannot deposit 0");
     VaultBPT bptVault = VaultBPT(_votingVaultController.BPTvaultAddress(vaultId));
     require(address(bptVault) != address(0x0), "invalid voting vault");
@@ -82,10 +87,17 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     require(allowance >= amount, "Insufficient Allowance");
     // mint this token, the collateral token, to the vault
     ERC20Upgradeable._mint(address(vault), amount);
-    // send the actual underlying to the voting vault for the vault
-    _underlying.safeTransferFrom(_msgSender(), address(bptVault), amount);
+
+    if (gaugeToken) {
+      _gaugeToken.safeTransferFrom(_msgSender(), address(bptVault), amount);
+    } else {
+      // send the actual underlying to the voting vault for the vault
+      _underlying.safeTransferFrom(_msgSender(), address(bptVault), amount);
+    }
   }
 
+
+  //TODO convert any gaugeTokens in the BPT vault to underlying BPT, maybe do in retrieveUnderlying
   function transfer(address recipient, uint256 amount) public override returns (bool) {
     uint96 vault_id = _votingVaultController.vaultId(_msgSender());
     // only vaults will ever send this. only vaults will ever hold this token.
@@ -101,8 +113,8 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   }
 
   function transferFrom(
-    address, /*sender*/
-    address, /*recipient*/
+    address /*sender*/,
+    address /*recipient*/,
     uint256 /*amount*/
   ) public pure override returns (bool) {
     // allowances are never granted, as the VotingVault does not grant allowances.

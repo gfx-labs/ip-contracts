@@ -118,6 +118,9 @@ export class TestScope extends MainnetAddresses {
     CappedStethBpt!: CappedBptToken
 
     stETH_BPT!: IERC20
+    stETH_Gauge!: IERC20
+    stETH_BPT_Amount = BN("50e18")
+    stETH_Gauge_Amount = BN("500e18")
 
     IPT!: InterestProtocolTokenDelegate;
     cIPT!: CappedGovToken

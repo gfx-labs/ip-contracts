@@ -117,9 +117,11 @@ describe("Upgrade Voting Vault Controller", () => {
 })
 
 /**
- * Steal BPTs 
+ * Steal Gauges 
  * Deposit
  * Register cap token on VC
+ * Stake Gauges on aura? Can stake BPTs for BPT rewards as well as aura rewards
+ * Or just list staked Aura BPTs? 
  * --ORACLE PROBLEM
  * Check voting power
  * Check deposit/withdraw staking functions
