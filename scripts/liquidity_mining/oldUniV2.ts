@@ -20,17 +20,17 @@ dotenv.config();
 
 //const POLYGON_POOL = "0x203c05ACb6FC02F5fA31bd7bE371E7B213e59Ff7";
 const POOL = "0x63aac74200ba1737f81beeaeda64a539d9883922"
-const rpc_url = process.env.ALCHEMY_API
+const rpc_url = "https://mainnet.rpc.gfx.xyz/"//process.env.ALCHEMY_API
 
 const main = async () => {
 
-  const cl = new AlchemyWebSocketProvider(1, rpc_url);
+  const cl = new ethers.providers.WebSocketProvider(rpc_url)
   //const cl = new ethers.providers.JsonRpcProvider(rpc_url)
   const tk = ERC20Detailed__factory.connect(POOL, cl);
   //const blockEnd = 15346983;
   //const blockStart = blockEnd - 1000;
 
-  const weekNum = 1
+  const weekNum = 0
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     const blockStart = week.start
     const blockEnd = week.end
@@ -56,6 +56,8 @@ const main = async () => {
       }
     });
     console.log("LOOPING")
+    console.log("Got addrs: ", addrs.length)
+
     //console.log(blockStart, blockEnd)
     let blocks = 0;
     for (let b = (blockStart); b <= blockEnd; b++) {
@@ -121,14 +123,14 @@ const main = async () => {
       })
       .map((v) => {
         let extra = 1
-        
+
         return {
           minter: v.minter,
           amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
         };
       })
-    //console.log(treeJson)
-    writeFileSync(`rewardtree/lps_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
+    console.log(treeJson)
+    //writeFileSync(`rewardtree/lps_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
   };
 };
 

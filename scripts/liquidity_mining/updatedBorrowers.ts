@@ -111,49 +111,41 @@ const main = async () => {
       }
       let totalMinted = new Decimal(0);
 
-      //calculate total for all vaults each block? 
-      summaries.forEach((v) => {
-        let val = new Decimal(v.vaultLiability.toString());
-        totalMinted = totalMinted.add(val);
-      });
-      summaries.forEach((v, idx) => {
-        let minter = minters[idx];
-        let val = new Decimal(v.vaultLiability.toString());
-        if (!totalLiabilities.has(minter)) {
-          totalLiabilities.set(minter, new Decimal(0));
-        }
-        totalLiabilities.set(
-          minter,
-          totalLiabilities.get(minter)!.add(val.div(totalMinted))
-        );
-      });
+
+
+
+
+
+
       blocks = blocks + 1;
       console.log(`block ${b} done, ${blockEnd - b} to go`, totalMinted.div(1e9).div(1e9));
       //console.log(totalLiabilities)
     }//end main loop
 
-    //calc totals
-    const totals = Array.from(totalLiabilities.entries()).map(([k, v]) => {
-      return {
-        minter: k,
-        share: v.div(blocks),
-      };
-    });
-    let treeJson = totals
-      .filter((x) => {
-        return x.share.gt(0);
-      })
-      .map((v) => {
-        let extra = 1
-        return {
-          minter: v.minter,
-          amount: v.share.mul(BlockRounds.rewardForBorrower).mul(extra),
-        };
-      })
-    //console.log("done with block range", blockStart, blockEnd)
-    //console.log(treeJson)
-    //writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
-    console.log(JSON.stringify(treeJson))
+    /**
+      //calc totals
+     const totals = Array.from(totalLiabilities.entries()).map(([k, v]) => {
+       return {
+         minter: k,
+         share: v.div(blocks),
+       };
+     });
+     let treeJson = totals
+       .filter((x) => {
+         return x.share.gt(0);
+       })
+       .map((v) => {
+         let extra = 1
+         return {
+           minter: v.minter,
+           amount: v.share.mul(BlockRounds.rewardForBorrower).mul(extra),
+         };
+       })
+     //console.log("done with block range", blockStart, blockEnd)
+     //console.log(treeJson)
+     //writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
+     console.log(JSON.stringify(treeJson))
+     */
     break
   };
 
@@ -168,4 +160,16 @@ main().then(console.log);
 real    0m41.114s
 user    0m12.670s
 sys     0m1.588s 
+
+real    0m37.659s
+user    0m13.772s
+sys     0m1.677s
+
+real    0m37.773s
+user    0m12.270s
+sys     0m1.522s
+
+real    0m41.803s
+user    0m13.051s
+sys     0m1.500s
  */

@@ -125,8 +125,8 @@ const main = async () => {
         amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
       };
     })
-    //console.log(treeJson)
-    writeFileSync(`rewardtree/lps_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
+    console.log(treeJson)
+    //writeFileSync(`rewardtree/lps_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
   };
 };
 

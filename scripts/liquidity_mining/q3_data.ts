@@ -10,6 +10,11 @@ export const BlockRounds = {
   rewardForLM: 38461,
   rewardForBorrower: 76923,
   blockRanges: [
+    //test week
+    {
+      start: 16294658,
+      end: 16294688
+    },
     {
       start: 16244257,
       end: 16294657
