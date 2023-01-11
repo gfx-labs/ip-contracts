@@ -7,7 +7,8 @@ import {
 import { CallContext } from "ethereum-multicall/dist/esm/models";
 import { IVaultController__factory, Vault__factory } from "../../typechain-types";
 import Decimal from "decimal.js";
-import { BlockRounds } from "./q3_data";
+import { BlockRounds } from "./q2_data";
+
 import { utils, BigNumber } from "ethers";
 
 import { writeFileSync } from "fs";
@@ -34,7 +35,6 @@ const main = async () => {
 
   const mc = new Multicall({ ethersProvider: cl });
 
-  let blocks = 0;
   const addrCalls: CallContext[] = [];
   for (let i = 1; i <= vaultCount.toNumber(); i++) {
     addrCalls.push({
@@ -99,11 +99,17 @@ const main = async () => {
       usedBlocks.push(filtered[i].blockNumber)
     }
     usedBlocks.push(blockEnd)
-    console.log("usedBlocks: ", usedBlocks)
 
-    //console.log(`LOOPING from ${blockStart} to ${blockEnd}`)
+
+    //need more blocks to make the values more accurate, 100 random filler blocks
+    for (let j = 0; j < 100; j++) {
+      let R = (Math.floor(Math.random() * (blockEnd - blockStart))) + blockStart
+      if (!usedBlocks.includes(R)) {
+        usedBlocks.push(R)
+      }
+    }
+
     let blocks = 0;
-
     for (let b = 0; b <= usedBlocks.length; b++) {
       let summaries;
       try {
@@ -163,18 +169,8 @@ const main = async () => {
     //writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
 
   };
-
-  // all done
-}
+}// all done
 
 main()
 
 
-//used data has //28 minters
-
-//og for 30 blocks
-/**
-real    0m41.114s
-user    0m12.670s
-sys     0m1.588s 
- */
