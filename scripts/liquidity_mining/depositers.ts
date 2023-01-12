@@ -56,7 +56,7 @@ const main = async () => {
     cl
   );
 
-  const weekNum = 2
+  const weekNum = 0
   const week = BlockRounds.blockRanges[weekNum]
 
   const blockStart = week.start
@@ -198,7 +198,7 @@ const main = async () => {
 
       return {
         minter: v.minter,
-        amount: v.share.mul(BlockRounds.rewardForLM).mul(extra),
+        amount: v.share.mul(BlockRounds.rewardForLender).mul(extra),
       };
     })
   //console.log(treeJson)

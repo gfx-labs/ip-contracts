@@ -13,8 +13,8 @@ export const BlockRounds = {
   blockRanges: [
     //test week
     {
-      start: 16294658,
-      end: 16294688
+      start: 16384328,
+      end: 16386949
     },
     {
       start: 16244257,
