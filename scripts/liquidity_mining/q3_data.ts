@@ -7,9 +7,9 @@ interface RewardPeriod {
 }
 //range: 50,400
 export const BlockRounds = {
-  rewardForLender: 71223,
-  rewardForLM: 38461,
-  rewardForBorrower: 56979,//76923,
+  rewardForLender: 64102,
+  //rewardForLM: 38461,
+  rewardForBorrower: 51282,//76923,
   blockRanges: [
     //test week
     {

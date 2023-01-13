@@ -19,7 +19,7 @@ dotenv.config();
 
 //const rpc_url = process.env.ALCHEMY_API
 
-const rpc_url = "https://mainnet.rpc.gfx.xyz/" //"https://brilliant.staging.gfx.town"
+const rpc_url = "https://brilliant.staging.gfx.town" //"https://mainnet.rpc.gfx.xyz/"
 const main = async () => {
 
   //base liab * IF
@@ -98,16 +98,34 @@ const main = async () => {
     for (let i = 0; i < filtered.length; i++) {
       usedBlocks.push(filtered[i].blockNumber)
     }
-    usedBlocks.push(blockEnd)
 
 
     //need more blocks to make the values more accurate, 100 random filler blocks
-    for (let j = 0; j < 100; j++) {
+
+    for (let j = 0; j < 500; j++) {
       let R = (Math.floor(Math.random() * (blockEnd - blockStart))) + blockStart
       if (!usedBlocks.includes(R)) {
         usedBlocks.push(R)
       }
     }
+
+
+
+
+
+    /**
+     let auxBlocks = 0
+    for (let b = usedBlocks[usedBlocks.length - 1]; b <= blockEnd; b++) {
+      usedBlocks.push(b)
+      auxBlocks++
+    }
+    console.log("Added blocks: ", auxBlocks)
+    //include all blocks between last interest event and endBlock
+    console.log("END Block: ", usedBlocks[usedBlocks.length - 1])
+
+    usedBlocks.push(blockEnd)
+     */
+
 
     let blocks = 0;
     for (let b = 0; b <= usedBlocks.length; b++) {
@@ -164,11 +182,12 @@ const main = async () => {
         };
       })
     //console.log("done with block range", blockStart, blockEnd)
-    //console.log(treeJson)
+    console.log(treeJson)
     console.log(treeJson.length, " total minters")
-    writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
+    //writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
 
   };
+
 }// all done
 
 main()

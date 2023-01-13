@@ -1,1 +1,118 @@
-[{"minter":"0x958892b4a0512b28AaAC890FC938868BBD42f064","amount":"21.130725181429030143"},{"minter":"0x7Bd82d87F75dC36F47e3508b6F8e77cA63b16e75","amount":"80.559034261164182875"},{"minter":"0x060a24A6C7a493D2bc58dB7B03becE9e67d2bD53","amount":"0.0026983884281443325459"},{"minter":"0xC16414AC1fedfDAC4F8A09674D994e1BbB9d7113","amount":"0.0016584239565299471832"},{"minter":"0x478d49e4f016f96510C3Aa9428acecb44e7601D2","amount":"0.017696135935582060749"},{"minter":"0x432DcBdA06e8B296CA29705572D7cb6315Ed8Bed","amount":"2076.8960622719813702"},{"minter":"0x9AC6A6B24bCd789Fa59A175c0514f33255e1e6D0","amount":"0.0057666446188610025167"},{"minter":"0x0bBf7580e036eA5D69ABe679CC90117EeC2e3dc1","amount":"0.093686492724922707937"},{"minter":"0xd37Ca44e9C70BC155c0E7AB9C0CC4528f4734b96","amount":"26.745945272952837434"},{"minter":"0xBCbeAc56eeF250E8a4859be46c6cBFd93aAe5d2F","amount":"23409.960359681056404"},{"minter":"0x8F2831544eAdCC0E0410F50F4F5c8706818Be198","amount":"610.1932868581021828"},{"minter":"0xCB33844b365c53D3462271cEe9B719B6Fc8bA06A","amount":"2.7491330523986794143"},{"minter":"0x0988E41C02915Fe1beFA78c556f946E5F20ffBD3","amount":"2.2536534649153043121"},{"minter":"0xe49473c41b98ca7CB69EC79df4986590344397FC","amount":"133.64790117140868848"},{"minter":"0x91C6f1a3933d465D97236F54D73BE8e36405360C","amount":"133.55624904560329372"},{"minter":"0x8Ac5c1CbaFc564Fbd01Ee4b116DeA85e6A593aB4","amount":"1716.4355590508610249"},{"minter":"0x5853eD4f26A3fceA565b3FBC698bb19cdF6DEB85","amount":"0.53391394536051840263"},{"minter":"0x931433324E6B0b5B04E3460ef3fb3f78dda3c721","amount":"0.031411931132133452417"},{"minter":"0x1b7F54f1F77f2b3f58F2E3fc86833f783F05dEcB","amount":"199.75687400399057618"},{"minter":"0xb0a4E99371dfb0734F002ae274933b4888F618ef","amount":"36192.714099650104173"},{"minter":"0x12fB8a80A55aC4A42990C8F2F8df11f3a45E0aFd","amount":"166.10626085574161788"},{"minter":"0x31dB5F5F9CC510B55c56b595D565b8bbBD0421c2","amount":"207.16879271171801267"},{"minter":"0x4c47b2520E9f7E3da15dF09718d467f783b03858","amount":"2.6249115399908737567"},{"minter":"0xe4fb9ca52E39B83BE69E74E7Fac8f807A9c16eF9","amount":"2356.977084088029557"},{"minter":"0x696607447225f6690883e718fd0Db0Abaf36B6E2","amount":"13.11649041225690484"},{"minter":"0xc14F8d8B5c41937c47bC73ffa64f7Dc20576C92e","amount":"131.85713348264306951"},{"minter":"0x5fee8d7d02B0cfC08f0205ffd6d6B41877c86558","amount":"2850.2576116653930135"},{"minter":"0xF01603E1ce9916Ba7446b57b8fA975aE9f1C1143","amount":"421.52574340892772605"},{"minter":"0x637d610cf15146cCA5B06BEfAF394ed12ce02Caf","amount":"6166.0802569071637544"}]
+[
+    {
+        "minter": "0x958892b4a0512b28AaAC890FC938868BBD42f064",
+        "amount": "21.130725181429030143"
+    },
+    {
+        "minter": "0x7Bd82d87F75dC36F47e3508b6F8e77cA63b16e75",
+        "amount": "80.559034261164182875"
+    },
+    {
+        "minter": "0x060a24A6C7a493D2bc58dB7B03becE9e67d2bD53",
+        "amount": "0.0026983884281443325459"
+    },
+    {
+        "minter": "0xC16414AC1fedfDAC4F8A09674D994e1BbB9d7113",
+        "amount": "0.0016584239565299471832"
+    },
+    {
+        "minter": "0x478d49e4f016f96510C3Aa9428acecb44e7601D2",
+        "amount": "0.017696135935582060749"
+    },
+    {
+        "minter": "0x432DcBdA06e8B296CA29705572D7cb6315Ed8Bed",
+        "amount": "2076.8960622719813702"
+    },
+    {
+        "minter": "0x9AC6A6B24bCd789Fa59A175c0514f33255e1e6D0",
+        "amount": "0.0057666446188610025167"
+    },
+    {
+        "minter": "0x0bBf7580e036eA5D69ABe679CC90117EeC2e3dc1",
+        "amount": "0.093686492724922707937"
+    },
+    {
+        "minter": "0xd37Ca44e9C70BC155c0E7AB9C0CC4528f4734b96",
+        "amount": "26.745945272952837434"
+    },
+    {
+        "minter": "0xBCbeAc56eeF250E8a4859be46c6cBFd93aAe5d2F",
+        "amount": "23409.960359681056404"
+    },
+    {
+        "minter": "0x8F2831544eAdCC0E0410F50F4F5c8706818Be198",
+        "amount": "610.1932868581021828"
+    },
+    {
+        "minter": "0xCB33844b365c53D3462271cEe9B719B6Fc8bA06A",
+        "amount": "2.7491330523986794143"
+    },
+    {
+        "minter": "0x0988E41C02915Fe1beFA78c556f946E5F20ffBD3",
+        "amount": "2.2536534649153043121"
+    },
+    {
+        "minter": "0xe49473c41b98ca7CB69EC79df4986590344397FC",
+        "amount": "133.64790117140868848"
+    },
+    {
+        "minter": "0x91C6f1a3933d465D97236F54D73BE8e36405360C",
+        "amount": "133.55624904560329372"
+    },
+    {
+        "minter": "0x8Ac5c1CbaFc564Fbd01Ee4b116DeA85e6A593aB4",
+        "amount": "1716.4355590508610249"
+    },
+    {
+        "minter": "0x5853eD4f26A3fceA565b3FBC698bb19cdF6DEB85",
+        "amount": "0.53391394536051840263"
+    },
+    {
+        "minter": "0x931433324E6B0b5B04E3460ef3fb3f78dda3c721",
+        "amount": "0.031411931132133452417"
+    },
+    {
+        "minter": "0x1b7F54f1F77f2b3f58F2E3fc86833f783F05dEcB",
+        "amount": "199.75687400399057618"
+    },
+    {
+        "minter": "0xb0a4E99371dfb0734F002ae274933b4888F618ef",
+        "amount": "36192.714099650104173"
+    },
+    {
+        "minter": "0x12fB8a80A55aC4A42990C8F2F8df11f3a45E0aFd",
+        "amount": "166.10626085574161788"
+    },
+    {
+        "minter": "0x31dB5F5F9CC510B55c56b595D565b8bbBD0421c2",
+        "amount": "207.16879271171801267"
+    },
+    {
+        "minter": "0x4c47b2520E9f7E3da15dF09718d467f783b03858",
+        "amount": "2.6249115399908737567"
+    },
+    {
+        "minter": "0xe4fb9ca52E39B83BE69E74E7Fac8f807A9c16eF9",
+        "amount": "2356.977084088029557"
+    },
+    {
+        "minter": "0x696607447225f6690883e718fd0Db0Abaf36B6E2",
+        "amount": "13.11649041225690484"
+    },
+    {
+        "minter": "0xc14F8d8B5c41937c47bC73ffa64f7Dc20576C92e",
+        "amount": "131.85713348264306951"
+    },
+    {
+        "minter": "0x5fee8d7d02B0cfC08f0205ffd6d6B41877c86558",
+        "amount": "2850.2576116653930135"
+    },
+    {
+        "minter": "0xF01603E1ce9916Ba7446b57b8fA975aE9f1C1143",
+        "amount": "421.52574340892772605"
+    },
+    {
+        "minter": "0x637d610cf15146cCA5B06BEfAF394ed12ce02Caf",
+        "amount": "6166.0802569071637544"
+    }
+]
