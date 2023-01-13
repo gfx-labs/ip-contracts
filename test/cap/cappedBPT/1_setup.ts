@@ -7,7 +7,7 @@ import { s } from "../scope";
 import { d } from "../DeploymentInfo";
 import { toNumber } from "../../../util/math"
 import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
-import { IERC20, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, IBalancerVault__factory, VotingVaultController__factory } from "../../../typechain-types";
+import { IERC20, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, IBalancerVault__factory, VotingVaultController__factory, IGauge__factory } from "../../../typechain-types";
 import { BigNumber, BytesLike } from "ethers";
 import { BPT_VaultController__factory } from "../../../typechain-types/factories/lending/BPT_VaultController__factory";
 //import { assert } from "console";
@@ -41,7 +41,7 @@ const primaryPoolID = "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000
 const primaryPoolBPTaddr = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
 const veBALaddr = "0xC128a9954e6c874eA3d62ce62B468bA073093F25"
 const stETH_BPT = "0x32296969Ef14EB0c6d29669C550D4a0449130230"
-const stETHstableGauge = "0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE"
+const stETHstableGauge = "0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE" //B-stETH-STABLE-gauge
 
 
 if (process.env.TENDERLY_KEY) {
@@ -83,7 +83,7 @@ describe("Token Setup", () => {
         s.BalancerVault = IBalancerVault__factory.connect(balVaultAddr, s.Frank)
 
         s.stETH_BPT = IERC20__factory.connect(stETH_BPT, s.Frank)
-        s.stETH_Gauge = IERC20__factory.connect(stETHstableGauge, s.Frank)
+        s.stETH_Gauge = IGauge__factory.connect(stETHstableGauge, s.Frank)
 
 
     });
@@ -97,7 +97,7 @@ describe("Token Setup", () => {
         s.ProxyAdmin = ProxyAdmin__factory.connect(d.ProxyAdmin, s.Frank)
 
         const vvc = "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2"
-        s.VotingVaultController = BPT_VaultController__factory.connect(vvc, s.Frank)
+        s.VotingVaultController = VotingVaultController__factory.connect(vvc, s.Frank)
 
 
     })

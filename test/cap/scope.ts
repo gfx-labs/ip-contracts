@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken } from "../../typechain-types";
+import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken, IGauge } from "../../typechain-types";
 import { BPT_VaultController } from "../../typechain-types/lending/BPT_VaultController";
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
@@ -86,6 +86,9 @@ export class TestScope extends MainnetAddresses {
     IP_DEPLOYER = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
     DEPLOYER =  ethers.provider.getSigner(this.IP_DEPLOYER)
 
+    GovAddr = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
+    GOV = ethers.provider.getSigner(this.GovAddr)
+
 
 
     AMPL_ADDR = "0xD46bA6D942050d489DBd938a2C909A5d5039A161"
@@ -112,13 +115,14 @@ export class TestScope extends MainnetAddresses {
     STETH_CAP = BN("1000e18")
 
 
-    VotingVaultController!: BPT_VaultController
+    VotingVaultController!: VotingVaultController
     BPT_VaultController!: BPT_VaultController
 
     CappedStethBpt!: CappedBptToken
+    CappedGaugeCap = BN("200e18")
 
     stETH_BPT!: IERC20
-    stETH_Gauge!: IERC20
+    stETH_Gauge!: IGauge
     stETH_BPT_Amount = BN("50e18")
     stETH_Gauge_Amount = BN("500e18")
 

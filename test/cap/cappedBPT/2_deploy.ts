@@ -129,13 +129,74 @@ describe("Upgrade Voting Vault Controller", () => {
 
 describe("Deploy and fund capped bpt", async () => {
 
+  const depositAmount = BN("100e18")
+
+  it("Deploy capped gauge contract", async () => {
+    const factory = await ethers.getContractFactory("CappedBptToken")
+    s.CappedStethBpt = await factory.deploy()
+    await mineBlock()
+
+    await s.CappedStethBpt.initialize(
+      "Capped B-stETH-STABLE-gauge",
+      "cstETH_STABLE_GAUGE",
+      "0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE",//gauge
+      s.VaultController.address,
+      s.VotingVaultController.address
+    )
+    await mineBlock()
+
+    await s.CappedStethBpt.setCap(s.CappedGaugeCap)
+    await mineBlock()
+  })
+
+  it("Register gauge token", async () => {
+    await impersonateAccount(s.GOV._address)
+    await s.VotingVaultController.connect(s.GOV).registerUnderlying(s.stETH_Gauge.address, s.CappedStethBpt.address)
+    await mineBlock()
+    await ceaseImpersonation(s.GOV._address)
+  })
+
   it("Deposit stETH/ETH BPT", async () => {
 
+    await s.stETH_Gauge.connect(s.Bob).approve(s.CappedStethBpt.address, depositAmount)
+    await mineBlock()
+
+    await s.CappedStethBpt.connect(s.Bob).deposit(depositAmount, s.BobVaultID)
+    await mineBlock()
+
   })
 
+  /**
+   * BPT Vault should receive underlying, gauge token in this case
+   * Standard vault receives cap tokens
+   */
   it("Check destinations", async () => {
 
+    let balance = await s.CappedStethBpt.balanceOf(s.BobVault.address)
+    expect(balance).to.eq(depositAmount, "Cap tokens minted to standard vault")
+
+    balance = await s.stETH_Gauge.balanceOf(s.BobBptVault.address)
+    expect(balance).to.eq(depositAmount, "Underlying sent to BPT vault")
   })
 
+  it("Check withdraw", async () => {
+
+    const startBal = await s.stETH_Gauge.balanceOf(s.Bob.address)
+
+    await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedStethBpt.address, depositAmount)
+    await mineBlock()
+
+    let balance = await s.stETH_Gauge.balanceOf(s.Bob.address)
+    expect(balance.sub(startBal)).to.eq(depositAmount, "Received the correct amount in the withdraw")
+
+  })
+
+  it("Deposit again for future tests", async () => {
+    await s.stETH_Gauge.connect(s.Bob).approve(s.CappedStethBpt.address, depositAmount)
+    await mineBlock()
+
+    await s.CappedStethBpt.connect(s.Bob).deposit(depositAmount, s.BobVaultID)
+    await mineBlock()
+  })
 })
 
