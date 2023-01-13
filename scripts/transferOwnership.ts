@@ -14,8 +14,15 @@ import {
     USDI__factory,
     VaultController__factory
 } from "../typechain-types";
+import { TokenDelegatorStorage__factory } from "../typechain-types/factories/governance/token/TokenStorage.sol/TokenDelegatorStorage__factory";
+import { InterestProtocolToken__factory } from "../typechain-types/factories/governance/token/TokenDelegator.sol/InterestProtocolToken__factory";
+import { ceaseImpersonation, impersonateAccount } from "../util/impersonator";
+import { s } from "../test/mainnet/scope";
+import { reset } from "../util/block";
 
 const { ethers, network, upgrades } = require("hardhat");
+
+const IPTaddr = "0xd909C5862Cdb164aDB949D92622082f0092eFC3d"
 
 const pool = "0xDE31F8bFBD8c84b5360CFACCa3539B938dd78ae6"
 const omAddr = "0x90a972d9b53659150F1412E885E27fb7c2E49110"
@@ -36,50 +43,8 @@ Univ3 value:  294040003320381704797000000000000
 async function main() {
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
-    /**
-     
-    const oracle = new OracleMaster__factory(deployer).attach(omAddr)
-    console.log(`found OracleMaster at ${omAddr}`);
     
-    const livePrice = await oracle.getLivePrice(wbtc)
-    console.log("Live price: ", livePrice.toString())
-
-    const relay = await oracle._relays(wbtc)
-    console.log("Relays ", relay)
-
-    const wbtcRelay = new AnchoredViewRelay__factory(deployer).attach(relay)
-    console.log("wbtc relay: ", wbtcRelay.address)
-
-    //main addr - chain
-    const mainAddr = await wbtcRelay._mainAddress()
-
-    const chainlinkRelay = new ChainlinkOracleRelay__factory(deployer).attach(mainAddr)
-    console.log(`found chainlinkRelay at ${chainlinkRelay.address}`);
-    let currentValue = await chainlinkRelay.currentValue()
-    console.log("Chainlink value: ", currentValue.toString())
-    
-
-    //anchor addr - uni
-
-    const wbtcRelay = new AnchoredViewRelay__factory(deployer).attach("0x4FdC91D86743C5A47A2739a1Abb9F85e589589AB")
-
-    const anchor = await wbtcRelay._anchorRelay()
-
-    const uniV3Relay = new UniswapV3OracleRelay__factory(deployer).attach(anchor)
-    console.log("got uni relay: ", uniV3Relay.address)
-
-    const pool = await uniV3Relay._pool()
-    console.log("POOL: ", pool)
-    const backup = "0x847b64f9d3A95e977D157866447a5C0A5dFa0Ee5"
-
-
-
-
-
-
-    let currentValue = await uniV3Relay.currentValue()
-    console.log("Univ3 value: ", currentValue.toString())
- */
+    await reset(16399519)
 
     const CharlieDelegator = "0x3389d29e457345e4f22731292d9c10ddfc78088f"
 
@@ -88,8 +53,27 @@ async function main() {
     const ProxyAdmin = await new ProxyAdmin__factory(deployer).attach("0xafDBA0899A00ca07D36d019eF7649803b70a9c08")
     const Curve = await new CurveMaster__factory(deployer).attach("0x52b2De5e0b5A9B2aF71FF61F1ef2EFB89d2138Af")
 
+    const IPT = await new InterestProtocolToken__factory(deployer).attach(IPTaddr)
     console.log("Got contracts")
 
+    const owner = ethers.provider.getSigner("0x958892b4a0512b28AaAC890FC938868BBD42f064")
+
+    await impersonateAccount(owner._address)
+    const result = await IPT.connect(owner)._setOwner("0x266d1020A84B9E8B0ed320831838152075F8C4cA")    
+    const receipt = await result.wait()
+    await ceaseImpersonation(owner._address)
+
+    console.log("Owner set to: ", await IPT.owner())
+
+    
+
+
+
+
+
+
+
+    /**
     await VaultController.transferOwnership(CharlieDelegator)
     console.log("Transfered VC")
     
@@ -101,6 +85,7 @@ async function main() {
 
     await Curve.transferOwnership(CharlieDelegator)
     console.log("Transfered Curve")
+     */
 
 
 }
