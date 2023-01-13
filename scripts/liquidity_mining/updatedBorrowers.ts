@@ -7,7 +7,7 @@ import {
 import { CallContext } from "ethereum-multicall/dist/esm/models";
 import { IVaultController__factory, Vault__factory } from "../../typechain-types";
 import Decimal from "decimal.js";
-import { BlockRounds } from "./q2_data";
+import { BlockRounds } from "./q3_data";
 
 import { utils, BigNumber } from "ethers";
 
@@ -82,7 +82,7 @@ const main = async () => {
 
 
   //const weekNum = 1
-  const weekNum = 2
+  const weekNum = 3
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     //weekNum = weekNum + 1
     const blockStart = week.start
@@ -164,9 +164,9 @@ const main = async () => {
         };
       })
     //console.log("done with block range", blockStart, blockEnd)
-    console.log(treeJson)
+    //console.log(treeJson)
     console.log(treeJson.length, " total minters")
-    //writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
+    writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
 
   };
 }// all done
