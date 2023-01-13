@@ -102,7 +102,7 @@ const main = async () => {
 
     //need more blocks to make the values more accurate, 100 random filler blocks
 
-    for (let j = 0; j < 500; j++) {
+    for (let j = 0; j < 1000; j++) {
       let R = (Math.floor(Math.random() * (blockEnd - blockStart))) + blockStart
       if (!usedBlocks.includes(R)) {
         usedBlocks.push(R)
@@ -193,3 +193,4 @@ const main = async () => {
 main()
 
 
+//running the 500 random blocks for week 1 in q3 data, compare to pinned on right monitor 

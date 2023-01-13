@@ -6,10 +6,16 @@ interface RewardPeriod {
   blocks: number;
 }
 //range: 50,400
+
+/**
+ * Q3 phase 1 values
+ rewardForLM: 38461,
+  rewardForBorrower: 76923,
+ */
 export const BlockRounds = {
   rewardForLender: 64102,
   //rewardForLM: 38461,
-  rewardForBorrower: 51282,//76923,
+  rewardForBorrower: 76923, //51282,
   blockRanges: [
     //test week
     {
