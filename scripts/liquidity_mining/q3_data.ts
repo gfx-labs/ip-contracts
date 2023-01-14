@@ -15,7 +15,7 @@ interface RewardPeriod {
 export const BlockRounds = {
   rewardForLender: 64102,
   //rewardForLM: 38461,
-  rewardForBorrower: 76923, //51282,
+  rewardForBorrower: 51282, //51282,
   blockRanges: [
     //test week
     {

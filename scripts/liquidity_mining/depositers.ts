@@ -38,6 +38,7 @@ const USDI_ADDR = "0x2A54bA2964C8Cd459Dc568853F79813a60761B58"
 const main = async () => {
 
   const blacklist: string[] = [
+    "0x0000000000000000000000000000000000000000",
     "0x63594b2011a0f2616586bf3eef8096d42272f916", //curve pool
     "0x63aac74200ba1737f81beeaeda64a539d9883922", //uni pool
     "0x266d1020a84b9e8b0ed320831838152075f8c4ca", //gov
@@ -56,7 +57,7 @@ const main = async () => {
     cl
   );
 
-  const weekNum = 1
+  const weekNum = 3
   const week = BlockRounds.blockRanges[weekNum]
 
   const blockStart = week.start
@@ -117,7 +118,6 @@ const main = async () => {
   console.log("Blocks in the range that include a transfer or an Interest Event: ", usedBlocks.length)
 
   //add filler blocks to improve data accuracy 
-
   for (let j = 0; j < 500; j++) {
     let R = (Math.floor(Math.random() * (blockEnd - blockStart))) + blockStart
     if (!usedBlocks.includes(R)) {
@@ -201,8 +201,8 @@ const main = async () => {
         amount: v.share.mul(BlockRounds.rewardForLender).mul(extra),
       };
     })
-  console.log(treeJson)
-  //writeFileSync(`rewardtree/lenders_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
+  //console.log(treeJson)
+  writeFileSync(`rewardtree/lenders_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
 
   console.log("DONE")
   process.exit()

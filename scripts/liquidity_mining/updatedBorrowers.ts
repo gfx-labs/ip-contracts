@@ -19,10 +19,9 @@ dotenv.config();
 
 //const rpc_url = process.env.ALCHEMY_API
 
-const rpc_url = "https://brilliant.staging.gfx.town" //"https://mainnet.rpc.gfx.xyz/"
+const rpc_url = "https://mainnet.rpc.gfx.xyz/" //"https://brilliant.staging.gfx.town" //
 const main = async () => {
 
-  //base liab * IF
   //const cl = new AlchemyWebSocketProvider(1, rpc_url);
   const cl = new ethers.providers.JsonRpcProvider(rpc_url)
 
@@ -102,7 +101,7 @@ const main = async () => {
 
     //need more blocks to make the values more accurate, 100 random filler blocks
 
-    for (let j = 0; j < 1000; j++) {
+    for (let j = 0; j < 200; j++) {
       let R = (Math.floor(Math.random() * (blockEnd - blockStart))) + blockStart
       if (!usedBlocks.includes(R)) {
         usedBlocks.push(R)
@@ -123,9 +122,9 @@ const main = async () => {
     //include all blocks between last interest event and endBlock
     console.log("END Block: ", usedBlocks[usedBlocks.length - 1])
 
-    usedBlocks.push(blockEnd)
      */
 
+    usedBlocks.push(blockEnd)
 
     let blocks = 0;
     for (let b = 0; b <= usedBlocks.length; b++) {
@@ -146,6 +145,24 @@ const main = async () => {
         let val = new Decimal(v.vaultLiability.toString());
         totalMinted = totalMinted.add(val);
       });
+
+      /**
+       console.log("TotalMinted: ", totalMinted)
+
+      //base liab * IF
+
+      const base = await vc.totalBaseLiability({ blockTag: usedBlocks[b] })
+      const IF = await vc.interestFactor({ blockTag: usedBlocks[b] })
+
+      const calculatedTotal = new Decimal(base.mul(IF).toString())
+      console.log("Calculated: ", calculatedTotal) 
+       
+       */
+
+
+
+
+
       summaries.forEach((v, idx) => {
         let minter = minters[idx];
         let val = new Decimal(v.vaultLiability.toString());
@@ -182,9 +199,9 @@ const main = async () => {
         };
       })
     //console.log("done with block range", blockStart, blockEnd)
-    console.log(treeJson)
+    //console.log(treeJson)
     console.log(treeJson.length, " total minters")
-    //writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
+    writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
 
   };
 
