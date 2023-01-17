@@ -24,6 +24,7 @@ import { s } from "../test/mainnet/scope";
 import { reset } from "../util/block";
 import { deploy } from "@openzeppelin/hardhat-upgrades/dist/utils";
 import { read } from "fs";
+import { toNumber } from "../util/math";
 
 const { ethers, network, upgrades } = require("hardhat");
 
@@ -51,23 +52,18 @@ Univ3 value:  294040003320381704797000000000000
 
 const upgrade = async (deployer:SignerWithAddress, IPT:InterestProtocolToken) => {
 
-    console.log("UPGRADE")
-
     //deploy new implementation
     const factory = await ethers.getContractFactory("InterestProtocolTokenDelegate")
     const implementation = await factory.deploy()
-    console.log("implementaion deployed to: ", implementation.address)
+    console.log("Implementation deployed to: ", implementation.address)
 
     //upgrade
-    
-    let readOwner = await IPT.owner()
-    console.log("Owner: ", readOwner)
+    const result = await IPT.connect(deployer)._setImplementation(implementation.address)
+    const receipt = await result.wait()
 
-
-    await IPT.connect(deployer)._setImplementation(implementation.address)
-    
     //verify
-    console.log("Upgrade complete")
+    const readImpAddr = await IPT.implementation()
+    console.log("Implementation read fr IPT: ", readImpAddr)
 
 }
 
@@ -78,8 +74,7 @@ async function main() {
     
     //await reset(16428171)
 
-
-    console.log("Contract upgrade complete")
+    //await impersonateAccount(owner._address)
 
 
     const CharlieDelegator = "0x3389d29e457345e4f22731292d9c10ddfc78088f"
@@ -91,11 +86,15 @@ async function main() {
 
     const IPT = await new InterestProtocolToken__factory(deployer).attach(IPTaddr)
     console.log("Got contracts")
-    await upgrade(deployer, IPT)
 
+    await upgrade(deployer, IPT)
+    console.log("Contract upgrade complete")
 
     const result = await IPT.connect(deployer)._setOwner("0x266d1020A84B9E8B0ed320831838152075F8C4cA")    
     const receipt = await result.wait()
+    console.log("Transfered ownership")
+
+    //await ceaseImpersonation(owner._address)
 
     console.log("Owner is now ", await IPT.owner())
 
