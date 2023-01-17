@@ -202,5 +202,27 @@ describe("Deploy and fund capped bpt", async () => {
 
 describe("Check BPT vault functions", () => {
   
+
+  it("collect rewards", async () => {
+
+    await s.BobBptVault.connect(s.Bob).claimRewards(s.Bob.address, s.stETH_Gauge.address)
+
+  })
+
+  it("Aura functions", async () => {
+
+  })
+
+
 })
 
+
+/**
+ * oracle notes
+ * see tx https://etherscan.io/tx/0x2dd37029541174bd7c07a5cd9ac0c72bb04a45835f2c3841ce5d003c69c3a786
+ * input 0.01 eth ==>> 0.000428598049387651 BPT (Balancer stETH stable pool)
+ * 
+ * Meta stable pools have a twap for the BPT I think, this is the twap for 1 assset to the other in the pool
+ * to convert this to the BPT price, we need to call
+ * 
+ */

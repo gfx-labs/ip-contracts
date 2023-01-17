@@ -79,25 +79,10 @@ contract VaultBPT is Context {
     return _vaultInfo.id;
   }
 
-  /**
-    deposit/withdraw function - stake vs unstake 
-    claim rewards
-   */
-  function deposit(uint256 amount, IGauge gauge) external {
-    gauge.deposit(amount);
-  }
-
-  function withdraw(
-    uint256 amount,
-    IGauge gauge,
-    bool claim
-  ) external {
-    gauge.withdraw(amount, claim);
-  }
-
-  ///@notice claim rewards to external wallet (I think)
-  function claimRewards(address recipient, IGauge gauge) external {
-    gauge.claim_rewards(recipient, _msgSender());
+  ///@notice claim rewards to external wallet
+  ///todo TX: https://etherscan.io/tx/0x4d5950df8da6b93a435a9b9762a3e54745bc4e67adbfcab3ebf459beb9baaf52
+  function claimRewards(address recipient, IGauge gauge) external onlyMinter {
+    gauge.claim_rewards(recipient);
   }
 
   /// @notice function used by the VaultController to transfer tokens
