@@ -31,7 +31,7 @@ const upgrade = async (deployer: SignerWithAddress, IPT: InterestProtocolToken) 
     console.log("Implementation deployed to: ", implementation.address)
 
     //upgrade
-    const result = await IPT.connect(owner)._setImplementation(implementation.address)
+    const result = await IPT.connect(deployer)._setImplementation(implementation.address)
     const receipt = await result.wait()
 
     //verify
@@ -54,9 +54,9 @@ async function main() {
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
 
-    await reset(16428171)
+    //await reset(16428171)
 
-    await impersonateAccount(owner._address)
+    //await impersonateAccount(owner._address)
 
     const IPT = await new InterestProtocolToken__factory(deployer).attach(IPTaddr)
     console.log("Got contracts")
@@ -65,12 +65,12 @@ async function main() {
     console.log("Contract upgrade complete")
 
     if (confirmed) {
-        const result = await IPT.connect(owner)._setOwner("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
+        const result = await IPT.connect(deployer)._setOwner("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
         const receipt = await result.wait()
         console.log("Transfered ownership")
     }
 
-    await ceaseImpersonation(owner._address)
+    //await ceaseImpersonation(owner._address)
 
     console.log("Owner is now ", await IPT.owner())
 
@@ -89,6 +89,7 @@ main()
 Got contracts
 Implementation deployed to:  0xFCFE742e19790Dd67a627875ef8b45F17DB1DaC6
 Implementation read fr IPT:  0xFCFE742e19790Dd67a627875ef8b45F17DB1DaC6
+Implementation via receipt:  0xFCFE742e19790Dd67a627875ef8b45F17DB1DaC6
 success
 Contract upgrade complete
 Transfered ownership
