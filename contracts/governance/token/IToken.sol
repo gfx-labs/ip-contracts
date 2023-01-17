@@ -35,7 +35,7 @@ interface ITokenDelegate {
     uint256 rawAmount
   ) external returns (bool);
 
-  function mint(address dst, uint256 rawAmount) external;
+  //function mint(address dst, uint256 rawAmount) external;
 
   function permit(
     address owner,

@@ -17,9 +17,9 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
   bytes32 public constant PERMIT_TYPEHASH =
     keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
-  uint96 public constant UINT96_MAX = 2**96 - 1;
+  uint96 public constant UINT96_MAX = 2 ** 96 - 1;
 
-  uint256 public constant UINT256_MAX = 2**256 - 1;
+  uint256 public constant UINT256_MAX = 2 ** 256 - 1;
 
   /**
    * @notice Used to initialize the contract during delegator constructor
@@ -32,7 +32,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
 
     totalSupply = initialSupply_;
 
-    require(initialSupply_ < 2**96, "initialSupply_ overflow uint96");
+    require(initialSupply_ < 2 ** 96, "initialSupply_ overflow uint96");
 
     balances[account_] = uint96(totalSupply);
     emit Transfer(address(0), account_, totalSupply);
@@ -167,11 +167,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
    * @param rawAmount The number of tokens to transfer
    * @return Whether or not the transfer succeeded
    */
-  function transferFrom(
-    address src,
-    address dst,
-    uint256 rawAmount
-  ) external override returns (bool) {
+  function transferFrom(address src, address dst, uint256 rawAmount) external override returns (bool) {
     address spender = msg.sender;
     uint96 spenderAllowance = allowances[src][spender];
     uint96 amount = safe96(rawAmount, "transferFrom: amount exceeds 96 bits");
@@ -192,7 +188,9 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
    * @param dst The address of the destination account
    * @param rawAmount The number of tokens to be minted
    */
-  function mint(address dst, uint256 rawAmount) external override onlyOwner {
+  /**
+   * Removed mint for compliance
+   function mint(address dst, uint256 rawAmount) external override onlyOwner {
     require(dst != address(0), "mint: cant transfer to 0 address");
     uint96 amount = safe96(rawAmount, "mint: amount exceeds 96 bits");
     totalSupply = safe96(totalSupply + amount, "mint: totalSupply exceeds 96 bits");
@@ -204,6 +202,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
     // move delegates
     _moveDelegates(address(0), delegates[dst], amount);
   }
+   */
 
   /**
    * @notice Delegate votes from `msg.sender` to `delegatee`
@@ -308,15 +307,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
     uint256 blk,
     uint32 lower,
     uint32 upper
-  )
-    internal
-    pure
-    returns (
-      bool ok,
-      uint32 newLower,
-      uint32 newUpper
-    )
-  {
+  ) internal pure returns (bool ok, uint32 newLower, uint32 newUpper) {
     uint32 center = upper - (upper - lower) / 2; // ceil, avoiding overflow
     if (from == blk) {
       return (true, 0, 0);
@@ -337,11 +328,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
     _moveDelegates(currentDelegate, delegatee, delegatorBalance);
   }
 
-  function _transferTokens(
-    address src,
-    address dst,
-    uint96 amount
-  ) internal {
+  function _transferTokens(address src, address dst, uint96 amount) internal {
     require(src != address(0), "_transferTokens: cant 0addr");
     require(dst != address(0), "_transferTokens: cant 0addr");
 
@@ -352,11 +339,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
     _moveDelegates(delegates[src], delegates[dst], amount);
   }
 
-  function _moveDelegates(
-    address srcRep,
-    address dstRep,
-    uint96 amount
-  ) internal {
+  function _moveDelegates(address srcRep, address dstRep, uint96 amount) internal {
     if (srcRep != dstRep && amount > 0) {
       if (srcRep != address(0)) {
         uint32 srcRepNum = numCheckpoints[srcRep];
@@ -374,12 +357,7 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
     }
   }
 
-  function _writeCheckpoint(
-    address delegatee,
-    uint32 nCheckpoints,
-    uint96 oldVotes,
-    uint96 newVotes
-  ) internal {
+  function _writeCheckpoint(address delegatee, uint32 nCheckpoints, uint96 oldVotes, uint96 newVotes) internal {
     uint32 blockNumber = safe32(block.number, "_writeCheckpoint: blocknum exceeds 32 bits");
 
     if (nCheckpoints > 0 && checkpoints[delegatee][nCheckpoints - 1].fromBlock == blockNumber) {
@@ -393,30 +371,22 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
   }
 
   function safe32(uint256 n, string memory errorMessage) internal pure returns (uint32) {
-    require(n < 2**32, errorMessage);
+    require(n < 2 ** 32, errorMessage);
     return uint32(n);
   }
 
   function safe96(uint256 n, string memory errorMessage) internal pure returns (uint96) {
-    require(n < 2**96, errorMessage);
+    require(n < 2 ** 96, errorMessage);
     return uint96(n);
   }
 
-  function add96(
-    uint96 a,
-    uint96 b,
-    string memory errorMessage
-  ) internal pure returns (uint96) {
+  function add96(uint96 a, uint96 b, string memory errorMessage) internal pure returns (uint96) {
     uint96 c = a + b;
     require(c >= a, errorMessage);
     return c;
   }
 
-  function sub96(
-    uint96 a,
-    uint96 b,
-    string memory errorMessage
-  ) internal pure returns (uint96) {
+  function sub96(uint96 a, uint96 b, string memory errorMessage) internal pure returns (uint96) {
     require(b <= a, errorMessage);
     return a - b;
   }
