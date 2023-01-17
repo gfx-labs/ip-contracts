@@ -50,7 +50,7 @@ Univ3 value:  294040003320381704797000000000000
 
 
 
-const upgrade = async (deployer:SignerWithAddress, IPT:InterestProtocolToken) => {
+const upgrade = async (deployer: SignerWithAddress, IPT: InterestProtocolToken) => {
 
     //deploy new implementation
     const factory = await ethers.getContractFactory("InterestProtocolTokenDelegate")
@@ -65,13 +65,15 @@ const upgrade = async (deployer:SignerWithAddress, IPT:InterestProtocolToken) =>
     const readImpAddr = await IPT.implementation()
     console.log("Implementation read fr IPT: ", readImpAddr)
 
+    return (receipt.confirmations > 0)
+
 }
 
 
 async function main() {
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
-    
+
     //await reset(16428171)
 
     //await impersonateAccount(owner._address)
@@ -87,12 +89,16 @@ async function main() {
     const IPT = await new InterestProtocolToken__factory(deployer).attach(IPTaddr)
     console.log("Got contracts")
 
-    await upgrade(deployer, IPT)
+    const confirmed = await upgrade(deployer, IPT)
     console.log("Contract upgrade complete")
 
-    const result = await IPT.connect(deployer)._setOwner("0x266d1020A84B9E8B0ed320831838152075F8C4cA")    
-    const receipt = await result.wait()
-    console.log("Transfered ownership")
+    if (confirmed) {
+        const result = await IPT.connect(deployer)._setOwner("0x266d1020A84B9E8B0ed320831838152075F8C4cA")
+        const receipt = await result.wait()
+        console.log("Transfered ownership")
+    }
+
+
 
     //await ceaseImpersonation(owner._address)
 
