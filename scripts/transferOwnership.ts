@@ -2,7 +2,7 @@ import { getContractFactory } from "@nomiclabs/hardhat-ethers/types";
 import { BN } from "../util/number";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
-    InterestProtocolToken
+    InterestProtocolToken, InterestProtocolTokenDelegate__factory
 } from "../typechain-types";
 import { TokenDelegatorStorage__factory } from "../typechain-types/factories/governance/token/TokenStorage.sol/TokenDelegatorStorage__factory";
 import { InterestProtocolToken__factory } from "../typechain-types/factories/governance/token/TokenDelegator.sol/InterestProtocolToken__factory";
@@ -21,6 +21,10 @@ const owner = ethers.provider.getSigner("0x958892b4a0512b28AaAC890FC938868BBD42f
 
 const upgrade = async (deployer: SignerWithAddress, IPT: InterestProtocolToken) => {
 
+    //get delegate addr
+    const ipt = await new InterestProtocolTokenDelegate__factory(deployer).attach(IPTaddr)
+    const preUpgradeBalance = await toNumber(await ipt.balanceOf(owner._address))
+
     //deploy new implementation
     const factory = await ethers.getContractFactory("InterestProtocolTokenDelegate")
     const implementation = await factory.deploy()
@@ -34,6 +38,12 @@ const upgrade = async (deployer: SignerWithAddress, IPT: InterestProtocolToken) 
     const readImpAddr = await IPT.implementation()
     console.log("Implementation read fr IPT: ", readImpAddr)
 
+    const postUpgradeBalance = await toNumber(await ipt.balanceOf(owner._address))
+    if (postUpgradeBalance != preUpgradeBalance) {
+        return false
+    }
+
+    console.log("success")
     return (receipt.confirmations > 0)
 
 }
@@ -71,3 +81,15 @@ main()
         console.error(error);
         process.exit(1);
     });
+
+
+/**
+ * OUTPUT
+Got contracts
+Implementation deployed to:  0xFCFE742e19790Dd67a627875ef8b45F17DB1DaC6
+Implementation read fr IPT:  0xFCFE742e19790Dd67a627875ef8b45F17DB1DaC6
+success
+Contract upgrade complete
+Transfered ownership
+Owner is now  0x266d1020A84B9E8B0ed320831838152075F8C4cA
+ */
