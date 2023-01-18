@@ -47,7 +47,6 @@ describe("Verify Contracts", () => {
     expect(await s.USDI.decimals()).to.equal(18);
     //expect(await s.USDI.owner()).to.equal(s.Frank.address);
     //s.owner = await s.USDI.owner()
-    s.pauser = await s.USDI.pauser()
   });
 
 
@@ -84,6 +83,8 @@ describe("Setup, Queue, and Execute proposal", () => {
 
   it("Set the implementation", async () => {
     const IPT = await new InterestProtocolToken__factory(s.Frank).attach(s.IPT_Addr)
+    const ipt = await new InterestProtocolTokenDelegate__factory(s.Frank).attach(s.IPT_Addr)
+    const preBal = await toNumber(await ipt.balanceOf(s.owner._address))
 
     await impersonateAccount(s.owner._address)
     const result = await IPT.connect(s.owner)._setImplementation(s.impAddr)
@@ -92,14 +93,24 @@ describe("Setup, Queue, and Execute proposal", () => {
     await mineBlock()
     await ceaseImpersonation(s.owner._address)
     const readImpAddr = await IPT.implementation()
-    console.log("Implementation read fr IPT: ", readImpAddr)
-    console.log("Implementation via receipt: ", receipt.events![0].args!.newImplementation)
+    //console.log("Implementation read fr IPT: ", readImpAddr)
+    //console.log("Implementation via receipt: ", receipt.events![0].args!.newImplementation)
 
-    const ipt = await new InterestProtocolTokenDelegate__factory(s.Frank).attach(s.IPT_Addr)
+    expect(s.impAddr).to.eq(readImpAddr).to.eq(receipt.events![0].args!.newImplementation, "All agree on new implementation address")
+
+
 
     const postUpgradeBalance = await toNumber(await ipt.balanceOf(s.owner._address))
-    console.log("BAL: ", postUpgradeBalance)
 
+    expect(postUpgradeBalance).to.eq(preBal, "Balance is correct after upgrade")
+
+  })
+
+  it("Check voting power", async () => {
+    const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
+    const block = await currentBlock()
+    const votes = await s.IPT.getPriorVotes(proposer, block.number - 2)
+    expect(await toNumber(votes)).to.eq(45000000, "voting power is good")
   })
 
 })
