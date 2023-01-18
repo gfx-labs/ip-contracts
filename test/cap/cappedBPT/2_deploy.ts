@@ -201,7 +201,7 @@ describe("Deploy and fund capped bpt", async () => {
 })
 
 describe("Check BPT vault functions", () => {
-  
+
 
   it("collect rewards", async () => {
 
@@ -216,11 +216,82 @@ describe("Check BPT vault functions", () => {
 
 })
 
+describe("Oracle things", () => {
+
+  let oracle:IOracleRelay
+
+  it("Deploy oracle", async () => {
+
+    const factory = await ethers.getContractFactory("BPT_TWAP_Oracle")
+
+    oracle = await factory.deploy(
+      14400,
+      "0x32296969Ef14EB0c6d29669C550D4a0449130230",
+      "0x72D07D7DcA67b8A406aD1Ec34ce969c90bFEE768",
+      1,
+      1
+    )
+    await mineBlock()
+    await oracle.deployed()
+
+    const result = await oracle.currentValue()
+    showBodyCyan("RESULT: ", await toNumber(result))
+
+  })
+
+
+
+
+  /**
+   * calculate from invariant
+   * we need the underlying price of token 1
+   * and the price of token 1 in terms of token 2 - TWAP ? 
+   * 
+   *  _ 
+   * | | symbol is prod - product
+   */
+
+  it("oracle math", async () => {
+    const amp = BN("50000")
+
+    const invariant = BN("116541847842842509280324").mul(amp)
+    const totalSupply = BN("113210279768128923680919")
+
+    showBody("Result: ", invariant.div(totalSupply))
+    showBody("Format: ", await toNumber(invariant.div(totalSupply)))
+    showBody("New format: ", await toNumber(invariant) / await toNumber(totalSupply))
+
+  })
+
+})
+
+
+
 
 /**
  * oracle notes
  * see tx https://etherscan.io/tx/0x2dd37029541174bd7c07a5cd9ac0c72bb04a45835f2c3841ce5d003c69c3a786
  * input 0.01 eth ==>> 0.000428598049387651 BPT (Balancer stETH stable pool)
+ * 
+ * https://etherscan.io/tx/0x8f323620a727394f86d3762b1a726257ea0fa0aadbaaef55bda0c7adf2a0b643
+ * stake 1:1 for gauge tokens
+ * 
+ * https://etherscan.io/tx/0x96ef901dc91ed2576516f29c74d7bdd94a9d675a6f5dc603e7dce6370d3723a7
+ * unstake - 1:1 gauge => bpt
+ * 
+ * EXIT POOL - function on balancer vault? 
+ * 
+ * https://etherscan.io/tx/0xf17c8409773211c02398ccdca3fca94d184940500c4a3d612c72f94d6f0d66d1
+ * withdraw both pool tokens
+ * burn 0.004841415705915759 BPT for:
+ * 0.002518751088880166 wstETH
+ * 0.00219997391912264 wETH
+ * 
+ * https://etherscan.io/tx/0x76f4ae2bdc238c8aa270edb071062f4bf068d985759cf66d60687ac1d1291844
+ * withdraw eth only
+ * burn 0.004939222083813048 BPT for:
+ * 0.005070746914439014 eth (~7.98 USD) 7.98 / 0.0050707... == 1573.7326585951272779952791570015 - accurate price for this block
+ * so BPT price should be 7.98 / 0.00593922... == 1,615.639062184287 USD
  * 
  * Meta stable pools have a twap for the BPT I think, this is the twap for 1 assset to the other in the pool
  * to convert this to the BPT price, we need to call
