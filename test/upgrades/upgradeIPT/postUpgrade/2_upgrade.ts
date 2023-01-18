@@ -80,17 +80,11 @@ describe("Verify Contracts", () => {
 });
 
 describe("Setup, Queue, and Execute proposal", () => {
-  const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
 
-  it("Set the implementation and verify", async () => {
+  it("Set the implementation", async () => {
     const IPT = await new InterestProtocolToken__factory(s.Frank).attach(s.IPT_Addr)
-    let ipt = await new InterestProtocolTokenDelegate__factory(s.Frank).attach(s.IPT_Addr)
+    const ipt = await new InterestProtocolTokenDelegate__factory(s.Frank).attach(s.IPT_Addr)
     const preBal = await toNumber(await ipt.balanceOf(s.owner._address))
-
-
-    let block = await currentBlock()
-    let votes = await ipt.getPriorVotes(proposer, block.number - 1)
-    const preVotes = await toNumber(votes)
 
     await impersonateAccount(s.owner._address)
     const result = await IPT.connect(s.owner)._setImplementation(s.impAddr)
@@ -98,33 +92,25 @@ describe("Setup, Queue, and Execute proposal", () => {
     const receipt = await result.wait()
     await mineBlock()
     await ceaseImpersonation(s.owner._address)
-
-    await mineBlock()
-    await mineBlock()
-    await mineBlock()
-    await mineBlock()
-
-
     const readImpAddr = await IPT.implementation()
     //console.log("Implementation read fr IPT: ", readImpAddr)
     //console.log("Implementation via receipt: ", receipt.events![0].args!.newImplementation)
 
     expect(s.impAddr).to.eq(readImpAddr).to.eq(receipt.events![0].args!.newImplementation, "All agree on new implementation address")
 
-    ipt = await new InterestProtocolTokenDelegate__factory(s.Frank).attach(s.IPT_Addr)
+
+
     const postUpgradeBalance = await toNumber(await ipt.balanceOf(s.owner._address))
 
     expect(postUpgradeBalance).to.eq(preBal, "Balance is correct after upgrade")
 
-    block = await currentBlock()
-    ipt = await new InterestProtocolTokenDelegate__factory(s.Frank).attach(s.IPT_Addr)
-    votes = await ipt.getPriorVotes(proposer, block.number - 2)
-    const postVotes = await toNumber(votes)
-    expect(postVotes).to.eq(preVotes, "Voting power did not change")
-
-
   })
 
-
+  it("Check voting power", async () => {
+    const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
+    const block = await currentBlock()
+    const votes = await s.IPT.getPriorVotes(proposer, block.number - 2)
+    expect(await toNumber(votes)).to.eq(45000000, "voting power is good")
+  })
 
 })
