@@ -53,7 +53,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(16430059)).to.not.throw;
+        expect(await reset(16436256)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -61,7 +61,7 @@ describe("hardhat settings", () => {
     });
 });
 
-describe("Initial Setup - Upgrade IPT", () => {
+describe("Initial Setup - Post Upgrade IPT", () => {
     it("connect to signers", async () => {
         s.accounts = await ethers.getSigners();
         s.Frank = s.accounts[0];

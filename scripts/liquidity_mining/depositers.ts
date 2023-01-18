@@ -44,6 +44,7 @@ const main = async () => {
     "0x266d1020a84b9e8b0ed320831838152075f8c4ca", //gov
     "0x9008d19f58aabd9ed0d60971565aa8510560ab41", //cow
     "0x818e9ae6b8355b17e3a221351e67b6f2cf803ce0", //yearn strat
+    "0xa6e8772af29b29B9202a073f8E36f447689BEef6"
   ]
 
   const cl = new ethers.providers.WebSocketProvider(rpc_url)

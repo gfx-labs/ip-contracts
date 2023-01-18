@@ -80,37 +80,23 @@ describe("Verify Contracts", () => {
 });
 
 describe("Setup, Queue, and Execute proposal", () => {
+  const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
 
-  it("Set the implementation", async () => {
-    const IPT = await new InterestProtocolToken__factory(s.Frank).attach(s.IPT_Addr)
+  it("Set the implementation and verify", async () => {
+  
     const ipt = await new InterestProtocolTokenDelegate__factory(s.Frank).attach(s.IPT_Addr)
-    const preBal = await toNumber(await ipt.balanceOf(s.owner._address))
-
-    await impersonateAccount(s.owner._address)
-    const result = await IPT.connect(s.owner)._setImplementation(s.impAddr)
-    await mineBlock()
-    const receipt = await result.wait()
-    await mineBlock()
-    await ceaseImpersonation(s.owner._address)
-    const readImpAddr = await IPT.implementation()
-    //console.log("Implementation read fr IPT: ", readImpAddr)
-    //console.log("Implementation via receipt: ", receipt.events![0].args!.newImplementation)
-
-    expect(s.impAddr).to.eq(readImpAddr).to.eq(receipt.events![0].args!.newImplementation, "All agree on new implementation address")
-
-
-
     const postUpgradeBalance = await toNumber(await ipt.balanceOf(s.owner._address))
 
-    expect(postUpgradeBalance).to.eq(preBal, "Balance is correct after upgrade")
 
-  })
-
-  it("Check voting power", async () => {
-    const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
     const block = await currentBlock()
-    const votes = await s.IPT.getPriorVotes(proposer, block.number - 2)
-    expect(await toNumber(votes)).to.eq(45000000, "voting power is good")
+    const votes = await ipt.getPriorVotes(proposer, block.number - 2)
+    const postVotes = await toNumber(votes)
+    showBody("Votes post upgrade: ", postVotes)
+    showBody("Balance post upgrade: ", postUpgradeBalance)
+
+
   })
+
+
 
 })

@@ -219,8 +219,25 @@ describe("Check BPT vault functions", () => {
 describe("Oracle things", () => {
 
   let oracle:IOracleRelay
+  let invariantOracle:IOracleRelay
 
-  it("Deploy oracle", async () => {
+
+  ///this oracle gets the simple pool balances from the balancer vault, and then divides against the total supply of BPTs
+  it("Deploy and check invariant oracle", async () => {
+
+    /**
+     * General procedure
+     * Array of tokens that are in balancer pool
+     * Equal length array of oracles for each asset
+     * 
+     * Get balance => value for each asset in the pool to gather a total asset value
+     * divide by BPT total supply 
+     */
+
+  })
+
+
+  it("Deploy and check TWAP oracle", async () => {
 
     const factory = await ethers.getContractFactory("BPT_TWAP_Oracle")
 
