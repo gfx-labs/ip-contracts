@@ -11,33 +11,8 @@ import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import { toNumber } from "../../../util/math"
 import {
-  AnchoredViewRelay,
-  AnchoredViewRelay__factory,
-  ChainlinkOracleRelay,
-  ChainlinkOracleRelay__factory,
-  CurveMaster,
-  CurveMaster__factory,
-  IERC20,
-  IERC20__factory,
   IOracleRelay,
-  OracleMaster,
-  OracleMaster__factory,
-  ProxyAdmin,
-  ProxyAdmin__factory,
-  TransparentUpgradeableProxy__factory,
-  ThreeLines0_100,
-  ThreeLines0_100__factory,
-  UniswapV3OracleRelay__factory,
-  USDI,
-  USDI__factory,
   IVault__factory,
-  VaultController,
-  VaultController__factory,
-  IVOTE,
-  VotingVault__factory,
-  UniswapV3TokenOracleRelay__factory,
-  CappedGovToken__factory,
-  VotingVaultController__factory,
   VaultBPT__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
@@ -218,8 +193,15 @@ describe("Check BPT vault functions", () => {
 
 describe("Oracle things", () => {
 
-  let oracle:IOracleRelay
-  let invariantOracle:IOracleRelay
+  let oracle: IOracleRelay
+  let invariantOracle: IOracleRelay
+
+  /**
+   * testing with reth 
+   * need reth / eth balancer pool and gauge
+   * 
+   * 
+   */
 
 
   ///this oracle gets the simple pool balances from the balancer vault, and then divides against the total supply of BPTs
@@ -233,6 +215,9 @@ describe("Oracle things", () => {
      * Get balance => value for each asset in the pool to gather a total asset value
      * divide by BPT total supply 
      */
+
+
+
 
   })
 

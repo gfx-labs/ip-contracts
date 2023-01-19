@@ -22,7 +22,8 @@ const threshold = BN("1e18")
 
 dotenv.config();
 
-const rpc_url =  "https://mainnet.rpc.gfx.xyz/"//"https://brilliant.staging.gfx.town"
+//const rpc_url =  "https://brilliant.staging.gfx.town" //"https://mainnet.rpc.gfx.xyz/"
+const rpc_url = process.env.MAINNET_URL
 
 const USDI_ADDR = "0x2A54bA2964C8Cd459Dc568853F79813a60761B58"
 
@@ -36,6 +37,8 @@ const USDI_ADDR = "0x2A54bA2964C8Cd459Dc568853F79813a60761B58"
  */
 
 const main = async () => {
+  console.log("URL: ", rpc_url)
+
 
   const blacklist: string[] = [
     "0x0000000000000000000000000000000000000000",
@@ -47,7 +50,13 @@ const main = async () => {
     "0xa6e8772af29b29B9202a073f8E36f447689BEef6"
   ]
 
-  const cl = new ethers.providers.WebSocketProvider(rpc_url)
+  const formatBlacklist = blacklist.map(function (x) { return x.toUpperCase() })
+
+  console.log("Format: ", formatBlacklist)
+
+
+
+  const cl = new ethers.providers.WebSocketProvider(rpc_url!)
   //const cl = new ethers.providers.JsonRpcProvider(rpc_url)
   const tk = IUSDI__factory.connect(USDI_ADDR, cl);
   //const blockEnd = 15346983;
@@ -58,7 +67,7 @@ const main = async () => {
     cl
   );
 
-  const weekNum = 3
+  const weekNum = 4
   const week = BlockRounds.blockRanges[weekNum]
 
   const blockStart = week.start
@@ -87,17 +96,15 @@ const main = async () => {
   let filteredAddrs: string[] = []
 
   for (let h = 0; h < addrs.length; h++) {
-
     let balance = await tk.balanceOf(addrs[h], { blockTag: blockStart })
-    if (balance! < threshold) {
-      //remove addrs from blacklist
-      if (!blacklist.includes(addrs[h])) {
-        filteredAddrs.push(addrs[h])
-      }else {
-        console.log("Filtered: ", addrs[h])
-      }
+    if (formatBlacklist.includes(addrs[h].toUpperCase())) {
+      console.log("Filtered: ", addrs[h])
+    } else if (balance > threshold) {
+      filteredAddrs.push(addrs[h])
     }
   }
+
+
   console.log("Filtered USDI holders: ", filteredAddrs.length)
 
   //gather the blocks in the range that have a transfer or interest event
@@ -137,7 +144,7 @@ const main = async () => {
     const liabilityCalls: CallContext[] = [];
     const addrCallContext: ContractCallContext[] = [];
     blocks = blocks + 1;
-    for (let addr of addrs) {
+    for (let addr of filteredAddrs) {
       addrCalls.push({
         reference: addr,
         methodName: "balanceOf",
