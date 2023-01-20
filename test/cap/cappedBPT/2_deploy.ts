@@ -11,14 +11,15 @@ import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import { toNumber } from "../../../util/math"
 import {
+  BPT_TWAP_Oracle__factory,
   IOracleRelay,
   IVault__factory,
-  VaultBPT__factory
+  VaultBPT__factory,
+  WstETHRelay__factory,
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
-import { BPT_VaultController__factory } from "../../../typechain-types/factories/lending/BPT_VaultController__factory";
 require("chai").should();
 describe("Check Interest Protocol contracts", () => {
   describe("Sanity check USDi deploy", () => {
@@ -194,6 +195,7 @@ describe("Check BPT vault functions", () => {
 describe("Oracle things", () => {
 
   let oracle: IOracleRelay
+  let wstethRelay: IOracleRelay
   let invariantOracle: IOracleRelay
 
   /**
@@ -202,6 +204,14 @@ describe("Oracle things", () => {
    * 
    * 
    */
+
+  it("Check wstETH exchange rate relay", async () => {
+
+    wstethRelay = await new WstETHRelay__factory(s.Frank).deploy()
+    await mineBlock()
+    showBody("wstETH price: ", await toNumber(await wstethRelay.currentValue()))
+
+  })
 
 
   ///this oracle gets the simple pool balances from the balancer vault, and then divides against the total supply of BPTs
@@ -216,7 +226,17 @@ describe("Oracle things", () => {
      * divide by BPT total supply 
      */
 
+    invariantOracle = await new BPT_TWAP_Oracle__factory(s.Frank).deploy(
+      "0x32296969Ef14EB0c6d29669C550D4a0449130230",
+      ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"],
+      [wstethRelay.address, "0x22B01826063564CBe01Ef47B96d623b739F82Bf2"],
+      1,
+      1
+    )
+    await mineBlock()
 
+    showBody("BPT value: ", await toNumber(await invariantOracle.currentValue()))
+    
 
 
   })
@@ -224,7 +244,8 @@ describe("Oracle things", () => {
 
   it("Deploy and check TWAP oracle", async () => {
 
-    const factory = await ethers.getContractFactory("BPT_TWAP_Oracle")
+    /**
+     const factory = await ethers.getContractFactory("BPT_TWAP_Oracle")
 
     oracle = await factory.deploy(
       14400,
@@ -238,6 +259,7 @@ describe("Oracle things", () => {
 
     const result = await oracle.currentValue()
     showBodyCyan("RESULT: ", await toNumber(result))
+     */
 
   })
 
@@ -259,9 +281,9 @@ describe("Oracle things", () => {
     const invariant = BN("116541847842842509280324").mul(amp)
     const totalSupply = BN("113210279768128923680919")
 
-    showBody("Result: ", invariant.div(totalSupply))
-    showBody("Format: ", await toNumber(invariant.div(totalSupply)))
-    showBody("New format: ", await toNumber(invariant) / await toNumber(totalSupply))
+    //showBody("Result: ", invariant.div(totalSupply))
+    //showBody("Format: ", await toNumber(invariant.div(totalSupply)))
+    //showBody("New format: ", await toNumber(invariant) / await toNumber(totalSupply))
 
   })
 

@@ -3,10 +3,12 @@ pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
 import "../../_external/IERC20.sol";
-import "../../_external/balancer/IVault.sol";
+import "../../_external/balancer/IBalancerVault.sol";
+
+import "hardhat/console.sol";
 
 interface IBalancerPool {
-  function getPoolID() external view returns (bytes32);
+  function getPoolId() external view returns (bytes32);
 
   function totalSupply() external view returns (uint256);
 }
@@ -27,7 +29,7 @@ contract BPT_TWAP_Oracle is IOracleRelay {
   mapping(address => IOracleRelay) public assetOracles;
 
   //Balancer Vault
-  IVault public constant VAULT = IVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+  IBalancerVault public constant VAULT = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
 
   /**
    * @param pool_address - Balancer pool address
@@ -48,22 +50,36 @@ contract BPT_TWAP_Oracle is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
-    (
-      IERC20[] memory tokens,
-      uint256[] memory balances, /**uint256 lastChangeBlock */
+    console.log("Current Value");
 
-    ) = VAULT.getPoolTokens(_priceFeed.getPoolID());
+    bytes32 id = _priceFeed.getPoolId();
+
+    console.log("Got pool id");
+
+    (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(id);
+
+    console.log("Got data");
 
     uint256 totalValue = sumBalances(tokens, balances);
+
+    console.log("Got value: ", totalValue);
 
     return totalValue / _priceFeed.totalSupply();
   }
 
   function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {
     total = 0;
+
+    console.log("Balances: ", balances.length);
+    console.log("token: ", address(tokens[0]), "balance: ", balances[0]); //100615514.12233347 USD
+    console.log("token: ", address(tokens[1]), "balance: ", balances[1]); //79835218.30133966 USD += 180,450,732.4233397 USD??
+
+
     for (uint256 i = 0; i < tokens.length; i++) {
-      total += assetOracles[address(tokens[i])].currentValue() * balances[i];
+      total += ((assetOracles[address(tokens[i])].currentValue() * balances[i]) / 1e18);
     }
+
+
   }
 
   function registerOracles(address[] memory _tokens, address[] memory _oracles) internal {

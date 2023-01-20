@@ -17,7 +17,7 @@ pragma experimental ABIEncoderV2;
 
 import "../IERC20.sol";
 
-import "./IVault.sol";
+import "./IBalancerVault.sol";
 import "./IAuthorizer.sol";
 
 interface IProtocolFeesCollector {
@@ -42,5 +42,5 @@ interface IProtocolFeesCollector {
 
     function getAuthorizer() external view returns (IAuthorizer);
 
-    function vault() external view returns (IVault);
+    function vault() external view returns (IBalancerVault);
 }

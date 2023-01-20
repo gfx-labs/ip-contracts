@@ -30,7 +30,7 @@ pragma solidity ^0.8.9;
  * @dev Full external interface for the Vault core contract - no external or public methods exist in the contract that
  * don't override one of these declarations.
  */
-interface IVault is ISignaturesValidator, ITemporarilyPausable {
+interface IBalancerVault is ISignaturesValidator, ITemporarilyPausable {
     // Generalities about the Vault:
     //
     // - Whenever documentation refers to 'tokens', it strictly refers to ERC20-compliant token contracts. Tokens are
