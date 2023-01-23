@@ -62,10 +62,10 @@ contract BPT_TWAP_Oracle is IOracleRelay {
 
     ///@notice switch to this to invert the price if needed, such that
     // ethPrice == assets per 1 eth
-    return divide(ethPrice, priceInEth, 18);
+    //return divide(ethPrice, priceInEth, 18);
 
     ///ethPrice == eth per 1 asset
-    //return (ethPrice * priceInEth) / 1e18;
+    return (ethPrice * priceInEth) / 1e18;
   }
 
   

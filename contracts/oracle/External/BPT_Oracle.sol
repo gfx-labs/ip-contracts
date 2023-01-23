@@ -19,7 +19,7 @@ interface IBalancerPool {
  *
  */
 
-contract BPT_TWAP_Oracle is IOracleRelay {
+contract BPT_Oracle is IOracleRelay {
   uint256 public immutable _multiply;
   uint256 public immutable _divide;
 
@@ -76,7 +76,7 @@ contract BPT_TWAP_Oracle is IOracleRelay {
 
 
     for (uint256 i = 0; i < tokens.length; i++) {
-      total += ((assetOracles[address(tokens[i])].currentValue() * balances[i]) / 1e18);
+      total += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
     }
 
 
