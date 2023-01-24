@@ -11,6 +11,7 @@ import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import { toNumber } from "../../../util/math"
 import {
+  BalancerWeightedPoolRelay__factory,
   BPT_TWAP_Oracle__factory,
   IOracleRelay,
   IVault__factory,
@@ -210,7 +211,7 @@ describe("Oracle things", () => {
 
     wstethRelay = await new WstETHRelay__factory(s.Frank).deploy()
     await mineBlock()
-    showBody("wstETH price: ", await toNumber(await wstethRelay.currentValue()))
+    //showBody("wstETH price: ", await toNumber(await wstethRelay.currentValue()))
 
   })
 
@@ -236,7 +237,7 @@ describe("Oracle things", () => {
     )
     await mineBlock()
 
-    showBody("BPT value: ", await toNumber(await invariantOracle.currentValue()))
+    //showBody("BPT value: ", await toNumber(await invariantOracle.currentValue()))
 
 
 
@@ -256,7 +257,7 @@ describe("Oracle things", () => {
     await mineBlock()
     await twapOracle.deployed()
 
-    showBody("TWAP value: ", await toNumber(await twapOracle.currentValue()))
+    //showBody("TWAP value: ", await toNumber(await twapOracle.currentValue()))
 
     /**
    const factory = await ethers.getContractFactory("BPT_TWAP_Oracle")
@@ -276,6 +277,20 @@ describe("Oracle things", () => {
    */
 
 
+  })
+
+  it("Check weighted pool oracle", async () => {
+    const weightedPoolOracle = await new BalancerWeightedPoolRelay__factory(s.Frank).deploy(
+      "0x32296969Ef14EB0c6d29669C550D4a0449130230",
+      ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"],
+      [wstethRelay.address, "0x22B01826063564CBe01Ef47B96d623b739F82Bf2"],
+      1,
+      1
+    )
+    await mineBlock()
+    await weightedPoolOracle.deployed()
+
+    showBody("Weighted Pool Oracle result: ", await toNumber(await weightedPoolOracle.currentValue()))
   })
 
 

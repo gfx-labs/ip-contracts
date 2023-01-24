@@ -8,13 +8,14 @@ import {
 } from "ethereum-multicall";
 import { CallContext } from "ethereum-multicall/dist/esm/models";
 import { ERC20Detailed__factory, IUSDI__factory, IVaultController__factory, Vault__factory } from "../../typechain-types";
-import { BigNumber } from "ethers";
+import { BigNumber, utils } from "ethers";
 import { BN } from "../../util/number";
 import Decimal from "decimal.js";
 import { BlockRounds } from "./q3_data";
 import { ethers } from "hardhat";
 import { writeFileSync } from "fs";
 import { sleep } from "../proposals/suite/proposal";
+import { toNumber } from "../../util/math";
 
 const GENESIS_BLOCK = 14936125
 
@@ -67,7 +68,7 @@ const main = async () => {
     cl
   );
 
-  const weekNum = 4
+  const weekNum = 2
   const week = BlockRounds.blockRanges[weekNum]
 
   const blockStart = week.start
@@ -91,18 +92,21 @@ const main = async () => {
     if (!addrs.includes(x.args[1])) {
       addrs.push(x.args[1]);
     }
+    if (!addrs.includes(x.args[0])) {
+      addrs.push(x.args[0]);
+    }
   })
   console.log("Total USDI holders: ", addrs.length)
   let filteredAddrs: string[] = []
 
   for (let h = 0; h < addrs.length; h++) {
-    let balance = await tk.balanceOf(addrs[h], { blockTag: blockStart })
     if (formatBlacklist.includes(addrs[h].toUpperCase())) {
       console.log("Filtered: ", addrs[h])
-    } else if (balance > threshold) {
+    } else {
       filteredAddrs.push(addrs[h])
     }
   }
+  //    let balance = await tk.balanceOf(addrs[h], { blockTag: blockStart })
 
 
   console.log("Filtered USDI holders: ", filteredAddrs.length)
@@ -161,11 +165,12 @@ const main = async () => {
           abi: ERC20Detailed__factory.abi,
           calls: addrCalls,
         },
-      ]);
+      ], { blockNumber: usedBlocks[b] });
     } catch (e: any) {
       console.log("error", e, "SKIPPING BLOCK", b)
       continue
     }
+    //console.log("RESPONSE: ", resp.blockNumber)
     const holderBal = resp.results.balance.callsReturnContext.map((x: any) => {
       return {
         holder: x.reference,

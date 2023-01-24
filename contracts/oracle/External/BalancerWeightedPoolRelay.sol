@@ -5,10 +5,14 @@ import "../IOracleRelay.sol";
 import "../../_external/IERC20.sol";
 import "../../_external/balancer/IBalancerVault.sol";
 
+//import "@prb/math/src/SD59x18.sol";
+
 import "hardhat/console.sol";
 
 interface IBalancerPool {
   function getPoolId() external view returns (bytes32);
+
+  function getNormalizedWeights() external view returns (uint256[] memory);
 
   function totalSupply() external view returns (uint256);
 
@@ -21,7 +25,9 @@ interface IBalancerPool {
  *
  */
 
-contract BPT_Oracle is IOracleRelay {
+contract BalancerWeightedPoolRelay is IOracleRelay {
+  //using PRBMathSD59x18 for *;
+
   uint256 public immutable _multiply;
   uint256 public immutable _divide;
 
@@ -46,7 +52,7 @@ contract BPT_Oracle is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
-    invariantMath();
+    uint256 bptPrice = _getBPTprice(true);
 
     bytes32 id = _priceFeed.getPoolId();
 
@@ -57,41 +63,26 @@ contract BPT_Oracle is IOracleRelay {
     return totalValue / _priceFeed.totalSupply();
   }
 
-  function invariantMath() internal view returns (uint256) {
-    //BPT Price = 1/(w0^w0 * w1^w1) * invariant * p0^w0 * p1^w1 * BPT supply^-1
+  function _getBPTprice(bool safe) internal view returns (uint256 price) {
+    bytes32 poolId = _priceFeed.getPoolId();
+    console.log("Got Pool ID");
+    uint256[] memory weights = new uint256[](2); //_priceFeed.getNormalizedWeights();
+    weights[0] = uint256(5e17);
+    weights[1] = uint256(5e17);
+    console.log("Got weights");
+    uint256 totalSupply = _priceFeed.totalSupply();
+    console.log("Got weights");
 
-    //p0 = 1729825465904068729306 1729.825465904068729306
-    //p1 = 1575137344000000000000 1575.137344
-    //V = 116541847842842509280324 116541.847842842509280324
-    //supply = 113210279768128923680919 113210.279768128923680919
-
-    //BPT Price = 1/(0.5**0.5 * 0.5**0.5)  = 0.70710678118654752440084436210485
-
-    //0.70710678118654752440084436210485 * V == 82,407.53090168475383135468416232
-    //p0^w0 = 41.591170528179039569371361271833
-    //p1^w1 = 39.688
-    //113210.279768128923680919 ^ -1 == 8.8331201798381E−6 ==> 0.0000088331201798381
-    //result == 1,201.54875700216
-    //ballpark?
-
-    (uint256 V /**uint256 unused */, ) = _priceFeed.getLastInvariant();
-    console.log("Got invariant: ", V);
-    console.log("Supply: ", _priceFeed.totalSupply());
-
-    //uint256 price = (1e18/(uint256(5e17)**uint256(5e17)));
-    //uint256 price = (uint256()**uint256(0.5));
-
-    //console.log("Math done");
-    //console.log("1 / weights", price);
-    //price = price * V * ()
+    (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(poolId);
+    console.log("Got pool tokens");
   }
 
   function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {
     total = 0;
 
-    console.log("Balances: ", balances.length);
-    console.log("token: ", address(tokens[0]), "balance: ", balances[0]); //100615514.12233347 USD
-    console.log("token: ", address(tokens[1]), "balance: ", balances[1]); //79835218.30133966 USD += 180,450,732.4233397 USD??
+    //console.log("Balances: ", balances.length);
+    //console.log("token: ", address(tokens[0]), "balance: ", balances[0]); //100615514.12233347 USD
+    //console.log("token: ", address(tokens[1]), "balance: ", balances[1]); //79835218.30133966 USD += 180,450,732.4233397 USD??
 
     for (uint256 i = 0; i < tokens.length; i++) {
       total += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
