@@ -30,7 +30,7 @@ export class MainnetAddresses {
     readonly chainlinkUniFeed: string = "0x553303d460EE0afB37EdFf9bE42922D8FF63220e";
     readonly chainlinkBtcFeed: string = "0xf4030086522a5beea4988f8ca5b36dbc97bee88c";
     readonly compVotingAddress: string = "0x1F2AB8Ac759Fb0E3185630277A554Ae3110bF530";
-    readonly richFTXWallet: string = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
+    readonly richAVAXWallet: string = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
     readonly richBinance14: string = "0x28C6c06298d514Db089934071355E5743bf21d60";
     constructor() { }
 }
