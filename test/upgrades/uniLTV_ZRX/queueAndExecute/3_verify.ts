@@ -12,7 +12,8 @@ import {
     IVault,
     VotingVault__factory,
     CurveMaster__factory,
-    curve
+    curve,
+    VaultController__factory
 } from "../../../../typechain-types";
 import {
     advanceBlockHeight,
@@ -75,6 +76,16 @@ describe("Verify Upgraded Contracts", () => {
 
         expect(vaultInfo.id).to.eq(s.CaroLVaultID, "Voting Vault ID is correct")
         expect(vaultInfo.vault_address).to.eq(s.CarolVault.address, "Vault address is correct")
+    })
+
+    it("Verify LTV ", async () => {
+        const VaultControllerVerbose = VaultController__factory.connect(s.VaultController.address, s.Frank)
+        let LTV = await VaultControllerVerbose._tokenId_tokenLTV(await VaultControllerVerbose._tokenAddress_tokenId(s.UNI.address))
+        expect(LTV).to.eq(s.NEW_UNI_LTV, "New UNI LTV set correctly")
+
+        LTV = await VaultControllerVerbose._tokenId_tokenLTV(await VaultControllerVerbose._tokenAddress_tokenId(s.CappedZRX.address))
+        expect(LTV).to.eq(s.ZRX_LTV, "ZRX LTV is correct, known bug is confirmed fixed")
+
     })
 
 })

@@ -38,16 +38,9 @@ describe("Check starting values", () => {
         const uniBorrowPower = UNI_VAL.mul(s.NEW_UNI_LTV).div(BN("1e18"))
 
         const expectedBorrowPower = uniBorrowPower.add(zrxBorrowPower)
-
-        showBody("Expected: ", await toNumber(expectedBorrowPower))
-        showBody("ActualBP: ", await toNumber(borrowPower))
-        
-
-        //const totalValue = ZRXval.add(UNI_VAL)//dydxVal.add(ZRXval).add(crvVal)
-
-
+       //const totalValue = ZRXval.add(UNI_VAL)//dydxVal.add(ZRXval).add(crvVal)
         //let expectedBorrowPower = (totalValue.mul(s.ZRX_LTV)).div(BN("1e18"))
-        expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 50, "Borrow power is correct")
+        expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 1, "Borrow power is correct")
     })
 })
 

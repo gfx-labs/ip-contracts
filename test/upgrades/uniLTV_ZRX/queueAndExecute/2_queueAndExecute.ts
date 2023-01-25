@@ -25,7 +25,9 @@ import {
   GeneralizedBalancerOracle__factory,
   OracleRETH,
   BalancerPeggedAssetRelay,
-  UniswapV2OracleRelay__factory
+  UniswapV2OracleRelay__factory,
+  VaultController,
+  ProxyAdmin__factory
 } from "../../../../typechain-types";
 import {
   advanceBlockHeight,
@@ -87,6 +89,17 @@ describe("Verify Contracts", () => {
     expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
   });
 });
+
+describe("Upgrade vault controller", async () => {
+
+  it("Upgrade", async () => {
+
+
+
+
+  })
+
+})
 
 describe("Deploy Cap Tokens and Oracles", () => {
 
@@ -160,6 +173,13 @@ describe("Setup, Queue, and Execute proposal", () => {
 
   let out: any
 
+  let implementation: VaultController
+
+
+  it("Deploy new VC implementation", async () => {
+    implementation = await new VaultController__factory(s.Frank).deploy()
+
+  })
 
   it("Makes the new proposal", async () => {
 
@@ -194,13 +214,29 @@ describe("Setup, Queue, and Execute proposal", () => {
       )
 
 
-    //set UNI LTV
+    //Upgrade VC and set UNI LTV
+
+
+
+
+    //test
+    /**
+     showBody("Upgrading")
+    await impersonateAccount(s.owner._address)
+    await s.ProxyAdmin.connect(s.owner).upgrade(s.VaultController.address, implementation.address)
+    await impersonateAccount(s.owner._address)
+    showBody("done")
+     */
+
+
+
+
     const OracleVerbose = OracleMaster__factory.connect(s.Oracle.address, s.Frank)
     const VaultControllerVerbose = VaultController__factory.connect(s.VaultController.address, s.Frank)
     const currentOracle = await OracleVerbose._relays(s.UNI.address)
     const currentLiqInc = await VaultControllerVerbose._tokenAddress_liquidationIncentive(s.UNI.address)
 
-    showBody("Current Oracle: ", currentOracle)
+    //showBody("Current Oracle: ", currentOracle)
 
     expect(await toNumber(currentLiqInc)).to.eq(0.15, "Current Liquidation Incentive is 0.15, no change needed")
 
@@ -213,13 +249,31 @@ describe("Setup, Queue, and Execute proposal", () => {
         currentLiqInc
       )
 
+    //console.log(updateUniLTV)
+
+    showBody("ProxyAdmin addr: ", s.ProxyAdmin.address)
+
+    const upgradeOnly = await new ProxyAdmin__factory(prop).
+      attach(s.ProxyAdmin.address).
+      populateTransaction.upgrade(
+        s.VaultController.address,
+        implementation.address
+      )
+
+    //upgrade VC
+    proposal.addStep(upgradeOnly, "upgrade(address,address)")
+    //UNI LTV
+    proposal.addStep(updateUniLTV, "updateRegisteredErc20(address,uint256,address,uint256)")
+
+
+
     //list ZRX
     proposal.addStep(addOracleZRX, "setRelay(address,address)")
     proposal.addStep(listZRX, "registerErc20(address,uint256,address,uint256)")
     proposal.addStep(registerZRX_VVC, "registerUnderlying(address,address)")
 
-    //update UNI LTV
-    proposal.addStep(updateUniLTV, "updateRegisteredErc20(address,uint256,address,uint256)")
+
+
 
     await ceaseImpersonation(proposer)
 
