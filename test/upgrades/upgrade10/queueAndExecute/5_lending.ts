@@ -147,7 +147,7 @@ describe("Liquidations", () => {
         expect(amountToSolvency).to.be.gt(0, "Vault underwater")
 
         // give dave some money
-        await stealMoney("0x8EB8a3b98659Cce290402893d0123abb75E3ab28", s.Dave.address, s.usdcAddress, BN("200e12"))
+        await stealMoney("0x8EB8a3b98659Cce290402893d0123abb75E3ab28", s.Dave.address, s.usdcAddress, BN("20000e6"))
         await mineBlock()
 
         await s.USDC.connect(s.Dave).approve(s.USDI.address, await s.USDC.balanceOf(s.Dave.address))
