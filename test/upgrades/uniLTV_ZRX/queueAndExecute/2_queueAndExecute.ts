@@ -249,11 +249,7 @@ describe("Setup, Queue, and Execute proposal", () => {
         currentLiqInc
       )
 
-    //console.log(updateUniLTV)
-
-    showBody("ProxyAdmin addr: ", s.ProxyAdmin.address)
-
-    const upgradeOnly = await new ProxyAdmin__factory(prop).
+    const upgradeVC = await new ProxyAdmin__factory(prop).
       attach(s.ProxyAdmin.address).
       populateTransaction.upgrade(
         s.VaultController.address,
@@ -261,7 +257,7 @@ describe("Setup, Queue, and Execute proposal", () => {
       )
 
     //upgrade VC
-    proposal.addStep(upgradeOnly, "upgrade(address,address)")
+    proposal.addStep(upgradeVC, "upgrade(address,address)")
     //UNI LTV
     proposal.addStep(updateUniLTV, "updateRegisteredErc20(address,uint256,address,uint256)")
 
@@ -322,10 +318,8 @@ describe("Setup, Queue, and Execute proposal", () => {
     await fastForward(timelock.toNumber());
     await mineBlock()
 
-    showBody("Executing:")
     await gov.connect(prop).execute(proposal);
     await mineBlock();
-    showBody("Done:")
 
 
     await ceaseImpersonation(proposer)
