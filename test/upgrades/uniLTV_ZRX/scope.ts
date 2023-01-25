@@ -19,7 +19,8 @@ export class TestScope extends MainnetAddresses {
     ZRX_LiqInc = BN("150000000000000000")
     ZRX_LTV = BN("5e17")
 
-    UNI_AMOUNT = BN("500")
+    UNI_AMOUNT = BN("500e18")
+    NEW_UNI_LTV = BN("700000000000000000") //0.70
 
     LiquidationIncentive = BN("5e16")
     wETH_LTV = BN("5e17")

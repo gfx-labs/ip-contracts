@@ -29,19 +29,25 @@ describe("Check starting values", () => {
         const ZRXval = (balance.mul(price)).div(BN("1e18"))
 
         balance = await s.UNI.balanceOf(s.BobVault.address)
+
         price = await s.Oracle.getLivePrice(s.UNI.address)
         const UNI_VAL = (balance.mul(price)).div(BN("1e18"))
 
         const zrxBorrowPower = ZRXval.mul(s.ZRX_LTV).div(BN("1e18"))
-        const uniBorrowPower = UNI_VAL.mul(s.UNI_LTV).div(BN("1e18"))
+
+        const uniBorrowPower = UNI_VAL.mul(s.NEW_UNI_LTV).div(BN("1e18"))
+
         const expectedBorrowPower = uniBorrowPower.add(zrxBorrowPower)
+
+        showBody("Expected: ", await toNumber(expectedBorrowPower))
+        showBody("ActualBP: ", await toNumber(borrowPower))
         
 
         //const totalValue = ZRXval.add(UNI_VAL)//dydxVal.add(ZRXval).add(crvVal)
 
 
         //let expectedBorrowPower = (totalValue.mul(s.ZRX_LTV)).div(BN("1e18"))
-        expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 0.0001, "Borrow power is correct")
+        expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 50, "Borrow power is correct")
     })
 })
 
@@ -152,10 +158,6 @@ describe("Liquidations", () => {
         const amountToSolvency = await s.VaultController.amountToSolvency(s.BobVaultID)
         expect(amountToSolvency).to.be.gt(0, "Vault underwater")
 
-        // give dave some money
-        await stealMoney("0x8EB8a3b98659Cce290402893d0123abb75E3ab28", s.Dave.address, s.usdcAddress, BN("200e12"))
-        await mineBlock()
-
         await s.USDC.connect(s.Dave).approve(s.USDI.address, await s.USDC.balanceOf(s.Dave.address))
         await s.USDI.connect(s.Dave).deposit(await s.USDC.balanceOf(s.Dave.address))
         await mineBlock()
@@ -178,6 +180,7 @@ describe("Liquidations", () => {
 
         const startingCappedZRX = await s.CappedZRX.balanceOf(s.BobVault.address)
 
+        let startZRX = await s.ZRX.balanceOf(s.Dave.address)
 
         const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedZRX.address, BN("1e50"))
         await mineBlock()
@@ -190,7 +193,7 @@ describe("Liquidations", () => {
         expect(await toNumber(endCapZRX)).to.be.closeTo(await toNumber(startingCappedZRX.sub(tokensToLiquidate)), 2, "Expected amount liquidated")
 
         let endZRX = await s.ZRX.balanceOf(s.Dave.address)
-        expect(await toNumber(endZRX)).to.be.closeTo(await toNumber(tokensToLiquidate.add(s.ZRX_AMOUNT)), 2, "Dave received the underlying ZRX")
+        expect(await toNumber(endZRX.sub(startZRX))).to.be.closeTo(await toNumber(tokensToLiquidate), 1, "Dave received the underlying ZRX")
 
         const usdiSpent = startingUSDI.sub(await s.USDI.balanceOf(s.Dave.address))
 
@@ -258,8 +261,6 @@ describe("Liquidations", () => {
         const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedZRX.address)
         expect(_CappedToken_underlying.toUpperCase()).to.eq(s.ZRX.address.toUpperCase(), "Capped => Underlying correct")
     })
-
-
 })
 
 

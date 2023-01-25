@@ -204,14 +204,11 @@ describe("Setup, Queue, and Execute proposal", () => {
 
     expect(await toNumber(currentLiqInc)).to.eq(0.15, "Current Liquidation Incentive is 0.15, no change needed")
 
-    const newLTV = BN("700000000000000000") //0.70
-
-
     const updateUniLTV = await new VaultController__factory(prop).
       attach(s.VaultController.address).
       populateTransaction.updateRegisteredErc20(
         s.UNI.address,
-        newLTV,
+        s.NEW_UNI_LTV,
         s.UNI.address,
         currentLiqInc
       )

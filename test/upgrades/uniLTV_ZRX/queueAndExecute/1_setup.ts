@@ -118,6 +118,8 @@ describe("Initial Setup - ZRX and UNI LTV", () => {
 
         }
 
+        await stealMoney(bank, s.Dave.address, s.USDC.address, s.USDC_AMOUNT.mul(2))
+
         await stealMoney(ZRX_WHALE, s.Bob.address, s.ZRX.address, s.ZRX_AMOUNT)
         await stealMoney(ZRX_WHALE, s.Carol.address, s.ZRX.address, s.ZRX_AMOUNT)
         await stealMoney(ZRX_WHALE, s.Gus.address, s.ZRX.address, s.ZRX_AMOUNT)
