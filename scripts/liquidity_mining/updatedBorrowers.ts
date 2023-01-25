@@ -86,82 +86,38 @@ const main = async () => {
     const blockStart = week.start
     const blockEnd = week.end
     const totalLiabilities = new Map<string, Decimal>();
-
     const usedBlocks: number[] = [blockStart];
-
-    const filter = vc.filters.InterestEvent(null, null, null)
-    const filtered = await vc.queryFilter(filter, blockStart, blockEnd)
-    console.log("Interest Events found: ", filtered.length)
-
-    for (let i = 0; i < filtered.length; i++) {
-      usedBlocks.push(filtered[i].blockNumber)
-    }
-
-
-    //need more blocks to make the values more accurate, 100 random filler blocks
-
-    for (let j = 0; j < 200; j++) {
-      let R = (Math.floor(Math.random() * (blockEnd - blockStart))) + blockStart
-      if (!usedBlocks.includes(R)) {
-        usedBlocks.push(R)
-      }
-    }
-
-
-
-
-
-    /**
-     let auxBlocks = 0
-    for (let b = usedBlocks[usedBlocks.length - 1]; b <= blockEnd; b++) {
-      usedBlocks.push(b)
-      auxBlocks++
-    }
-    console.log("Added blocks: ", auxBlocks)
-    //include all blocks between last interest event and endBlock
-    console.log("END Block: ", usedBlocks[usedBlocks.length - 1])
-
-     */
-
-    usedBlocks.push(blockEnd)
-
-    let blocks = 0;
-    for (let b = 0; b <= usedBlocks.length; b++) {
+//   const filter = vc.filters.InterestEvent(null, null, null)
+//  const filtered = await vc.queryFilter(filter, blockStart, blockEnd)
+//  console.log("Interest Events found: ", filtered.length)
+//  for (let i = 0; i < filtered.length; i++) {
+//    usedBlocks.push(filtered[i].blockNumber)
+//  }
+//  //need more blocks to make the values more accurate, 100 random filler blocks
+//  for (let j = 0; j < 200; j++) {
+//    let R = (Math.floor(Math.random() * (blockEnd - blockStart))) + blockStart
+//    if (!usedBlocks.includes(R)) {
+//      usedBlocks.push(R)
+//    }
+//  }
+//  usedBlocks.push(blockEnd)
+    const runBlock = async (block:number)=> {
       let summaries;
       try {
-        const vaultCount = await vc.vaultsMinted({ blockTag: usedBlocks[b] });
-        summaries = await vc.vaultSummaries(1, vaultCount, { blockTag: usedBlocks[b] })
+        const vaultCount = await vc.vaultsMinted({ blockTag: block });
+        summaries = await vc.vaultSummaries(1, vaultCount, { blockTag: block })
       } catch (e) {
-        console.log("ERROR ON BLOCK", usedBlocks[b], e)
-        continue
+        console.log("ERROR ON BLOCK", block, e)
+        return
       }
 
       let totalMinted = new Decimal(0);
       //get vault liability relative to total for this block
-
-      //calculate total for all vaults each block? 
+      //calculate total for all vaults each block?
       summaries.forEach((v) => {
         let val = new Decimal(v.vaultLiability.toString());
         totalMinted = totalMinted.add(val);
       });
-
-      /**
-       console.log("TotalMinted: ", totalMinted)
-
-      //base liab * IF
-
-      const base = await vc.totalBaseLiability({ blockTag: usedBlocks[b] })
-      const IF = await vc.interestFactor({ blockTag: usedBlocks[b] })
-
-      const calculatedTotal = new Decimal(base.mul(IF).toString())
-      console.log("Calculated: ", calculatedTotal) 
-       
-       */
-
-
-
-
-
       summaries.forEach((v, idx) => {
         let minter = minters[idx];
         let val = new Decimal(v.vaultLiability.toString());
@@ -173,11 +129,24 @@ const main = async () => {
           totalLiabilities.get(minter)!.add(val.div(totalMinted))
         );
       });
-
       blocks = blocks + 1;
-      console.log(`Block ${usedBlocks[b]} done, ${usedBlocks.length - b} to go`, totalMinted.div(1e9).div(1e9));
-    }//end main loop
+      console.log(`Block ${block} done, ${blocks/(blockEnd-blockStart)}`, totalMinted.div(1e9).div(1e9));
+    }
 
+
+    let pms  = []
+    let blocks = 0;
+    let idx = 0
+    for (let b = blockStart; b <= blockEnd; b++) {
+      let pm = runBlock(b)
+      pms.push(pm)
+      idx = idx + 1
+      if(idx % 1000 ==  0) {
+        await Promise.all(pms)
+        pms = []
+      }
+    }//end main loop
+    await Promise.all(pms)
 
     //calc totals
     const totals = Array.from(totalLiabilities.entries()).map(([k, v]) => {
@@ -209,4 +178,4 @@ const main = async () => {
 main()
 
 
-//running the 500 random blocks for week 1 in q3 data, compare to pinned on right monitor 
+//running the 500 random blocks for week 1 in q3 data, compare to pinned on right monitor
