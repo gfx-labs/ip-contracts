@@ -14,14 +14,6 @@ interface IBalancerPool {
 
   function totalSupply() external view returns (uint256);
 
-  function getLastInvariant() external view returns (uint256, uint256);
-}
-
-interface IBalancerRatioPool {
-  function getPoolId() external view returns (bytes32);
-
-  function totalSupply() external view returns (uint256);
-
   function getLastInvariant() external view returns (uint256);
 
   function getNormalizedWeights() external view returns (uint256[] memory);
@@ -33,7 +25,7 @@ interface IBalancerRatioPool {
  *
  */
 
-contract BPT_Oracle is IOracleRelay {
+contract BPT_WEIGHTED_ORACLE is IOracleRelay {
   using PRBMathSD59x18 for *;
 
   uint256 public immutable _multiply;
@@ -81,10 +73,8 @@ contract BPT_Oracle is IOracleRelay {
 
   function _getLPPrice() internal view returns (uint256 price) {
     bytes32 poolId = _priceFeed.getPoolId();
-    //uint256[] memory weights = _priceFeed.getNormalizedWeights();
-    uint256[] memory weights = new uint256[](2);
-    weights[0] = 5e17;
-    weights[1] = 5e17;
+    uint256[] memory weights = _priceFeed.getNormalizedWeights();
+
     int256 totalSupply = int256(_priceFeed.totalSupply());
     (IERC20[] memory tokens, uint256[] memory balances, ) = VAULT.getPoolTokens(poolId);
 
@@ -102,12 +92,7 @@ contract BPT_Oracle is IOracleRelay {
       totalPi = totalPi.mul(indivPi);
     }
 
-    (
-      uint256 V, /**uint256 unused */
-
-    ) = _priceFeed.getLastInvariant();
-
-    int256 invariant = int256(V);
+    int256 invariant = int256(_priceFeed.getLastInvariant());
     int256 numerator = totalPi.mul(invariant);
     price = uint256((numerator.toInt().div(totalSupply)));
   }

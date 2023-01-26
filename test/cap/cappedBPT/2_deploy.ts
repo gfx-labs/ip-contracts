@@ -13,6 +13,7 @@ import { toNumber } from "../../../util/math"
 import {
   BalancerWeightedPoolRelay__factory,
   BPT_TWAP_Oracle__factory,
+  BPT_WEIGHTED_ORACLE__factory,
   IOracleRelay,
   IVault__factory,
   VaultBPT__factory,
@@ -22,6 +23,9 @@ import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
 import { BPT_Oracle__factory } from "../../../typechain-types/factories/oracle/External/BPT_Oracle.sol/BPT_Oracle__factory";
+
+
+
 require("chai").should();
 describe("Check Interest Protocol contracts", () => {
   describe("Sanity check USDi deploy", () => {
@@ -229,15 +233,55 @@ describe("Oracle things", () => {
      */
 
     invariantOracle = await new BPT_Oracle__factory(s.Frank).deploy(
-      "0x32296969Ef14EB0c6d29669C550D4a0449130230",
-      ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"],
-      [wstethRelay.address, "0x22B01826063564CBe01Ef47B96d623b739F82Bf2"],
+      "0x32296969Ef14EB0c6d29669C550D4a0449130230", //pool_address
+      ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
+      [wstethRelay.address, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"], //_oracles
       1,
       1
     )
     await mineBlock()
 
-    //showBody("BPT value: ", await toNumber(await invariantOracle.currentValue()))
+    showBodyCyan("BPT value: ", await toNumber(await (await invariantOracle.currentValue()).div(2)))
+
+
+
+  })
+
+  it("Try invariant oracle again", async () => {
+
+    const rETH_WETH_BPT = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276"
+    const rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393"
+    const cappedRETH = "0x64eA012919FD9e53bDcCDc0Fc89201F484731f41"
+    const rETH_Oracle = "0x69F3d75Fa1eaA2a46005D566Ec784FE9059bb04B"
+
+    const Voracle = await new BPT_Oracle__factory(s.Frank).deploy(
+      rETH_WETH_BPT, //pool_address
+      [rETH, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
+      [rETH_Oracle, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"], //_oracles, weth oracle
+      1,
+      1
+    )
+    await mineBlock()
+
+    showBodyCyan("rETH BPT value: ", await toNumber(await (await Voracle.currentValue()).div(2)))
+
+  })
+
+  it("Invariant oracle with multiple assets/ratios", async () => {
+    const balWethBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56" //bal80 / weth20
+    const CappedBalancer = "0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85"
+    const balancerToken = "0xba100000625a3754423978a60c9317c58a424e3D"
+    const balancerOracle = "0xf5E0e2827F60580304522E2C38177DFeC7a428a4"
+
+    const ratioOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
+      balWethBPT,
+      [balancerToken, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
+      [balancerOracle, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"], //_oracles, weth oracle
+      1,
+      1
+    )
+    await ratioOracle.deployed()
+    showBodyCyan("BalWeth BPT value: ", await toNumber(await (await ratioOracle.currentValue()).div(2)))
 
 
 
@@ -279,19 +323,21 @@ describe("Oracle things", () => {
 
   })
 
-  it("Check weighted pool oracle", async () => {
+  /**
+   it("Check weighted pool oracle", async () => {
     const weightedPoolOracle = await new BalancerWeightedPoolRelay__factory(s.Frank).deploy(
       "0x32296969Ef14EB0c6d29669C550D4a0449130230",
       ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"],
-      [wstethRelay.address, "0x22B01826063564CBe01Ef47B96d623b739F82Bf2"],
+      [wstethRelay.address, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"],
       1,
       1
     )
     await mineBlock()
     await weightedPoolOracle.deployed()
 
-    showBody("Weighted Pool Oracle result: ", await toNumber(await weightedPoolOracle.currentValue()))
+    //showBody("Weighted Pool Oracle result: ", await toNumber(await weightedPoolOracle.currentValue()))
   })
+   */
 
 
 
