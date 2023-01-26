@@ -183,14 +183,10 @@ describe("Setup, Queue, and Execute proposal", () => {
     //UNI LTV
     proposal.addStep(updateUniLTV, "updateRegisteredErc20(address,uint256,address,uint256)")
 
-
-
     //list ZRX
     proposal.addStep(addOracleZRX, "setRelay(address,address)")
     proposal.addStep(listZRX, "registerErc20(address,uint256,address,uint256)")
     proposal.addStep(registerZRX_VVC, "registerUnderlying(address,address)")
-
-
 
 
     await ceaseImpersonation(proposer)
@@ -201,8 +197,30 @@ describe("Setup, Queue, and Execute proposal", () => {
 
   })
 
-
-
+  const scriptOutput = {
+    targets: [
+      '0x3D9d8c08dC16Aa104b5B24aBDd1aD857e2c0D8C5',
+      '0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3',
+      '0xf4818813045E954f5Dc55a40c9B60Def0ba3D477',
+      '0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3',
+      '0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2'
+    ],
+    values: [0, 0, 0, 0, 0],
+    signatures: [
+      'upgrade(address,address)',
+      'updateRegisteredErc20(address,uint256,address,uint256)',
+      'setRelay(address,address)',
+      'registerErc20(address,uint256,address,uint256)',
+      'registerUnderlying(address,address)'
+    ],
+    calldatas: [
+      '0x0000000000000000000000004aae9823fb4c70490f1d802fc697f3fff8d5cbe30000000000000000000000009bdb5575e24eeb2dca7ba6ce367d609bdeb38246',
+      '0x0000000000000000000000001f9840a85d5af5bf1d1762f925bdaddc4201f98400000000000000000000000000000000000000000000000009b6e64a8ec600000000000000000000000000001f9840a85d5af5bf1d1762f925bdaddc4201f9840000000000000000000000000000000000000000000000000214e8348c4f0000',
+      '0x000000000000000000000000df623240ec300fd9e2b7780b34dc2f417c0ab6d2000000000000000000000000ef12fa3183362506a2dd0ff1cf06b2f4156e751e',
+      '0x000000000000000000000000df623240ec300fd9e2b7780b34dc2f417c0ab6d200000000000000000000000000000000000000000000000006f05b59d3b20000000000000000000000000000df623240ec300fd9e2b7780b34dc2f417c0ab6d20000000000000000000000000000000000000000000000000214e8348c4f0000',
+      '0x000000000000000000000000e41d2489571d322189246dafa5ebde1f4699f498000000000000000000000000df623240ec300fd9e2b7780b34dc2f417c0ab6d2'
+    ]
+  }
 
   it("queue and execute", async () => {
     const votingPeriod = await gov.votingPeriod()
@@ -213,12 +231,14 @@ describe("Setup, Queue, and Execute proposal", () => {
     const votes = await s.IPT.getPriorVotes(proposer, block.number - 2)
     expect(await toNumber(votes)).to.eq(45000000, "Correct number of votes delegated")
 
+    //expect(scriptOutput.targets).to.eq(out.targets, "Script data matches proposal output")
+
     await impersonateAccount(proposer)
     await gov.connect(prop).propose(
-      out.targets,
-      out.values,
-      out.signatures,
-      out.calldatas,
+      scriptOutput.targets,
+      scriptOutput.values,
+      scriptOutput.signatures,
+      scriptOutput.calldatas,
       "List ZRX & update UNI LTV",
       false
     )
