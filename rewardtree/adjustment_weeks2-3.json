@@ -1,70 +1,34 @@
 [
     {
-        "minter": "0x31dB5F5F9CC510B55c56b595D565b8bbBD0421c2",
-        "amount": "67116663465409010"
-    },
-    {
-        "minter": "0xBCbeAc56eeF250E8a4859be46c6cBFd93aAe5d2F",
-        "amount": "56013652978508808644"
-    },
-    {
-        "minter": "0xa8ecAf8745C56D5935c232D2c5b83B9CD3dE1f6a",
-        "amount": "0"
-    },
-    {
-        "minter": "0x96D4F9d8F23eadee78fc6824fc60b8c1CE578443",
-        "amount": "0"
-    },
-    {
-        "minter": "0x5f62593C70069AbB35dFe2B63db969e8906609d6",
-        "amount": "0"
-    },
-    {
-        "minter": "0xE8c060F8052E07423f71D445277c61AC5138A2e5",
-        "amount": "0"
-    },
-    {
-        "minter": "0x24902AA0cf0000a08c0EA0b003B0c0bF600000E0",
-        "amount": "0"
-    },
-    {
-        "minter": "0x0E113904cB1d53cAbB324927dffaE2f8F6705111",
-        "amount": "0"
-    },
-    {
-        "minter": "0x4c47b2520E9f7E3da15dF09718d467f783b03858",
-        "amount": "1189858808305117144"
-    },
-    {
-        "minter": "0x696607447225f6690883e718fd0Db0Abaf36B6E2",
-        "amount": "0"
-    },
-    {
-        "minter": "0x988bD1029D477F38A66eE1ce8fC9b4A48A9748C7",
-        "amount": "0"
-    },
-    {
-        "minter": "0x00000000A991C429eE2Ec6df19d40fe0c80088B8",
-        "amount": "0"
-    },
-    {
         "minter": "0xf0d919bF7CD8A631FB8261Efd4E8ff7631e27825",
-        "amount": "16351738614084526489023"
-    },
-    {
-        "minter": "0x50d36f27872F637EC9Ecb4EEdFF300df44A608aB",
-        "amount": "504057293692761049897"
+        "amount": "16351738610000000000000"
     },
     {
         "minter": "0x95Bc377F540E504F666671177E5d80bf7c21ab6F",
-        "amount": "8973360562031852168730"
+        "amount": "8973360562000000000000"
+    },
+    {
+        "minter": "0x50d36f27872F637EC9Ecb4EEdFF300df44A608aB",
+        "amount": "504057293700000000000"
+    },
+    {
+        "minter": "0xBCbeAc56eeF250E8a4859be46c6cBFd93aAe5d2F",
+        "amount": "56013652980000000000"
     },
     {
         "minter": "0x6DD6934452eB4E6D87B9c874AE0EF83ec3bd5803",
-        "amount": "29371475008792639727"
+        "amount": "29371475010000000000"
     },
     {
         "minter": "0x3446Ab139cBA20E1D7118371420fABC5Fdc2bFCc",
-        "amount": "5394039504231167292"
+        "amount": "5394039504000000000"
+    },
+    {
+        "minter": "0x4c47b2520E9f7E3da15dF09718d467f783b03858",
+        "amount": "1189858808000000000"
+    },
+    {
+        "minter": "0x31dB5F5F9CC510B55c56b595D565b8bbBD0421c2",
+        "amount": "67116663000000000"
     }
 ]

@@ -80,7 +80,7 @@ const main = async () => {
 
 
   //const weekNum = 1
-  const weekNum = 4
+  const weekNum = 5
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     //weekNum = weekNum + 1
     const blockStart = week.start
@@ -176,6 +176,3 @@ const main = async () => {
 }// all done
 
 main()
-
-
-//running the 500 random blocks for week 1 in q3 data, compare to pinned on right monitor

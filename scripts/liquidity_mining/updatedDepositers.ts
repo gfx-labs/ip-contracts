@@ -53,7 +53,7 @@ const main = async () => {
 
   const formatBlacklist = blacklist.map(function (x) { return x.toUpperCase() })
 
-  console.log("Format: ", formatBlacklist)
+  //onsole.log("Format: ", formatBlacklist)
 
 
 
@@ -111,43 +111,10 @@ const main = async () => {
 
   console.log("Filtered USDI holders: ", filteredAddrs.length)
 
-  //gather the blocks in the range that have a transfer or interest event
-  //first entry should be blockStart and last should be blockEnd
-  const usedBlocks: number[] = [blockStart];
-
-  //first add the interest event blocks, these are already in the range per the query
-  for (let i = 0; i < vcFiltered.length; i++) {
-    usedBlocks.push(vcFiltered[i].blockNumber)
-  }
-
-  //next add the transfers that happen after block start and are not also interest event blocks
-  for (let i = 0; i < TotalUsdiTransfers.length; i++) {
-    if ((TotalUsdiTransfers[i].blockNumber > blockStart) && !usedBlocks.includes(TotalUsdiTransfers[i].blockNumber)) {
-      usedBlocks.push(TotalUsdiTransfers[i].blockNumber)
-    }
-  }
-
-  console.log("Blocks in the range that include a transfer or an Interest Event: ", usedBlocks.length)
-
-  //add filler blocks to improve data accuracy 
-  for (let j = 0; j < 500; j++) {
-    let R = (Math.floor(Math.random() * (blockEnd - blockStart))) + blockStart
-    if (!usedBlocks.includes(R)) {
-      usedBlocks.push(R)
-    }
-  }
-
-  console.log(`Gathering data for ${usedBlocks.length} blocks`)
-
-  let blocks = 0;
-
-  for (let b = 0; b <= usedBlocks.length; b++) {
 
 
+  const runBlock = async (block: number) => {
     const addrCalls: CallContext[] = [];
-    const liabilityCalls: CallContext[] = [];
-    const addrCallContext: ContractCallContext[] = [];
-    blocks = blocks + 1;
     for (let addr of filteredAddrs) {
       addrCalls.push({
         reference: addr,
@@ -165,10 +132,10 @@ const main = async () => {
           abi: ERC20Detailed__factory.abi,
           calls: addrCalls,
         },
-      ], { blockNumber: usedBlocks[b] });
+      ], { blockNumber: block });
     } catch (e: any) {
-      console.log("error", e, "SKIPPING BLOCK", b)
-      continue
+      console.log("error", e, "SKIPPING BLOCK", block)
+      return
     }
     //console.log("RESPONSE: ", resp.blockNumber)
     const holderBal = resp.results.balance.callsReturnContext.map((x: any) => {
@@ -192,9 +159,26 @@ const main = async () => {
       );
       totalBalance = totalBalance.add(x.val);
     });
+    blocks = blocks + 1;
 
-    console.log(`Block ${usedBlocks[b]} done, ${usedBlocks.length - b} to go`, totalBal.div(1e9).div(1e9));
+    console.log(`Block ${block} done, ${blocks/(blockEnd-blockStart)}`, totalBal.div(1e9).div(1e9));
   }
+
+
+
+  let pms = []
+  let blocks = 0;
+  let idx = 0
+  for (let b = blockStart; b <= blockEnd; b++) {
+    let pm = runBlock(b)
+    pms.push(pm)
+    idx = idx + 1
+    if (idx % 1000 == 0) {
+      await Promise.all(pms)
+      pms = []
+    }
+  }
+  await Promise.all(pms)
 
   const totals = Array.from(totalBalances.entries()).map(([k, v]) => {
     return {

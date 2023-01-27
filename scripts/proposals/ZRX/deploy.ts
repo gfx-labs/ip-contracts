@@ -163,6 +163,8 @@ main()
         process.exit(1);
     });
 /**
+hh verify --network mainnet 0xB9cb624D4b21E0239bB149B1B1F1992A0eB351b8
+ * 
  * OUTPUT 
 New VC implementation deployed to:  0x9BDb5575E24EEb2DCA7Ba6CE367d609Bdeb38246
 Capped ZRX deployed to:  0xDf623240ec300fD9e2B7780B34dC2F417c0Ab6D2
