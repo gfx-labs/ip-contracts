@@ -137,15 +137,19 @@ contract BPT_Oracle is IOracleRelay {
 
     (IERC20[] memory tokens, uint256[] memory balances, ) = VAULT.getPoolTokens(poolId);
 
-    uint256 valueX = ((balances[0] * assetOracles[address(tokens[0])].currentValue()) / 1e18);
+    uint256 valueX = ((balances[0] * assetOracles[address(tokens[0])].currentValue()));
 
-    uint256 valueY = (((getSpotPrice() * balances[1]) * assetOracles[address(tokens[1])].currentValue()) / 1e36);
+    uint256 valueY = (((getSpotPrice() * balances[1]) * assetOracles[address(tokens[1])].currentValue()) / 1e18);
 
     console.log("Value X: ", valueX);
     console.log("Value Y: ", valueY);
-    console.log("Total value: ", valueX + valueY);
 
-    price = (valueX + valueY) / _priceFeed.totalSupply();
+    uint256 totalValue = valueX + valueY;
+    console.log("Total value: ", totalValue);
+
+    console.log("Total Value Price: ", (totalValue / _priceFeed.totalSupply()));
+
+    price = (totalValue / _priceFeed.totalSupply());
   }
 
   function _getLPPrice() internal view returns (uint256 price) {
