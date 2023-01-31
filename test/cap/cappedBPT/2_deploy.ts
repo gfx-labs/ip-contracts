@@ -263,7 +263,7 @@ describe("Oracle things", () => {
     )
     await mineBlock()
 
-    showBodyCyan("rETH BPT value: ", await toNumber(await (await Voracle.currentValue()).div(2)))
+    //showBodyCyan("rETH BPT value: ", await toNumber(await (await Voracle.currentValue()).div(2)))
 
   })
 
@@ -281,7 +281,7 @@ describe("Oracle things", () => {
       1
     )
     await ratioOracle.deployed()
-    showBodyCyan("BalWeth BPT value: ", await toNumber(await (await ratioOracle.currentValue()).div(2)))
+    //showBodyCyan("BalWeth BPT value: ", await toNumber(await ratioOracle.currentValue()))
 
 
 
@@ -301,7 +301,7 @@ describe("Oracle things", () => {
     await mineBlock()
     await twapOracle.deployed()
 
-    //showBody("TWAP value: ", await toNumber(await twapOracle.currentValue()))
+    showBodyCyan("TWAP value: ", await toNumber(await twapOracle.currentValue()))
 
     /**
    const factory = await ethers.getContractFactory("BPT_TWAP_Oracle")

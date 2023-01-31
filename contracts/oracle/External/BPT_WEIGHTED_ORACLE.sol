@@ -58,7 +58,7 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
-    console.log("PRICE??: ", _getLPPrice());
+    console.log("PRICE???????: ", _getLPPrice());
 
     bytes32 id = _priceFeed.getPoolId();
 
@@ -83,14 +83,23 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
     uint256[] memory prices = new uint256[](tokens.length);
 
     for (uint256 i = 0; i < tokens.length; i++) {
+      //console.log("Total Pi: ", uint256(totalPi));
       balances[i] = (balances[i] * (10**18)) / (10**IERC20(address(tokens[i])).decimals());
       prices[i] = assetOracles[address(tokens[i])].currentValue();
 
       int256 val = int256(prices[i]).div(int256(weights[i]));
+      //console.log("Token: ", address(tokens[i]));
+      //console.log("Weight: ", weights[i]);
+      //console.log("val: ", uint256(val));
+
       int256 indivPi = val.pow(int256(weights[i]));
+      //console.log("indivPi: ", uint256(indivPi));
+
+      console.log("");
 
       totalPi = totalPi.mul(indivPi);
     }
+    //console.log("Total Pi: ", uint256(totalPi));
 
     int256 invariant = int256(_priceFeed.getLastInvariant());
     int256 numerator = totalPi.mul(invariant);
