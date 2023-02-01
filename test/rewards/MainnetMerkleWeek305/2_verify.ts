@@ -11,11 +11,13 @@ import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import { toNumber, minter, mergeLists, getGas } from "../../../util/math"
 import {
+    InterestProtocolTokenDelegate__factory,
     MerkleRedeem__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
+const week = 305
 
 require("chai").should();
 describe("Merkle Redeem", () => {
@@ -30,7 +32,6 @@ describe("Merkle Redeem", () => {
 
 
     let total = BN(0)
-    const week = 305
 
     let startingIPT: BigNumber
 
@@ -78,9 +79,9 @@ describe("Merkle Redeem", () => {
         s.mergedList.map((obj) =>
             total = total.add(BN(obj.amount))
         )
-        showBody("ADMIN: ", s.DEPLOYER._address)
-        showBody("Admin balance: ", await toNumber(await s.IPT.balanceOf(s.DEPLOYER._address)))
-        showBody("Total amount : ", await toNumber(total))
+        //showBody("ADMIN: ", s.DEPLOYER._address)
+        //showBody("Admin balance: ", await toNumber(await s.IPT.balanceOf(s.DEPLOYER._address)))
+        //showBody("Total amount : ", await toNumber(total))
         await s.IPT.connect(s.DEPLOYER).approve(s.MerkleRedeem.address, total)
         await s.MerkleRedeem.connect(s.DEPLOYER).seedAllocations(
             week,
@@ -213,6 +214,61 @@ describe("Merkle Redeem", () => {
 
         let balance = await s.IPT.balanceOf(s.MerkleRedeem.address)
         expect(balance).to.eq(startingIPT, "All redemptions done, remaining IPT is exactly what it was before, calculations correct")
+
+    })
+})
+
+describe("Check verifications post deployment", async () => {
+    it("Set hardhat network to a block after deployment", async () => {
+        expect(await reset(16528922)).to.not.throw;//14940917
+    });
+
+    it("Connect to mainnet deployment", async () => {
+        const IPTaddress = "0xd909C5862Cdb164aDB949D92622082f0092eFC3d"
+
+        s.IPT = InterestProtocolTokenDelegate__factory.connect(IPTaddress, s.Frank);
+        s.MerkleRedeem = MerkleRedeem__factory.connect("0x91a1Fb8eEaeB0E05629719938b03EE3C32348CF7", s.Frank)
+
+    })
+
+    it("Do all claims post deployment as the claimers", async () => {
+        showBody(s.MERKLE_TREE)
+
+        showBodyCyan("Redeeming...")
+        //start from 2 since LP1 and LP2 claimed already above
+        for (let i = 0; i < s.mergedList.length; i++) {
+            let claim = BN(s.mergedList[i].amount)
+            let minter = s.mergedList[i].minter
+
+            const tx = {
+                to: minter,
+                value: BN("1e17")
+            }
+            await s.Frank.sendTransaction(tx)
+            await mineBlock()
+
+            const signer = ethers.provider.getSigner(minter)
+
+            let leaf = solidityKeccak256(["address", "uint256"], [minter, claim])
+            let proof = s.MERKLE_TREE.getHexProof(leaf)
+
+            const initIPT = await s.IPT.balanceOf(minter)
+
+            showBody(minter, " redeeming for: ", claim.toString())
+            showBody("Proof: ", proof)
+            //showBody("Leaf: ", leaf)
+            showBody("")
+
+            await impersonateAccount(minter)
+            await s.MerkleRedeem.connect(signer).claimWeek(minter, week, claim, proof)
+            await mineBlock()
+            await ceaseImpersonation(minter)
+            //const gas = await getGas(result)
+            //showBodyCyan("Gas to claimWeek: ", gas)
+
+            let balance = await s.IPT.balanceOf(minter)
+            expect(await toNumber(balance.sub(initIPT))).to.eq(await toNumber(BN(claim)))
+        }
 
     })
 })

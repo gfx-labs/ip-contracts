@@ -241,7 +241,7 @@ describe("Oracle things", () => {
     )
     await mineBlock()
 
-    showBodyCyan("BPT value: ", await toNumber(await (await invariantOracle.currentValue()).div(2)))
+    showBodyCyan("BPT value: ", await toNumber(await (await invariantOracle.currentValue())))
 
 
 

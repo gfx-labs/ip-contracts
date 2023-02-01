@@ -93,6 +93,8 @@ describe("Token Setup", () => {
             solidityKeccak256(["address", "uint256"], [obj.minter, BN(obj.amount)])
         )
 
+        console.log("Leaf nodes: ", leafNodes)
+
 
         s.MERKLE_TREE = new MerkleTree(leafNodes, keccak256, { sortPairs: true })
 

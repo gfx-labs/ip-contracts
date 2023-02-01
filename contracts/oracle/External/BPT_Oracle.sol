@@ -19,15 +19,17 @@ interface IBalancerPool {
 
 /*****************************************
  *
- * This relay gets a USD price for a wrapped asset from a balancer MetaStablePool
+ * This relay gets a USD price for BPT LP token from a balancer MetaStablePool *
  *
  */
 
 contract BPT_Oracle is IOracleRelay {
   using PRBMathSD59x18 for *;
 
-  uint256 public immutable _multiply;
-  uint256 public immutable _divide;
+  bytes32 public immutable _poolId;
+
+  uint256 public immutable _widthNumerator;
+  uint256 public immutable _widthDenominator;
 
   IBalancerPool private immutable _priceFeed;
   IOracleRelay public constant ethOracle = IOracleRelay(0x22B01826063564CBe01Ef47B96d623b739F82Bf2);
@@ -46,61 +48,70 @@ contract BPT_Oracle is IOracleRelay {
     address pool_address,
     address[] memory _tokens,
     address[] memory _oracles,
-    uint256 mul,
-    uint256 div
+    uint256 widthNumerator,
+    uint256 widthDenominator
   ) {
     _priceFeed = IBalancerPool(pool_address);
 
+    _poolId = _priceFeed.getPoolId();
+
     registerOracles(_tokens, _oracles);
 
-    _multiply = mul;
-    _divide = div;
+    _widthNumerator = widthNumerator;
+    _widthDenominator = widthDenominator;
   }
 
   function currentValue() external view override returns (uint256) {
-    //console.log("PRICE??: ", _getLPPrice());
+    (
+      IERC20[] memory tokens,
+      uint256[] memory balances, /**uint256 lastChangeBlock */
 
-    console.log("Fancy Price : ", getBPTprice());
+    ) = VAULT.getPoolTokens(_poolId);
 
-    bytes32 id = _priceFeed.getPoolId();
+    uint256 simpleValue = sumBalances(tokens, balances);
+    uint256 simplePrice = simpleValue = _priceFeed.totalSupply();
+    require(simplePrice > 0, "invalid simple price");
 
-    (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(id);
+    console.log("Simple price: ", simplePrice);
+    console.log("Format simPr: ", simplePrice / 1e18);
 
-    uint256 totalValue = sumBalances(tokens, balances);
-    console.log("Total value: ", totalValue);
-    console.log("Total Supply: ", _priceFeed.totalSupply());
-    console.log("Simple Price: ", totalValue / _priceFeed.totalSupply());
-    console.log("Simple Price: ", (totalValue / _priceFeed.totalSupply()) / 1e18);
+    uint256 robustPrice = getBPTprice();
+    require(robustPrice > 0, "invalid anchor value");
 
-    //return totalValue / _priceFeed.totalSupply();
-    return _getLPPrice();
+    console.log("robust price: ", robustPrice);
+    console.log("Format robPr: ", robustPrice / 1e18);
+
+    // calculate buffer
+    uint256 buffer = (_widthNumerator * simplePrice) / _widthDenominator;
+
+    // create upper and lower bounds
+    uint256 upperBounds = simplePrice + buffer;
+    uint256 lowerBounds = simplePrice - buffer;
+
+    // ensure the robust price is within bounds
+    require(robustPrice < upperBounds, "robustPrice too low");
+    require(robustPrice > lowerBounds, "robustPrice too high");
+
+    // return checked price
+    return robustPrice;
   }
 
   /**
-  crash plan for non weighted pools
-  Get spot prices for tokens via TWAP on balancer pool itself
-  because this uses the all important invariant to calculate the prices see StableOracleMath._calcSpotPrice
-  or we can calc the spot price the wame way
-
+    //                             2.a.x.y + a.y^2 + b.y                                                         //
+    // spot price Y/X = - dx/dy = -----------------------                                                        //
+    //                             2.a.x.y + a.x^2 + b.x                                                         //
+    //                                                                                                           //
+    // n = 2                                                                                                     //
+    // a = amp param * n                                                                                         //
+    // b = D + a.(S - D)                                                                                         //
+    // D = invariant                                                                                             //
+    // S = sum of balances but x,y = 0 since x  and y are the only tokens                                        //
 
   once we have the spot price, we can then calc the BPT price by
     //              balance X + (spot price Y/X * balance Y)                                                     //
     // BPT price = ------------------------------------------                                                    //
     //                          total supply      
    */
-
-  /**************************************************************************************************************
-        //                                                                                                           //
-        //                             2.a.x.y + a.y^2 + b.y                                                         //
-        // spot price Y/X = - dx/dy = -----------------------                                                        //
-        //                             2.a.x.y + a.x^2 + b.x                                                         //
-        //                                                                                                           //
-        // n = 2                                                                                                     //
-        // a = amp param * n                                                                                         //
-        // b = D + a.(S - D)                                                                                         //
-        // D = invariant                                                                                             //
-        // S = sum of balances but x,y = 0 since x  and y are the only tokens                                        //
-        **************************************************************************************************************/
 
   /**
    * @dev Calculates the spot price of token Y in token X.
@@ -128,8 +139,6 @@ contract BPT_Oracle is IOracleRelay {
     uint256 derivativeY = mulDown(axy2 + (a * balances[0]), balances[1]) - (mulDown(b, balances[0]));
 
     pyx = divUp(derivativeX, derivativeY);
-
-    console.log("PYX: ", pyx);
   }
 
   function getBPTprice() internal view returns (uint256 price) {
@@ -141,63 +150,12 @@ contract BPT_Oracle is IOracleRelay {
 
     uint256 valueY = (((getSpotPrice() * balances[1]) * assetOracles[address(tokens[1])].currentValue()) / 1e18);
 
-    console.log("Value X: ", valueX);
-    console.log("Value Y: ", valueY);
-
     uint256 totalValue = valueX + valueY;
-    console.log("Total value: ", totalValue);
-
-    console.log("Total Value Price: ", (totalValue / _priceFeed.totalSupply()));
 
     price = (totalValue / _priceFeed.totalSupply());
   }
 
-  function _getLPPrice() internal view returns (uint256 price) {
-    bytes32 poolId = _priceFeed.getPoolId();
-
-    int256 totalSupply = int256(_priceFeed.totalSupply());
-    (IERC20[] memory tokens, uint256[] memory balances, ) = VAULT.getPoolTokens(poolId);
-
-    int256 totalPi = PRBMathSD59x18.fromInt(1e18);
-
-    uint256[] memory prices = new uint256[](tokens.length);
-
-    for (uint256 i = 0; i < tokens.length; i++) {
-      balances[i] = (balances[i] * (10**18)) / (10**IERC20(address(tokens[i])).decimals());
-      prices[i] = assetOracles[address(tokens[i])].currentValue();
-
-      int256 val = int256(prices[i]).div(WEIGHT);
-      int256 indivPi = val.pow(WEIGHT);
-
-      totalPi = totalPi.mul(indivPi);
-    }
-
-    (
-      uint256 V, /**uint256 unused */
-
-    ) = _priceFeed.getLastInvariant();
-
-    int256 invariant = int256(V);
-    int256 numerator = totalPi.mul(invariant);
-    price = uint256((numerator.toInt().div(totalSupply)));
-  }
-
-  /**
-    50000 * 4 
-
-    inv = 142788812182034023487442 142788.812182034023487442
-
-    supply = 113210279768128923680919 113210.279768128923680919
-
-    simple price = 1615447846318525289543 1615.447846318525289543
-
-    inv * x 
-    -------- == price
-     supply
-
-   
-   
-   */
+  //formula for converting balances => invariant
   /**********************************************************************************************
   // invariant                                                                                 //
   // D = invariant                                                  D^(n+1)                    //

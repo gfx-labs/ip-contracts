@@ -30,7 +30,7 @@ import { json } from "stream/consumers";
 
 const { ethers, network, upgrades } = require("hardhat");
 
-const LPS = require('../rewardtree/lps_15639445-15689845.json')
+const LPS = require('../rewardtree/adjustment_weeks2-3.json')
 //const BORROWERS = require('../rewardtree/borrowers_15639445-15689845.json')
 const BORROWERS = LPS
 
@@ -65,25 +65,31 @@ const prepareList = async (list: any) => {
 
 //LPS: JSON, borrowers: JSON
 async function main() {
-
+    console.log("Start")
     let formatLPS = await prepareList(LPS)
 
-    let formatBORROW = await prepareList(BORROWERS)
+    console.log("Prepared list")
+
+    //let formatBORROW = await prepareList(BORROWERS)
 
 
     //let mergedList = await mergeLists(formatBORROW, formatLPS)
-    let mergedList = formatLPS
+    //let mergedList = formatLPS
+
+    //console.log("Merged list", mergedList)
 
     let valueAdjusted: any[] = []
 
-    for (let minter of mergedList) {
+    for (let minter of LPS) {
 
         //console.log(minter.amount.toString())
+
+        console.log("Pushing: ", minter.amount)
 
 
         valueAdjusted.push({
             minter: minter.minter,
-            amount: utils.parseEther(minter.amount.toFixed(18).toString()).toString()
+            amount: minter.amount//utils.parseEther(minter.amount.toFixed(18).toString()).toString()
         })
 
     }
@@ -97,8 +103,8 @@ async function main() {
         formatObject[object.minter] = object.amount
     }
 
-    writeFileSync(`rewardtree/mergedAndFormatWeek155.json`, JSON.stringify(valueAdjusted), 'utf8')
-    writeFileSync(`rewardtree/week155Object.json`, JSON.stringify(formatObject), 'utf8')
+    //writeFileSync(`rewardtree/mergedAndFormatWeek155.json`, JSON.stringify(valueAdjusted), 'utf8')
+    writeFileSync(`rewardtree/week305Object.json`, JSON.stringify(formatObject), 'utf8')
 
 }
 
