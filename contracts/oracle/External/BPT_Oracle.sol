@@ -69,17 +69,11 @@ contract BPT_Oracle is IOracleRelay {
     ) = VAULT.getPoolTokens(_poolId);
 
     uint256 simpleValue = sumBalances(tokens, balances);
-    uint256 simplePrice = simpleValue = _priceFeed.totalSupply();
+    uint256 simplePrice = simpleValue / _priceFeed.totalSupply();
     require(simplePrice > 0, "invalid simple price");
 
-    console.log("Simple price: ", simplePrice);
-    console.log("Format simPr: ", simplePrice / 1e18);
-
-    uint256 robustPrice = getBPTprice();
-    require(robustPrice > 0, "invalid anchor value");
-
-    console.log("robust price: ", robustPrice);
-    console.log("Format robPr: ", robustPrice / 1e18);
+    uint256 robustPrice = getBPTprice(tokens, balances);
+    require(robustPrice > 0, "invalid robust price");
 
     // calculate buffer
     uint256 buffer = (_widthNumerator * simplePrice) / _widthDenominator;
@@ -87,6 +81,9 @@ contract BPT_Oracle is IOracleRelay {
     // create upper and lower bounds
     uint256 upperBounds = simplePrice + buffer;
     uint256 lowerBounds = simplePrice - buffer;
+
+    console.log("Simple Price: ", simplePrice, simplePrice / 1e18);
+    console.log("Robust Price: ", robustPrice, robustPrice / 1e18);
 
     // ensure the robust price is within bounds
     require(robustPrice < upperBounds, "robustPrice too low");
@@ -114,18 +111,11 @@ contract BPT_Oracle is IOracleRelay {
    */
 
   /**
-   * @dev Calculates the spot price of token Y in token X.
+   * @dev Calculates the spot price of token Y in terms of token X.
+   todo optimize for getPoolTokens calls? 
    */
-  function getSpotPrice() internal view returns (uint256 pyx) {
+  function getSpotPrice(uint256[] memory balances) internal view returns (uint256 pyx) {
     (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
-    bytes32 poolId = _priceFeed.getPoolId();
-
-    (
-      ,
-      /**IERC20[] memory tokens */
-      uint256[] memory balances,
-
-    ) = VAULT.getPoolTokens(poolId);
 
     uint256 a = amp * 2;
     uint256 b = (invariant * a) - invariant;
@@ -141,21 +131,7 @@ contract BPT_Oracle is IOracleRelay {
     pyx = divUp(derivativeX, derivativeY);
   }
 
-  function getBPTprice() internal view returns (uint256 price) {
-    bytes32 poolId = _priceFeed.getPoolId();
-
-    (IERC20[] memory tokens, uint256[] memory balances, ) = VAULT.getPoolTokens(poolId);
-
-    uint256 valueX = ((balances[0] * assetOracles[address(tokens[0])].currentValue()));
-
-    uint256 valueY = (((getSpotPrice() * balances[1]) * assetOracles[address(tokens[1])].currentValue()) / 1e18);
-
-    uint256 totalValue = valueX + valueY;
-
-    price = (totalValue / _priceFeed.totalSupply());
-  }
-
-  //formula for converting balances => invariant
+  //The below formula is used for converting balances => invariant by the Balancer protocol
   /**********************************************************************************************
   // invariant                                                                                 //
   // D = invariant                                                  D^(n+1)                    //
@@ -164,6 +140,18 @@ contract BPT_Oracle is IOracleRelay {
   // P = product of balances                                                                   //
   // n = number of tokens                                                                      //
   *********x************************************************************************************/
+  function getBPTprice(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 price) {
+    //(IERC20[] memory tokens, uint256[] memory balances, ) = VAULT.getPoolTokens(poolId);
+
+    uint256 valueX = ((balances[0] * assetOracles[address(tokens[0])].currentValue()));
+
+    uint256 valueY = (((getSpotPrice(balances) * balances[1]) * assetOracles[address(tokens[1])].currentValue()) /
+      1e18);
+
+    uint256 totalValue = valueX + valueY;
+
+    price = (totalValue / _priceFeed.totalSupply());
+  }
 
   function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {
     total = 0;

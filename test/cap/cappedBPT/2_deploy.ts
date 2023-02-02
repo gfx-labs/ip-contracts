@@ -16,6 +16,7 @@ import {
   BPT_WEIGHTED_ORACLE__factory,
   IOracleRelay,
   IVault__factory,
+  UniswapV3TokenOracleRelay__factory,
   VaultBPT__factory,
   WstETHRelay__factory,
 } from "../../../typechain-types"
@@ -188,21 +189,21 @@ describe("Check BPT vault functions", () => {
   it("collect rewards", async () => {
 
     await s.BobBptVault.connect(s.Bob).claimRewards(s.Bob.address, s.stETH_Gauge.address)
+    //todo verify
 
   })
 
   it("Aura functions", async () => {
-
+    //todo
   })
-
-
 })
 
 describe("Oracle things", () => {
 
   let oracle: IOracleRelay
   let wstethRelay: IOracleRelay
-  let invariantOracle: IOracleRelay
+  let stablePoolOracle: IOracleRelay
+  let weightedPoolOracle: IOracleRelay
 
   /**
    * testing with reth 
@@ -221,147 +222,90 @@ describe("Oracle things", () => {
 
 
   ///this oracle gets the simple pool balances from the balancer vault, and then divides against the total supply of BPTs
-  it("Deploy and check invariant oracle", async () => {
+  it("Deploy and check stable pool oracle", async () => {
 
-    /**
-     * General procedure
-     * Array of tokens that are in balancer pool
-     * Equal length array of oracles for each asset
-     * 
-     * Get balance => value for each asset in the pool to gather a total asset value
-     * divide by BPT total supply 
-     */
 
-    invariantOracle = await new BPT_Oracle__factory(s.Frank).deploy(
+    stablePoolOracle = await new BPT_Oracle__factory(s.Frank).deploy(
       "0x32296969Ef14EB0c6d29669C550D4a0449130230", //pool_address
       ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
       [wstethRelay.address, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"], //_oracles
-      1,
-      1
+      BN("1"),
+      BN("100")
     )
     await mineBlock()
 
-    showBodyCyan("BPT value: ", await toNumber(await (await invariantOracle.currentValue())))
-
-
+    //showBodyCyan("BPT value: ", await toNumber(await (await stablePoolOracle.currentValue())))
+    expect(await toNumber(await stablePoolOracle.currentValue())).to.be.closeTo( 1615, 1, "Oracle price within 1% of simple price")
 
   })
 
-  it("Try invariant oracle again", async () => {
+  it("Try stable pool oracle again", async () => {
 
     const rETH_WETH_BPT = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276"
     const rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393"
     const cappedRETH = "0x64eA012919FD9e53bDcCDc0Fc89201F484731f41"
     const rETH_Oracle = "0x69F3d75Fa1eaA2a46005D566Ec784FE9059bb04B"
 
-    const Voracle = await new BPT_Oracle__factory(s.Frank).deploy(
+    const testStableOracle = await new BPT_Oracle__factory(s.Frank).deploy(
       rETH_WETH_BPT, //pool_address
       [rETH, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
       [rETH_Oracle, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"], //_oracles, weth oracle
-      1,
-      1
+      BN("1"),
+      BN("100")
     )
     await mineBlock()
 
-    //showBodyCyan("rETH BPT value: ", await toNumber(await (await Voracle.currentValue()).div(2)))
+    //showBodyCyan("rETH BPT value: ", await toNumber(await (await testStableOracle.currentValue())))
+    expect(await toNumber(await testStableOracle.currentValue())).to.be.closeTo( 1611, 1, "Oracle price within 1% of simple price")
 
   })
 
-  it("Invariant oracle with multiple assets/ratios", async () => {
+  it("Check weighted oracle", async () => {
     const balWethBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56" //bal80 / weth20
     const CappedBalancer = "0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85"
     const balancerToken = "0xba100000625a3754423978a60c9317c58a424e3D"
     const balancerOracle = "0xf5E0e2827F60580304522E2C38177DFeC7a428a4"
 
-    const ratioOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
+    weightedPoolOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       balWethBPT,
       [balancerToken, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
       [balancerOracle, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"], //_oracles, weth oracle
-      1,
-      1
+      BN("1"),
+      BN("100")
     )
-    await ratioOracle.deployed()
-    //showBodyCyan("BalWeth BPT value: ", await toNumber(await ratioOracle.currentValue()))
-
-
-
-  })
-
-
-  it("Deploy and check TWAP oracle", async () => {
-
-
-    const twapOracle = await new BPT_TWAP_Oracle__factory(s.Frank).deploy(
-      14400,
-      "0x32296969Ef14EB0c6d29669C550D4a0449130230",
-      "0x72D07D7DcA67b8A406aD1Ec34ce969c90bFEE768",
-      1,
-      1
-    )
-    await mineBlock()
-    await twapOracle.deployed()
-
-    showBodyCyan("TWAP value: ", await toNumber(await twapOracle.currentValue()))
-
-    /**
-   const factory = await ethers.getContractFactory("BPT_TWAP_Oracle")
-
-  oracle = await factory.deploy(
-    14400,
-    "0x32296969Ef14EB0c6d29669C550D4a0449130230",
-    "0x72D07D7DcA67b8A406aD1Ec34ce969c90bFEE768",
-    1,
-    1
-  )
-  await mineBlock()
-  await oracle.deployed()
-
-  const result = await oracle.currentValue()
-  showBodyCyan("RESULT: ", await toNumber(result))
-   */
-
-
-  })
-
-  /**
-   it("Check weighted pool oracle", async () => {
-    const weightedPoolOracle = await new BalancerWeightedPoolRelay__factory(s.Frank).deploy(
-      "0x32296969Ef14EB0c6d29669C550D4a0449130230",
-      ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"],
-      [wstethRelay.address, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"],
-      1,
-      1
-    )
-    await mineBlock()
     await weightedPoolOracle.deployed()
-
-    //showBody("Weighted Pool Oracle result: ", await toNumber(await weightedPoolOracle.currentValue()))
-  })
-   */
-
-
-
-
-  /**
-   * calculate from invariant
-   * we need the underlying price of token 1
-   * and the price of token 1 in terms of token 2 - TWAP ? 
-   * 
-   *  _ 
-   * | | symbol is prod - product
-   */
-
-  it("oracle math", async () => {
-    const amp = BN("50000")
-
-    const invariant = BN("116541847842842509280324").mul(amp)
-    const totalSupply = BN("113210279768128923680919")
-
-    //showBody("Result: ", invariant.div(totalSupply))
-    //showBody("Format: ", await toNumber(invariant.div(totalSupply)))
-    //showBody("New format: ", await toNumber(invariant) / await toNumber(totalSupply))
+    //showBodyCyan("BalWeth BPT value: ", await toNumber(await weightedPoolOracle.currentValue()))
+    expect(await toNumber(await weightedPoolOracle.currentValue())).to.be.closeTo(16, 1, "Oracle price within 1% of simple price")
 
   })
+
+  it("Deploy and check weighted pool oracle again", async () => {
+    const wethAuraBPT = "0xCfCA23cA9CA720B6E98E3Eb9B6aa0fFC4a5C08B9" //weth / aura 50/50
+    const auraToken = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF"
+    const auraPoolAddr3k = "0x4Be410e2fF6a5F1718ADA572AFA9E8D26537242b"
+
+    const uniAuraRelay = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
+      500,
+      auraPoolAddr3k,
+      true,
+      BN("1"),
+      BN("1")
+    )
+    await uniAuraRelay.deployed()
+    expect(await toNumber(await uniAuraRelay.currentValue())).to.be.closeTo(2.2, 0.1, "Aura relay price is correct")
+
+    const testStableOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
+      wethAuraBPT, //pool_address
+      [auraToken, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
+      [uniAuraRelay.address, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"], //_oracles, weth oracle
+      BN("1"),
+      BN("100")
+    )
+    await mineBlock()
+
+    expect(await toNumber(await testStableOracle.currentValue())).to.be.closeTo(62, 5, "Oracle price within 1% of simple price")
+  })
+
 
 })
 

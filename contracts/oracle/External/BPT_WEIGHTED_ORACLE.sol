@@ -21,15 +21,17 @@ interface IBalancerPool {
 
 /*****************************************
  *
- * This relay gets a USD price for a wrapped asset from a balancer MetaStablePool
+ * This relay gets a USD price for a Balancer BPT LP token from a weighted pool
  *
  */
 
 contract BPT_WEIGHTED_ORACLE is IOracleRelay {
   using PRBMathSD59x18 for *;
 
-  uint256 public immutable _multiply;
-  uint256 public immutable _divide;
+  bytes32 public immutable _poolId;
+
+  uint256 public immutable _widthNumerator;
+  uint256 public immutable _widthDenominator;
 
   IBalancerPool private immutable _priceFeed;
   IOracleRelay public constant ethOracle = IOracleRelay(0x22B01826063564CBe01Ef47B96d623b739F82Bf2);
@@ -46,76 +48,80 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
     address pool_address,
     address[] memory _tokens,
     address[] memory _oracles,
-    uint256 mul,
-    uint256 div
+    uint256 widthNumerator,
+    uint256 widthDenominator
   ) {
     _priceFeed = IBalancerPool(pool_address);
 
     registerOracles(_tokens, _oracles);
 
-    _multiply = mul;
-    _divide = div;
+    _widthNumerator = widthNumerator;
+    _widthDenominator = widthDenominator;
+    _poolId = _priceFeed.getPoolId();
   }
 
   function currentValue() external view override returns (uint256) {
-    console.log("PRICE???????: ", _getLPPrice());
+    (
+      IERC20[] memory tokens,
+      uint256[] memory balances, /**uint256 lastChangeBlock */
 
-    bytes32 id = _priceFeed.getPoolId();
+    ) = VAULT.getPoolTokens(_poolId);
+    uint256 robustPrice = getBPTprice(tokens, balances, int256(_priceFeed.totalSupply()));
+    require(robustPrice > 0, "invalid robust price");
 
-    (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(id);
+    uint256 simplePrice = sumBalances(tokens, balances) / _priceFeed.totalSupply();
+    require(simplePrice > 0, "invalid simple price");
 
-    uint256 totalValue = sumBalances(tokens, balances);
-    console.log("Simple Price: ", totalValue / _priceFeed.totalSupply());
+    // calculate buffer
+    uint256 buffer = (_widthNumerator * simplePrice) / _widthDenominator;
 
-    //return totalValue / _priceFeed.totalSupply();
-    return _getLPPrice();
+    // create upper and lower bounds
+    uint256 upperBounds = simplePrice + buffer;
+    uint256 lowerBounds = simplePrice - buffer;
+
+    console.log("Simple Price: ", simplePrice, simplePrice / 1e18);
+    console.log("Robust Price: ", robustPrice, robustPrice / 1e18);
+
+    // ensure the robust price is within bounds
+    require(robustPrice < upperBounds, "robustPrice too low");
+    require(robustPrice > lowerBounds, "robustPrice too high");
+
+    // return checked price
+    return robustPrice;
   }
 
-  function _getLPPrice() internal view returns (uint256 price) {
-    bytes32 poolId = _priceFeed.getPoolId();
+  function getBPTprice(
+    IERC20[] memory tokens,
+    uint256[] memory balances,
+    int256 totalSupply
+  ) internal view returns (uint256 price) {
     uint256[] memory weights = _priceFeed.getNormalizedWeights();
-
-    int256 totalSupply = int256(_priceFeed.totalSupply());
-    (IERC20[] memory tokens, uint256[] memory balances, ) = VAULT.getPoolTokens(poolId);
 
     int256 totalPi = PRBMathSD59x18.fromInt(1e18);
 
     uint256[] memory prices = new uint256[](tokens.length);
 
     for (uint256 i = 0; i < tokens.length; i++) {
-      //console.log("Total Pi: ", uint256(totalPi));
       balances[i] = (balances[i] * (10**18)) / (10**IERC20(address(tokens[i])).decimals());
       prices[i] = assetOracles[address(tokens[i])].currentValue();
 
       int256 val = int256(prices[i]).div(int256(weights[i]));
-      //console.log("Token: ", address(tokens[i]));
-      //console.log("Weight: ", weights[i]);
-      //console.log("val: ", uint256(val));
 
       int256 indivPi = val.pow(int256(weights[i]));
-      //console.log("indivPi: ", uint256(indivPi));
-
-      console.log("");
 
       totalPi = totalPi.mul(indivPi);
     }
-    //console.log("Total Pi: ", uint256(totalPi));
 
     int256 invariant = int256(_priceFeed.getLastInvariant());
     int256 numerator = totalPi.mul(invariant);
     price = uint256((numerator.toInt().div(totalSupply)));
   }
 
+  ///@notice get total values for calculating the simple price
   function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {
     total = 0;
-
-    //console.log("Balances: ", balances.length);
-    //console.log("token: ", address(tokens[0]), "balance: ", balances[0]); //100615514.12233347 USD
-    //console.log("token: ", address(tokens[1]), "balance: ", balances[1]); //79835218.30133966 USD += 180,450,732.4233397 USD??
-
     for (uint256 i = 0; i < tokens.length; i++) {
       total += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
-      //console.log(address(tokens[i]), assetOracles[address(tokens[i])].currentValue());
     }
   }
 
