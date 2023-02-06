@@ -118,6 +118,8 @@ export class TestScope extends MainnetAddresses {
     VotingVaultController!: VotingVaultController
     BPT_VaultController!: BPT_VaultController
 
+    CappedAuraBal!: CappedBptToken
+
     CappedStethBpt!: CappedBptToken
     CappedGaugeCap = BN("200e18")
 

@@ -3,7 +3,7 @@ import { d } from "../DeploymentInfo";
 import { upgrades, ethers } from "hardhat";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../../util/block";
+import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear, hardhat_mine } from "../../../util/block";
 import { utils, BigNumber } from "ethers";
 import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs";
@@ -192,10 +192,40 @@ describe("Check BPT vault functions", () => {
     //todo verify
 
   })
+  /**
+   * Deposit into 80/20 BAL/wETH to get BPT and receive auraBal
+   * stake auraBAL and receive BAL, bb-a-usd, AURA
+   * 
+   * Deposit eth for BPT - https://etherscan.io/tx/0xc13ca913667f10ccf787cf6f626ccd0b2c6f921e6ca8608be361aadae3776c14
+   * joinPool(bytes32, address, address, (address[],uint256[],bytes,bool)) (balancer vault 0xba12222222228d8ba445958a75a0704d566bf2c8)
+      1	poolId	bytes32	0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014
+      2	sender	address	0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89
+      3	recipient	address	0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89
+      3	request.assets	address	0xba100000625a3754423978a60c9317c58a424e3D,0x0000000000000000000000000000000000000000
 
+
+   * Mint and stake - https://etherscan.io/tx/0x8c2e8db7a1daabd8eba83d7669c283a314a18af861974ae7c7cb59248794e466
+   * deposit(uint256 _amount, bool _lock, address _stakeAddress)(crvDepositer 0xeAd792B55340Aa20181A80d6a16db6A0ECd1b827)
+      0	_amount	uint256	1010917644170912739
+      1	_lock	bool	true
+      2	_stakeAddress	address	0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2
+
+   * OR can also contribute to auraBAL / 80/20 BAL/wETH BPT
+      joinPool()
+   * Stake this BPT on aura to receive AURA
+   * 
+   */
   it("Aura functions", async () => {
+    const depositWrapperAddr = "0x68655ad9852a99c87c0934c7290bb62cfa5d4123"
+    const rewardsAddr = "0x00a7ba8ae7bca0b10a32ea1f8e2a1da980c6cad2"
+    const crvDepositerAddr = "0xeAd792B55340Aa20181A80d6a16db6A0ECd1b827"
+    const auraBalAddr = "0x616e8bfa43f920657b3497dbf40d6b1a02d4608d"
+    const BalAddr = "0xba100000625a3754423978a60c9317c58a424e3d"
     //todo
   })
+  /**
+   * 
+   */
 })
 
 describe("Oracle things", () => {
@@ -235,7 +265,7 @@ describe("Oracle things", () => {
     await mineBlock()
 
     //showBodyCyan("BPT value: ", await toNumber(await (await stablePoolOracle.currentValue())))
-    expect(await toNumber(await stablePoolOracle.currentValue())).to.be.closeTo( 1615, 1, "Oracle price within 1% of simple price")
+    expect(await toNumber(await stablePoolOracle.currentValue())).to.be.closeTo(1615, 1, "Oracle price within 1% of simple price")
 
   })
 
@@ -256,7 +286,7 @@ describe("Oracle things", () => {
     await mineBlock()
 
     //showBodyCyan("rETH BPT value: ", await toNumber(await (await testStableOracle.currentValue())))
-    expect(await toNumber(await testStableOracle.currentValue())).to.be.closeTo( 1611, 1, "Oracle price within 1% of simple price")
+    expect(await toNumber(await testStableOracle.currentValue())).to.be.closeTo(1611, 1, "Oracle price within 1% of simple price")
 
   })
 
@@ -304,6 +334,14 @@ describe("Oracle things", () => {
     await mineBlock()
 
     expect(await toNumber(await testStableOracle.currentValue())).to.be.closeTo(62, 5, "Oracle price within 1% of simple price")
+  })
+
+  it("auraBal oracle", async () => {
+
+    showBody("Hardhat mine")
+    await hardhat_mine(54800)
+
+
   })
 
 

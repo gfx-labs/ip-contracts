@@ -1,5 +1,6 @@
 import { network, ethers } from "hardhat";
 import * as dotenv from "dotenv";
+import hre from "hardhat";
 
 export const advanceBlockHeight = async (blocks: number) => {
     for (let i = 0; i < blocks; i++) {
@@ -7,6 +8,16 @@ export const advanceBlockHeight = async (blocks: number) => {
     }
     return
 };
+
+export const hardhat_mine = async (blocks: number) => {
+    await hre.network.provider.send("hardhat_mine", [("0x" + blocks.toString(16))])
+    return
+}
+
+export const hardhat_mine_timed = async (blocks: number, interval: number) => {
+    await hre.network.provider.send("hardhat_mine", [("0x" + blocks.toString(16)), ("0x" + interval.toString(16))])
+    return
+}
 
 export const fastForward = async (time: number) => {
     await network.provider.request({
@@ -28,8 +39,8 @@ export const currentBlock = async () => {
 }
 
 //set next TX timestamp to be current time + 1, cannot set next TX to be current time
-export const nextBlockTime = async (blockTime:number) => {
-    if(blockTime == 0){
+export const nextBlockTime = async (blockTime: number) => {
+    if (blockTime == 0) {
         let currentTime = await currentBlock()
         blockTime = currentTime.timestamp
     }
