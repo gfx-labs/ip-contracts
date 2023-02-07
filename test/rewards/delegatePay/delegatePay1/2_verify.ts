@@ -95,7 +95,7 @@ describe("Merkle Redeem", () => {
             formatObject[object.minter] = object.amount.toString()
         }
         console.log(formatObject)
-        
+
         await mineBlock()
 
         await ceaseImpersonation(s.DEPLOYER._address)
@@ -137,6 +137,7 @@ describe("Merkle Redeem", () => {
 
 
     })
+    
     it("Do a claim for LP2 using claimWeeks", async () => {
 
         const startingIPT = await s.IPT.balanceOf(LP2.minter)
@@ -158,8 +159,6 @@ describe("Merkle Redeem", () => {
         expect(await toNumber(balance.sub(startingIPT))).to.eq(await toNumber(BN(LP2.amount)))
 
     })
-
-  
 
     it("Check end state", async () => {
         //start from 0 this time, check everyone
