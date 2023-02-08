@@ -85,7 +85,7 @@ async function main() {
     )
 
     fs.writeFileSync('./scripts/proposals/govThresholds/proposalHexData.txt', JSON.stringify(data));
-    console.log(JSON.stringify(data))
+    //console.log(JSON.stringify(data))
 }
 
 main()

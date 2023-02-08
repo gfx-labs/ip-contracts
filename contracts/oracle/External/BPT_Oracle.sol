@@ -5,8 +5,6 @@ import "../IOracleRelay.sol";
 import "../../_external/IERC20.sol";
 import "../../_external/balancer/IBalancerVault.sol";
 
-import "../../_external/PRBMath/PRBMathSD59x18.sol";
-
 import "hardhat/console.sol";
 
 interface IBalancerPool {
@@ -19,12 +17,12 @@ interface IBalancerPool {
 
 /*****************************************
  *
- * This relay gets a USD price for BPT LP token from a balancer MetaStablePool *
+ * This relay gets a USD price for BPT LP token from a balancer MetaStablePool 
+ * This can be used as a stand alone oracle as the price is checked 2 separate ways
  *
  */
 
 contract BPT_Oracle is IOracleRelay {
-  using PRBMathSD59x18 for *;
 
   bytes32 public immutable _poolId;
 
@@ -42,7 +40,7 @@ contract BPT_Oracle is IOracleRelay {
   int256 public constant WEIGHT = int256(5e17);
 
   /**
-   * @param pool_address - Balancer pool address
+   * @param pool_address - Balancer StablePool or MetaStablePool address
    */
   constructor(
     address pool_address,

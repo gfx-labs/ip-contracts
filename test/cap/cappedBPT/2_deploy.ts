@@ -11,6 +11,7 @@ import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import { toNumber } from "../../../util/math"
 import {
+  BalancerStablePoolTokenOracle__factory,
   BalancerWeightedPoolRelay__factory,
   BPT_TWAP_Oracle__factory,
   BPT_WEIGHTED_ORACLE__factory,
@@ -235,6 +236,11 @@ describe("Oracle things", () => {
   let stablePoolOracle: IOracleRelay
   let weightedPoolOracle: IOracleRelay
 
+  let auraUniRelay: IOracleRelay
+  let auraBalRelay: IOracleRelay
+
+  const BAL_TOKEN_ORACLE = "0xf5E0e2827F60580304522E2C38177DFeC7a428a4"
+
   /**
    * testing with reth 
    * need reth / eth balancer pool and gauge
@@ -258,14 +264,14 @@ describe("Oracle things", () => {
     stablePoolOracle = await new BPT_Oracle__factory(s.Frank).deploy(
       "0x32296969Ef14EB0c6d29669C550D4a0449130230", //pool_address
       ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
-      [wstethRelay.address, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"], //_oracles
+      [wstethRelay.address, s.wethOracleAddr], //_oracles
       BN("1"),
       BN("100")
     )
     await mineBlock()
 
     //showBodyCyan("BPT value: ", await toNumber(await (await stablePoolOracle.currentValue())))
-    expect(await toNumber(await stablePoolOracle.currentValue())).to.be.closeTo(1615, 1, "Oracle price within 1% of simple price")
+    expect(await toNumber(await stablePoolOracle.currentValue())).to.be.closeTo(1716, 1, "Oracle price within 1% of simple price")
 
   })
 
@@ -279,14 +285,14 @@ describe("Oracle things", () => {
     const testStableOracle = await new BPT_Oracle__factory(s.Frank).deploy(
       rETH_WETH_BPT, //pool_address
       [rETH, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
-      [rETH_Oracle, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"], //_oracles, weth oracle
+      [rETH_Oracle, s.wethOracleAddr], //_oracles, weth oracle
       BN("1"),
       BN("100")
     )
     await mineBlock()
 
     //showBodyCyan("rETH BPT value: ", await toNumber(await (await testStableOracle.currentValue())))
-    expect(await toNumber(await testStableOracle.currentValue())).to.be.closeTo(1611, 1, "Oracle price within 1% of simple price")
+    expect(await toNumber(await testStableOracle.currentValue())).to.be.closeTo(1709, 1, "Oracle price within 1% of simple price")
 
   })
 
@@ -294,18 +300,17 @@ describe("Oracle things", () => {
     const balWethBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56" //bal80 / weth20
     const CappedBalancer = "0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85"
     const balancerToken = "0xba100000625a3754423978a60c9317c58a424e3D"
-    const balancerOracle = "0xf5E0e2827F60580304522E2C38177DFeC7a428a4"
 
     weightedPoolOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       balWethBPT,
       [balancerToken, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
-      [balancerOracle, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"], //_oracles, weth oracle
+      [BAL_TOKEN_ORACLE, s.wethOracleAddr], //_oracles, weth oracle
       BN("1"),
       BN("100")
     )
     await weightedPoolOracle.deployed()
     //showBodyCyan("BalWeth BPT value: ", await toNumber(await weightedPoolOracle.currentValue()))
-    expect(await toNumber(await weightedPoolOracle.currentValue())).to.be.closeTo(16, 1, "Oracle price within 1% of simple price")
+    expect(await toNumber(await weightedPoolOracle.currentValue())).to.be.closeTo(17, 1, "Oracle price within 1% of simple price")
 
   })
 
@@ -322,24 +327,82 @@ describe("Oracle things", () => {
       BN("1")
     )
     await uniAuraRelay.deployed()
-    expect(await toNumber(await uniAuraRelay.currentValue())).to.be.closeTo(2.2, 0.1, "Aura relay price is correct")
+    expect(await toNumber(await uniAuraRelay.currentValue())).to.be.closeTo(2.65, 0.1, "Aura relay price is correct")
 
     const testStableOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       wethAuraBPT, //pool_address
       [auraToken, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
-      [uniAuraRelay.address, "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"], //_oracles, weth oracle
+      [uniAuraRelay.address, s.wethOracleAddr], //_oracles, weth oracle
       BN("1"),
       BN("100")
     )
     await mineBlock()
 
-    expect(await toNumber(await testStableOracle.currentValue())).to.be.closeTo(62, 5, "Oracle price within 1% of simple price")
+    expect(await toNumber(await testStableOracle.currentValue())).to.be.closeTo(70, 5, "Oracle price within 1% of simple price")
   })
 
+  /**
+   * Uni v3 relay
+   * Balancer relay, new Balancer weighted pool relay??
+   * Current price ~$17
+   * aura token = 0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF
+   * auraBal = 0x616e8BfA43F920657B3497DBf40D6b1A02D4608d
+   * 
+   */
   it("auraBal oracle", async () => {
+    const uniPool = "0xFdeA35445489e608fb4F20B6E94CCFEa8353Eabd"//3k, meh liquidity
 
-    showBody("Hardhat mine")
-    await hardhat_mine(54800)
+    auraUniRelay = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
+      500,
+      uniPool,
+      false,
+      BN("1"),
+      BN("1")
+    )
+    await mineBlock()
+    await auraUniRelay.deployed()
+
+    showBody("Aura uni relay price: ", await toNumber(await auraUniRelay.currentValue()))
+
+
+
+    //aura relay using balancer
+    const balancerPool = "0x3dd0843A028C86e0b760b1A76929d1C5Ef93a2dd" //auraBal/"veBal" BPT stable pool (B-80BAL-20WETH - 0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56)
+    const primeBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
+
+    const primeBPToracle: IOracleRelay = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
+      primeBPT,
+      [s.BAL.address, s.wethAddress],
+      [BAL_TOKEN_ORACLE, s.wethOracleAddr],
+      BN("10"),
+      BN("100")
+    )
+
+    await primeBPToracle.deployed()
+    //showBody("Prime BPT oracle price: ", await toNumber(await primeBPToracle.currentValue()))
+    auraBalRelay = await new BalancerStablePoolTokenOracle__factory(s.Frank).deploy(
+      balancerPool,
+      [s.auraBal.address, primeBPT],
+      [auraUniRelay.address, primeBPToracle.address]
+    )
+    await auraBalRelay.deployed()
+    showBodyCyan("REsult: ", await toNumber(await auraBalRelay.currentValue()))
+
+
+
+    //twap oracle
+
+
+    //get aura bal price using balancer pool, new stable oracle? 
+
+
+
+  })
+
+  /**
+   * Use auraBal oracle + conversion rate to get reward token price
+   */
+  it("Staked auraBal rewards token", async () => {
 
 
   })

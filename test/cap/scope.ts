@@ -16,6 +16,8 @@ export class TestScope extends MainnetAddresses {
 
     MTA!: IERC20;
     BalancerVault!: IBalancerVault;
+    wethOracleAddr = "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"
+    wethOracle!: IOracleRelay
     
 
     ENS!: IVOTE;
@@ -118,7 +120,9 @@ export class TestScope extends MainnetAddresses {
     VotingVaultController!: VotingVaultController
     BPT_VaultController!: BPT_VaultController
 
+    auraBal!: IERC20
     CappedAuraBal!: CappedBptToken
+    BAL!: IERC20
 
     CappedStethBpt!: CappedBptToken
     CappedGaugeCap = BN("200e18")

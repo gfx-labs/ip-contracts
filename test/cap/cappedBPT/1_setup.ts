@@ -7,7 +7,7 @@ import { s } from "../scope";
 import { d } from "../DeploymentInfo";
 import { toNumber } from "../../../util/math"
 import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
-import { IERC20, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, IBalancerVault__factory, VotingVaultController__factory, IGauge__factory } from "../../../typechain-types";
+import { IERC20, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, IBalancerVault__factory, VotingVaultController__factory, IGauge__factory, IOracleRelay__factory } from "../../../typechain-types";
 import { BigNumber, BytesLike } from "ethers";
 import { BPT_VaultController__factory } from "../../../typechain-types/factories/lending/BPT_VaultController__factory";
 //import { assert } from "console";
@@ -54,7 +54,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(16429910)).to.not.throw;//14940917
+        expect(await reset(16579684)).to.not.throw;//14940917
     });
     it("set automine", async () => {
         expect(await network.provider.send("evm_setAutomine", [true])).to.not
@@ -85,6 +85,11 @@ describe("Token Setup", () => {
 
         s.stETH_BPT = IERC20__factory.connect(stETH_BPT, s.Frank)
         s.stETH_Gauge = IGauge__factory.connect(stETHstableGauge, s.Frank)
+
+        s.wethOracle = IOracleRelay__factory.connect(s.wethOracleAddr, s.Frank)
+
+        s.BAL = IERC20__factory.connect("0xba100000625a3754423978a60c9317c58a424e3D", s.Frank)
+        s.auraBal = IERC20__factory.connect("0x616e8BfA43F920657B3497DBf40D6b1A02D4608d", s.Frank)
 
 
     });
