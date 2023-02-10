@@ -35,6 +35,7 @@ const feems = "0x6DD6934452eB4E6D87B9c874AE0EF83ec3bd5803"
 
 const newProposalThreshold = BN("200000e18")
 const newQuorum = BN("2000000e18")
+const newOptimisticQuorum = BN("500000e18")
 const anchorViewAddr = "0xEF12fa3183362506A2dd0ff1CF06b2f4156e751E"
 
 async function main() {
@@ -61,10 +62,16 @@ async function main() {
         newQuorum
       )
 
+    const setOptimisticQuorum = await new GovernorCharlieDelegate__factory(deployer).attach(governorAddress).populateTransaction._setOptimisticQuorumVotes(
+      newOptimisticQuorum
+    )
+
     const transferUSDi = await new USDI__factory(deployer).attach(d.USDI).populateTransaction.transfer(feems, BN("600e18"))
 
     proposal.addStep(setProposalThreshold, "_setProposalThreshold(uint256)")
     proposal.addStep(setQuorumThreshold, "_setQuorumVotes(uint256)")
+    proposal.addStep(setOptimisticQuorum, "_setOptimisticQuorumVotes(uint256)")
+
     proposal.addStep(transferUSDi, "transfer(address,uint256)")
 
     const out = proposal.populateProposal()

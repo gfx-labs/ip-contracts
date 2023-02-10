@@ -39,3 +39,5 @@ If we find that too many proposals are being made, we can increase the proposal 
 
 ## Links
 [Forum thread](https://forums.interestprotocol.io/t/proposal-to-change-governance-parameters/141?u=getty)
+## Recongized Delegator Facilitator Pay
+600 USDi will be transferred from the treasury to Feems.eth to pay for Feem's efforts on the recongized delegate program.

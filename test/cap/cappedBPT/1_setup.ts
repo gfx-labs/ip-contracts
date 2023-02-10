@@ -39,10 +39,8 @@ const primaryPool = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
 const mtaPoolID = "0xe2469f47ab58cf9cf59f9822e3c5de4950a41c49000200000000000000000089"
 const primaryPoolID = "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014"
 const primaryPoolBPTaddr = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
-const veBALaddr = "0xC128a9954e6c874eA3d62ce62B468bA073093F25"
 const stETH_BPT = "0x32296969Ef14EB0c6d29669C550D4a0449130230"
 const stETHstableGauge = "0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE" //B-stETH-STABLE-gauge
-const auraBal_addr = "0x616e8BfA43F920657B3497DBf40D6b1A02D4608d"
 
 
 if (process.env.TENDERLY_KEY) {
@@ -90,6 +88,7 @@ describe("Token Setup", () => {
 
         s.BAL = IERC20__factory.connect("0xba100000625a3754423978a60c9317c58a424e3D", s.Frank)
         s.auraBal = IERC20__factory.connect("0x616e8BfA43F920657B3497DBf40D6b1A02D4608d", s.Frank)
+        s.auraBalRewards = IERC20__factory.connect("0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2", s.Frank)
 
 
     });

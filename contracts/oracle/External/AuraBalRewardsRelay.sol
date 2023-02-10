@@ -28,17 +28,11 @@ interface IBalancerFeed {
 }
 
 /*****************************************
- *
- * This relay gets a USD price for a pegged asset from a balancer StablePool
- * Price is calculated using a known safe price for one asset in the pool to derive the price for the other via the exchange rate
- * The exchange rate is calculated using the invariant, thereby making the derived price resistant to manipulation
- *
- * This should be used as one of two separate relays for a token price where possible, such that a second safe price
- * is obtained elsewhere to serve as a check via AnchorViewRelay
- *
+ * This relay converts an auraBal price to a rewards price
+ * The price for rewards token is reduced by a factor of 1e18
  */
 
-contract BalancerStablePoolTokenOracle is IOracleRelay {
+contract AuraBalRewardsRelay is IOracleRelay {
   IBalancerFeed private immutable _priceFeed;
   IBalancerVault public constant VAULT = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
   bytes32 public immutable _poolId;

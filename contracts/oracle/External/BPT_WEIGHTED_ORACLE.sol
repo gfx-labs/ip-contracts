@@ -79,8 +79,8 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
     uint256 upperBounds = simplePrice + buffer;
     uint256 lowerBounds = simplePrice - buffer;
 
-    console.log("Simple Price: ", simplePrice, simplePrice / 1e18);
-    console.log("Robust Price: ", robustPrice, robustPrice / 1e18);
+    //console.log("Simple Price: ", simplePrice, simplePrice / 1e18);
+    //console.log("Robust Price: ", robustPrice, robustPrice / 1e18);
 
     // ensure the robust price is within bounds
     require(robustPrice < upperBounds, "robustPrice too low");

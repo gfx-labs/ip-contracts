@@ -113,7 +113,9 @@ describe("Setup, Queue, and Execute proposal", () => {
   let feemsInit: BigNumber
   let initQuorum: BigNumber
   let initProposalThreshold: BigNumber
+  let initOptimisticQuorum: BigNumber
 
+  const newOptimisticQuorum = BN("500000e18")
   const newProposalThreshold = BN("200000e18")
   const newQuorum = BN("2000000e18")
 
@@ -121,18 +123,25 @@ describe("Setup, Queue, and Execute proposal", () => {
     gov = new GovernorCharlieDelegate__factory(s.Frank).attach(
       governorAddress
     );
+    
     //set initial values for tracking
     feemsInit = await s.USDI.balanceOf(feems)
+    
     initQuorum = await gov.quorumVotes()
     expect(await toNumber(initQuorum)).to.eq(10000000, "Initial quorum is correct")
+    
     initProposalThreshold = await gov.proposalThreshold()
     expect(await toNumber(initProposalThreshold)).to.eq(1000000, "Initial proposal threshold is correct")
+  
+    initOptimisticQuorum = await gov.optimisticQuorumVotes()
+    expect(await toNumber(initOptimisticQuorum)).to.eq(2000000, "Init optimistic quorum is correct")
+
   })
 
   it("Makes the new proposal", async () => {
 
     await impersonateAccount(proposer)
-    
+
 
     const proposal = new ProposalContext("GovThresholds")
 
@@ -147,11 +156,16 @@ describe("Setup, Queue, and Execute proposal", () => {
       populateTransaction._setQuorumVotes(
         newQuorum
       )
+    const setOptimisticQuorum = await new GovernorCharlieDelegate__factory(prop).attach(governorAddress).populateTransaction._setOptimisticQuorumVotes(
+      newOptimisticQuorum
+    )
 
     const transferUSDi = await new USDI__factory(prop).attach(s.USDI.address).populateTransaction.transfer(feems, BN("600e18"))
 
     proposal.addStep(setProposalThreshold, "_setProposalThreshold(uint256)")
     proposal.addStep(setQuorumThreshold, "_setQuorumVotes(uint256)")
+    proposal.addStep(setOptimisticQuorum, "_setOptimisticQuorumVotes(uint256)")
+
     proposal.addStep(transferUSDi, "transfer(address,uint256)")
 
     await ceaseImpersonation(proposer)
@@ -216,6 +230,9 @@ describe("Setup, Queue, and Execute proposal", () => {
 
     let actualNewPT = await gov.proposalThreshold()
     expect(actualNewPT).to.eq(newProposalThreshold, "New proposal threshold is correct")
+
+    let actualOptiQuorum = await gov.optimisticQuorumVotes()
+    expect(actualOptiQuorum).to.eq(newOptimisticQuorum, "Optimistic quorum is correct")
   })
 
 })

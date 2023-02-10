@@ -76,6 +76,7 @@ export class TestScope extends MainnetAddresses {
     BobVotingVault!: VotingVault
     BobBptVault!: VaultBPT
     CarolVotingVault!: VotingVault
+    CarolBptVault!: VaultBPT
     DeployerVotingVault!: VotingVault
     DeployerVaultID = 1
     DeployerVault!: IVault
@@ -122,9 +123,18 @@ export class TestScope extends MainnetAddresses {
 
     auraBal!: IERC20
     CappedAuraBal!: CappedBptToken
+    auraBalRewards!: IERC20
+    CappedAuraBalRewards!: CappedBptToken
+    AuraBalAmount = BN("200e18")
+    AuraBalRewardsAmount = BN("500e18")
+    AuraBalCap = BN("200e18")
+    auraBalLTV = BN("75e16")
+    
     BAL!: IERC20
 
+
     CappedStethBpt!: CappedBptToken
+    CappedStethGauge!: CappedBptToken
     CappedGaugeCap = BN("200e18")
 
     stETH_BPT!: IERC20
