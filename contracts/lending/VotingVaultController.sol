@@ -12,7 +12,7 @@ import "./VotingVault.sol";
 import "./VaultBPT.sol";
 import "./CappedBptToken.sol";
 
-//import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 /// @title CappedGovToken
 /// @notice handles all minting/burning of underlying
@@ -55,7 +55,11 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
   /// @param amount of underlying asset to retrieve by burning cap tokens
   /// @param voting_vault holding the underlying
   /// @param target to receive the underlying
-  function retrieveUnderlying(uint256 amount, address voting_vault, address target) public {
+  function retrieveUnderlying(
+    uint256 amount,
+    address voting_vault,
+    address target
+  ) public {
     require(voting_vault != address(0x0), "invalid vault");
 
     address underlying_address = _CappedToken_underlying[_msgSender()];
@@ -65,14 +69,28 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
     votingVault.votingVaultControllerTransfer(underlying_address, target, amount);
   }
 
-  function retrieveUnderlyingBPT(uint256 amount, address vaultBPT, address target) public {
+  function retrieveUnderlyingBPT(
+    uint256 amount,
+    address vaultBPT,
+    address target
+  ) public {
     require(vaultBPT != address(0x0), "invalid vault");
 
+    //get BPT addr
     address underlying_address = _CappedToken_underlying[_msgSender()];
-
     require(underlying_address != address(0x0), "only capped token");
-    VaultBPT vaultBPT = VaultBPT(vaultBPT);
-    vaultBPT.votingVaultControllerTransfer(underlying_address, target, amount);
+
+    VaultBPT bptVault = VaultBPT(vaultBPT);
+
+    console.log("Bouda vvc transfer", underlying_address);
+
+    //determine if we need to unstake
+    bool unstake = false;
+    //if auraBal and staked then we need to unstake
+    if (underlying_address == 0x616e8BfA43F920657B3497DBf40D6b1A02D4608d && bptVault.stakedAuraBal()) {
+      unstake = true;
+    }
+    bptVault.votingVaultControllerTransfer(underlying_address, target, amount, unstake);
   }
 
   /// @notice create a new vault

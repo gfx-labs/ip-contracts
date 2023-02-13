@@ -78,7 +78,7 @@ describe("Check Interest Protocol contracts", () => {
 describe("Upgrade Voting Vault Controller", () => {
 
   it("Deploy new implementation", async () => {
-    const bptControllerFactory = await ethers.getContractFactory("BPT_VaultController")
+    const bptControllerFactory = await ethers.getContractFactory("VotingVaultController")
     const implementation = await bptControllerFactory.deploy()
     await mineBlock()
     await implementation.deployed()
@@ -423,6 +423,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
       s.VotingVaultController.address
     )
     await s.CappedStethGauge.deployed()
+    await s.CappedStethGauge.setCap(s.STETH_CAP)
     await s.CappedStethGauge.connect(s.Frank).transferOwnership(s.owner._address)
 
     await impersonateAccount(s.owner._address)
@@ -456,6 +457,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
       s.VotingVaultController.address
     )
     await s.CappedAuraBal.deployed()
+    await s.CappedAuraBal.setCap(s.AuraBalCap)
     await s.CappedAuraBal.connect(s.Frank).transferOwnership(s.owner._address)
 
     await impersonateAccount(s.owner._address)

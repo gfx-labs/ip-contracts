@@ -10,7 +10,7 @@ import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 import "./IVaultController.sol";
 import "./IVault.sol";
 import "./VaultBPT.sol";
-import "./BPT_VaultController.sol";
+import "./VotingVaultController.sol";
 
 import "hardhat/console.sol";
 
@@ -90,6 +90,7 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
 
   //TODO convert any gaugeTokens in the BPT vault to underlying BPT, maybe do in retrieveUnderlying
   function transfer(address recipient, uint256 amount) public override returns (bool) {
+    console.log("Capped BPT transfer: ", amount);
     uint96 vault_id = _votingVaultController.vaultId(_msgSender());
     // only vaults will ever send this. only vaults will ever hold this token.
     require(vault_id > 0, "only vaults");
@@ -98,6 +99,7 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     require(BPT_vault_address != address(0x0), "no voting vault");
     // burn the collateral tokens from the sender, which is the vault that holds the collateral tokens
     ERC20Upgradeable._burn(_msgSender(), amount);
+    console.log("Bouda retrieve underlying");
     // move the underlying tokens from voting vault to the target
     _votingVaultController.retrieveUnderlyingBPT(amount, BPT_vault_address, recipient);
     return true;
