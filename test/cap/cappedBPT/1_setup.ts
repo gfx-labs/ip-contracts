@@ -111,6 +111,7 @@ describe("Token Setup", () => {
         await stealMoney(usdc_minter, s.Frank.address, s.USDC.address, s.USDC_AMOUNT)
         await stealMoney(usdc_minter, s.Bob.address, s.USDC.address, s.USDC_AMOUNT)
         await stealMoney(usdc_minter, s.Carol.address, s.USDC.address, s.USDC_AMOUNT)
+        await stealMoney(usdc_minter, s.Dave.address, s.USDC.address, s.USDC_AMOUNT)
 
         await stealMoney(weth_minter, s.Bob.address, s.WETH.address, s.WETH_AMOUNT)
 

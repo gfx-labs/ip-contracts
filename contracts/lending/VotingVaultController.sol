@@ -82,8 +82,6 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
 
     VaultBPT bptVault = VaultBPT(vaultBPT);
 
-    console.log("Bouda vvc transfer", underlying_address);
-
     //determine if we need to unstake
     bool unstake = false;
     //if auraBal and staked then we need to unstake
