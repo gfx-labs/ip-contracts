@@ -81,8 +81,8 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     // check cap
     checkCap(amount);
     // check allowance and ensure transfer success
-    uint256 allowance = _underlying.allowance(_msgSender(), address(this));
-    require(allowance >= amount, "Insufficient Allowance");
+    //uint256 allowance = _underlying.allowance(_msgSender(), address(this));
+    //require(allowance >= amount, "Insufficient Allowance");
     // mint this token, the collateral token, to the vault
     ERC20Upgradeable._mint(address(vault), amount);
     _underlying.safeTransferFrom(_msgSender(), address(bptVault), amount);

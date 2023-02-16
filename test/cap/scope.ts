@@ -129,6 +129,12 @@ export class TestScope extends MainnetAddresses {
     AuraBalRewardsAmount = BN("500e18")
     AuraBalCap = BN("200e18")
     auraBalLTV = BN("75e16")
+
+    primeAuraBalLP!: IERC20
+    primeAuraBalRewardToken!: IERC20
+    CappedAuraLP!: CappedBptToken
+    AuraLPamount = BN("100e18")
+    AuraLPrewardsAmount = BN("500e18")
     
     BAL!: IERC20
 

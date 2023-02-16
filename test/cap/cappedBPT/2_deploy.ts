@@ -254,15 +254,18 @@ describe("Setup oracles, deploy and register cap tokens", () => {
   let auraUniRelay: IOracleRelay
   let auraBalRelay: IOracleRelay
   let auraBalAnchorView: IOracleRelay
+  let auraStablePoolLPoracle: IOracleRelay
+  let primeBPToracle: IOracleRelay
 
   const BAL_TOKEN_ORACLE = "0xf5E0e2827F60580304522E2C38177DFeC7a428a4"
 
+  const primeBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
 
   it("Check wstETH exchange rate relay", async () => {
 
     wstethRelay = await new WstETHRelay__factory(s.Frank).deploy()
     await mineBlock()
-    showBody("wstETH direct conversion price: ", await toNumber(await wstethRelay.currentValue()))
+    //showBody("wstETH direct conversion price: ", await toNumber(await wstethRelay.currentValue()))
 
   })
 
@@ -379,9 +382,8 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     //aura relay using balancer
     const balancerPool = "0x3dd0843A028C86e0b760b1A76929d1C5Ef93a2dd" //auraBal/"veBal" BPT stable pool (B-80BAL-20WETH - 0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56)
-    const primeBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
 
-    const primeBPToracle: IOracleRelay = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
+    primeBPToracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       primeBPT,
       [s.BAL.address, s.wethAddress],
       [BAL_TOKEN_ORACLE, s.wethOracleAddr],
@@ -409,6 +411,22 @@ describe("Setup oracles, deploy and register cap tokens", () => {
     await auraBalAnchorView.deployed()
     showBodyCyan("AuraBal anchor view result: ", await toNumber(await auraBalAnchorView.currentValue()))
 
+  })
+
+  /**
+   * Set up oracle for stable pool 'prime' BPT / auraBal LP token 0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd
+   * This is the oracle used for the price of the reward token being listed
+   */
+  it("Aura LP token oracle", async () => {
+    auraStablePoolLPoracle = await new BPT_Oracle__factory(s.Frank).deploy(
+      s.primeAuraBalLP.address,
+      [primeBPT, s.auraBal.address],//prime BPT / auraBal
+      [primeBPToracle.address, auraBalAnchorView.address],//prime BPT oracle / auraBal oracle
+      BN("1"),
+      BN("100")
+    )
+    await auraStablePoolLPoracle.deployed()
+    showBodyCyan("Price for primeBPT / auraBal Aura Stable pool LP: ", await toNumber(await auraStablePoolLPoracle.currentValue()))
   })
 
   it("Deploy and Register gaugeToken", async () => {
@@ -479,13 +497,104 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
   })
 
+  it("Deploy and register Capped Aura LP token", async () => {
+    s.CappedAuraLP = await DeployContractWithProxy(
+      new CappedBptToken__factory(s.Frank),
+      s.Frank,
+      s.ProxyAdmin,
+      "CappedAuraLP",
+      "caLP",
+      s.primeAuraBalLP.address,
+      s.VaultController.address,
+      s.VotingVaultController.address
+    )
+    await s.CappedAuraLP.deployed()
+    await s.CappedAuraLP.setCap(s.AuraLPamount)
+
+    await s.CappedAuraLP.connect(s.Frank).transferOwnership(s.owner._address)
+
+    await impersonateAccount(s.owner._address)
+    //register on voting vault controller
+    await s.VotingVaultController.connect(s.owner).registerUnderlying(s.primeAuraBalLP.address, s.CappedAuraLP.address)
+
+    //register oracle
+    await s.Oracle.connect(s.owner).setRelay(s.CappedAuraLP.address, auraStablePoolLPoracle.address)
+    showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedAuraLP.address)))
+
+    //register on vault controller
+    await s.VaultController.connect(s.owner).registerErc20(
+      s.CappedAuraLP.address,
+      s.auraBalLTV,
+      s.CappedAuraLP.address,
+      s.LiquidationIncentive
+    )
+    await ceaseImpersonation(s.owner._address)
+  })
+
+  /**
+   * Aura LP token notes
+   * Rewards contract - 0xacada51c320947e7ed1a0d0f6b939b0ff465e4c2 //LIST THIS
+   * Rewards Depositer - 0xb188b1cb84fb0ba13cb9ee1292769f903a9fec59
+   * LP token - 0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd // staked 1:1 for rewards token
+   * 
+   * LP tokens are approving aura Booster 0xA57b8d98dAE62B26Ec3bcC4a365338157060B234 and calling deposit https://etherscan.io/tx/0x63174bb01aa1e9bb9c9642670026b1d324a33d40d4ce60557f3f09e29cdb6f30
+   * Receive Base rewards Pool 0xACAdA51C320947E7ed1a0D0F6b939b0FF465E4c2 which has a good distribution
+   * 
+   * All LP holders stake to Balancer B-auraBAL-STABLE Gauge Deposit 0x0312AA8D0BA4a1969Fddb382235870bF55f7f242
+   * All gauge token holders stake to aura VoterProxy 0xaF52695E1bB01A16D33D7194C28C42b10e0Dbec2
+   * 
+   * Call deposit single on rewards contract? to receive rewards token 0xACAdA51C320947E7ed1a0D0F6b939b0FF465E4c2
+   * 
+   * Deposit naitive assets to get aura LP token
+   * Stake LP token
+   */
+  /**
+   * not transferrable? 
+   it("Deploy and register Capped Aura LP reward token", async () => {
+    s.CappedAuraLP = await DeployContractWithProxy(
+      new CappedBptToken__factory(s.Frank),
+      s.Frank,
+      s.ProxyAdmin,
+      "CappedAuraLPrewardToken",
+      "cALPR",
+      s.primeAuraBalRewardToken.address,
+      s.VaultController.address,
+      s.VotingVaultController.address
+    )
+    await s.CappedAuraLP.deployed()
+    await s.CappedAuraLP.setCap(s.AuraBalCap)
+
+    await s.CappedAuraLP.connect(s.Frank).transferOwnership(s.owner._address)
+
+    await impersonateAccount(s.owner._address)
+    //register on voting vault controller
+    await s.VotingVaultController.connect(s.owner).registerUnderlying(s.primeAuraBalRewardToken.address, s.CappedAuraLP.address)
+
+    //register oracle
+    await s.Oracle.connect(s.owner).setRelay(s.CappedAuraLP.address, auraStablePoolLPoracle.address)
+    showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedAuraLP.address)))
+
+    //register on vault controller
+    await s.VaultController.connect(s.owner).registerErc20(
+      s.CappedAuraLP.address,
+      s.auraBalLTV,
+      s.CappedAuraLP.address,
+      s.LiquidationIncentive
+    )
+    await ceaseImpersonation(s.owner._address)
+
+  })
+   */
+
   /**
     * AuraBal BaseRewardsPool - 0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2
     * Etherscan can't format 0 decimals 1.013404652797941235 auraBal => 1,013,404,652,797,940,000 rewards tokens 
     * Rewards paid in positive rebase on withdraw? AuraBal received     1,013,404,652,797,941,235
     * https://etherscan.io/tx/0x4e15607b6cf9f0acd7374f825074ab492c99ebca65ac86f802641d3aaefe69e1
     */
-  it("Register CappedAuraBalRewards token", async () => {
+  /**
+   * Rewards token not liquid :(
+   it("Register CappedAuraBalRewards token", async () => {
 
     s.CappedAuraBalRewards = await DeployContractWithProxy(
       new CappedBptToken__factory(s.Frank),
@@ -517,6 +626,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
     await ceaseImpersonation(s.owner._address)
 
   })
+   */
 })
 
 

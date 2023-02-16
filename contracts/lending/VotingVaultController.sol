@@ -82,13 +82,7 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
 
     VaultBPT bptVault = VaultBPT(vaultBPT);
 
-    //determine if we need to unstake
-    bool unstake = false;
-    //if auraBal and staked then we need to unstake
-    if (underlying_address == 0x616e8BfA43F920657B3497DBf40D6b1A02D4608d && bptVault.stakedAuraBal()) {
-      unstake = true;
-    }
-    bptVault.votingVaultControllerTransfer(underlying_address, target, amount, unstake);
+    bptVault.votingVaultControllerTransfer(underlying_address, target, amount);
   }
 
   /// @notice create a new vault

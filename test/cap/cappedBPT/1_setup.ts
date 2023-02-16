@@ -10,6 +10,7 @@ import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
 import { IERC20, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, IBalancerVault__factory, VotingVaultController__factory, IGauge__factory, IOracleRelay__factory } from "../../../typechain-types";
 import { BigNumber, BytesLike } from "ethers";
 import { BPT_VaultController__factory } from "../../../typechain-types/factories/lending/BPT_VaultController__factory";
+import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
 //import { assert } from "console";
 
 require("chai").should();
@@ -30,6 +31,9 @@ let mta_minter = "0xE93381fB4c4F14bDa253907b18faD305D799241a"//huboi
 
 const stETH_BPT_minter = "0x4d73EF089CD9B59405eb303e08B76a4e8da3a1C9"
 const stETH_Gauge_minter = "0xe8343fd029561289CF7359175EE84DA121817C71"
+
+const auraLPminter = "0x3004E7d0bA11BcD506349F1062eA57f7037F0BBd"
+const auraLPrewardsMinter = "0xBB19053E031D9B2B364351B21a8ed3568b21399b"
 
 
 let weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
@@ -90,6 +94,9 @@ describe("Token Setup", () => {
         s.auraBal = IERC20__factory.connect("0x616e8BfA43F920657B3497DBf40D6b1A02D4608d", s.Frank)
         s.auraBalRewards = IERC20__factory.connect("0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2", s.Frank)
 
+        //'prime' BPT / auraBal LP token 0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd
+        s.primeAuraBalLP = IERC20__factory.connect("0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd", s.Frank)//B-auraBAL-STABLE
+        s.primeAuraBalRewardToken = IERC20__factory.connect("0xacada51c320947e7ed1a0d0f6b939b0ff465e4c2", s.Frank)//auraB-auraBAL-STABLE-vaul
 
     });
 
@@ -120,6 +127,19 @@ describe("Token Setup", () => {
         await stealMoney(stETH_BPT_minter, s.Bob.address, stETH_BPT, s.stETH_BPT_Amount)
         await stealMoney(stETH_Gauge_minter, s.Bob.address, stETHstableGauge, s.stETH_Gauge_Amount)
 
+
+        await stealMoney(auraLPminter, s.Bob.address, s.primeAuraBalLP.address, s.AuraLPamount)
+
+
+        /**
+         //await stealMoney(auraLPrewardsMinter, s.Bob.address, s.primeAuraBalRewardToken.address, s.AuraLPrewardsAmount)
+        let balance = await s.primeAuraBalRewardToken.balanceOf(auraLPrewardsMinter)
+        showBody("Balance: ", await toNumber(balance))
+        await impersonateAccount(auraLPrewardsMinter)
+        const minter =  ethers.provider.getSigner(auraLPrewardsMinter)
+        await s.primeAuraBalRewardToken.connect(minter).transfer(s.Bob.address, s.AuraLPrewardsAmount)
+        await ceaseImpersonation(auraLPrewardsMinter)
+         */
     })
 
 

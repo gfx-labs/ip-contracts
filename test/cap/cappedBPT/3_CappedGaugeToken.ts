@@ -82,7 +82,8 @@ describe("Deposit and verify functions", () => {
     })
 
     it("deposit auraBal rewards token", async () => {
-
+        await s.primeAuraBalLP.connect(s.Bob).approve(s.CappedAuraLP.address, s.AuraLPamount)
+        await s.CappedAuraLP.connect(s.Bob).deposit(s.AuraLPamount, s.BobVaultID)
     })
 
     it("Claim gauge token rewards", async () => {
@@ -97,7 +98,6 @@ describe("Deposit and verify functions", () => {
         //stake to BaseRewardPool https://etherscan.io/tx/0xaa65bed1143a02c4220a423de47f4365fc3008384df4c8910c714eb618ab9e32
         await s.BobBptVault.connect(s.Bob).stakeAuraBal();
         let balance = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
-        showBody(await toNumber(balance))
         expect(balance).to.eq(s.AuraBalAmount, "Correct amount staked")
         balance = await s.auraBal.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(0, "0 auraBal remaining unstaked")

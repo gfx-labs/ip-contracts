@@ -28,6 +28,14 @@ interface IAuraBalRewardsPool {
   function balanceOf(address target) external view returns (uint256);
 }
 
+interface IBooster {
+  function depositAll(uint256 _pid, bool _stake) external returns (bool);
+}
+
+interface IlpToken {
+  function getPoolId() external view returns (bytes32);
+}
+
 contract VaultBPT is Context {
   using SafeERC20Upgradeable for IERC20;
 
@@ -42,7 +50,6 @@ contract VaultBPT is Context {
   struct VaultInfo {
     uint96 id;
     address vault_address;
-    bool stakedAuraBal;
   }
   /// @notice Metadata of vault, aka the id & the minter's address
   VaultInfo public _vaultInfo;
@@ -52,6 +59,18 @@ contract VaultBPT is Context {
 
   IERC20 public constant auraBal = IERC20(0x616e8BfA43F920657B3497DBf40D6b1A02D4608d);
   IAuraBalRewardsPool public constant rewardsPool = IAuraBalRewardsPool(0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2);
+
+  /// @notice if staked, then underlying is not in the vault so we need to unstake
+  /// all assets stake all or nothing
+  mapping(address => bool) public isStaked;
+
+  mapping(address => stakeType) public typeOfStake;
+
+  enum stakeType {
+    AURABAL,
+    AURA_LP,
+    BAL_LP
+  }
 
   /// @notice checks if _msgSender is the controller of the voting vault
   modifier onlyVotingVaultController() {
@@ -80,7 +99,7 @@ contract VaultBPT is Context {
     address controller_address,
     address voting_controller_address
   ) {
-    _vaultInfo = VaultInfo(id_, vault_address, false);
+    _vaultInfo = VaultInfo(id_, vault_address);
     _controller = IVaultController(controller_address);
     _votingController = VotingVaultController(voting_controller_address);
   }
@@ -95,19 +114,14 @@ contract VaultBPT is Context {
     return _vaultInfo.id;
   }
 
-  function stakedAuraBal() external view returns (bool) {
-    return _vaultInfo.stakedAuraBal;
-  }
-
-  ///@notice claim rewards to external wallet
-  ///todo TX: https://etherscan.io/tx/0x4d5950df8da6b93a435a9b9762a3e54745bc4e67adbfcab3ebf459beb9baaf52
-  function claimRewards(address recipient, IGauge gauge) external onlyMinter {
-    gauge.claim_rewards(recipient);
-  }
-
+  /** auraBal staking */
   function stakeAuraBal() external onlyMinter {
     auraBal.approve(address(rewardsPool), auraBal.balanceOf(address(this)));
-    _vaultInfo.stakedAuraBal = true;
+
+    isStaked[address(auraBal)] = true;
+
+    typeOfStake[address(auraBal)] = stakeType.AURABAL;
+
     require(rewardsPool.stakeAll(), "auraBal stake failed");
   }
 
@@ -120,8 +134,21 @@ contract VaultBPT is Context {
   }
 
   function _unstakeAuraBal() internal {
-    _vaultInfo.stakedAuraBal = false;
+    isStaked[address(auraBal)] = false;
     rewardsPool.withdrawAll(false);
+  }
+
+  /**aura LP token staking */
+  function stakeAuraLP(IlpToken lp) external onlyMinter {
+    // get PID
+    console.log("address: ", address(lp));
+  }
+
+  /**Balancer LP token staking */
+  ///@notice claim rewards to external wallet
+  ///todo TX: https://etherscan.io/tx/0x4d5950df8da6b93a435a9b9762a3e54745bc4e67adbfcab3ebf459beb9baaf52
+  function claimRewards(address recipient, IGauge gauge) external onlyMinter {
+    gauge.claim_rewards(recipient);
   }
 
   /// @notice function used by the VaultController to transfer tokens
@@ -150,12 +177,16 @@ contract VaultBPT is Context {
   function votingVaultControllerTransfer(
     address _token,
     address _to,
-    uint256 _amount,
-    bool unstake
+    uint256 _amount
   ) external onlyVotingVaultController {
-    if (unstake) {
+    console.log("TRANSFER: ", _token);
+    console.log("auraBal : ", address(auraBal));
+    console.log("Staked? : ", isStaked[address(auraBal)]);
+    if (_token == address(auraBal) && isStaked[address(auraBal)] == true) {
+      console.log("UNSTAKING");
       _unstakeAuraBal();
     }
+
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
 }

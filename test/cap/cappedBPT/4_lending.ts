@@ -25,7 +25,7 @@ describe("Check starting values", () => {
     it("Stake capped auraBal - future tests are against staked auraBal", async () => {
         await s.BobBptVault.connect(s.Bob).stakeAuraBal();
         let balance = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
-        showBody(await toNumber(balance))
+        //showBody(await toNumber(balance))
         expect(balance).to.eq(s.AuraBalAmount, "Correct amount staked")
         balance = await s.auraBal.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(0, "0 auraBal remaining unstaked")
@@ -35,9 +35,22 @@ describe("Check starting values", () => {
         let borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
         expect(borrowPower).to.be.gt(0, "There exists a borrow power against capped token")
 
-        const balance = await s.CappedAuraBal.balanceOf(s.BobVault.address)
-        const price = await s.Oracle.getLivePrice(s.CappedAuraBal.address)
+        //aura bal
+        let balance = await s.CappedAuraBal.balanceOf(s.BobVault.address)
+        let price = await s.Oracle.getLivePrice(s.CappedAuraBal.address)
         let totalValue = (balance.mul(price)).div(BN("1e18"))
+
+        showBody("Total value: ", await toNumber(totalValue))
+
+        balance = await s.CappedAuraLP.balanceOf(s.BobVault.address)
+        price = await s.Oracle.getLivePrice(s.CappedAuraLP.address)
+        const auraLPvalue = (balance.mul(price)).div(BN("1e18"))
+        showBody("auraLP value: ", auraLPvalue)
+
+        totalValue = totalValue.add(auraLPvalue)
+        showBody("Total value: ", await toNumber(totalValue))
+
+
         let expectedBorrowPower = (totalValue.mul(s.auraBalLTV)).div(BN("1e18"))
         expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 0.0001, "Borrow power is correct")
     })
@@ -95,7 +108,7 @@ describe("Lending with capped Balancer LP tokens and AuraBal", () => {
 })
 
 
- describe("Liquidations - auraBal", () => {
+describe("Liquidations - auraBal", () => {
 
     let borrowPower: BigNumber
     let T2L: BigNumber
@@ -161,7 +174,7 @@ describe("Lending with capped Balancer LP tokens and AuraBal", () => {
 
         let supply = await s.CappedAuraBal.totalSupply()
 
-        expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 5, "Total supply reduced as Capped auraBal is liquidatede")
+        expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 10, "Total supply reduced as Capped auraBal is liquidatede")
 
         const startingUSDI = await s.USDI.balanceOf(s.Dave.address)
         expect(startingUSDI).to.eq(s.USDC_AMOUNT.mul(BN("1e12")))
@@ -172,6 +185,11 @@ describe("Lending with capped Balancer LP tokens and AuraBal", () => {
 
         const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedAuraBal.address, BN("1e50"))
         await mineBlock()
+
+        //ensure balances are correct
+        let balance = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(0, "All reward tokens have been unstaked due to liquidation")
+
 
         let endwauraBal = await s.CappedAuraBal.balanceOf(s.BobVault.address)
         expect(await toNumber(endwauraBal)).to.be.closeTo(await toNumber(startingAuraBal.sub(tokensToLiquidate)), 0.0001, "Expected amount liquidated")
@@ -247,4 +265,3 @@ describe("Lending with capped Balancer LP tokens and AuraBal", () => {
         expect(_CappedToken_underlying.toUpperCase()).to.eq(s.auraBal.address.toUpperCase(), "Capped => Underlying correct")
     })
 })
- 
