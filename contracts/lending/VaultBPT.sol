@@ -68,6 +68,9 @@ contract VaultBPT is Context {
 
   mapping(address => stakeType) public typeOfStake;
 
+  mapping(address => address) public lp_rewardtoken;
+
+
   enum stakeType {
     AURABAL,
     AURA_LP,
@@ -148,11 +151,19 @@ contract VaultBPT is Context {
     IRewardsPool rp,
     IBooster booster
   ) external {
+    isStaked[lp] = true;
+
+    if (typeOfStake[lp] != stakeType.AURA_LP) {
+      typeOfStake[lp] = stakeType.AURA_LP;
+    }
+
+    lp_rewardtoken[lp] = address(rp);
+
     //approve booster
     IERC20(lp).approve(address(booster), IERC20(lp).balanceOf(address(this)));
 
     //deposit via booster
-    booster.depositAll(rp.pid(), true);
+    require(booster.depositAll(rp.pid(), true), "Deposit failed");
   }
 
   /**Balancer LP token staking */
