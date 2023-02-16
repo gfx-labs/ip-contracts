@@ -70,7 +70,6 @@ contract VaultBPT is Context {
 
   mapping(address => address) public lp_rewardtoken;
 
-
   enum stakeType {
     AURABAL,
     AURA_LP,
@@ -136,35 +135,40 @@ contract VaultBPT is Context {
     rewardsPool.getReward();
   }
 
-  function unstakeAuraBal() external onlyMinter {
-    _unstakeAuraBal();
+  ///@param claim will claim all rewards and withdraw
+  function unstakeAuraBal(bool claim) external onlyMinter {
+    _unstakeAuraBal(claim);
   }
 
-  function _unstakeAuraBal() internal {
+  function _unstakeAuraBal(bool claim) internal {
     isStaked[address(auraBal)] = false;
-    rewardsPool.withdrawAll(false);
+    rewardsPool.withdrawAll(claim);
   }
 
   /**aura LP token staking */
+
+  ///@param lp underlying lp
   function stakeAuraLP(
-    address lp,
-    IRewardsPool rp,
-    IBooster booster
+    address lp
   ) external {
     isStaked[lp] = true;
 
-    if (typeOfStake[lp] != stakeType.AURA_LP) {
-      typeOfStake[lp] = stakeType.AURA_LP;
-    }
+    IBooster booster = IBooster(_votingController._auraBooster());
 
-    lp_rewardtoken[lp] = address(rp);
+    (, uint256 pid) = _votingController.getAuraLpData(lp);
 
     //approve booster
     IERC20(lp).approve(address(booster), IERC20(lp).balanceOf(address(this)));
 
     //deposit via booster
-    require(booster.depositAll(rp.pid(), true), "Deposit failed");
+    require(booster.depositAll(pid, true), "Deposit failed");
   }
+
+  function claimAuraLpRewards() external onlyMinter {}
+
+  function unstakeAuraLP(bool claim) external onlyMinter {}
+
+  function _unstakeAuraLP() internal {}
 
   /**Balancer LP token staking */
   ///@notice claim rewards to external wallet
@@ -186,7 +190,7 @@ contract VaultBPT is Context {
     bool unstake
   ) external onlyVaultController {
     if (unstake) {
-      _unstakeAuraBal();
+      _unstakeAuraBal(false);
     }
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
@@ -206,7 +210,7 @@ contract VaultBPT is Context {
     console.log("Staked? : ", isStaked[address(auraBal)]);
     if (_token == address(auraBal) && isStaked[address(auraBal)] == true) {
       console.log("UNSTAKING");
-      _unstakeAuraBal();
+      _unstakeAuraBal(false);
     }
 
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);

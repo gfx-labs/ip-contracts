@@ -32,14 +32,35 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
   mapping(uint96 => address) public _vaultId_vaultBPTaddress;
   mapping(address => uint96) public _vaultBPTaddress_vaultId;
 
+  mapping(address => auraLpData) public _auraLpData;
+
+  address public _auraBooster;
+
   event NewVotingVault(address voting_vault_address, uint256 vaultId);
   event NewVaultBPT(address vault_bpt_address, uint256 vaultId);
+
+  struct auraLpData {
+    address rewardToken;
+    uint96 pid;
+  }
 
   /// @notice initializer for contract
   /// @param vaultController_ the address of the vault controller
   function initialize(address vaultController_) public initializer {
     __Ownable_init();
     _vaultController = IVaultController(vaultController_);
+  }
+
+  function registerAuraLpData(
+    address auraLP,
+    address rewardToken,
+    uint256 pid
+  ) external onlyOwner {
+    _auraLpData[auraLP] = auraLpData({rewardToken: rewardToken, pid: uint96(pid)});
+  }
+
+  function registerAuraBooster(address newBooster) external onlyOwner {
+    _auraBooster = newBooster;
   }
 
   /// @notice register an underlying capped token pair
@@ -125,6 +146,12 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
       }
     }
     return _vaultId_vaultBPTaddress[id];
+  }
+
+  function getAuraLpData(address lp) external view returns (address rewardToken, uint256 pid) {
+    auraLpData memory data = _auraLpData[lp];
+    rewardToken = data.rewardToken;
+    pid = uint256(data.pid);
   }
 
   function votingVaultId(address voting_vault_address) public view returns (uint96) {

@@ -23,6 +23,7 @@ import {
 } from "../../../typechain-types"
 import { JsxEmit } from "typescript";
 import { stealMoney } from "../../../util/money";
+import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
 require("chai").should();
 
 
@@ -45,6 +46,19 @@ describe("Verify setup", () => {
 })
 
 describe("Deposit and verify functions", () => {
+
+    before(async () => {
+        //register aura LP data to vvc
+        await impersonateAccount(s.owner._address)
+
+        await s.VotingVaultController.connect(s.owner).registerAuraBooster("0xA57b8d98dAE62B26Ec3bcC4a365338157060B234")
+
+        // call pid on reward token to get pid
+        await s.VotingVaultController.connect(s.owner).registerAuraLpData(s.primeAuraBalLP.address, s.primeAuraBalRewardToken.address, 1)
+
+        await ceaseImpersonation(s.owner._address)
+    })
+
     const auraBalRewardsPool = "0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2"
     it("Steal money to fund participants", async () => {
         //steal wstEth/weth gauge token
@@ -118,7 +132,7 @@ describe("Deposit and verify functions", () => {
         expect(balance).to.eq(0, "0 auraBal remaining unstaked")
 
         //0xA57b8d98dAE62B26Ec3bcC4a365338157060B234 booster
-        await s.BobBptVault.stakeAuraLP(s.primeAuraBalLP.address, "0xacada51c320947e7ed1a0d0f6b939b0ff465e4c2", "0xA57b8d98dAE62B26Ec3bcC4a365338157060B234")
+        await s.BobBptVault.stakeAuraLP(s.primeAuraBalLP.address)
 
 
 
