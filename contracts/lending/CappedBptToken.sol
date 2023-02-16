@@ -72,12 +72,17 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   /// @notice gaugeToken is fungible 1:1 with underlying BPT
   /// @param amount of underlying to deposit
   /// @param vaultId recipient vault of tokens
-  function deposit(uint256 amount, uint96 vaultId) public {
+  function deposit(uint256 amount, uint96 vaultId, bool stake) public {
     require(amount > 0, "Cannot deposit 0");
     VaultBPT bptVault = VaultBPT(_votingVaultController.BPTvaultAddress(vaultId));
     require(address(bptVault) != address(0x0), "invalid voting vault");
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     require(address(vault) != address(0x0), "invalid vault");
+
+    if(stake){
+      //do something
+    }
+
     // check cap
     checkCap(amount);
     // check allowance and ensure transfer success

@@ -55,10 +55,6 @@ describe("Deposit and verify functions", () => {
         const auraBalWhale = "0x0BE2340d942e79DFeF172392429855DE8A4f5b14"
         await stealMoney(auraBalWhale, s.Bob.address, s.auraBal.address, s.AuraBalAmount)
 
-        //steal auraBal rewards token
-        //total supply 1713644.8999
-        const auraBalRewardsWhale = "0x1C39BAbd4E0d7BFF33bC27c6Cc5a4f1d74C9F562"
-        //await stealMoney(auraBalRewardsWhale, s.Bob.address, s.auraBalRewards.address, s.AuraBalRewardsAmount)
 
 
     })
@@ -70,7 +66,7 @@ describe("Deposit and verify functions", () => {
 
     it("deposit auraBal", async () => {
         await s.auraBal.connect(s.Bob).approve(s.CappedAuraBal.address, s.AuraBalAmount)
-        await s.CappedAuraBal.connect(s.Bob).deposit(s.AuraBalAmount, s.BobVaultID)
+        await s.CappedAuraBal.connect(s.Bob).deposit(s.AuraBalAmount, s.BobVaultID, true)
 
         //check destinations
         let balance = await s.CappedAuraBal.balanceOf(s.BobVault.address)
@@ -81,19 +77,38 @@ describe("Deposit and verify functions", () => {
 
     })
 
-    it("deposit auraBal rewards token", async () => {
+    it("deposit and stake aura lp token", async () => {
         await s.primeAuraBalLP.connect(s.Bob).approve(s.CappedAuraLP.address, s.AuraLPamount)
-        await s.CappedAuraLP.connect(s.Bob).deposit(s.AuraLPamount, s.BobVaultID)
+        await s.CappedAuraLP.connect(s.Bob).deposit(s.AuraLPamount, s.BobVaultID, true)
+
+        //check destinations
+        let balance = await s.CappedAuraLP.balanceOf(s.BobVault.address)
+        expect(balance).to.eq(s.AuraLPamount, "Cap tokens minted to standard vault")
+
+        balance = await s.primeAuraBalLP.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(s.AuraLPamount, "Underlying sent to BPT vault")
+
+        //stake 
+
+
+
     })
 
     it("Claim gauge token rewards", async () => {
 
     })
 
+    /**
+     * BaseReward pool staking token is auraB-auraBAL-STABLE 0x12e9DA849f12d47707A94e29f781f1cd20A7f49A
+     * MASTER PLAN
+     * get PID from rewards addr
+     * call depositAll on booster with pid
+     * call stake with lp (for tracking), rewards (for tracking and to get PID), and booster
+     */
     it("Stake auraBal", async () => {
         //approve BaseRewardPool https://etherscan.io/tx/0x8b01d7779ab8702ac9cc4b1eb8f9670f676d26f91d3e665afee34b02edf1000e
         //approve 0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2 as spender for total balance
-
+        //booster 0xA57b8d98dAE62B26Ec3bcC4a365338157060B234
 
         //stake to BaseRewardPool https://etherscan.io/tx/0xaa65bed1143a02c4220a423de47f4365fc3008384df4c8910c714eb618ab9e32
         await s.BobBptVault.connect(s.Bob).stakeAuraBal();
@@ -101,6 +116,10 @@ describe("Deposit and verify functions", () => {
         expect(balance).to.eq(s.AuraBalAmount, "Correct amount staked")
         balance = await s.auraBal.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(0, "0 auraBal remaining unstaked")
+
+        //0xA57b8d98dAE62B26Ec3bcC4a365338157060B234 booster
+        await s.BobBptVault.stakeAuraLP(s.primeAuraBalLP.address, "0xacada51c320947e7ed1a0d0f6b939b0ff465e4c2", "0xA57b8d98dAE62B26Ec3bcC4a365338157060B234")
+
 
 
 
@@ -130,7 +149,7 @@ describe("Deposit and verify functions", () => {
 
     it("Deposit tokens again for future tests", async () => {
         await s.auraBal.connect(s.Bob).approve(s.CappedAuraBal.address, s.AuraBalAmount)
-        await s.CappedAuraBal.connect(s.Bob).deposit(s.AuraBalAmount, s.BobVaultID)
+        await s.CappedAuraBal.connect(s.Bob).deposit(s.AuraBalAmount, s.BobVaultID, false)
 
         //check destinations
         let balance = await s.CappedAuraBal.balanceOf(s.BobVault.address)

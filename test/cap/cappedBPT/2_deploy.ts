@@ -163,7 +163,7 @@ describe("Deploy and fund capped bpt", async () => {
     await s.stETH_Gauge.connect(s.Bob).approve(s.CappedStethBpt.address, depositAmount)
     await mineBlock()
 
-    await s.CappedStethBpt.connect(s.Bob).deposit(depositAmount, s.BobVaultID)
+    await s.CappedStethBpt.connect(s.Bob).deposit(depositAmount, s.BobVaultID, false)
     await mineBlock()
 
   })
@@ -197,7 +197,7 @@ describe("Deploy and fund capped bpt", async () => {
     await s.stETH_Gauge.connect(s.Bob).approve(s.CappedStethBpt.address, depositAmount)
     await mineBlock()
 
-    await s.CappedStethBpt.connect(s.Bob).deposit(depositAmount, s.BobVaultID)
+    await s.CappedStethBpt.connect(s.Bob).deposit(depositAmount, s.BobVaultID, false)
     await mineBlock()
   })
 })

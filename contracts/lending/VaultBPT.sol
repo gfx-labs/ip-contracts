@@ -18,7 +18,7 @@ import "../_external/balancer/IGauge.sol";
 
 import "hardhat/console.sol";
 
-interface IAuraBalRewardsPool {
+interface IRewardsPool {
   function stakeAll() external returns (bool);
 
   function getReward() external returns (bool);
@@ -26,14 +26,16 @@ interface IAuraBalRewardsPool {
   function withdrawAll(bool claim) external;
 
   function balanceOf(address target) external view returns (uint256);
-}
 
-interface IBooster {
-  function depositAll(uint256 _pid, bool _stake) external returns (bool);
+  function pid() external view returns (uint256);
 }
 
 interface IlpToken {
   function getPoolId() external view returns (bytes32);
+}
+
+interface IBooster {
+  function depositAll(uint256 _pid, bool _stake) external returns (bool);
 }
 
 contract VaultBPT is Context {
@@ -58,7 +60,7 @@ contract VaultBPT is Context {
   IVaultController public _controller;
 
   IERC20 public constant auraBal = IERC20(0x616e8BfA43F920657B3497DBf40D6b1A02D4608d);
-  IAuraBalRewardsPool public constant rewardsPool = IAuraBalRewardsPool(0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2);
+  IRewardsPool public constant rewardsPool = IRewardsPool(0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2);
 
   /// @notice if staked, then underlying is not in the vault so we need to unstake
   /// all assets stake all or nothing
@@ -115,7 +117,9 @@ contract VaultBPT is Context {
   }
 
   /** auraBal staking */
-  function stakeAuraBal() external onlyMinter {
+
+  ///@notice stake is not permissioned so the vvc can stake in same tx
+  function stakeAuraBal() external {
     auraBal.approve(address(rewardsPool), auraBal.balanceOf(address(this)));
 
     isStaked[address(auraBal)] = true;
@@ -139,9 +143,16 @@ contract VaultBPT is Context {
   }
 
   /**aura LP token staking */
-  function stakeAuraLP(IlpToken lp) external onlyMinter {
-    // get PID
-    console.log("address: ", address(lp));
+  function stakeAuraLP(
+    address lp,
+    IRewardsPool rp,
+    IBooster booster
+  ) external {
+    //approve booster
+    IERC20(lp).approve(address(booster), IERC20(lp).balanceOf(address(this)));
+
+    //deposit via booster
+    booster.depositAll(rp.pid(), true);
   }
 
   /**Balancer LP token staking */
