@@ -23,9 +23,9 @@ describe("Check starting values", () => {
     const amount = BN("500e18")
 
     it("Stake capped auraBal - future tests are against staked auraBal", async () => {
-        await s.BobBptVault.connect(s.Bob).stakeAuraBal();
+        await s.BobBptVault.connect(s.Bob).stakeAuraLP(s.auraBal.address)
+        
         let balance = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
-        //showBody(await toNumber(balance))
         expect(balance).to.eq(s.AuraBalAmount, "Correct amount staked")
         balance = await s.auraBal.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(0, "0 auraBal remaining unstaked")

@@ -120,21 +120,6 @@ contract VaultBPT is Context {
 
   /** auraBal staking */
 
-  ///@notice stake is not permissioned so the vvc can stake in same tx
-  function stakeAuraBal() external {
-    auraBal.approve(address(rewardsPool), auraBal.balanceOf(address(this)));
-
-    isStaked[address(auraBal)] = true;
-
-    typeOfStake[address(auraBal)] = stakeType.AURABAL;
-
-    require(rewardsPool.stakeAll(), "auraBal stake failed");
-  }
-
-  function getAuraBalRewards() external {
-    rewardsPool.getReward();
-  }
-
   ///@param claim will claim all rewards and withdraw
   function unstakeAuraBal(bool claim) external onlyMinter {
     _unstakeAuraBal(claim);
@@ -148,27 +133,53 @@ contract VaultBPT is Context {
   /**aura LP token staking */
 
   ///@param lp underlying lp
-  function stakeAuraLP(
-    address lp
-  ) external {
-    isStaked[lp] = true;
+  function stakeAuraLP(IERC20 lp) external {
+    require(isStaked[address(lp)] == false, "already staked");
+    isStaked[address(lp)] = true;
 
-    IBooster booster = IBooster(_votingController._auraBooster());
+    //stake auraBal directly on rewards pool
+    if (lp == auraBal) {
+      (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
+      IRewardsPool rp = IRewardsPool(rewardsToken);
+      auraBal.approve(rewardsToken, auraBal.balanceOf(address(this)));
 
-    (, uint256 pid) = _votingController.getAuraLpData(lp);
+      require(rp.stakeAll(), "auraBal staking failed");
+    } else {
+      //stake other LPs via booster contract
 
-    //approve booster
-    IERC20(lp).approve(address(booster), IERC20(lp).balanceOf(address(this)));
+      IBooster booster = IBooster(_votingController._auraBooster());
 
-    //deposit via booster
-    require(booster.depositAll(pid, true), "Deposit failed");
+      (, uint256 pid) = _votingController.getAuraLpData(address(lp));
+
+      //approve booster
+      lp.approve(address(booster), lp.balanceOf(address(this)));
+
+      //deposit via booster
+      require(booster.depositAll(pid, true), "Deposit failed");
+    }
   }
 
-  function claimAuraLpRewards() external onlyMinter {}
+  function claimAuraLpRewards(IERC20 lp) external onlyMinter {
+    //get rewards pool
+    (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
 
-  function unstakeAuraLP(bool claim) external onlyMinter {}
+    IRewardsPool rp = IRewardsPool(rewardsToken);
 
-  function _unstakeAuraLP() internal {}
+    rp.getReward();
+  }
+
+  function unstakeAuraLP(IERC20 lp, bool claim) external onlyMinter {
+    _unstakeAuraLP(lp, claim);
+  }
+
+  function _unstakeAuraLP(IERC20 lp, bool claim) internal {
+    isStaked[address(lp)] = false;
+
+    (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
+    IRewardsPool rp = IRewardsPool(rewardsToken);
+
+    rp.withdrawAll(claim);
+  }
 
   /**Balancer LP token staking */
   ///@notice claim rewards to external wallet
@@ -186,12 +197,12 @@ contract VaultBPT is Context {
   function controllerTransfer(
     address _token,
     address _to,
-    uint256 _amount,
-    bool unstake
+    uint256 _amount
   ) external onlyVaultController {
-    if (unstake) {
-      _unstakeAuraBal(false);
+    if (isStaked[_token] == true) {
+      _unstakeAuraLP(IERC20(_token), false);
     }
+
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
 
@@ -205,12 +216,8 @@ contract VaultBPT is Context {
     address _to,
     uint256 _amount
   ) external onlyVotingVaultController {
-    console.log("TRANSFER: ", _token);
-    console.log("auraBal : ", address(auraBal));
-    console.log("Staked? : ", isStaked[address(auraBal)]);
-    if (_token == address(auraBal) && isStaked[address(auraBal)] == true) {
-      console.log("UNSTAKING");
-      _unstakeAuraBal(false);
+    if (isStaked[_token] == true) {
+      _unstakeAuraLP(IERC20(_token), false);
     }
 
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);

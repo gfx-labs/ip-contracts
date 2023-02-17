@@ -55,6 +55,7 @@ describe("Deposit and verify functions", () => {
 
         // call pid on reward token to get pid
         await s.VotingVaultController.connect(s.owner).registerAuraLpData(s.primeAuraBalLP.address, s.primeAuraBalRewardToken.address, 1)
+        await s.VotingVaultController.connect(s.owner).registerAuraLpData(s.auraBal.address, s.auraBalRewards.address, 0)
 
         await ceaseImpersonation(s.owner._address)
     })
@@ -102,47 +103,39 @@ describe("Deposit and verify functions", () => {
         balance = await s.primeAuraBalLP.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(s.AuraLPamount, "Underlying sent to BPT vault")
 
-        //stake 
-
-
-
+        //stake aura LP
+        await s.BobBptVault.stakeAuraLP(s.primeAuraBalLP.address)
+        balance = await s.primeAuraBalRewardToken.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(s.AuraLPamount, "Correct amount staked")
+        balance = await s.primeAuraBalLP.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(0, "0 LPs remaining unstaked")
     })
 
     it("Claim gauge token rewards", async () => {
 
     })
 
-    /**
-     * BaseReward pool staking token is auraB-auraBAL-STABLE 0x12e9DA849f12d47707A94e29f781f1cd20A7f49A
-     * MASTER PLAN
-     * get PID from rewards addr
-     * call depositAll on booster with pid
-     * call stake with lp (for tracking), rewards (for tracking and to get PID), and booster
-     */
     it("Stake auraBal", async () => {
-        //approve BaseRewardPool https://etherscan.io/tx/0x8b01d7779ab8702ac9cc4b1eb8f9670f676d26f91d3e665afee34b02edf1000e
-        //approve 0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2 as spender for total balance
-        //booster 0xA57b8d98dAE62B26Ec3bcC4a365338157060B234
 
-        //stake to BaseRewardPool https://etherscan.io/tx/0xaa65bed1143a02c4220a423de47f4365fc3008384df4c8910c714eb618ab9e32
-        await s.BobBptVault.connect(s.Bob).stakeAuraBal();
+        //stake auraBal
+        await s.BobBptVault.connect(s.Bob).stakeAuraLP(s.auraBal.address)
+
         let balance = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(s.AuraBalAmount, "Correct amount staked")
         balance = await s.auraBal.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(0, "0 auraBal remaining unstaked")
 
-        //0xA57b8d98dAE62B26Ec3bcC4a365338157060B234 booster
-        await s.BobBptVault.stakeAuraLP(s.primeAuraBalLP.address)
-
-
-
-
     })
 
-    //aura base rewards CRV 0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2
-    it("Claim auraBal rewards", async () => {
-        //rewards claim doesn't fail
-        await expect(s.BobBptVault.getAuraBalRewards()).to.not.reverted
+    it("Claim rewards", async () => {
+        //auraBal rewards claim doesn't fail
+        await expect(s.BobBptVault.claimAuraLpRewards(s.auraBal.address)).to.not.reverted
+
+
+        await expect(s.BobBptVault.claimAuraLpRewards(s.primeAuraBalLP.address)).to.not.reverted
+
+
+        //todo verify rewards?
     })
 
     it("Withdraw all tokens", async () => {
