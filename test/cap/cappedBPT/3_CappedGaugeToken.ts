@@ -57,6 +57,9 @@ describe("Deposit and verify functions", () => {
         await s.VotingVaultController.connect(s.owner).registerAuraLpData(s.primeAuraBalLP.address, s.primeAuraBalRewardToken.address, 1)
         await s.VotingVaultController.connect(s.owner).registerAuraLpData(s.auraBal.address, s.auraBalRewards.address, 0)
 
+        //register gauge token
+        await s.VotingVaultController.connect(s.owner).registerAuraLpData(s.stETH_Gauge.address, "", 29)
+
         await ceaseImpersonation(s.owner._address)
     })
 
@@ -75,7 +78,30 @@ describe("Deposit and verify functions", () => {
     })
 
     //seems like gauge tokens are all held by 0xaF52695E1bB01A16D33D7194C28C42b10e0Dbec2 aura voter proxy
+    /**
+    Another question for you, 
+    For staking of balancer LP gauge tokens on aura (such as B-stETH-STABLE-gauge 0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE), it looks like you can  do this through the booster contract, is that the correct way this should happen? 
+    This one: 0xA57b8d98dAE62B26Ec3bcC4a365338157060B234
+
+    It looks like most aura LPs are staked this way as well. It seems simple enough to get the reward token / PID from the aura app for the corresponding  aura LP but I'm not sure how to do this for a balancer gauge token. 
+
+    My question is, how is one to know which aura reward token / PID to pass to the booster? I haven't noticed a straight forward way to do this on the aura app but I could be missing something? 
+
+    Is there a function I can call somewhere with an LP token or gauge token that will return the reward token addr? 
+
+
+
+    however some are staking the standard BPT through aura via the booster
+    see tx approve: 0xcdba867e2542a89cc5f038ddc6cb6de2e0c91f2ee72dcf3c90eb5ef32f6ed050
+    and stake: 0x0675e01f6785a27224d1b127182235797aa1e87e1d0888a55fd484a454c34825
+
+    User receives rewards 0xe4683Fe8F53da14cA5DAc4251EaDFb3aa614d528 with PID 29
+
+
+     */
     it("Deposit gauge token", async () => {
+
+        //register PID 29 for gauge token
 
     })
 
