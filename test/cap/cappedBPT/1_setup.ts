@@ -128,6 +128,9 @@ describe("Token Setup", () => {
         await stealMoney(stETH_BPT_minter, s.Bob.address, stETH_BPT, s.stETH_BPT_Amount)
         await stealMoney(stETH_Gauge_minter, s.Bob.address, stETHstableGauge, s.stETH_Gauge_Amount)
 
+        //steal auraBal
+        const auraBalWhale = "0x0BE2340d942e79DFeF172392429855DE8A4f5b14"
+        await stealMoney(auraBalWhale, s.Bob.address, s.auraBal.address, s.AuraBalAmount)
 
         await stealMoney(auraLPminter, s.Bob.address, s.primeAuraBalLP.address, s.AuraLPamount)
 

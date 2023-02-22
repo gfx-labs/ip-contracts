@@ -63,21 +63,6 @@ describe("Deposit and verify functions", () => {
 
         await ceaseImpersonation(s.owner._address)
     })
-
-    const auraBalRewardsPool = "0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2"
-    it("Steal money to fund participants", async () => {
-        //steal wstEth/weth gauge token
-        const stEthGaugeWhale = "0xfF72243C5D7373F8Ac9cCF4ccd226301dC213a70"
-        await stealMoney(stEthGaugeWhale, s.Bob.address, s.stETH_Gauge.address, s.stETH_Gauge_Amount)
-
-        //steal auraBal
-        const auraBalWhale = "0x0BE2340d942e79DFeF172392429855DE8A4f5b14"
-        await stealMoney(auraBalWhale, s.Bob.address, s.auraBal.address, s.AuraBalAmount)
-
-
-
-    })
-
     it("Deposit naked gauge token", async () => {
         await s.stETH_Gauge.connect(s.Bob).approve(s.CappedStethGauge.address, s.stETH_Gauge_Amount)
         await s.CappedStethGauge.connect(s.Bob).deposit(s.stETH_Gauge_Amount, s.BobVaultID, false)
@@ -186,6 +171,13 @@ describe("Deposit and verify functions", () => {
         expect(balance).to.eq(s.AuraLPamount, "Bob now holds the expected number of aura LPs")
     })
 
+    it("Withdraw gauge token", async () => {
+        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedStethGauge.address, await s.CappedStethGauge.balanceOf(s.BobVault.address))
+
+        let balance = await s.stETH_Gauge.balanceOf(s.Bob.address)
+        expect(balance).to.eq(s.stETH_Gauge_Amount, "Received the correct amount of gauge tokens")
+    })
+
     
      it("Deposit tokens again for future tests", async () => {
         await s.auraBal.connect(s.Bob).approve(s.CappedAuraBal.address, s.AuraBalAmount)
@@ -193,6 +185,9 @@ describe("Deposit and verify functions", () => {
 
         await s.primeAuraBalLP.connect(s.Bob).approve(s.CappedAuraLP.address, s.AuraLPamount)
         await s.CappedAuraLP.connect(s.Bob).deposit(s.AuraLPamount, s.BobVaultID, true)
+        
+        await s.stETH_Gauge.connect(s.Bob).approve(s.CappedStethGauge.address, s.stETH_Gauge_Amount)
+        await s.CappedStethGauge.connect(s.Bob).deposit(s.stETH_Gauge_Amount, s.BobVaultID, false)
 
         //check destinations
         let balance = await s.CappedAuraBal.balanceOf(s.BobVault.address)
@@ -201,11 +196,18 @@ describe("Deposit and verify functions", () => {
         balance = await s.CappedAuraLP.balanceOf(s.BobVault.address)
         expect(balance).to.eq(s.AuraLPamount, "Cap tokens minted to standard vault")
 
+        balance = await s.CappedStethGauge.balanceOf(s.BobVault.address)
+        expect(balance).to.eq(s.stETH_Gauge_Amount, "Cap tokens minted to standard vault")
+
         balance = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(s.AuraBalAmount, "Underlying sent to BPT vault and staked")
 
         balance = await s.primeAuraBalRewardToken.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(s.AuraLPamount, "Underlying sent to BPT vault and staked")
+
+        balance = await s.stETH_Gauge.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(s.stETH_Gauge_Amount, "Underlying sent to BPT vault")
+
     })
      
 

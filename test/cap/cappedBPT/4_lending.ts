@@ -22,15 +22,6 @@ const borrowAmount = s.AuraBalAmount
 describe("Check starting values", () => {
     const amount = BN("500e18")
 
-    it("Stake capped auraBal - future tests are against staked auraBal", async () => {
-        await s.BobBptVault.connect(s.Bob).stakeAuraLP(s.auraBal.address)
-        
-        let balance = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
-        expect(balance).to.eq(s.AuraBalAmount, "Correct amount staked")
-        balance = await s.auraBal.balanceOf(s.BobBptVault.address)
-        expect(balance).to.eq(0, "0 auraBal remaining unstaked")
-    })
-
     it("Check borrow power / LTV", async () => {
         let borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
         expect(borrowPower).to.be.gt(0, "There exists a borrow power against capped token")
@@ -176,9 +167,7 @@ describe("Liquidations - auraBal", () => {
         await s.USDI.connect(s.Dave).deposit(await s.USDC.balanceOf(s.Dave.address))
         await mineBlock()
 
-        let supply = await s.CappedAuraBal.totalSupply()
 
-        expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 10, "Total supply reduced as Capped auraBal is liquidatede")
 
         const startingUSDI = await s.USDI.balanceOf(s.Dave.address)
         expect(startingUSDI).to.eq(s.USDC_AMOUNT.mul(BN("1e12")))
@@ -189,17 +178,20 @@ describe("Liquidations - auraBal", () => {
 
         const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedAuraBal.address, BN("1e50"))
         await mineBlock()
+        
+        let supply = await s.CappedAuraBal.totalSupply()
+        expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 10, "Total supply reduced as Capped auraBal is liquidatede")
 
         //ensure balances are correct
         let balance = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(0, "All reward tokens have been unstaked due to liquidation")
 
 
-        let endwauraBal = await s.CappedAuraBal.balanceOf(s.BobVault.address)
-        expect(await toNumber(endwauraBal)).to.be.closeTo(await toNumber(startingAuraBal.sub(tokensToLiquidate)), 0.0001, "Expected amount liquidated")
+        let endCappedAuraBal = await s.CappedAuraBal.balanceOf(s.BobVault.address)
+        expect(await toNumber(endCappedAuraBal)).to.be.closeTo(await toNumber(startingAuraBal.sub(tokensToLiquidate)), 0.0001, "Expected amount liquidated")
 
-        let endauraBal = await s.auraBal.balanceOf(s.Dave.address)
-        expect(await toNumber(endauraBal)).to.be.closeTo(await toNumber(tokensToLiquidate), 0.001, "Dave received the underlying auraBal")
+        let endAuraBal = await s.auraBal.balanceOf(s.Dave.address)
+        expect(await toNumber(endAuraBal)).to.be.closeTo(await toNumber(tokensToLiquidate), 0.001, "Dave received the underlying auraBal")
 
         const usdiSpent = startingUSDI.sub(await s.USDI.balanceOf(s.Dave.address))
 
