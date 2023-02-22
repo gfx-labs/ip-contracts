@@ -40,15 +40,19 @@ describe("Check starting values", () => {
         let price = await s.Oracle.getLivePrice(s.CappedAuraBal.address)
         let totalValue = (balance.mul(price)).div(BN("1e18"))
 
-        showBody("Total value: ", await toNumber(totalValue))
+        //showBody("Total value: ", await toNumber(totalValue))
 
         balance = await s.CappedAuraLP.balanceOf(s.BobVault.address)
         price = await s.Oracle.getLivePrice(s.CappedAuraLP.address)
         const auraLPvalue = (balance.mul(price)).div(BN("1e18"))
-        showBody("auraLP value: ", auraLPvalue)
+        //showBody("auraLP value: ", auraLPvalue)
 
-        totalValue = totalValue.add(auraLPvalue)
-        showBody("Total value: ", await toNumber(totalValue))
+        balance = await s.CappedStethGauge.balanceOf(s.BobVault.address)
+        price = await s.Oracle.getLivePrice(s.CappedStethGauge.address)
+        const gaugeValue = (balance.mul(price)).div(BN("1e18"))
+
+        totalValue = totalValue.add(auraLPvalue).add(gaugeValue)
+        //showBody("Total value: ", await toNumber(totalValue))
 
 
         let expectedBorrowPower = (totalValue.mul(s.auraBalLTV)).div(BN("1e18"))

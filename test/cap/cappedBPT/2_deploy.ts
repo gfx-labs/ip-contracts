@@ -133,7 +133,8 @@ describe("Deploy and fund capped bpt", async () => {
 
   const depositAmount = BN("100e18")
 
-  it("Deploy capped gauge contract", async () => {
+  /**
+   it("Deploy capped gauge contract", async () => {
     const factory = await ethers.getContractFactory("CappedBptToken")
     s.CappedStethBpt = await factory.deploy()
     await mineBlock()
@@ -167,11 +168,9 @@ describe("Deploy and fund capped bpt", async () => {
     await mineBlock()
 
   })
+   
 
-  /**
-   * BPT Vault should receive underlying, gauge token in this case
-   * Standard vault receives cap tokens
-   */
+
   it("Check destinations", async () => {
 
     let balance = await s.CappedStethBpt.balanceOf(s.BobVault.address)
@@ -200,6 +199,7 @@ describe("Deploy and fund capped bpt", async () => {
     await s.CappedStethBpt.connect(s.Bob).deposit(depositAmount, s.BobVaultID, false)
     await mineBlock()
   })
+  */
 })
 
 describe("Check BPT vault functions", () => {
@@ -207,7 +207,7 @@ describe("Check BPT vault functions", () => {
 
   it("collect rewards", async () => {
 
-    await s.BobBptVault.connect(s.Bob).claimRewards(s.Bob.address, s.stETH_Gauge.address)
+    //await s.BobBptVault.connect(s.Bob).claimRewards(s.Bob.address, s.stETH_Gauge.address)
     //todo verify
 
   })

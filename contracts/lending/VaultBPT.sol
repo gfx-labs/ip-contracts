@@ -23,15 +23,31 @@ interface IRewardsPool {
 
   function getReward() external returns (bool);
 
+  function getReward(address _account, bool _claimExtras) external returns (bool);
+
   function withdrawAll(bool claim) external;
+
+  function withdrawAllAndUnwrap(bool claim) external;
 
   function balanceOf(address target) external view returns (uint256);
 
   function pid() external view returns (uint256);
+
+  function earned(address account) external view returns (uint256);
+
+  function extraRewardsLength() external view returns (uint256);
+
+  function extraRewards(uint256 idx) external view returns (address);
+
+  function rewardToken() external view returns (address);
 }
 
-interface IlpToken {
-  function getPoolId() external view returns (bytes32);
+interface IVirtualRewardPool {
+  function getReward() external;
+
+  function balanceOf(address target) external view returns (uint256);
+
+  function rewardToken() external view returns (address);
 }
 
 interface IBooster {
@@ -118,19 +134,7 @@ contract VaultBPT is Context {
     return _vaultInfo.id;
   }
 
-  /** auraBal staking */
-
-  ///@param claim will claim all rewards and withdraw
-  function unstakeAuraBal(bool claim) external onlyMinter {
-    _unstakeAuraBal(claim);
-  }
-
-  function _unstakeAuraBal(bool claim) internal {
-    isStaked[address(auraBal)] = false;
-    rewardsPool.withdrawAll(claim);
-  }
-
-  /**aura LP token staking */
+  /** auraBal && aura LP token staking */
 
   ///@param lp underlying lp
   function stakeAuraLP(IERC20 lp) external {
@@ -159,33 +163,68 @@ contract VaultBPT is Context {
     }
   }
 
-  function claimAuraLpRewards(IERC20 lp) external onlyMinter {
+  /// @param lp - the aura LP token address, or auraBal address
+  /// @param claimExtra - claim extra token rewards, uses more gas
+  function claimAuraLpRewards(IERC20 lp, bool claimExtra) external {
     //get rewards pool
     (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
 
     IRewardsPool rp = IRewardsPool(rewardsToken);
 
-    rp.getReward();
+    rp.getReward(address(this), claimExtra);
+
+    IERC20 rewardToken = IERC20(rp.rewardToken());
+    address minter = IVault(_vaultInfo.vault_address).minter();
+
+    //send rewards to minter
+    rewardToken.transfer(minter, rewardToken.balanceOf(address(this)));
+
+    if (claimExtra) {
+      for (uint256 i = 0; i < rp.extraRewardsLength(); i++) {
+        IVirtualRewardPool extraRewardPool = IVirtualRewardPool(rp.extraRewards(i));
+
+        IERC20 extraRewardToken = IERC20(extraRewardPool.rewardToken());
+
+        extraRewardPool.getReward();
+
+        extraRewardToken.transfer(minter, extraRewardToken.balanceOf(address(this)));
+      }
+    }
+
+    // if an underlying reward or extra reward token is used as collateral,
+    // claiming rewards will empty the vault of this token, this check prevents this
+    // if it is the case that the underlying reward token is registered collateral held by this vault
+    // the liability will need to be repaid sufficiently in order to claim rewards
+    require(_controller.checkVault(_vaultInfo.id), "Claim causes insolvency");
   }
 
+  // is this needed?? todo
+  // only if support unstake properly
+  // better to have withdraw on cap contract call claimAuraLpRewards ?
+  /**
   function unstakeAuraLP(IERC20 lp, bool claim) external onlyMinter {
     _unstakeAuraLP(lp, claim);
   }
+   */
 
-  function _unstakeAuraLP(IERC20 lp, bool claim) internal {
+  function _unstakeAuraLP(IERC20 lp) internal {
     isStaked[address(lp)] = false;
-
     (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
     IRewardsPool rp = IRewardsPool(rewardsToken);
 
-    rp.withdrawAll(claim);
+    if (lp == auraBal) {
+      rp.withdrawAll(false);
+    } else {
+      rp.withdrawAllAndUnwrap(false);
+    }
+
   }
 
   /**Balancer LP token staking */
-  ///@notice claim rewards to external wallet
+  ///@notice claim rewards to the vault minter
   ///todo TX: https://etherscan.io/tx/0x4d5950df8da6b93a435a9b9762a3e54745bc4e67adbfcab3ebf459beb9baaf52
-  function claimRewards(address recipient, IGauge gauge) external onlyMinter {
-    gauge.claim_rewards(recipient);
+  function claimRewards(IGauge gauge) external {
+    gauge.claim_rewards(address(this), IVault(_vaultInfo.vault_address).minter());
   }
 
   /// @notice function used by the VaultController to transfer tokens
@@ -200,7 +239,7 @@ contract VaultBPT is Context {
     uint256 _amount
   ) external onlyVaultController {
     if (isStaked[_token] == true) {
-      _unstakeAuraLP(IERC20(_token), false);
+      _unstakeAuraLP(IERC20(_token));
     }
 
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
@@ -217,9 +256,8 @@ contract VaultBPT is Context {
     uint256 _amount
   ) external onlyVotingVaultController {
     if (isStaked[_token] == true) {
-      _unstakeAuraLP(IERC20(_token), false);
-    }
-
+      _unstakeAuraLP(IERC20(_token));
+    }  
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
 }

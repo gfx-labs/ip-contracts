@@ -27,6 +27,13 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   // in actual units
   uint256 public _cap;
 
+  bool private locked;
+  modifier nonReentrant () {
+    locked = true;
+    _;
+    locked = false;
+  }
+
   /// @notice initializer for contract
   /// @param name_ name of capped token
   /// @param symbol_ symbol of capped token
@@ -46,6 +53,8 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
 
     _vaultController = IVaultController(vaultController_);
     _votingVaultController = VotingVaultController(votingVaultController_);
+
+    locked = false;
   }
 
   /// @notice 18 decimal erc20 spec should have been written into the fucking standard
@@ -72,16 +81,16 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   /// @notice gaugeToken is fungible 1:1 with underlying BPT
   /// @param amount of underlying to deposit
   /// @param vaultId recipient vault of tokens
-  function deposit(uint256 amount, uint96 vaultId, bool stake) public {
+  function deposit(
+    uint256 amount,
+    uint96 vaultId,
+    bool stake
+  ) public nonReentrant{
     require(amount > 0, "Cannot deposit 0");
     VaultBPT bptVault = VaultBPT(_votingVaultController.BPTvaultAddress(vaultId));
     require(address(bptVault) != address(0x0), "invalid voting vault");
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     require(address(vault) != address(0x0), "invalid vault");
-
-    if(stake){
-      //do something
-    }
 
     // check cap
     checkCap(amount);
@@ -91,6 +100,11 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     // mint this token, the collateral token, to the vault
     ERC20Upgradeable._mint(address(vault), amount);
     _underlying.safeTransferFrom(_msgSender(), address(bptVault), amount);
+
+    if (stake) {
+      //do something
+      bptVault.stakeAuraLP(IERC20(address(_underlying)));
+    }
   }
 
   //TODO convert any gaugeTokens in the BPT vault to underlying BPT, maybe do in retrieveUnderlying
