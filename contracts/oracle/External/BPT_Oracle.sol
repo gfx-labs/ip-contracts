@@ -5,8 +5,6 @@ import "../IOracleRelay.sol";
 import "../../_external/IERC20.sol";
 import "../../_external/balancer/IBalancerVault.sol";
 
-import "hardhat/console.sol";
-
 interface IBalancerPool {
   function getPoolId() external view returns (bytes32);
 
