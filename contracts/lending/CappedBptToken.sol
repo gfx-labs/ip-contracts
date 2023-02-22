@@ -12,8 +12,6 @@ import "./IVault.sol";
 import "./VaultBPT.sol";
 import "./VotingVaultController.sol";
 
-import "hardhat/console.sol";
-
 /// @title CappedGovToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
@@ -28,7 +26,7 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   uint256 public _cap;
 
   bool private locked;
-  modifier nonReentrant () {
+  modifier nonReentrant() {
     locked = true;
     _;
     locked = false;
@@ -81,11 +79,12 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   /// @notice gaugeToken is fungible 1:1 with underlying BPT
   /// @param amount of underlying to deposit
   /// @param vaultId recipient vault of tokens
+  /// @param stake deposit + stake in 1 TX, only for auraBal or aura LPs
   function deposit(
     uint256 amount,
     uint96 vaultId,
     bool stake
-  ) public nonReentrant{
+  ) public nonReentrant {
     require(amount > 0, "Cannot deposit 0");
     VaultBPT bptVault = VaultBPT(_votingVaultController.BPTvaultAddress(vaultId));
     require(address(bptVault) != address(0x0), "invalid voting vault");
@@ -94,15 +93,14 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
 
     // check cap
     checkCap(amount);
-    // check allowance and ensure transfer success
-    //uint256 allowance = _underlying.allowance(_msgSender(), address(this));
-    //require(allowance >= amount, "Insufficient Allowance");
+
     // mint this token, the collateral token, to the vault
     ERC20Upgradeable._mint(address(vault), amount);
+
+    // take underlying and sent to BPT vault
     _underlying.safeTransferFrom(_msgSender(), address(bptVault), amount);
 
     if (stake) {
-      //do something
       bptVault.stakeAuraLP(IERC20(address(_underlying)));
     }
   }

@@ -7,7 +7,6 @@ import "../../_external/balancer/IBalancerVault.sol";
 
 import "../../_external/PRBMath/PRBMathSD59x18.sol";
 
-import "hardhat/console.sol";
 
 interface IBalancerPool {
   function getPoolId() external view returns (bytes32);
@@ -78,9 +77,6 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
     // create upper and lower bounds
     uint256 upperBounds = simplePrice + buffer;
     uint256 lowerBounds = simplePrice - buffer;
-
-    //console.log("Simple Price: ", simplePrice, simplePrice / 1e18);
-    //console.log("Robust Price: ", robustPrice, robustPrice / 1e18);
 
     // ensure the robust price is within bounds
     require(robustPrice < upperBounds, "robustPrice too low");

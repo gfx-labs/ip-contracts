@@ -177,7 +177,8 @@ describe("Liquidations - auraBal", () => {
         expect(startauraBal).to.eq(0, "Dave holds 0 auraBal")
 
         const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedAuraBal.address, BN("1e50"))
-        await mineBlock()
+        const gas = await getGas(result)
+        showBodyCyan("Gas to liquidate auraBal: ", gas)
         
         let supply = await s.CappedAuraBal.totalSupply()
         expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 10, "Total supply reduced as Capped auraBal is liquidatede")
@@ -186,13 +187,14 @@ describe("Liquidations - auraBal", () => {
         let balance = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(0, "All reward tokens have been unstaked due to liquidation")
 
+        balance = await s.primeAuraBalRewardToken.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(s.AuraLPamount, "Other aura LPs not unstaked")
 
         let endCappedAuraBal = await s.CappedAuraBal.balanceOf(s.BobVault.address)
         expect(await toNumber(endCappedAuraBal)).to.be.closeTo(await toNumber(startingAuraBal.sub(tokensToLiquidate)), 0.1, "Expected amount liquidated")
 
         let endAuraBal = await s.auraBal.balanceOf(s.Dave.address)
         expect(await toNumber(endAuraBal)).to.be.closeTo(await toNumber(tokensToLiquidate), 0.1, "Dave received the underlying auraBal")
-        showBody("End auraBal: ", await toNumber(endAuraBal))
 
         const usdiSpent = startingUSDI.sub(await s.USDI.balanceOf(s.Dave.address))
 
@@ -224,7 +226,7 @@ describe("Liquidations - auraBal", () => {
 
     it("Withdraw after loan", async () => {
 
-        const voteVaultauraBal = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
+        const voteVaultauraBal = await s.auraBal.balanceOf(s.BobBptVault.address)
         expect(voteVaultauraBal).to.be.gt(0, "Vote vault holds auraBal")
         const vaultCappedAuraBal = await s.CappedAuraBal.balanceOf(s.BobVault.address)
 

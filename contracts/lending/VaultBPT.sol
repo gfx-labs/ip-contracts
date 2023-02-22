@@ -16,8 +16,6 @@ import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
 import "../_external/balancer/IGauge.sol";
 
-import "hardhat/console.sol";
-
 interface IRewardsPool {
   function stakeAll() external returns (bool);
 
@@ -173,10 +171,10 @@ contract VaultBPT is Context {
 
     rp.getReward(address(this), claimExtra);
 
-    IERC20 rewardToken = IERC20(rp.rewardToken());
     address minter = IVault(_vaultInfo.vault_address).minter();
 
     //send rewards to minter
+    IERC20 rewardToken = IERC20(rp.rewardToken());
     rewardToken.transfer(minter, rewardToken.balanceOf(address(this)));
 
     if (claimExtra) {
@@ -188,9 +186,9 @@ contract VaultBPT is Context {
         extraRewardPool.getReward();
 
         extraRewardToken.transfer(minter, extraRewardToken.balanceOf(address(this)));
+
       }
     }
-
     // if an underlying reward or extra reward token is used as collateral,
     // claiming rewards will empty the vault of this token, this check prevents this
     // if it is the case that the underlying reward token is registered collateral held by this vault
@@ -217,7 +215,6 @@ contract VaultBPT is Context {
     } else {
       rp.withdrawAllAndUnwrap(false);
     }
-
   }
 
   /**Balancer LP token staking */
@@ -257,7 +254,7 @@ contract VaultBPT is Context {
   ) external onlyVotingVaultController {
     if (isStaked[_token] == true) {
       _unstakeAuraLP(IERC20(_token));
-    }  
+    }
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
 }

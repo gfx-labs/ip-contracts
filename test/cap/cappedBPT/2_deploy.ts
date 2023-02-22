@@ -450,7 +450,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     //register oracle
     await s.Oracle.connect(s.owner).setRelay(s.CappedStethGauge.address, stEThMetaStablePoolOracle.address)
-    showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedStethGauge.address)))
+    //showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedStethGauge.address)))
 
     //register on vault controller
     await s.VaultController.connect(s.owner).registerErc20(
@@ -484,7 +484,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     //register oracle
     await s.Oracle.connect(s.owner).setRelay(s.CappedAuraBal.address, auraBalAnchorView.address)
-    showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedAuraBal.address)))
+    //showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedAuraBal.address)))
 
     //register on vault controller
     await s.VaultController.connect(s.owner).registerErc20(
@@ -519,7 +519,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     //register oracle
     await s.Oracle.connect(s.owner).setRelay(s.CappedAuraLP.address, auraStablePoolLPoracle.address)
-    showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedAuraLP.address)))
+    //showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedAuraLP.address)))
 
     //register on vault controller
     await s.VaultController.connect(s.owner).registerErc20(
@@ -530,134 +530,4 @@ describe("Setup oracles, deploy and register cap tokens", () => {
     )
     await ceaseImpersonation(s.owner._address)
   })
-
-  /**
-   * Aura LP token notes
-   * Rewards contract - 0xacada51c320947e7ed1a0d0f6b939b0ff465e4c2 //LIST THIS
-   * Rewards Depositer - 0xb188b1cb84fb0ba13cb9ee1292769f903a9fec59
-   * LP token - 0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd // staked 1:1 for rewards token
-   * 
-   * LP tokens are approving aura Booster 0xA57b8d98dAE62B26Ec3bcC4a365338157060B234 and calling deposit https://etherscan.io/tx/0x63174bb01aa1e9bb9c9642670026b1d324a33d40d4ce60557f3f09e29cdb6f30
-   * Receive Base rewards Pool 0xACAdA51C320947E7ed1a0D0F6b939b0FF465E4c2 which has a good distribution
-   * 
-   * All LP holders stake to Balancer B-auraBAL-STABLE Gauge Deposit 0x0312AA8D0BA4a1969Fddb382235870bF55f7f242
-   * All gauge token holders stake to aura VoterProxy 0xaF52695E1bB01A16D33D7194C28C42b10e0Dbec2
-   * 
-   * Call deposit single on rewards contract? to receive rewards token 0xACAdA51C320947E7ed1a0D0F6b939b0FF465E4c2
-   * 
-   * Deposit naitive assets to get aura LP token
-   * Stake LP token
-   */
-  /**
-   * not transferrable? 
-   it("Deploy and register Capped Aura LP reward token", async () => {
-    s.CappedAuraLP = await DeployContractWithProxy(
-      new CappedBptToken__factory(s.Frank),
-      s.Frank,
-      s.ProxyAdmin,
-      "CappedAuraLPrewardToken",
-      "cALPR",
-      s.primeAuraBalRewardToken.address,
-      s.VaultController.address,
-      s.VotingVaultController.address
-    )
-    await s.CappedAuraLP.deployed()
-    await s.CappedAuraLP.setCap(s.AuraBalCap)
-
-    await s.CappedAuraLP.connect(s.Frank).transferOwnership(s.owner._address)
-
-    await impersonateAccount(s.owner._address)
-    //register on voting vault controller
-    await s.VotingVaultController.connect(s.owner).registerUnderlying(s.primeAuraBalRewardToken.address, s.CappedAuraLP.address)
-
-    //register oracle
-    await s.Oracle.connect(s.owner).setRelay(s.CappedAuraLP.address, auraStablePoolLPoracle.address)
-    showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedAuraLP.address)))
-
-    //register on vault controller
-    await s.VaultController.connect(s.owner).registerErc20(
-      s.CappedAuraLP.address,
-      s.auraBalLTV,
-      s.CappedAuraLP.address,
-      s.LiquidationIncentive
-    )
-    await ceaseImpersonation(s.owner._address)
-
-  })
-   */
-
-  /**
-    * AuraBal BaseRewardsPool - 0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2
-    * Etherscan can't format 0 decimals 1.013404652797941235 auraBal => 1,013,404,652,797,940,000 rewards tokens 
-    * Rewards paid in positive rebase on withdraw? AuraBal received     1,013,404,652,797,941,235
-    * https://etherscan.io/tx/0x4e15607b6cf9f0acd7374f825074ab492c99ebca65ac86f802641d3aaefe69e1
-    */
-  /**
-   * Rewards token not liquid :(
-   it("Register CappedAuraBalRewards token", async () => {
-
-    s.CappedAuraBalRewards = await DeployContractWithProxy(
-      new CappedBptToken__factory(s.Frank),
-      s.Frank,
-      s.ProxyAdmin,
-      "CappedAuraBalRewards",
-      "cAuraBalRewards",
-      s.auraBalRewards.address,
-      s.VaultController.address,
-      s.VotingVaultController.address
-    )
-    await s.CappedAuraBalRewards.deployed()
-    await s.CappedAuraBalRewards.connect(s.Frank).transferOwnership(s.owner._address)
-
-    await impersonateAccount(s.owner._address)
-    //register on voting vault controller
-    await s.VotingVaultController.connect(s.owner).registerUnderlying(s.auraBalRewards.address, s.CappedAuraBalRewards.address)
-
-    //No need to register oracle, same oracle as CappedAuraBal
-
-
-    //register on vault controller
-    await s.VaultController.connect(s.owner).registerErc20(
-      s.CappedAuraBalRewards.address,
-      s.auraBalLTV,
-      s.CappedAuraBal.address,//same oracle as CappedAuraBal
-      s.LiquidationIncentive
-    )
-    await ceaseImpersonation(s.owner._address)
-
-  })
-   */
 })
-
-
-
-
-/**
- * oracle notes
- * see tx https://etherscan.io/tx/0x2dd37029541174bd7c07a5cd9ac0c72bb04a45835f2c3841ce5d003c69c3a786
- * input 0.01 eth ==>> 0.000428598049387651 BPT (Balancer stETH stable pool)
- * 
- * https://etherscan.io/tx/0x8f323620a727394f86d3762b1a726257ea0fa0aadbaaef55bda0c7adf2a0b643
- * stake 1:1 for gauge tokens
- * 
- * https://etherscan.io/tx/0x96ef901dc91ed2576516f29c74d7bdd94a9d675a6f5dc603e7dce6370d3723a7
- * unstake - 1:1 gauge => bpt
- * 
- * EXIT POOL - function on balancer vault? 
- * 
- * https://etherscan.io/tx/0xf17c8409773211c02398ccdca3fca94d184940500c4a3d612c72f94d6f0d66d1
- * withdraw both pool tokens
- * burn 0.004841415705915759 BPT for:
- * 0.002518751088880166 wstETH
- * 0.00219997391912264 wETH
- * 
- * https://etherscan.io/tx/0x76f4ae2bdc238c8aa270edb071062f4bf068d985759cf66d60687ac1d1291844
- * withdraw eth only
- * burn 0.004939222083813048 BPT for:
- * 0.005070746914439014 eth (~7.98 USD) 7.98 / 0.0050707... == 1573.7326585951272779952791570015 - accurate price for this block
- * so BPT price should be 7.98 / 0.00593922... == 1,615.639062184287 USD
- * 
- * Meta stable pools have a twap for the BPT I think, this is the twap for 1 assset to the other in the pool
- * to convert this to the BPT price, we need to call
- * 
- */

@@ -12,8 +12,6 @@ import "./VotingVault.sol";
 import "./VaultBPT.sol";
 import "./CappedBptToken.sol";
 
-import "hardhat/console.sol";
-
 /// @title CappedGovToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable

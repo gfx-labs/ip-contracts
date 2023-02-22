@@ -65,7 +65,7 @@ contract BalancerStablePoolTokenOracle is IOracleRelay {
 
   function currentValue() external view override returns (uint256) {
     (
-      IERC20[] memory tokens,
+      /**IERC20[] memory tokens */,
       uint256[] memory balances, /**uint256 lastChangeBlock */
 
     ) = VAULT.getPoolTokens(_poolId);

@@ -122,7 +122,13 @@ describe("Deposit and verify functions", () => {
         let balance = await extraRewardToken.balanceOf(s.Bob.address)
         expect(balance).to.eq(0, "Bob starts with 0 reward tokens")
 
-        await s.BobBptVault.claimAuraLpRewards(s.auraBal.address, true)
+        let result = await s.BobBptVault.claimAuraLpRewards(s.auraBal.address, true, {
+            gasPrice: 200000000000, //gas price of 200 gwei - extreeemely high
+            gasLimit: 4000000
+        })
+        let gas = await getGas(result)
+        showBodyCyan("Gas to claim auraBal rewards: ", gas)
+
         let balRewards = await s.BAL.balanceOf(s.Bob.address)
         expect(balRewards).to.be.gt(0, "Received BAL rewards")
         balance = await extraRewardToken.balanceOf(s.Bob.address)
@@ -133,7 +139,12 @@ describe("Deposit and verify functions", () => {
         balance = await extraRewardToken.balanceOf(s.Bob.address)
         expect(balance).to.eq(0, "Bob starts with 0 reward tokens")
 
-        await s.BobBptVault.claimAuraLpRewards(s.primeAuraBalLP.address, true)
+        result = await s.BobBptVault.claimAuraLpRewards(s.primeAuraBalLP.address, true, {
+            gasPrice: 200000000000, //gas price of 200 gwei - extreeemely high
+            gasLimit: 4000000
+        })
+        gas = await getGas(result)
+        showBodyCyan("Gas to claim LP rewards: ", gas)
 
         let newbalance = await s.BAL.balanceOf(s.Bob.address)
         expect(newbalance.sub(balRewards)).to.be.gt(0, "Received more BAL rewards")
@@ -178,14 +189,14 @@ describe("Deposit and verify functions", () => {
         expect(balance).to.eq(s.stETH_Gauge_Amount, "Received the correct amount of gauge tokens")
     })
 
-    
-     it("Deposit tokens again for future tests", async () => {
+
+    it("Deposit tokens again for future tests", async () => {
         await s.auraBal.connect(s.Bob).approve(s.CappedAuraBal.address, s.AuraBalAmount)
         await s.CappedAuraBal.connect(s.Bob).deposit(s.AuraBalAmount, s.BobVaultID, true)
 
         await s.primeAuraBalLP.connect(s.Bob).approve(s.CappedAuraLP.address, s.AuraLPamount)
         await s.CappedAuraLP.connect(s.Bob).deposit(s.AuraLPamount, s.BobVaultID, true)
-        
+
         await s.stETH_Gauge.connect(s.Bob).approve(s.CappedStethGauge.address, s.stETH_Gauge_Amount)
         await s.CappedStethGauge.connect(s.Bob).deposit(s.stETH_Gauge_Amount, s.BobVaultID, false)
 
@@ -209,6 +220,6 @@ describe("Deposit and verify functions", () => {
         expect(balance).to.eq(s.stETH_Gauge_Amount, "Underlying sent to BPT vault")
 
     })
-     
+
 
 })

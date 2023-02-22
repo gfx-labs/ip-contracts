@@ -17,13 +17,12 @@ interface IBalancerPool {
 
 /*****************************************
  *
- * This relay gets a USD price for BPT LP token from a balancer MetaStablePool 
+ * This relay gets a USD price for BPT LP token from a balancer MetaStablePool
  * This can be used as a stand alone oracle as the price is checked 2 separate ways
  *
  */
 
 contract BPT_Oracle is IOracleRelay {
-
   bytes32 public immutable _poolId;
 
   uint256 public immutable _widthNumerator;
@@ -91,26 +90,23 @@ contract BPT_Oracle is IOracleRelay {
     return robustPrice;
   }
 
-  /**
-    //                             2.a.x.y + a.y^2 + b.y                                                         //
-    // spot price Y/X = - dx/dy = -----------------------                                                        //
-    //                             2.a.x.y + a.x^2 + b.x                                                         //
-    //                                                                                                           //
-    // n = 2                                                                                                     //
-    // a = amp param * n                                                                                         //
-    // b = D + a.(S - D)                                                                                         //
-    // D = invariant                                                                                             //
-    // S = sum of balances but x,y = 0 since x  and y are the only tokens                                        //
+  //                             2.a.x.y + a.y^2 + b.y                                                         //
+  // spot price Y/X = - dx/dy = -----------------------                                                        //
+  //                             2.a.x.y + a.x^2 + b.x                                                         //
+  //                                                                                                           //
+  // n = 2                                                                                                     //
+  // a = amp param * n                                                                                         //
+  // b = D + a.(S - D)                                                                                         //
+  // D = invariant                                                                                             //
+  // S = sum of balances but x,y = 0 since x  and y are the only tokens                                        //
 
-  once we have the spot price, we can then calc the BPT price by
-    //              balance X + (spot price Y/X * balance Y)                                                     //
-    // BPT price = ------------------------------------------                                                    //
-    //                          total supply      
-   */
+  // once we have the spot price, we can then calc the BPT price by
+  //              balance X + (spot price Y/X * balance Y)                                                     //
+  // BPT price = ------------------------------------------                                                    //
+  //                          total supply
 
   /**
    * @dev Calculates the spot price of token Y in terms of token X.
-   todo optimize for getPoolTokens calls? 
    */
   function getSpotPrice(uint256[] memory balances) internal view returns (uint256 pyx) {
     (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
@@ -153,14 +149,8 @@ contract BPT_Oracle is IOracleRelay {
 
   function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {
     total = 0;
-
-    //console.log("Balances: ", balances.length);
-    //console.log("token: ", address(tokens[0]), "balance: ", balances[0]); //100615514.12233347 USD
-    //console.log("token: ", address(tokens[1]), "balance: ", balances[1]); //79835218.30133966 USD += 180,450,732.4233397 USD??
-
     for (uint256 i = 0; i < tokens.length; i++) {
       total += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
-      //console.log(address(tokens[i]), assetOracles[address(tokens[i])].currentValue());
     }
   }
 
