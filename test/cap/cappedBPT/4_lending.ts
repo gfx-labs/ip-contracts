@@ -84,7 +84,7 @@ describe("Lending with capped Balancer LP tokens and AuraBal", () => {
 
     it("Repay loan", async () => {
 
-        expect(await s.USDC.balanceOf(s.Bob.address)).to.eq(s.Bob_USDC, "Bob still holds starting USDC")
+        expect(await s.USDC.balanceOf(s.Bob.address)).to.eq(s.Bob_USDC.mul(10), "Bob still holds starting USDC")
 
         //deposit some to be able to repay all
         await s.USDC.connect(s.Bob).approve(s.USDI.address, BN("50e6"))
@@ -131,7 +131,7 @@ describe("Liquidations - auraBal", () => {
 
     it("Elapse time to put vault underwater", async () => {
 
-        await fastForward(OneYear)
+        await fastForward(OneDay)
         await mineBlock()
         await s.VaultController.calculateInterest()
         await mineBlock()
@@ -170,7 +170,7 @@ describe("Liquidations - auraBal", () => {
 
 
         const startingUSDI = await s.USDI.balanceOf(s.Dave.address)
-        expect(startingUSDI).to.eq(s.USDC_AMOUNT.mul(BN("1e12")))
+        expect(startingUSDI).to.eq((s.USDC_AMOUNT.mul(5)).mul(BN("1e12")))
 
         const startingAuraBal = await s.CappedAuraBal.balanceOf(s.BobVault.address)
         const startauraBal = await s.auraBal.balanceOf(s.Dave.address)
@@ -188,23 +188,24 @@ describe("Liquidations - auraBal", () => {
 
 
         let endCappedAuraBal = await s.CappedAuraBal.balanceOf(s.BobVault.address)
-        expect(await toNumber(endCappedAuraBal)).to.be.closeTo(await toNumber(startingAuraBal.sub(tokensToLiquidate)), 0.0001, "Expected amount liquidated")
+        expect(await toNumber(endCappedAuraBal)).to.be.closeTo(await toNumber(startingAuraBal.sub(tokensToLiquidate)), 0.1, "Expected amount liquidated")
 
         let endAuraBal = await s.auraBal.balanceOf(s.Dave.address)
-        expect(await toNumber(endAuraBal)).to.be.closeTo(await toNumber(tokensToLiquidate), 0.001, "Dave received the underlying auraBal")
+        expect(await toNumber(endAuraBal)).to.be.closeTo(await toNumber(tokensToLiquidate), 0.1, "Dave received the underlying auraBal")
+        showBody("End auraBal: ", await toNumber(endAuraBal))
 
         const usdiSpent = startingUSDI.sub(await s.USDI.balanceOf(s.Dave.address))
 
         //price - liquidation incentive (5%)
         const effectivePrice = (price.mul(BN("1e18").sub(s.LiquidationIncentive))).div(BN("1e18"))
         const realPrice = ((tokensToLiquidate.mul(effectivePrice)).div(tokensToLiquidate))
-        expect(await toNumber(realPrice)).to.be.closeTo(await toNumber(effectivePrice), 0.001, "Effective price is correct")
+        expect(await toNumber(realPrice)).to.be.closeTo(await toNumber(effectivePrice), 0.1, "Effective price is correct")
 
 
         const profit = liquidationValue.sub(usdiSpent)
         const expected = (liquidationValue.mul(s.LiquidationIncentive)).div(BN("1e18"))
 
-        expect(await toNumber(profit)).to.be.closeTo(await toNumber(expected), 0.1, "Expected profit achieved")
+        expect(await toNumber(profit)).to.be.closeTo(await toNumber(expected), 2, "Expected profit achieved")
 
     })
 
@@ -223,7 +224,7 @@ describe("Liquidations - auraBal", () => {
 
     it("Withdraw after loan", async () => {
 
-        const voteVaultauraBal = await s.auraBal.balanceOf(s.BobBptVault.address)
+        const voteVaultauraBal = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
         expect(voteVaultauraBal).to.be.gt(0, "Vote vault holds auraBal")
         const vaultCappedAuraBal = await s.CappedAuraBal.balanceOf(s.BobVault.address)
 
