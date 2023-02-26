@@ -80,7 +80,7 @@ const main = async () => {
 
 
   //const weekNum = 1
-  const weekNum = 8
+  const weekNum = 9
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     //weekNum = weekNum + 1
     const blockStart = week.start

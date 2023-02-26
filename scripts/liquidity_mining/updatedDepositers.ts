@@ -68,7 +68,7 @@ const main = async () => {
     cl
   );
 
-  const weekNum = 8
+  const weekNum = 9
   const week = BlockRounds.blockRanges[weekNum]
 
   const blockStart = week.start
@@ -169,11 +169,13 @@ const main = async () => {
   let pms = []
   let blocks = 0;
   let idx = 0
+  console.log("LOOPING: : : ")
   for (let b = blockStart; b <= blockEnd; b++) {
     let pm = runBlock(b)
     pms.push(pm)
     idx = idx + 1
-    if (idx % 1000 == 0) {
+    if (idx % 500 == 0) {
+      console.log("Loop 500")
       await Promise.all(pms)
       pms = []
     }
