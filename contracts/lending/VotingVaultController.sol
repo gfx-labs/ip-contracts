@@ -62,8 +62,8 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
     _auraBooster = newBooster;
   }
 
-  /// @notice auraBal staking is handled slightly differently 
-  function registerAuraBal(address auraBal) external onlyOwner{
+  /// @notice auraBal staking is handled slightly differently
+  function registerAuraBal(address auraBal) external onlyOwner {
     _auraBal = auraBal;
   }
 
@@ -107,7 +107,7 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
 
     VaultBPT bptVault = VaultBPT(vaultBPT);
 
-    bptVault.votingVaultControllerTransfer(underlying_address, target, amount);
+    bptVault.votingVaultControllerTransfer(underlying_address, target, amounts);
   }
 
   /// @notice create a new vault
@@ -140,7 +140,7 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
       //if a standard vault exists already
       if (vault_address != address(0)) {
         // mint the vault itself, deploying the contract
-        address bpt_vault_address = address(new VaultBPT(id, vault_address, address(_vaultController), address(this), _auraBal));
+        address bpt_vault_address = address(new VaultBPT(id, vault_address, address(_vaultController), address(this)));
         // add the vault to our system
         _vaultId_vaultBPTaddress[id] = bpt_vault_address;
         _vaultAddress_vaultId[vault_address] = id;

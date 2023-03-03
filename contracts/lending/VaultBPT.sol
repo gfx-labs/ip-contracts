@@ -71,9 +71,6 @@ contract VaultBPT is Context {
   VotingVaultController public _votingController;
   IVaultController public _controller;
 
-  /// @notice auraBal stake/unstake is handled differently
-  IERC20 public immutable auraBal;
-
   /// @notice if staked, then underlying is not in the vault so we need to unstake
   /// all assets stake all or nothing
   mapping(address => bool) public isStaked;
@@ -113,14 +110,12 @@ contract VaultBPT is Context {
     uint96 id_,
     address vault_address,
     address controller_address,
-    address voting_controller_address,
-    address _auraBal
-  ) {
+    address voting_controller_address
+  ) //address _auraBal
+  {
     _vaultInfo = VaultInfo(id_, vault_address);
     _controller = IVaultController(controller_address);
     _votingController = VotingVaultController(voting_controller_address);
-
-    auraBal = IERC20(_auraBal);
   }
 
   function parentVault() external view returns (address) {
@@ -134,17 +129,16 @@ contract VaultBPT is Context {
   }
 
   /** auraBal && aura LP token staking */
-
   ///@param lp underlying lp
   function stakeAuraLP(IERC20 lp) external returns (bool) {
     require(isStaked[address(lp)] == false, "already staked");
     isStaked[address(lp)] = true;
 
     //stake auraBal directly on rewards pool
-    if (lp == auraBal) {
+    if (address(lp) == _votingController._auraBal()) {
       (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
       IRewardsPool rp = IRewardsPool(rewardsToken);
-      auraBal.approve(rewardsToken, auraBal.balanceOf(address(this)));
+      lp.approve(rewardsToken, lp.balanceOf(address(this)));
 
       require(rp.stakeAll(), "auraBal staking failed");
       return true;
@@ -200,15 +194,15 @@ contract VaultBPT is Context {
 
   /// @notice manual unstake
   function unstakeAuraLP(IERC20 lp) external onlyMinter {
-    _unstakeAuraLP(lp);
+    //_unstakeAuraLP(lp);
   }
 
-  function _unstakeAuraLP(IERC20 lp) internal {
+  function _unstakeAuraLP(IERC20 lp, bool auraBal) internal {
     isStaked[address(lp)] = false;
     (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
     IRewardsPool rp = IRewardsPool(rewardsToken);
 
-    if (lp == auraBal) {
+    if (auraBal) {
       rp.withdrawAll(false);
     } else {
       rp.withdrawAllAndUnwrap(false);
@@ -234,7 +228,7 @@ contract VaultBPT is Context {
     uint256 _amount
   ) external onlyVaultController {
     if (isStaked[_token] == true) {
-      _unstakeAuraLP(IERC20(_token));
+      _unstakeAuraLP(IERC20(_token), (_token == _votingController._auraBal()));
     }
 
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
@@ -251,8 +245,9 @@ contract VaultBPT is Context {
     uint256 _amount
   ) external onlyVotingVaultController {
     if (isStaked[_token] == true) {
-      _unstakeAuraLP(IERC20(_token));
+      _unstakeAuraLP(IERC20(_token), (_token == _votingController._auraBal()));
     }
+
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
 }
