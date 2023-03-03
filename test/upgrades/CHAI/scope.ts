@@ -16,8 +16,8 @@ export class TestScope extends MainnetAddresses {
     CHAI_AMOUNT = BN("10000e18")
     CappedCHAI!: CappedGovToken
     CHAI_CAP = BN("1000000e18")
-    CHAI_LiqInc = BN("150000000000000000")
-    CHAI_LTV = BN("1e18").sub(this.CHAI_LiqInc).sub(1)
+    CHAI_LiqInc = BN("7500000000000000")//0.0075 / 0.75%
+    CHAI_LTV = BN("98e16")//BN("1e18").sub(this.CHAI_LiqInc).sub(1)
 
     UNI_AMOUNT = BN("500e18")
     NEW_UNI_LTV = BN("700000000000000000") //0.70

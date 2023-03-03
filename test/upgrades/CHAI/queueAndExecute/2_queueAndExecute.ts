@@ -120,7 +120,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
     chaiAnchor = await new CHI_Oracle__factory(s.Frank).deploy("0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7")
     await chaiAnchor.deployed()
 
-    showBody("Result: ", await toNumber(await chaiAnchor.currentValue()))
+    showBodyCyan("Chai Oracle Price: ", await toNumber(await chaiAnchor.currentValue()))
 
   })
 })

@@ -121,7 +121,7 @@ describe("Liquidations", () => {
         let solvency = await s.VaultController.checkVault(s.BobVaultID)
         expect(solvency).to.eq(true, "Bob's vault is not yet underwater")
 
-        //await fastForward(OneDay)
+        await fastForward(OneDay)
         await s.VaultController.calculateInterest()
 
         solvency = await s.VaultController.checkVault(s.BobVaultID)
@@ -146,7 +146,6 @@ describe("Liquidations", () => {
 
         const tokensToLiquidate = await s.VaultController.tokensToLiquidate(s.BobVaultID, s.CappedCHAI.address)
         T2L = tokensToLiquidate
-        expect(T2L).to.eq(s.CHAI_AMOUNT, "High LTV leads to total liquidation")
         expect(tokensToLiquidate).to.be.gt(0, "Capped Tokens are liquidatable")
 
         const price = await s.Oracle.getLivePrice(s.CappedCHAI.address)
@@ -187,11 +186,6 @@ describe("Liquidations", () => {
 
         expect(await toNumber(profit)).to.be.closeTo(await toNumber(expected), 5, "Expected profit achieved")
 
-
-        //total liquidation due to high LTV
-        const voteVaultCHAI = await s.CHAI.balanceOf(s.BobVotingVault.address)
-        expect(voteVaultCHAI).to.eq(0, "Vote vault empty, high LTV leads to total liquidation")
-
     })
 
     it("repay all", async () => {
@@ -207,9 +201,7 @@ describe("Liquidations", () => {
     })
 
 
-    /**
-     * // high LTV means total liquidation so no tokens remain
-     it("Withdraw after loan", async () => {
+    it("Withdraw after loan", async () => {
         const voteVaultCHAI = await s.CHAI.balanceOf(s.BobVotingVault.address)
         expect(voteVaultCHAI).to.be.gt(0, "Vote vault holds underlying")
         const vaultCappedCHAI = await s.CappedCHAI.balanceOf(s.BobVault.address)
@@ -230,7 +222,7 @@ describe("Liquidations", () => {
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.CHAI_AMOUNT.sub(T2L)), 5, "Bob received collateral - liquidated amount")
 
     })
-     */
+
 
     it("mappings", async () => {
         const _vaultAddress_vaultId = await s.VotingVaultController._vaultAddress_vaultId(s.BobVault.address)
