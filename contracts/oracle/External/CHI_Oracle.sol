@@ -23,6 +23,10 @@ contract CHI_Oracle is IOracleRelay {
     wad = readDrip() / 1e9;
   }
 
+
+  /// @notice logic and math pulled directly from the pot contract
+  /// https://github.com/makerdao/dss/commit/17187f7d47be2f4c71d218785e1155474bbafe8a
+  /// https://etherscan.io/address/0x197e90f9fad81970ba7976f33cbd77088e5d7cf7#code
   function readDrip() internal view returns (uint256 tmp) {
     tmp = rmul(rpow(pot.dsr(), (block.timestamp - pot.rho()), ONE), pot.chi());
   }

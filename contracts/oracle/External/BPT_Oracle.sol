@@ -27,20 +27,19 @@ contract BPT_Oracle is IOracleRelay {
   uint256 public immutable _widthDenominator;
 
   IBalancerPool private immutable _priceFeed;
-  IOracleRelay public constant ethOracle = IOracleRelay(0x22B01826063564CBe01Ef47B96d623b739F82Bf2);
 
   mapping(address => IOracleRelay) public assetOracles;
 
   //Balancer Vault
-  IBalancerVault public constant VAULT = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+  IBalancerVault public immutable VAULT; // = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
 
-  int256 public constant WEIGHT = int256(5e17);
 
   /**
    * @param pool_address - Balancer StablePool or MetaStablePool address
    */
   constructor(
     address pool_address,
+    IBalancerVault balancerVault,
     address[] memory _tokens,
     address[] memory _oracles,
     uint256 widthNumerator,
@@ -49,6 +48,8 @@ contract BPT_Oracle is IOracleRelay {
     _priceFeed = IBalancerPool(pool_address);
 
     _poolId = _priceFeed.getPoolId();
+
+    VAULT = balancerVault;
 
     registerOracles(_tokens, _oracles);
 
