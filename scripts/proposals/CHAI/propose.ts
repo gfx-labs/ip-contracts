@@ -30,25 +30,19 @@ const { ethers, network, upgrades } = require("hardhat");
 
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 
-let anchor: UniswapV3TokenOracleRelay
-let mainRelay: ChainlinkOracleRelay
-let anchorView: AnchoredViewRelay
-let CappedZRX: CappedGovToken
 
-const ZRX_LTV = BN("5e17")
-const NEW_UNI_LTV = BN("700000000000000000") //0.70
-const ZRX_LiqInc = BN("150000000000000000")
+const CHAI_LTV = BN("98e16")
+const CHAI_LiqInc = BN("7500000000000000")//0.0075 / 0.75%
 
-const ZRX_ADDR = "0xE41d2489571d322189246DaFA5ebDe1F4699F498"
+const CHAI_ADDR = "0x06AF07097C9Eeb7fD685c692751D5C66dB49c215"
 
 
-const implementation = "0x9BDb5575E24EEb2DCA7Ba6CE367d609Bdeb38246"
-const CappedZRX_ADDR = "0xDf623240ec300fD9e2B7780B34dC2F417c0Ab6D2"
+const CappedCHAI_ADDR = "0xDf623240ec300fD9e2B7780B34dC2F417c0Ab6D2"
 const anchorViewAddr = "0xEF12fa3183362506A2dd0ff1CF06b2f4156e751E"
 
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await reset(16487453)
+    await reset(16744427)
     await network.provider.send("evm_setAutomine", [true])
 
     
@@ -56,29 +50,29 @@ async function main() {
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
 
-    const proposal = new ProposalContext("ZRX, VC Upgrade, UNI LTV")
+    const proposal = new ProposalContext("LIST CHAI")
 
-    const addOracleZRX = await new OracleMaster__factory().
+    const addOracleCHAI = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            CappedZRX_ADDR,
+            CappedCHAI_ADDR,
             anchorViewAddr
         )
 
-    const listZRX = await new VaultController__factory().
+    const listCHAI = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            CappedZRX_ADDR,
-            ZRX_LTV,
-            CappedZRX_ADDR,
-            ZRX_LiqInc
+            CappedCHAI_ADDR,
+            CHAI_LTV,
+            CappedCHAI_ADDR,
+            CHAI_LiqInc
         )
 
-    const registerZRX_VVC = await new VotingVaultController__factory().
+    const registerCHAI_VVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            ZRX_ADDR,
-            CappedZRX_ADDR
+            CHAI_ADDR,
+            CappedCHAI_ADDR
         )
 
 
@@ -90,37 +84,16 @@ async function main() {
     //showBody("Current Oracle: ", currentOracle)
 
 
-    const updateUniLTV = await new VaultController__factory().
-        attach(d.VaultController).
-        populateTransaction.updateRegisteredErc20(
-            d.UNI,
-            NEW_UNI_LTV,
-            d.UNI,
-            currentLiqInc
-        )
-
-    const upgradeVC = await new ProxyAdmin__factory().
-        attach(d.ProxyAdmin).
-        populateTransaction.upgrade(
-            d.VaultController,
-            implementation
-        )
-
-
-    //upgrade VC
-    proposal.addStep(upgradeVC, "upgrade(address,address)")
-    //UNI LTV
-    proposal.addStep(updateUniLTV, "updateRegisteredErc20(address,uint256,address,uint256)")
-
-    //list ZRX
-    proposal.addStep(addOracleZRX, "setRelay(address,address)")
-    proposal.addStep(listZRX, "registerErc20(address,uint256,address,uint256)")
-    proposal.addStep(registerZRX_VVC, "registerUnderlying(address,address)")
+   
+    //list CHAI
+    proposal.addStep(addOracleCHAI, "setRelay(address,address)")
+    proposal.addStep(listCHAI, "registerErc20(address,uint256,address,uint256)")
+    proposal.addStep(registerCHAI_VVC, "registerUnderlying(address,address)")
 
     let out = proposal.populateProposal()
 
     console.log(out)
-    const proposalText = fs.readFileSync('./scripts/proposals/ZRX/proposal.md', 'utf8');
+    const proposalText = fs.readFileSync('./scripts/proposals/CHAI/proposal.md', 'utf8');
 
     let gov: GovernorCharlieDelegate;
     gov = new GovernorCharlieDelegate__factory(deployer).attach(
@@ -136,7 +109,8 @@ async function main() {
         false
     )
 
-    fs.writeFileSync('./scripts/proposals/ZRX/proposalHexData.txt', JSON.stringify(data));
+    showBody("Data: ", data)
+    //fs.writeFileSync('./scripts/proposals/CHAI/proposalHexData.txt', JSON.stringify(data));
 
 }
 
