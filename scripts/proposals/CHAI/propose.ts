@@ -45,7 +45,7 @@ async function main() {
     await reset(16744427)
     await network.provider.send("evm_setAutomine", [true])
 
-    
+
 
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
@@ -75,16 +75,6 @@ async function main() {
             CappedCHAI_ADDR
         )
 
-
-    const OracleVerbose = OracleMaster__factory.connect(d.Oracle, deployer)
-    const VaultControllerVerbose = VaultController__factory.connect(d.VaultController, deployer)
-    const currentOracle = await OracleVerbose._relays(d.UNI)
-    const currentLiqInc = await VaultControllerVerbose._tokenAddress_liquidationIncentive(d.UNI)
-
-    //showBody("Current Oracle: ", currentOracle)
-
-
-   
     //list CHAI
     proposal.addStep(addOracleCHAI, "setRelay(address,address)")
     proposal.addStep(listCHAI, "registerErc20(address,uint256,address,uint256)")
