@@ -121,6 +121,9 @@ describe("Liquidations", () => {
         const carolBP = await s.VaultController.vaultBorrowingPower(s.CaroLVaultID)
         await s.VaultController.connect(s.Carol).borrowUsdi(s.CaroLVaultID, carolBP)
 
+        showBody(await toNumber(carolBP))
+
+
     })
 
 
@@ -130,7 +133,7 @@ describe("Liquidations", () => {
 
         await fastForward(OneWeek * 10)
         await s.VaultController.calculateInterest()
-        
+
         solvency = await s.VaultController.checkVault(s.BobVaultID)
         expect(solvency).to.eq(false, "Bob's vault is underwater")
 

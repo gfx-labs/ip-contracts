@@ -50,7 +50,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(16735779)).to.not.throw;
+        expect(await reset(16771935)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [true])).to.not

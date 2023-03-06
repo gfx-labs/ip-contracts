@@ -1,49 +1,46 @@
-# Proposal to add ZRX & update UNI LTV
+# Proposal to add CHAI
+Proposal to add CHAI as an capped collateral to Interest Protocol.
 
-## Proposal to add ZRX - Mintcloud
-Proposal to add ZRX as a capped collateral to Interest Protocol.
+## Overview
 
-### Overview
-The ZRX token is the governance token of the [0x Protocol](https://www.0x.org/). It was one of the first [DEX governance tokens ever deployed (2017)]([https:/](https://blog.0xproject.com/announcing-the-0x-token-zrx-launch-d4c097d893c7?gi=4de9922b4b5b)/).
+CHAI is an ERC20 token developed by Dapphub that provides a tokenized representation of DAI that has been deposited into the DAI Savings Rate (DSR) module of the Maker Protocol. It accrues interest at the rate set by Maker governance for the DSR. At time of writing, that is 1%. CHAI is freely transferrable and redeemable, and is immutable with no special permissions.
 
-The proposed parameters and cap are set conservatively given relative low DEX liquidity. To be revisited if liquidity increases.
+Because CHAI is interest-bearing DAI redeemable with Maker, there is no risk of it becoming illiquid for its underlying (Maker issues new DAI when redeeming from the DSR). Additionally, Maker's Peg Stability Modules (PSMs) contain billions of dollar-redeemable stablecoins that DAI can be converted to and from with zero slippage.
 
-### Parameters
-Token Address: [0xe41d2489571d322189246dafa5ebde1f4699f498](https://etherscan.io/token/0xe41d2489571d322189246dafa5ebde1f4699f498)
-LTV: 50%
-Liquidation incentive: 15%
-Cap: 1m (~$250k)
-Oracle Address: [Anchor View](https://etherscan.io/address/0xEF12fa3183362506A2dd0ff1CF06b2f4156e751E#code)
-Primary oracle: [Chainlink ZRX/ETH](https://data.chain.link/ethereum/mainnet/crypto-eth/zrx-eth)
-Secondary oracle: [Uniswap v3 ETH/ZRX](https://etherscan.io/address/0x14424eeecbff345b38187d0b8b749e56faa68539)
-Price deviation: 20%
+Currently, DAI deposited in the DSR yields 1% per annum. This rate is manually adjusted by Maker governance. The stable value of CHAI in relation to DAI (and USDC, USDP, and GUSD) makes it a highly secure asset that is also yield bearing. In times that Interest Protocol charges less than CHAI yields, it allows for users to safely arbitrage the rates, resulting in higher DAI, CHAI, and USDi usage.
 
-### Liquidity
-MCAP: $190m
-Uniswap v3 liquidity: $600k
-[Coingecko](https://www.coingecko.com/en/coins/0x) 7-day avg 24hr volume: $22m
-Notable exchanges: Coinbase, Binance, OKX
+## Parameters
 
-### Technical risks
-1. Type of contract: governance token
-1. Underlying asset: governance token
-1. Time: +4 years
-1. Value: control of the 0x protocol and [0x Treasury](https://www.0x.org/zrx/treasury)
-1. Privileges: None
-1. Upgradability: None
+Token Address: [0x06AF07097C9Eeb7fD685c692751D5C66dB49c215](https://etherscan.io/address/0x06AF07097C9Eeb7fD685c692751D5C66dB49c215#code)
+Capped Token address: [0xDdAD1d1127A7042F43CFC209b954cFc37F203897](https://etherscan.io/address/0xDdAD1d1127A7042F43CFC209b954cFc37F203897#code)
+LTV: 98%
+Liquidation incentive: 0.75%
+Cap: 1,000,000
+Oracle Address: [Chi Oracle](https://etherscan.io/address/0x9Aa2Ccb26686dd7698778599cD0f4425a5231e18#code)
+Price deviation: N/A
 
-## Proposal to increase LTV for UNI - Nekosan
-Proposal to increase the LTV for UNI to 70%
+## Liquidity
 
-### Overview
-The UNI token is the governance token to the Uniswap Protocol. UNI holders can engage in protocol governance by delegating their voting power to their address or an address of their choosing.
+Market Cap: $312,076
+Liquidity: Equivalent to Maker PSMs; ~2 billion at time of writing
+Volatility: Stablecoin
+Coingecko 7-day avg 24hr volume: N/A
+Notable exchanges: N/A
 
-The LTV was initially set conservatively to 55% because UNI is an uncapped collateral. The increase to 70% will bring it in alignment with other collateral on Interest Protocol of similar risk profile.
+## Technical risks
 
-We have not seen a ton of demand for UNI as a collateral but hopefully this increase in LTV will make IP a more competitive venue to originate loans from.
+Type of contract: ERC20 wrapper
+Underlying asset: DAI
+Time: >3 Years (Created November 29, 2019)
+Value:
+Privileges: None
+Upgradability: None
+Supplemental Information: An edge case could result in users not receiving the full interest accrued. The DSR contract (Pot) requires someone to call `drip` to update the contract's internal accounting. This function is not bundled with `exit` function, which means a user withdrawing from the DSR (with or without CHAI) would forgo any accrued interest since the last time `drip` was called.
 
-### Parameters
-Token Address: [0x1f9840a85d5af5bf1d1762f925bdaddc4201f984](https://etherscan.io/address/0x1f9840a85d5af5bf1d1762f925bdaddc4201f984)
-
-## Note: 
-To upgrade UNI's LTV, we're also including a minor code change to the `updateRegisteredErc20()` to address the bug identified by Sigma Prime in the most recent audit.
+## Relevant References
+[Two-day audit by Trail of Bits](https://chai.money/Trail_Of_Bits-Letter_of_Attestation_Chai.pdf)
+[Github documentation for CHAI](https://github.com/dapphub/chai)
+[A front end for users to mint/burn CHAI](https://chai.money)
+[MakerDAO Glossary](https://docs.makerdao.com/other-documentation/system-glossary)
+[DAI Savings Rate documentation](https://docs.makerdao.com/smart-contract-modules/rates-module/pot-detailed-documentation)
+[Code for IP's Chai Oracle Contract](https://gfx.cafe/ip/contracts/-/blob/master/contracts/oracle/External/CHI_Oracle.sol)

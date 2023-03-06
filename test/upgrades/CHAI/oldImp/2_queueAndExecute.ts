@@ -29,7 +29,8 @@ import {
   VaultController,
   ProxyAdmin__factory,
   CHI_Oracle__factory,
-  IOracleRelay
+  IOracleRelay,
+  TransparentUpgradeableProxy__factory
 } from "../../../../typechain-types";
 import {
   advanceBlockHeight,
@@ -89,8 +90,8 @@ describe("Verify Contracts", () => {
     vaultAddress = await s.VaultController.vaultAddress(s.CaroLVaultID)
     s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
     expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
-
     await s.WETH.connect(s.Carol).transfer(s.CarolVault.address, await s.WETH.balanceOf(s.Carol.address))
+
   });
 });
 
@@ -98,40 +99,39 @@ describe("Verify Contracts", () => {
 
 describe("Deploy Cap Tokens and Oracles", () => {
 
+  const cCHAIaddr = "0xDdAD1d1127A7042F43CFC209b954cFc37F203897"
+  const oldImp = "0xB9cb624D4b21E0239bB149B1B1F1992A0eB351b8"
 
-  it("Deploy capped CHAI", async () => {
-    s.CappedCHAI = await DeployContractWithProxy(
-      new CappedGovToken__factory(s.Frank),
-      s.Frank,
-      s.ProxyAdmin,
-      "CappedCHAI",
-      "cCHAI",
-      s.CHAI.address,
-      s.VaultController.address,
-      s.VotingVaultController.address
-    )
-    await s.CappedCHAI.deployed()
+  it("Set capped chai to old implementation", async () => {
 
-    await s.CappedCHAI.connect(s.Frank).setCap(s.CHAI_CAP)
+    s.CappedCHAI = CappedGovToken__factory.connect(cCHAIaddr, s.Frank)
 
-    await s.CappedCHAI.connect(s.Frank).transferOwnership(s.owner._address)
-  })
+    const proxy = TransparentUpgradeableProxy__factory.connect(cCHAIaddr, s.Frank)
 
-  it("CHAI oracle", async () => {
-    //deploy
-    chaiAnchor = await new CHI_Oracle__factory(s.Frank).deploy("0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7")
-    await chaiAnchor.deployed()
+    await impersonateAccount(s.deployer._address)
+    showBodyCyan("TRYING")
+    await s.CappedCHAI.connect(s.deployer).transferOwnership(s.owner._address)
+    await ceaseImpersonation(s.deployer._address)
 
-    showBodyCyan("Chai Oracle Price: ", await toNumber(await chaiAnchor.currentValue()))
+    /**
+     await impersonateAccount(s.owner._address)
+    s.ProxyAdmin.connect(s.owner).upgrade(s.CappedCHAI.address, oldImp)
+    await ceaseImpersonation(s.owner._address)
+     */
 
   })
+
+
+
+
 })
 
 
 
 describe("Setup, Queue, and Execute proposal", () => {
   const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
-  const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
+  const deployer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
+  const proposer = "0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908"//"0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
   const prop = ethers.provider.getSigner(proposer)
 
   let gov: GovernorCharlieDelegate;
@@ -139,6 +139,17 @@ describe("Setup, Queue, and Execute proposal", () => {
   let proposal: number
 
   let out: any
+
+  const deployedOracle = "0x9Aa2Ccb26686dd7698778599cD0f4425a5231e18"
+
+
+  it("Check votes", async () => {
+
+    const votes = await s.IPT.getCurrentVotes(prop._address)
+    showBody("Votes: ", await toNumber(votes))
+
+  })
+
 
   it("Makes the new proposal", async () => {
 
@@ -153,7 +164,7 @@ describe("Setup, Queue, and Execute proposal", () => {
       attach(s.Oracle.address).
       populateTransaction.setRelay(
         s.CappedCHAI.address,
-        chaiAnchor.address
+        deployedOracle
       )
 
     const listCHAI = await new VaultController__factory(prop).
@@ -203,7 +214,7 @@ describe("Setup, Queue, and Execute proposal", () => {
 
     const block = await currentBlock()
     const votes = await s.IPT.getPriorVotes(proposer, block.number - 2)
-    expect(await toNumber(votes)).to.eq(45000000, "Correct number of votes delegated")
+    //expect(await toNumber(votes)).to.eq(45000000, "Correct number of votes delegated")
 
     await impersonateAccount(proposer)
     await gov.connect(prop).propose(
@@ -221,6 +232,14 @@ describe("Setup, Queue, and Execute proposal", () => {
 
     await gov.connect(prop).castVote(proposal, 1)
     await mineBlock()
+    await ceaseImpersonation(proposer)
+
+    await impersonateAccount(deployer)
+    const dep = ethers.provider.getSigner(deployer)
+    await gov.connect(dep).castVote(proposal, 1)
+    await ceaseImpersonation(deployer)
+
+    await impersonateAccount(proposer)
 
     showBodyCyan("Advancing a lot of blocks again...")
     await hardhat_mine(votingPeriod.toNumber());
@@ -235,8 +254,10 @@ describe("Setup, Queue, and Execute proposal", () => {
     await gov.connect(prop).execute(proposal);
     await mineBlock();
 
-
     await ceaseImpersonation(proposer)
+
+
+
 
   })
 

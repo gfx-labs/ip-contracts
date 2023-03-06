@@ -109,6 +109,7 @@ export class TestScope extends MainnetAddresses {
     Andy_USDC = BN("1e8")
     Bob_USDC = BN("1000e6")
     Bob_WETH = BN("10e18")
+    Carol_WETH = BN("500e18")
     Carol_UNI = BN("100e18")
     Gus_WBTC = BN("10e8")
 

@@ -42,13 +42,15 @@ const anchorViewAddr = "0x9Aa2Ccb26686dd7698778599cD0f4425a5231e18"
 
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await reset(16770877)
-    await network.provider.send("evm_setAutomine", [true])
+    //await reset(16770877)
+    //await network.provider.send("evm_setAutomine", [true])
 
 
 
     const accounts = await ethers.getSigners();
-    const deployer = accounts[0];
+    const deployer = accounts[1];
+
+
 
     const proposal = new ProposalContext("LIST CHAI")
 
@@ -82,7 +84,7 @@ async function main() {
 
     let out = proposal.populateProposal()
 
-    console.log(out)
+    //console.log(out)
     const proposalText = fs.readFileSync('./scripts/proposals/CHAI/proposal.md', 'utf8');
 
     let gov: GovernorCharlieDelegate;
@@ -99,7 +101,17 @@ async function main() {
         false
     )
 
-    showBody("Data: ", data)
+    console.log("Sending proposal from ", deployer.address)
+    await gov.connect(deployer).propose(
+        out.targets,
+        out.values,
+        out.signatures,
+        out.calldatas,
+        proposalText,
+        false
+    )
+
+    //showBody("Data: ", data)
     //fs.writeFileSync('./scripts/proposals/CHAI/proposalHexData.txt', JSON.stringify(data));
 
 }
