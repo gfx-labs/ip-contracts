@@ -16,6 +16,8 @@ import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
 import "../_external/balancer/IGauge.sol";
 
+import "hardhat/console.sol";
+
 interface IRewardsPool {
   function stakeAll() external returns (bool);
 
@@ -110,9 +112,8 @@ contract VaultBPT is Context {
     uint96 id_,
     address vault_address,
     address controller_address,
-    address voting_controller_address
-  ) //address _auraBal
-  {
+    address voting_controller_address //address _auraBal
+  ) {
     _vaultInfo = VaultInfo(id_, vault_address);
     _controller = IVaultController(controller_address);
     _votingController = VotingVaultController(voting_controller_address);
@@ -145,7 +146,6 @@ contract VaultBPT is Context {
     }
 
     //else we stake other LPs via booster contract
-
     IBooster booster = IBooster(_votingController._auraBooster());
 
     (, uint256 pid) = _votingController.getAuraLpData(address(lp));

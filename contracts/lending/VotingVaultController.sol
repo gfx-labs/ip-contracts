@@ -107,7 +107,7 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
 
     VaultBPT bptVault = VaultBPT(vaultBPT);
 
-    bptVault.votingVaultControllerTransfer(underlying_address, target, amounts);
+    bptVault.votingVaultControllerTransfer(underlying_address, target, amount);
   }
 
   /// @notice create a new vault

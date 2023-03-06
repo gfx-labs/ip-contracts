@@ -37,12 +37,12 @@ const CHAI_LiqInc = BN("7500000000000000")//0.0075 / 0.75%
 const CHAI_ADDR = "0x06AF07097C9Eeb7fD685c692751D5C66dB49c215"
 
 
-const CappedCHAI_ADDR = "0xDf623240ec300fD9e2B7780B34dC2F417c0Ab6D2"
-const anchorViewAddr = "0xEF12fa3183362506A2dd0ff1CF06b2f4156e751E"
+const CappedCHAI_ADDR = "0xDdAD1d1127A7042F43CFC209b954cFc37F203897"
+const anchorViewAddr = "0x9Aa2Ccb26686dd7698778599cD0f4425a5231e18"
 
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await reset(16744427)
+    await reset(16770877)
     await network.provider.send("evm_setAutomine", [true])
 
 

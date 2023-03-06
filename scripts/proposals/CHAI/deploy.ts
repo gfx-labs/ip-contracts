@@ -111,8 +111,8 @@ const deploy = async (deployer: SignerWithAddress) => {
 
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await network.provider.send("evm_setAutomine", [true])
-    await reset(16744427)
+    //await network.provider.send("evm_setAutomine", [true])
+    //await reset(16744427)
 
 
     const accounts = await ethers.getSigners();
@@ -128,3 +128,13 @@ main()
         console.error(error);
         process.exit(1);
     });
+
+/**
+ Capped CHAI deployed to:  0xDdAD1d1127A7042F43CFC209b954cFc37F203897
+Capped CHAI Initialized 0xDdAD1d1127A7042F43CFC209b954cFc37F203897
+All Cap Tokens deployed
+↓   CHAI anchor view deployed:  0x9Aa2Ccb26686dd7698778599cD0f4425a5231e18
+↓   CHAI anchor view price:  1.0205021615169114
+All oracles have been deployed successfully
+Set CHAI cap to:  1000000
+ */
