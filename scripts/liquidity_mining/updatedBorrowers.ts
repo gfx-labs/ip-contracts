@@ -141,7 +141,7 @@ const main = async () => {
       let pm = runBlock(b)
       pms.push(pm)
       idx = idx + 1
-      if(idx % 1000 ==  0) {
+      if(idx % 500 ==  0) {
         await Promise.all(pms)
         pms = []
       }
@@ -170,7 +170,7 @@ const main = async () => {
     //console.log(treeJson)
     console.log(treeJson.length, " total minters")
     writeFileSync(`rewardtree/borrowers_${blockStart}-${blockEnd}.json`, JSON.stringify(treeJson), 'utf8');
-
+    process.exit(1)
   };
 
 }// all done
