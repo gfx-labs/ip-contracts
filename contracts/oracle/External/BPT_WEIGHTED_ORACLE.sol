@@ -32,7 +32,7 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
   uint256 public immutable _widthNumerator;
   uint256 public immutable _widthDenominator;
 
-  IBalancerPool private immutable _priceFeed;
+  IBalancerPool public immutable _priceFeed;
   mapping(address => IOracleRelay) public assetOracles;
 
   //Balancer Vault
