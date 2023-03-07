@@ -32,6 +32,8 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     locked = false;
   }
 
+  event cappedBPTtransfer(uint96 vaultId, address recipient, uint256 amount);
+
   /// @notice initializer for contract
   /// @param name_ name of capped token
   /// @param symbol_ symbol of capped token
@@ -105,7 +107,6 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     }
   }
 
-  //TODO convert any gaugeTokens in the BPT vault to underlying BPT, maybe do in retrieveUnderlying
   function transfer(address recipient, uint256 amount) public override returns (bool) {
     uint96 vault_id = _votingVaultController.vaultId(_msgSender());
     // only vaults will ever send this. only vaults will ever hold this token.
@@ -117,6 +118,8 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     ERC20Upgradeable._burn(_msgSender(), amount);
     // move the underlying tokens from voting vault to the target
     _votingVaultController.retrieveUnderlyingBPT(amount, BPT_vault_address, recipient);
+    // emit event for clarity 
+    emit cappedBPTtransfer(vault_id, recipient, amount);
     return true;
   }
 

@@ -58,9 +58,6 @@ describe("Deposit and verify functions", () => {
         await s.VotingVaultController.connect(s.owner).registerAuraLpData(s.primeAuraBalLP.address, s.primeAuraBalRewardToken.address, 1)
         await s.VotingVaultController.connect(s.owner).registerAuraLpData(s.auraBal.address, s.auraBalRewards.address, 0)
 
-        //register gauge token
-        //await s.VotingVaultController.connect(s.owner).registerAuraLpData(s.stETH_Gauge.address, "", 29)
-
         await ceaseImpersonation(s.owner._address)
     })
     it("Deposit naked gauge token", async () => {
@@ -77,7 +74,9 @@ describe("Deposit and verify functions", () => {
 
     it("deposit and stake auraBal in a single TX", async () => {
         await s.auraBal.connect(s.Bob).approve(s.CappedAuraBal.address, s.AuraBalAmount)
-        await s.CappedAuraBal.connect(s.Bob).deposit(s.AuraBalAmount, s.BobVaultID, true)
+        const result = await s.CappedAuraBal.connect(s.Bob).deposit(s.AuraBalAmount, s.BobVaultID, true)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to deposit and stake auraBal: ", gas)
 
         //check destinations
         let balance = await s.CappedAuraBal.balanceOf(s.BobVault.address)
@@ -95,17 +94,13 @@ describe("Deposit and verify functions", () => {
 
     it("deposit and stake aura lp token in a single TX", async () => {
         await s.primeAuraBalLP.connect(s.Bob).approve(s.CappedAuraLP.address, s.AuraLPamount)
-        await s.CappedAuraLP.connect(s.Bob).deposit(s.AuraLPamount, s.BobVaultID, true)
-
+        const result = await s.CappedAuraLP.connect(s.Bob).deposit(s.AuraLPamount, s.BobVaultID, true)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to deposit and stake aura LP: ", gas)
         //check destinations
         let balance = await s.CappedAuraLP.balanceOf(s.BobVault.address)
         expect(balance).to.eq(s.AuraLPamount, "Cap tokens minted to standard vault")
 
-        //balance = await s.primeAuraBalLP.balanceOf(s.BobBptVault.address)
-        //expect(balance).to.eq(s.AuraLPamount, "Underlying sent to BPT vault")
-
-        //stake aura LP
-        //await s.BobBptVault.stakeAuraLP(s.primeAuraBalLP.address)
         balance = await s.primeAuraBalRewardToken.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(s.AuraLPamount, "Correct amount staked")
         balance = await s.primeAuraBalLP.balanceOf(s.BobBptVault.address)

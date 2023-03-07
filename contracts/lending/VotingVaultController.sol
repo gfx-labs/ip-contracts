@@ -33,6 +33,7 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
   mapping(address => auraLpData) public _auraLpData;
 
   address public _auraBooster;
+  address public _auraBal;
 
   event NewVotingVault(address voting_vault_address, uint256 vaultId);
   event NewVaultBPT(address vault_bpt_address, uint256 vaultId);
@@ -59,6 +60,11 @@ contract VotingVaultController is Initializable, OwnableUpgradeable {
 
   function registerAuraBooster(address newBooster) external onlyOwner {
     _auraBooster = newBooster;
+  }
+
+  /// @notice auraBal staking is handled slightly differently
+  function registerAuraBal(address auraBal) external onlyOwner {
+    _auraBal = auraBal;
   }
 
   /// @notice register an underlying capped token pair

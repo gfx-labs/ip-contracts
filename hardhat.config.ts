@@ -33,6 +33,7 @@ const config: HardhatUserConfig = {
         process.env.MAINNET_PRIVATE_KEY
           ? process.env.MAINNET_PRIVATE_KEY
           : zaddr,
+          process.env.PERSONAL_PRIVATE_KEY!
       ],
       minGasPrice: 32000000000,
     },
@@ -124,7 +125,7 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      mainnet: process.env.API_KEY!,//"6I23UXVXWXB4RM8QTDWKSVIWZF7V1ZDMNU",
+      mainnet: process.env.API_KEY!,
       ropsten: process.env.API_KEY!,
       polygon: process.env.ETHERSCAN_POLYGON_KEY!,
     },

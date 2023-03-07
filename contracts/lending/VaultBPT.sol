@@ -16,6 +16,8 @@ import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
 import "../_external/balancer/IGauge.sol";
 
+import "hardhat/console.sol";
+
 interface IRewardsPool {
   function stakeAll() external returns (bool);
 
@@ -30,8 +32,6 @@ interface IRewardsPool {
   function balanceOf(address target) external view returns (uint256);
 
   function pid() external view returns (uint256);
-
-  function earned(address account) external view returns (uint256);
 
   function extraRewardsLength() external view returns (uint256);
 
@@ -73,9 +73,6 @@ contract VaultBPT is Context {
   VotingVaultController public _votingController;
   IVaultController public _controller;
 
-  IERC20 public constant auraBal = IERC20(0x616e8BfA43F920657B3497DBf40D6b1A02D4608d);
-  IRewardsPool public constant rewardsPool = IRewardsPool(0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2);
-
   /// @notice if staked, then underlying is not in the vault so we need to unstake
   /// all assets stake all or nothing
   mapping(address => bool) public isStaked;
@@ -115,7 +112,7 @@ contract VaultBPT is Context {
     uint96 id_,
     address vault_address,
     address controller_address,
-    address voting_controller_address
+    address voting_controller_address //address _auraBal
   ) {
     _vaultInfo = VaultInfo(id_, vault_address);
     _controller = IVaultController(controller_address);
@@ -133,32 +130,32 @@ contract VaultBPT is Context {
   }
 
   /** auraBal && aura LP token staking */
-
   ///@param lp underlying lp
-  function stakeAuraLP(IERC20 lp) external {
+  function stakeAuraLP(IERC20 lp) external returns (bool) {
     require(isStaked[address(lp)] == false, "already staked");
     isStaked[address(lp)] = true;
 
     //stake auraBal directly on rewards pool
-    if (lp == auraBal) {
+    if (address(lp) == _votingController._auraBal()) {
       (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
       IRewardsPool rp = IRewardsPool(rewardsToken);
-      auraBal.approve(rewardsToken, auraBal.balanceOf(address(this)));
+      lp.approve(rewardsToken, lp.balanceOf(address(this)));
 
       require(rp.stakeAll(), "auraBal staking failed");
-    } else {
-      //stake other LPs via booster contract
-
-      IBooster booster = IBooster(_votingController._auraBooster());
-
-      (, uint256 pid) = _votingController.getAuraLpData(address(lp));
-
-      //approve booster
-      lp.approve(address(booster), lp.balanceOf(address(this)));
-
-      //deposit via booster
-      require(booster.depositAll(pid, true), "Deposit failed");
+      return true;
     }
+
+    //else we stake other LPs via booster contract
+    IBooster booster = IBooster(_votingController._auraBooster());
+
+    (, uint256 pid) = _votingController.getAuraLpData(address(lp));
+
+    //approve booster
+    lp.approve(address(booster), lp.balanceOf(address(this)));
+
+    //deposit via booster
+    require(booster.depositAll(pid, true), "Deposit failed");
+    return true;
   }
 
   /// @param lp - the aura LP token address, or auraBal address
@@ -186,7 +183,6 @@ contract VaultBPT is Context {
         extraRewardPool.getReward();
 
         extraRewardToken.transfer(minter, extraRewardToken.balanceOf(address(this)));
-
       }
     }
     // if an underlying reward or extra reward token is used as collateral,
@@ -196,21 +192,17 @@ contract VaultBPT is Context {
     require(_controller.checkVault(_vaultInfo.id), "Claim causes insolvency");
   }
 
-  // is this needed?? todo
-  // only if support unstake properly
-  // better to have withdraw on cap contract call claimAuraLpRewards ?
-  /**
-  function unstakeAuraLP(IERC20 lp, bool claim) external onlyMinter {
-    _unstakeAuraLP(lp, claim);
+  /// @notice manual unstake
+  function unstakeAuraLP(IERC20 lp) external onlyMinter {
+    //_unstakeAuraLP(lp);
   }
-   */
 
-  function _unstakeAuraLP(IERC20 lp) internal {
+  function _unstakeAuraLP(IERC20 lp, bool auraBal) internal {
     isStaked[address(lp)] = false;
     (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
     IRewardsPool rp = IRewardsPool(rewardsToken);
 
-    if (lp == auraBal) {
+    if (auraBal) {
       rp.withdrawAll(false);
     } else {
       rp.withdrawAllAndUnwrap(false);
@@ -236,7 +228,7 @@ contract VaultBPT is Context {
     uint256 _amount
   ) external onlyVaultController {
     if (isStaked[_token] == true) {
-      _unstakeAuraLP(IERC20(_token));
+      _unstakeAuraLP(IERC20(_token), (_token == _votingController._auraBal()));
     }
 
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
@@ -253,8 +245,9 @@ contract VaultBPT is Context {
     uint256 _amount
   ) external onlyVotingVaultController {
     if (isStaked[_token] == true) {
-      _unstakeAuraLP(IERC20(_token));
+      _unstakeAuraLP(IERC20(_token), (_token == _votingController._auraBal()));
     }
+
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
 }

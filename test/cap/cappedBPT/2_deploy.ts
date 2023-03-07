@@ -9,7 +9,7 @@ import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
-import { toNumber } from "../../../util/math"
+import { toNumber, getGas } from "../../../util/math"
 import {
   AnchoredViewRelay__factory,
   BalancerStablePoolTokenOracle__factory,
@@ -63,13 +63,21 @@ describe("Check Interest Protocol contracts", () => {
     })
 
     it("Mint vault for Carol", async () => {
-      await expect(s.VaultController.connect(s.Carol).mintVault()).to.not
-        .reverted;
-      await mineBlock();
+
+      const result = await s.VaultController.connect(s.Carol).mintVault()
+      const gas = await getGas(result)
+      showBodyCyan("Gas to mint standard vault: ", gas)
+
       s.CaroLVaultID = await s.VaultController.vaultsMinted()
       let vaultAddress = await s.VaultController.vaultAddress(s.CaroLVaultID)
       s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
       expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
+    })
+
+    it("Mint voting vault for Carol", async () => {
+      const result = await s.VotingVaultController.mintVault(s.CaroLVaultID)
+      const gas = await getGas(result)
+      showBodyCyan("Gas to mint standard voting vault: ", gas)
     })
   });
 });
@@ -93,16 +101,21 @@ describe("Upgrade Voting Vault Controller", () => {
     //upgrade
     await impersonateAccount(s.owner._address)
     await s.ProxyAdmin.connect(s.owner).upgrade(s.VotingVaultController.address, implementation.address)
-    await mineBlock()
+    //register auraBal
+    await s.VotingVaultController.connect(s.owner).registerAuraBal(s.auraBal.address)
     await ceaseImpersonation(s.owner._address)
 
     expect(await s.VotingVaultController._vaultController()).to.eq(s.VaultController.address, "Upgrade successful")
 
+
+
   })
 
   it("Mint BPT vaults", async () => {
-    await s.VotingVaultController.connect(s.Bob).mintBptVault(s.BobVaultID)
-    await mineBlock()
+    const result = await s.VotingVaultController.connect(s.Bob).mintBptVault(s.BobVaultID)
+    const gas = await getGas(result)
+    showBodyCyan("Cas to mint BPT vault: ", gas)
+
     s.BobBptVault = VaultBPT__factory.connect(await s.VotingVaultController.BPTvaultAddress(s.BobVaultID), s.Bob)
 
     let info = await s.BobBptVault._vaultInfo()
@@ -114,133 +127,6 @@ describe("Upgrade Voting Vault Controller", () => {
 
     info = await s.CarolBptVault._vaultInfo()
     expect(info.id).to.eq(s.CaroLVaultID, "ID is correct, vault minted successfully")
-  })
-
-})
-
-/**
- * Steal Gauges 
- * Deposit
- * Register cap token on VC
- * Stake Gauges on aura? Can stake BPTs for BPT rewards as well as aura rewards
- * Or just list staked Aura BPTs? 
- * --ORACLE PROBLEM
- * Check voting power
- * Check deposit/withdraw staking functions
- */
-
-describe("Deploy and fund capped bpt", async () => {
-
-  const depositAmount = BN("100e18")
-
-  /**
-   it("Deploy capped gauge contract", async () => {
-    const factory = await ethers.getContractFactory("CappedBptToken")
-    s.CappedStethBpt = await factory.deploy()
-    await mineBlock()
-
-    await s.CappedStethBpt.initialize(
-      "Capped B-stETH-STABLE-gauge",
-      "cstETH_STABLE_GAUGE",
-      "0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE",//gauge
-      s.VaultController.address,
-      s.VotingVaultController.address
-    )
-    await mineBlock()
-
-    await s.CappedStethBpt.setCap(s.CappedGaugeCap)
-    await mineBlock()
-  })
-
-  it("Register gauge token", async () => {
-    await impersonateAccount(s.GOV._address)
-    await s.VotingVaultController.connect(s.GOV).registerUnderlying(s.stETH_Gauge.address, s.CappedStethBpt.address)
-    await mineBlock()
-    await ceaseImpersonation(s.GOV._address)
-  })
-
-  it("Deposit stETH/ETH BPT", async () => {
-
-    await s.stETH_Gauge.connect(s.Bob).approve(s.CappedStethBpt.address, depositAmount)
-    await mineBlock()
-
-    await s.CappedStethBpt.connect(s.Bob).deposit(depositAmount, s.BobVaultID, false)
-    await mineBlock()
-
-  })
-   
-
-
-  it("Check destinations", async () => {
-
-    let balance = await s.CappedStethBpt.balanceOf(s.BobVault.address)
-    expect(balance).to.eq(depositAmount, "Cap tokens minted to standard vault")
-
-    balance = await s.stETH_Gauge.balanceOf(s.BobBptVault.address)
-    expect(balance).to.eq(depositAmount, "Underlying sent to BPT vault")
-  })
-
-  it("Check withdraw", async () => {
-
-    const startBal = await s.stETH_Gauge.balanceOf(s.Bob.address)
-
-    await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedStethBpt.address, depositAmount)
-    await mineBlock()
-
-    let balance = await s.stETH_Gauge.balanceOf(s.Bob.address)
-    expect(balance.sub(startBal)).to.eq(depositAmount, "Received the correct amount in the withdraw")
-
-  })
-
-  it("Deposit again for future tests", async () => {
-    await s.stETH_Gauge.connect(s.Bob).approve(s.CappedStethBpt.address, depositAmount)
-    await mineBlock()
-
-    await s.CappedStethBpt.connect(s.Bob).deposit(depositAmount, s.BobVaultID, false)
-    await mineBlock()
-  })
-  */
-})
-
-describe("Check BPT vault functions", () => {
-
-
-  it("collect rewards", async () => {
-
-    //await s.BobBptVault.connect(s.Bob).claimRewards(s.Bob.address, s.stETH_Gauge.address)
-    //todo verify
-
-  })
-  /**
-   * Deposit into 80/20 BAL/wETH to get BPT and receive auraBal
-   * stake auraBAL and receive BAL, bb-a-usd, AURA
-   * 
-   * Deposit eth for BPT - https://etherscan.io/tx/0xc13ca913667f10ccf787cf6f626ccd0b2c6f921e6ca8608be361aadae3776c14
-   * joinPool(bytes32, address, address, (address[],uint256[],bytes,bool)) (balancer vault 0xba12222222228d8ba445958a75a0704d566bf2c8)
-      1	poolId	bytes32	0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014
-      2	sender	address	0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89
-      3	recipient	address	0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89
-      3	request.assets	address	0xba100000625a3754423978a60c9317c58a424e3D,0x0000000000000000000000000000000000000000
-
-
-   * Mint and stake - https://etherscan.io/tx/0x8c2e8db7a1daabd8eba83d7669c283a314a18af861974ae7c7cb59248794e466
-   * deposit(uint256 _amount, bool _lock, address _stakeAddress)(crvDepositer 0xeAd792B55340Aa20181A80d6a16db6A0ECd1b827)
-      0	_amount	uint256	1010917644170912739
-      1	_lock	bool	true
-      2	_stakeAddress	address	0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2
-
-   * OR can also contribute to auraBAL / 80/20 BAL/wETH BPT
-      joinPool()
-   * Stake this BPT on aura to receive AURA
-   * 
-   */
-  it("Aura functions", async () => {
-    const depositWrapperAddr = "0x68655ad9852a99c87c0934c7290bb62cfa5d4123"
-    const rewardsAddr = "0x00a7ba8ae7bca0b10a32ea1f8e2a1da980c6cad2"
-    const crvDepositerAddr = "0xeAd792B55340Aa20181A80d6a16db6A0ECd1b827"
-    const auraBalAddr = "0x616e8bfa43f920657b3497dbf40d6b1a02d4608d"
-    const BalAddr = "0xba100000625a3754423978a60c9317c58a424e3d"
-    //todo
   })
 
 })
@@ -277,6 +163,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
     //wstETH/weth MetaStable pool
     stEThMetaStablePoolOracle = await new BPT_Oracle__factory(s.Frank).deploy(
       "0x32296969Ef14EB0c6d29669C550D4a0449130230", //pool_address
+      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
       [wstethRelay.address, s.wethOracleAddr], //_oracles
       BN("1"),
@@ -298,6 +185,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     const testStableOracle = await new BPT_Oracle__factory(s.Frank).deploy(
       rETH_WETH_BPT, //pool_address
+      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [rETH, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
       [rETH_Oracle, s.wethOracleAddr], //_oracles, weth oracle
       BN("1"),
@@ -317,6 +205,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     weightedPoolOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       balWethBPT,
+      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [balancerToken, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
       [BAL_TOKEN_ORACLE, s.wethOracleAddr], //_oracles, weth oracle
       BN("1"),
@@ -345,6 +234,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     const testStableOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       wethAuraBPT, //pool_address
+      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [auraToken, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
       [uniAuraRelay.address, s.wethOracleAddr], //_oracles, weth oracle
       BN("1"),
@@ -361,7 +251,6 @@ describe("Setup oracles, deploy and register cap tokens", () => {
    * Current price ~$17
    * aura token = 0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF
    * auraBal = 0x616e8BfA43F920657B3497DBf40D6b1A02D4608d
-   * 
    */
   it("auraBal oracle", async () => {
     const uniPool = "0xFdeA35445489e608fb4F20B6E94CCFEa8353Eabd"//3k, meh liquidity
@@ -378,13 +267,12 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     showBodyCyan("AuraBal uni relay price: ", await toNumber(await auraUniRelay.currentValue()))
 
-
-
     //aura relay using balancer
     const balancerPool = "0x3dd0843A028C86e0b760b1A76929d1C5Ef93a2dd" //auraBal/"veBal" BPT stable pool (B-80BAL-20WETH - 0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56)
 
     primeBPToracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       primeBPT,
+      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [s.BAL.address, s.wethAddress],
       [BAL_TOKEN_ORACLE, s.wethOracleAddr],
       BN("10"),
@@ -420,6 +308,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
   it("Aura LP token oracle", async () => {
     auraStablePoolLPoracle = await new BPT_Oracle__factory(s.Frank).deploy(
       s.primeAuraBalLP.address,
+      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [primeBPT, s.auraBal.address],//prime BPT / auraBal
       [primeBPToracle.address, auraBalAnchorView.address],//prime BPT oracle / auraBal oracle
       BN("1"),
@@ -494,7 +383,6 @@ describe("Setup oracles, deploy and register cap tokens", () => {
       s.LiquidationIncentive
     )
     await ceaseImpersonation(s.owner._address)
-
   })
 
   it("Deploy and register Capped Aura LP token", async () => {
@@ -514,6 +402,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
     await s.CappedAuraLP.connect(s.Frank).transferOwnership(s.owner._address)
 
     await impersonateAccount(s.owner._address)
+
     //register on voting vault controller
     await s.VotingVaultController.connect(s.owner).registerUnderlying(s.primeAuraBalLP.address, s.CappedAuraLP.address)
 
