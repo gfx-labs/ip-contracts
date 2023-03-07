@@ -84,7 +84,6 @@ async function main() {
 
     let out = proposal.populateProposal()
 
-    //console.log(out)
     const proposalText = fs.readFileSync('./scripts/proposals/CHAI/proposal.md', 'utf8');
 
     let gov: GovernorCharlieDelegate;
@@ -101,6 +100,8 @@ async function main() {
         false
     )
 
+    console.log(out)
+
     console.log("Sending proposal from ", deployer.address)
     await gov.connect(deployer).propose(
         out.targets,
@@ -110,6 +111,8 @@ async function main() {
         proposalText,
         false
     )
+
+    showBody("Done")
 
     //showBody("Data: ", data)
     //fs.writeFileSync('./scripts/proposals/CHAI/proposalHexData.txt', JSON.stringify(data));
@@ -122,3 +125,24 @@ main()
         console.error(error);
         process.exit(1);
     });
+
+/**
+ {
+targets: [
+'0xf4818813045E954f5Dc55a40c9B60Def0ba3D477',
+'0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3',
+'0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2'
+],
+values: [ 0, 0, 0 ],
+signatures: [
+'setRelay(address,address)',
+'registerErc20(address,uint256,address,uint256)',
+'registerUnderlying(address,address)'
+],
+calldatas: [
+'0x000000000000000000000000ddad1d1127a7042f43cfc209b954cfc37f2038970000000000000000000000009aa2ccb26686dd7698778599cd0f4425a5231e18',
+'0x000000000000000000000000ddad1d1127a7042f43cfc209b954cfc37f2038970000000000000000000000000000000000000000000000000d99a8cec7e20000000000000000000000000000ddad1d1127a7042f43cfc209b954cfc37f203897000000000000000000000000000000000000000000000000001aa535d3d0c000',
+'0x00000000000000000000000006af07097c9eeb7fd685c692751d5c66db49c215000000000000000000000000ddad1d1127a7042f43cfc209b954cfc37f203897'
+]
+}
+ */
