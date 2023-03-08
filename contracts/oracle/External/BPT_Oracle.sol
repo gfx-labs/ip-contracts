@@ -70,24 +70,24 @@ contract BPT_Oracle is IOracleRelay {
     ) = VAULT.getPoolTokens(_poolId);
     invariantFormula(tokens, balances);
 
-    uint256 simpleValue = sumBalances(tokens, balances);
-    uint256 simplePrice = simpleValue / _priceFeed.totalSupply();
-    require(simplePrice > 0, "invalid simple price");
+    uint256 naiveValue = sumBalances(tokens, balances);
+    uint256 naivePrice = naiveValue / _priceFeed.totalSupply();
+    require(naivePrice > 0, "invalid naive price");
 
     uint256 robustPrice = getBPTprice(tokens, balances);
     console.log("Robust price: ", robustPrice);
-    console.log("simple price: ", simplePrice);
+    console.log("naive price: ", naivePrice);
 
     require(robustPrice > 0, "invalid robust price");
 
     // calculate buffer
-    uint256 buffer = (_widthNumerator * simplePrice) / _widthDenominator;
+    uint256 buffer = (_widthNumerator * naivePrice) / _widthDenominator;
 
     // create upper and lower bounds
-    uint256 upperBounds = simplePrice + buffer;
-    uint256 lowerBounds = simplePrice - buffer;
+    uint256 upperBounds = naivePrice + buffer;
+    uint256 lowerBounds = naivePrice - buffer;
 
-    //console.log("Simple Price: ", simplePrice, simplePrice / 1e18);
+    //console.log("naive Price: ", naivePrice, naivePrice / 1e18);
     //console.log("Robust Price: ", robustPrice, robustPrice / 1e18);
 
     // ensure the robust price is within bounds
@@ -97,21 +97,6 @@ contract BPT_Oracle is IOracleRelay {
     // return checked price
     return robustPrice;
   }
-
-  //                             2.a.x.y + a.y^2 + b.y                                                         //
-  // spot price Y/X = - dx/dy = -----------------------                                                        //
-  //                             2.a.x.y + a.x^2 + b.x                                                         //
-  //                                                                                                           //
-  // n = 2                                                                                                     //
-  // a = amp param * n                                                                                         //
-  // b = D + a.(S - D)                                                                                         //
-  // D = invariant                                                                                             //
-  // S = sum of balances but x,y = 0 since x  and y are the only tokens                                        //
-
-  // once we have the spot price, we can then calc the BPT price by
-  //              balance X + (spot price Y/X * balance Y)                                                     //
-  // BPT price = ------------------------------------------                                                    //
-  //                          total supply
 
   /**
    * @dev Calculates the spot price of token Y in terms of token X.
@@ -133,15 +118,7 @@ contract BPT_Oracle is IOracleRelay {
     pyx = divUp(derivativeX, derivativeY);
   }
 
-  //The below formula is used for converting balances => invariant by the Balancer protocol
-  /**********************************************************************************************
-  // invariant                                                                                 //
-  // D = invariant                                                  D^(n+1)                    //
-  // A = amplification coefficient      A  n^n S + D = A D n^n + -----------                   //
-  // S = sum of balances                                             n^n P                     //
-  // P = product of balances                                                                   //
-  // n = number of tokens                                                                      //
-  *********x************************************************************************************/
+
   function getBPTprice(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 price) {
     //(IERC20[] memory tokens, uint256[] memory balances, ) = VAULT.getPoolTokens(poolId);
 
@@ -161,7 +138,6 @@ contract BPT_Oracle is IOracleRelay {
 
     price = (totalValue / _priceFeed.totalSupply());
 
-    //uniStyle(assetOracles[address(tokens[0])].currentValue(), assetOracles[address(tokens[1])].currentValue());
   }
 
   function invariantFormula(IERC20[] memory tokens, uint256[] memory balances) internal view {
@@ -172,60 +148,27 @@ contract BPT_Oracle is IOracleRelay {
 
     uint256 K = V / a;
 
-  /*
-  console.log("Invariant: ", invariant);
-  console.log("AMP: ", amp, a);
-  console.log("Amplified: ", V);
-  console.log("Testing??: ", K);
-  */
-
-  /**
-
-  For all: 
-
-  Closest to simple: K 
-  invariant onl  1807445808749031612880 1807.44580874903161288
-  INV utilize K  1807427734290944122563 1807.427734290944122563
-  Robust price:  1716542781054602544033 1716.542781054602544033
-  simple price:  1716542740177402721733 1716.542740177402721733
-  Deviation from simple price: 5.294653723806986%
-
-  Closest to simple: K 
-  invariant onl  1759991645857842864514 1759.991645857842864514
-  INV utilize K  1759974045941384286086 1759.974045941384286086
-  Robust price:  1709353293223869510514 1709.353293223869510514
-  simple price:  1709351161866984898973 1709.351161866984898973
-  Deviation from simple price: 2.961526291596399%
-
-  Closest to simple: INV
-  invariant onl  18291087272096805490   18.29108727209680549
-  INV utilize K  18290904361224084522   18.290904361224084522
-  Robust price:  18326395901812910110   18.326395901812910110
-  simple price:  18326395901725071798   18.326395901725071798
-  Deviation from simple price: -0.19266543%
-
-  */
-
     int256 totalPi = PRBMathSD59x18.fromInt(1e18);
 
     uint256[] memory prices = new uint256[](tokens.length);
+
+    int256 weight = int256(5e17);
 
     for (uint256 i = 0; i < tokens.length; i++) {
       balances[i] = (balances[i] * (10**18)) / (10**IERC20(address(tokens[i])).decimals());
       prices[i] = assetOracles[address(tokens[i])].currentValue();
 
-      int256 val = int256(prices[i]).div(int256(5e17));
+      int256 val = int256(prices[i]).div(weight);
 
-      int256 indivPi = val.pow(int256(5e17));
-      console.log("Indv Pi: ", uint256(indivPi));
+      int256 indivPi = val.pow(weight);
 
       totalPi = totalPi.mul(indivPi);
     }
 
-    int256 numerator = (totalPi.mul(int256(V))).div(int256(1e18));
+    int256 numerator = (totalPi.mul(int256(K))).div(int256(1e18));
     uint256 price = uint256((numerator.toInt().div(int256(_priceFeed.totalSupply()))));
 
-    console.log("INV utilize K ", price / 2);
+    console.log("Formula price result: ", price / 2);
   }
 
   function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {

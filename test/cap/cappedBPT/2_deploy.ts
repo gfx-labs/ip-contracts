@@ -156,7 +156,59 @@ describe("Setup oracles, deploy and register cap tokens", () => {
   })
 
 
-  ///this oracle gets the simple pool balances from the balancer vault, and then divides against the total supply of BPTs
+  /**
+Notes regarding error in price calculation utilizing Revest formula
+
+Closest to simple: K 
+invariant onl  1807445808749031612880 1807.44580874903161288
+INV utilize K  1807427734290944122563 1807.427734290944122563
+Robust price:  1716542781054602544033 1716.542781054602544033
+simple price:  1716542740177402721733 1716.542740177402721733
+Deviation from simple price: 5.294653723806986%
+
+Closest to simple: K 
+invariant onl  1759991645857842864514 1759.991645857842864514
+INV utilize K  1759974045941384286086 1759.974045941384286086
+Robust price:  1709353293223869510514 1709.353293223869510514
+simple price:  1709351161866984898973 1709.351161866984898973
+Deviation from simple price: 2.961526291596399%
+
+Closest to simple: INV
+invariant onl  18291087272096805490   18.29108727209680549
+INV utilize K  18290904361224084522   18.290904361224084522
+Robust price:  18326395901812910110   18.326395901812910110
+simple price:  18326395901725071798   18.326395901725071798
+Deviation from simple price: -0.19266543%
+
+*/
+  //  BPT_Oracle calculates the spot price of one token in terms of the other using this formula
+  //  This is similar to how the Balancer pools calculate the spot price utilizing the invariant and amp
+  //
+  //
+  //                             2.a.x.y + a.y^2 + b.y                                                         //
+  // spot price Y/X = - dx/dy = -----------------------                                                        //
+  //                             2.a.x.y + a.x^2 + b.x                                                         //
+  //                                                                                                           //
+  // n = 2                                                                                                     //
+  // a = amp param * n                                                                                         //
+  // b = D + a.(S - D)                                                                                         //
+  // D = invariant                                                                                             //
+  // S = sum of balances but x,y = 0 since x  and y are the only tokens                                        //
+
+  // once we have the spot price, we can then calc the BPT price by
+  //              balance X + (spot price Y/X * balance Y)                                                     //
+  // BPT price = ------------------------------------------                                                    //
+  //                           total supply
+
+    //The below formula is used for converting balances => invariant by the Balancer protocol
+  /**********************************************************************************************
+  // invariant                                                                                 //
+  // D = invariant                                                  D^(n+1)                    //
+  // A = amplification coefficient      A  n^n S + D = A D n^n + -----------                   //
+  // S = sum of balances                                             n^n P                     //
+  // P = product of balances                                                                   //
+  // n = number of tokens                                                                      //
+  *********x************************************************************************************/
   it("Deploy and check meta stable pool oracle", async () => {
 
 
