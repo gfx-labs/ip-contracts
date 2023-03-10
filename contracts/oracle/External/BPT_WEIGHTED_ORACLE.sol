@@ -7,7 +7,6 @@ import "../../_external/balancer/IBalancerVault.sol";
 
 import "../../_external/PRBMath/PRBMathSD59x18.sol";
 
-
 interface IBalancerPool {
   function getPoolId() external view returns (bytes32);
 
@@ -66,7 +65,7 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
       uint256[] memory balances, /**uint256 lastChangeBlock */
 
     ) = VAULT.getPoolTokens(_poolId);
-    uint256 robustPrice = getBPTprice(tokens, balances, int256(_priceFeed.totalSupply()));
+    uint256 robustPrice = getBPTprice(tokens, int256(_priceFeed.totalSupply()));
     require(robustPrice > 0, "invalid robust price");
 
     uint256 simplePrice = sumBalances(tokens, balances) / _priceFeed.totalSupply();
@@ -89,7 +88,7 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
 
   function getBPTprice(
     IERC20[] memory tokens,
-    uint256[] memory balances,
+    //uint256[] memory balances,
     int256 totalSupply
   ) internal view returns (uint256 price) {
     uint256[] memory weights = _priceFeed.getNormalizedWeights();
@@ -99,7 +98,7 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
     uint256[] memory prices = new uint256[](tokens.length);
 
     for (uint256 i = 0; i < tokens.length; i++) {
-      balances[i] = (balances[i] * (10**18)) / (10**IERC20(address(tokens[i])).decimals());
+      //balances[i] = (balances[i] * (10**18)) / (10**IERC20(address(tokens[i])).decimals());
       prices[i] = assetOracles[address(tokens[i])].currentValue();
 
       int256 val = int256(prices[i]).div(int256(weights[i]));

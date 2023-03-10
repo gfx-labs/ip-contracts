@@ -63,20 +63,17 @@ contract BPT_Oracle is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
-    (
-      IERC20[] memory tokens,
-      uint256[] memory balances, /**uint256 lastChangeBlock */
-
-    ) = VAULT.getPoolTokens(_poolId);
-    invariantFormula(tokens, balances);
+    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
+    //invariantFormula(tokens, balances);
+    getVirtualPrice(balances);
 
     uint256 naiveValue = sumBalances(tokens, balances);
     uint256 naivePrice = naiveValue / _priceFeed.totalSupply();
     require(naivePrice > 0, "invalid naive price");
 
     uint256 robustPrice = getBPTprice(tokens, balances);
-    console.log("Robust price: ", robustPrice);
-    console.log("naive price: ", naivePrice);
+    //console.log("Robust price: ", robustPrice);
+    //console.log("naive price: ", naivePrice);
 
     require(robustPrice > 0, "invalid robust price");
 
@@ -104,6 +101,13 @@ contract BPT_Oracle is IOracleRelay {
   function getSpotPrice(uint256[] memory balances) internal view returns (uint256 pyx) {
     (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
 
+    /**
+    console.log("Invariant: ", invariant, invariant / 1e18);
+    console.log("Amp: ", amp);
+    console.log("Balance0: ", balances[0], balances[0] / 1e18);
+    console.log("Balance1: ", balances[1], balances[0] / 1e18);
+     */
+
     uint256 a = amp * 2;
     uint256 b = (invariant * a) - invariant;
 
@@ -118,6 +122,36 @@ contract BPT_Oracle is IOracleRelay {
     pyx = divUp(derivativeX, derivativeY);
   }
 
+  /**
+   D invariant calculation in non-overflowing integer operations
+    iteratively
+    A * sum(x_i) * n**n + D = A * D * n**n + D**(n+1) / (n**n * prod(x_i))
+    Converging solution:
+    D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
+   */
+  function getVirtualPrice(uint256[] memory balances) internal view returns (uint256) {
+    (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
+    uint256 tokenSupply = _priceFeed.totalSupply();
+
+    uint256 N_COINS = 2;
+
+    uint256 S = 0;
+    uint256 Dprev = 0;
+
+    //get conversion rate for each
+    //get rate and invert?
+
+    uint256 spotPrice = getSpotPrice(balances);
+    console.log("Spot price: ", spotPrice); //999998636010943333 0.999998636010943333
+
+    //inverse rate => divide 1 / rate == inverse rate
+    (uint256 quotient, uint256 remainder, string memory result) = division(18, 1e18, spotPrice); //divide(1e18, spotPrice, 1e18);
+    console.log("q: ", quotient);
+    console.log("r: ", remainder);
+    console.log("result: ", result);
+
+    console.log("inverse: ", (quotient * 1e18) + remainder); //1.00000136?
+  }
 
   function getBPTprice(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 price) {
     //(IERC20[] memory tokens, uint256[] memory balances, ) = VAULT.getPoolTokens(poolId);
@@ -137,7 +171,6 @@ contract BPT_Oracle is IOracleRelay {
     uint256 totalValue = valueX + valueY;
 
     price = (totalValue / _priceFeed.totalSupply());
-
   }
 
   function invariantFormula(IERC20[] memory tokens, uint256[] memory balances) internal view {
@@ -155,7 +188,7 @@ contract BPT_Oracle is IOracleRelay {
     int256 weight = int256(5e17);
 
     for (uint256 i = 0; i < tokens.length; i++) {
-      balances[i] = (balances[i] * (10**18)) / (10**IERC20(address(tokens[i])).decimals());
+      balances[i] = (balances[i] * (10 ** 18)) / (10 ** IERC20(address(tokens[i])).decimals());
       prices[i] = assetOracles[address(tokens[i])].currentValue();
 
       int256 val = int256(prices[i]).div(weight);
@@ -208,5 +241,89 @@ contract BPT_Oracle is IOracleRelay {
 
       return ((aInflated - 1) / b) + 1;
     }
+  }
+
+  function division(
+    uint256 decimalPlaces,
+    uint256 numerator,
+    uint256 denominator
+  ) public pure returns (uint256 quotient, uint256 remainder, string memory result) {
+    uint256 factor = 10 ** decimalPlaces;
+    quotient = numerator / denominator;
+    remainder = ((numerator * factor) / denominator) % factor;
+    result = string(abi.encodePacked(toString(quotient), ".", toString(remainder)));
+  }
+
+  function divide(uint256 numerator, uint256 denominator, uint256 factor) internal view returns (uint256) {
+    console.log("DIVIDE");
+    uint256 q = (numerator / denominator) * 10 ** factor;
+    console.log("Q: ", q);
+    uint256 r = ((numerator * 10 ** factor) / denominator) % 10 ** factor;
+    console.log("r: ", r);
+
+    return q + r;
+  }
+
+  /**OZ FUNCTIONS */
+
+  function toString(uint256 value) internal pure returns (string memory) {
+    bytes memory _SYMBOLS = "0123456789abcdef";
+    unchecked {
+      uint256 length = log10(value) + 1;
+      string memory buffer = new string(length);
+      uint256 ptr;
+      /// @solidity memory-safe-assembly
+      assembly {
+        ptr := add(buffer, add(32, length))
+      }
+      while (true) {
+        ptr--;
+        /// @solidity memory-safe-assembly
+        assembly {
+          mstore8(ptr, byte(mod(value, 10), _SYMBOLS))
+        }
+        value /= 10;
+        if (value == 0) break;
+      }
+      return buffer;
+    }
+  }
+
+  /**
+   * @dev Return the log in base 10, rounded down, of a positive value.
+   * Returns 0 if given 0.
+   */
+  function log10(uint256 value) internal pure returns (uint256) {
+    uint256 result = 0;
+    unchecked {
+      if (value >= 10 ** 64) {
+        value /= 10 ** 64;
+        result += 64;
+      }
+      if (value >= 10 ** 32) {
+        value /= 10 ** 32;
+        result += 32;
+      }
+      if (value >= 10 ** 16) {
+        value /= 10 ** 16;
+        result += 16;
+      }
+      if (value >= 10 ** 8) {
+        value /= 10 ** 8;
+        result += 8;
+      }
+      if (value >= 10 ** 4) {
+        value /= 10 ** 4;
+        result += 4;
+      }
+      if (value >= 10 ** 2) {
+        value /= 10 ** 2;
+        result += 2;
+      }
+      if (value >= 10 ** 1) {
+        result += 1;
+      }
+    }
+    return result;
   }
 }
