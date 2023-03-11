@@ -73,7 +73,7 @@ contract BPT_Oracle is IOracleRelay {
 
     uint256 robustPrice = getBPTprice(tokens, balances);
     //console.log("Robust price: ", robustPrice);
-    //console.log("naive price: ", naivePrice);
+    console.log("naive price: ", naivePrice);
 
     require(robustPrice > 0, "invalid robust price");
 
@@ -133,24 +133,66 @@ contract BPT_Oracle is IOracleRelay {
     (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
     uint256 tokenSupply = _priceFeed.totalSupply();
 
-    uint256 N_COINS = 2;
-
-    uint256 S = 0;
-    uint256 Dprev = 0;
+    console.log("Invariant: ", invariant);
+    console.log("Amp: ", amp);
 
     //get conversion rate for each
     //get rate and invert?
 
     uint256 spotPrice = getSpotPrice(balances);
-    console.log("Spot price: ", spotPrice); //999998636010943333 0.999998636010943333
 
     //inverse rate => divide 1 / rate == inverse rate
     (uint256 quotient, uint256 remainder, string memory result) = division(18, 1e18, spotPrice); //divide(1e18, spotPrice, 1e18);
-    console.log("q: ", quotient);
-    console.log("r: ", remainder);
-    console.log("result: ", result);
 
-    console.log("inverse: ", (quotient * 1e18) + remainder); //1.00000136?
+    uint256 inverse = (quotient * 1e18) + remainder;
+
+    uint256 D = getD(spotPrice, inverse, amp);
+
+    uint256 virtualPrice = (D * 1e18) / tokenSupply;
+
+    console.log("spo: ", spotPrice);
+    console.log("inv: ", inverse);
+    console.log("???: ", (invariant * 1e18) / tokenSupply);
+
+    //console.log("VIRTUAL PRICE: ", virtualPrice);
+  }
+
+  function getD(uint256 spotPrice, uint256 inverse, uint256 amp) internal view returns (uint256) {
+    uint256 N_COINS = 2;
+
+    uint256 S = 0;
+    uint256 Dprev = 0;
+
+    S = inverse + spotPrice;
+    if (S == 0) {
+      return 0;
+    }
+
+    uint256 D = S;
+    uint256 Ann = amp + (N_COINS * 1e18);
+
+    for (uint i = 0; i < 255; i++) {
+      uint256 D_P = D;
+
+      D_P = (D_P * D) / (spotPrice * N_COINS);
+      D_P = (D_P * D) / (inverse * N_COINS);
+
+      Dprev = D;
+      uint256 numerator = (((Ann * S) / 1e18 + D_P * N_COINS) * D);
+
+      uint256 denominator = (((Ann - 1e18) * D) / 1e18 + (N_COINS + 1) * D_P);
+
+      D = numerator / denominator;
+      if (D > Dprev) {
+        if (D - Dprev <= 1) {
+          return D;
+        }
+      } else {
+        if (Dprev - D <= 1) {
+          return D;
+        }
+      }
+    }
   }
 
   function getBPTprice(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 price) {

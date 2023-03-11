@@ -200,7 +200,7 @@ Deviation from simple price: -0.19266543%
   // BPT price = ------------------------------------------                                                    //
   //                           total supply
 
-    //The below formula is used for converting balances => invariant by the Balancer protocol
+  //The below formula is used for converting balances => invariant by the Balancer protocol
   /**********************************************************************************************
   // invariant                                                                                 //
   // D = invariant                                                  D^(n+1)                    //
@@ -368,6 +368,10 @@ Deviation from simple price: -0.19266543%
     )
     await auraStablePoolLPoracle.deployed()
     showBodyCyan("Price for primeBPT / auraBal Aura Stable pool LP: ", await toNumber(await auraStablePoolLPoracle.currentValue()))
+
+    showBody("Feed addr: ", s.primeAuraBalLP.address)
+    showBody("Underlying price for prime BPT: ", await toNumber(await primeBPToracle.currentValue()))
+    showBody("Underlying price for aura Bal : ", await toNumber(await auraBalAnchorView.currentValue()))
   })
 
   it("Deploy and Register gaugeToken", async () => {

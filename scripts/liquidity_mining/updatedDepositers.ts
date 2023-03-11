@@ -23,8 +23,8 @@ const threshold = BN("1e18")
 
 dotenv.config();
 
-//const rpc_url =  "https://brilliant.staging.gfx.town" //"https://mainnet.rpc.gfx.xyz/"
-const rpc_url = process.env.MAINNET_URL
+const rpc_url =  "https://mainnet.rpc.gfx.xyz/"//"https://brilliant.staging.gfx.town" //
+//const rpc_url = process.env.MAINNET_URL
 
 const USDI_ADDR = "0x2A54bA2964C8Cd459Dc568853F79813a60761B58"
 
@@ -68,7 +68,7 @@ const main = async () => {
     cl
   );
 
-  const weekNum = 10
+  const weekNum = 11
   const week = BlockRounds.blockRanges[weekNum]
 
   const blockStart = week.start
