@@ -15,6 +15,8 @@ interface IBalancerPool {
   function totalSupply() external view returns (uint256);
 
   function getLastInvariant() external view returns (uint256, uint256);
+
+  function getRate() external view returns (uint256);
 }
 
 /*****************************************
@@ -65,14 +67,17 @@ contract BPT_Oracle is IOracleRelay {
   function currentValue() external view override returns (uint256) {
     (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
     //invariantFormula(tokens, balances);
-    getVirtualPrice(balances);
+    //getVirtualPrice(balances, tokens);
+
+    //uint256 result = _calcOutGivenIn(balances, 0, 1, 1e18);
+    //console.log("Result: ", result);
 
     uint256 naiveValue = sumBalances(tokens, balances);
     uint256 naivePrice = naiveValue / _priceFeed.totalSupply();
     require(naivePrice > 0, "invalid naive price");
 
     uint256 robustPrice = getBPTprice(tokens, balances);
-    //console.log("Robust price: ", robustPrice);
+    console.log("Robust price: ", robustPrice);
     console.log("naive price: ", naivePrice);
 
     require(robustPrice > 0, "invalid robust price");
@@ -129,74 +134,171 @@ contract BPT_Oracle is IOracleRelay {
     Converging solution:
     D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
    */
-  function getVirtualPrice(uint256[] memory balances) internal view returns (uint256) {
-    (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
-    uint256 tokenSupply = _priceFeed.totalSupply();
+  function getVirtualPrice(uint256[] memory balances, IERC20[] memory tokens) internal view returns (uint256) {
+    //(uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
+    //uint256 tokenSupply = _priceFeed.totalSupply();
+    /**
+    
+    uint256 a = amp * 2;
+    uint256 V = (invariant * a) - invariant;
 
-    console.log("Invariant: ", invariant);
-    console.log("Amp: ", amp);
+    uint256 K = V / a;
+    uint256 rate = (K * 1e18) / tokenSupply;
+    console.log("Calculate: ", rate);
+    console.log("True rate: ", _priceFeed.getRate());
 
+    uint256 price1 = (_priceFeed.getRate() * assetOracles[address(tokens[0])].currentValue()) / 1e18;
+    console.log("Price1:      ", price1);
+    uint256 price2 = (_priceFeed.getRate() * assetOracles[address(tokens[1])].currentValue()) / 1e18;
+    console.log("Price2:      ", price2);
+     */
 
-
-    //get conversion rate for each
-    //get rate and invert?
-
-    uint256 spotPrice = getSpotPrice(balances);
-
-    //inverse rate => divide 1 / rate == inverse rate
-    (uint256 quotient, uint256 remainder, string memory result) = division(18, 1e18, spotPrice); //divide(1e18, spotPrice, 1e18);
-
-    uint256 inverse = (quotient * 1e18) + remainder;
-
-    uint256 D = getD(spotPrice, inverse, amp);
-
-    uint256 virtualPrice = (D * 1e18) / tokenSupply;
-
-    console.log("spo: ", spotPrice);
-    console.log("inv: ", inverse);
-    //console.log("???: ", (b * 1e18) / tokenSupply);
-
-    //console.log("VIRTUAL PRICE: ", virtualPrice);
+    uint256 result = _calcOutGivenIn(balances, 0, 1, 1e18);
+    console.log("Result: ", result);
   }
 
+  // Computes how many tokens can be taken out of a pool if `tokenAmountIn` are sent, given the current balances.
+  // The amplification parameter equals: A n^(n-1)
+  // The invariant should be rounded up.
+  function _calcOutGivenIn(
+    //uint256 amplificationParameter,
+    uint256[] memory balances,
+    uint256 tokenIndexIn,
+    uint256 tokenIndexOut,
+    uint256 tokenAmountIn
+  )
+    internal
+    view
+    returns (
+      //uint256 invariant
 
-  //use price for rate??
-  function getD(uint256 spotPrice, uint256 inverse, uint256 amp) internal view returns (uint256) {
-    uint256 N_COINS = 2;
+      uint256
+    )
+  {
+    /**************************************************************************************************************
+        // outGivenIn token x for y - polynomial equation to solve                                                   //
+        // ay = amount out to calculate                                                                              //
+        // by = balance token out                                                                                    //
+        // y = by - ay (finalBalanceOut)                                                                             //
+        // D = invariant                                               D                     D^(n+1)                 //
+        // A = amplification coefficient               y^2 + ( S - ----------  - D) * y -  ------------- = 0         //
+        // n = number of tokens                                    (A * n^n)               A * n^2n * P              //
+        // S = sum of final balances but y                                                                           //
+        // P = product of final balances but y                                                                       //
+        **************************************************************************************************************/
 
-    uint256 S = 0;
-    uint256 Dprev = 0;
+    // Amount out, so we round down overall.
 
-    S = inverse + spotPrice;
-    if (S == 0) {
-      return 0;
+    (uint256 invariant, uint256 amplificationParameter) = _priceFeed.getLastInvariant();
+
+    balances[tokenIndexIn] = add(balances[tokenIndexIn], tokenAmountIn);
+
+    uint256 finalBalanceOut = _getTokenBalanceGivenInvariantAndAllOtherBalances(
+      amplificationParameter,
+      balances,
+      invariant,
+      tokenIndexOut
+    );
+
+    // No need to use checked arithmetic since `tokenAmountIn` was actually added to the same balance right before
+    // calling `_getTokenBalanceGivenInvariantAndAllOtherBalances` which doesn't alter the balances array.
+    balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn;
+
+    uint256 finalBalancesIndex = balances[tokenIndexOut];
+    uint256 finalBalancesToken = finalBalanceOut;
+
+    console.log("Final sub");
+    console.log("Final sub index: ", finalBalancesIndex);
+    console.log("Final sub token: ", finalBalancesToken);
+
+    return sub(sub(balances[tokenIndexOut], finalBalanceOut), 1);
+  }
+
+  // This function calculates the balance of a given token (tokenIndex)
+  // given all the other balances and the invariant
+  function _getTokenBalanceGivenInvariantAndAllOtherBalances(
+    uint256 amplificationParameter,
+    uint256[] memory balances,
+    uint256 invariant,
+    uint256 tokenIndex
+  ) internal view returns (uint256) {
+    // Rounds result up overall
+    uint256 _AMP_PRECISION = 1e3;
+
+    uint256 ampTimesTotal = amplificationParameter * balances.length;
+    uint256 sum = balances[0];
+    uint256 P_D = balances[0] * balances.length;
+    for (uint256 j = 1; j < balances.length; j++) {
+      P_D = divDown(mul(mul(P_D, balances[j]), balances.length), invariant);
+      sum = add(sum, balances[j]);
     }
+    // No need to use safe math, based on the loop above `sum` is greater than or equal to `balances[tokenIndex]`
+    sum = sum - balances[tokenIndex];
 
-    uint256 D = S;
-    uint256 Ann = amp + (N_COINS * 1e18);
+    uint256 inv2 = mul(invariant, invariant);
+    // We remove the balance from c by multiplying it
+    uint256 c = mul(mul(divUp(inv2, mul(ampTimesTotal, P_D)), _AMP_PRECISION), balances[tokenIndex]);
+    uint256 b = add(sum, mul(divDown(invariant, ampTimesTotal), _AMP_PRECISION));
 
-    for (uint i = 0; i < 255; i++) {
-      uint256 D_P = D;
+    // We iterate to find the balance
+    uint256 prevTokenBalance = 0;
+    // We multiply the first iteration outside the loop with the invariant to set the value of the
+    // initial approximation.
+    uint256 tokenBalance = divUp(add(inv2, c), add(invariant, b));
 
-      D_P = (D_P * D) / (spotPrice * N_COINS);
-      D_P = (D_P * D) / (inverse * N_COINS);
+    for (uint256 i = 0; i < 255; i++) {
+      prevTokenBalance = tokenBalance;
 
-      Dprev = D;
-      uint256 numerator = (((Ann * S) / 1e18 + D_P * N_COINS) * D);
+      //tokenBalance = divUp(add(mul(tokenBalance, tokenBalance), c), sub(add(mul(tokenBalance, 2), b), invariant));
 
-      uint256 denominator = (((Ann - 1e18) * D) / 1e18 + (N_COINS + 1) * D_P);
+      uint256 numerator = (tokenBalance * tokenBalance) + c;
+      uint256 denominator = ((tokenBalance * 2) + b) - invariant;
 
-      D = numerator / denominator;
-      if (D > Dprev) {
-        if (D - Dprev <= 1) {
-          return D;
+      tokenBalance = divUp(numerator, denominator);
+
+      if (tokenBalance > prevTokenBalance) {
+        if (tokenBalance - prevTokenBalance <= 1) {
+          return tokenBalance;
         }
-      } else {
-        if (Dprev - D <= 1) {
-          return D;
-        }
+      } else if (prevTokenBalance - tokenBalance <= 1) {
+        return tokenBalance;
       }
     }
+
+    //_revert(Errors.STABLE_GET_BALANCE_DIDNT_CONVERGE);
+  }
+
+  function divDown(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0, "divDown: Zero division");
+    return a / b;
+  }
+
+  function divUp(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0, "divUp: Zero division");
+
+    if (a == 0) {
+      return 0;
+    } else {
+      return 1 + (a - 1) / b;
+    }
+  }
+
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    require(a == 0 || c / a == b, "mul: overflow");
+    return c;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    require(c >= a, "ADD_OVERFLOW");
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b <= a, "SUB_OVERFLOW");
+    uint256 c = a - b;
+    return c;
   }
 
   function getBPTprice(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 price) {
@@ -268,25 +370,6 @@ contract BPT_Oracle is IOracleRelay {
     require(a == 0 || product / a == b, "overflow");
 
     return product / 1e18;
-  }
-
-  function divUp(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b != 0, "Zero Division");
-
-    if (a == 0) {
-      return 0;
-    } else {
-      uint256 aInflated = a * 1e18;
-      require(aInflated / a == 1e18, "divUp error - mull overflow"); // mul overflow
-
-      // The traditional divUp formula is:
-      // divUp(x, y) := (x + y - 1) / y
-      // To avoid intermediate overflow in the addition, we distribute the division and get:
-      // divUp(x, y) := (x - 1) / y + 1
-      // Note that this requires x != 0, which we already tested for.
-
-      return ((aInflated - 1) / b) + 1;
-    }
   }
 
   function division(
