@@ -136,6 +136,8 @@ contract BPT_Oracle is IOracleRelay {
     console.log("Invariant: ", invariant);
     console.log("Amp: ", amp);
 
+
+
     //get conversion rate for each
     //get rate and invert?
 
@@ -152,11 +154,13 @@ contract BPT_Oracle is IOracleRelay {
 
     console.log("spo: ", spotPrice);
     console.log("inv: ", inverse);
-    console.log("???: ", (invariant * 1e18) / tokenSupply);
+    //console.log("???: ", (b * 1e18) / tokenSupply);
 
     //console.log("VIRTUAL PRICE: ", virtualPrice);
   }
 
+
+  //use price for rate??
   function getD(uint256 spotPrice, uint256 inverse, uint256 amp) internal view returns (uint256) {
     uint256 N_COINS = 2;
 

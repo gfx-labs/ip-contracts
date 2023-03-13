@@ -15,12 +15,11 @@
         "alwaysStrict": true, /* Ensure 'use strict' is always emitted. */
         "skipLibCheck": true, /* Skip type checking all .d.ts files. */
         "resolveJsonModule": true /* Allow import of JSON ABI files */
-
     },
     "include": [
         "./scripts/**/*",
         "./proposals/**/*",
-        "./scripts/liquidity_mining/*",
+        "./scripts/*",
         "./test/**/*",
         "./typechain-types/**/*",
         "./util/**/*"
