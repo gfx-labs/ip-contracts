@@ -124,7 +124,7 @@ contract BPT_Oracle is IOracleRelay {
     // dy = a.x.y.2 + a.x^2 - b.x
     uint256 derivativeY = mulDown(axy2 + (a * balances[0]), balances[1]) - (mulDown(b, balances[0]));
 
-    pyx = divUp(derivativeX, derivativeY);
+    pyx = divUpSpot(derivativeX, derivativeY);
   }
 
   /**
@@ -370,6 +370,25 @@ contract BPT_Oracle is IOracleRelay {
     require(a == 0 || product / a == b, "overflow");
 
     return product / 1e18;
+  }
+
+  function divUpSpot(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0, "Zero Division");
+
+    if (a == 0) {
+      return 0;
+    } else {
+      uint256 aInflated = a * 1e18;
+      require(aInflated / a == 1e18, "divUp error - mull overflow"); // mul overflow
+
+      // The traditional divUp formula is:
+      // divUp(x, y) := (x + y - 1) / y
+      // To avoid intermediate overflow in the addition, we distribute the division and get:
+      // divUp(x, y) := (x - 1) / y + 1
+      // Note that this requires x != 0, which we already tested for.
+
+      return ((aInflated - 1) / b) + 1;
+    }
   }
 
   function division(
