@@ -66,11 +66,24 @@ contract BPT_Oracle is IOracleRelay {
 
   function currentValue() external view override returns (uint256) {
     (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
-    //invariantFormula(tokens, balances);
-    //getVirtualPrice(balances, tokens);
 
-    //uint256 result = _calcOutGivenIn(balances, 0, 1, 1e18);
-    //console.log("Result: ", result);
+    /**
+    uint256[] memory reverse = new uint256[](2);
+    reverse[0] = balances[1];
+    reverse[1] = balances[0];
+
+    uint256 result = _calcOutGivenIn(
+      reverse,
+      0, //tokenIn
+      1, //tokenOut
+      1e18 //amountIn
+    );
+    console.log("Result: ", result);
+
+   */
+
+    //test
+    getVirtualPrice(balances, tokens);
 
     uint256 naiveValue = sumBalances(tokens, balances);
     uint256 naivePrice = naiveValue / _priceFeed.totalSupply();
@@ -135,7 +148,7 @@ contract BPT_Oracle is IOracleRelay {
     D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
    */
   function getVirtualPrice(uint256[] memory balances, IERC20[] memory tokens) internal view returns (uint256) {
-    //(uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
+    (uint256 invariant, uint256 amplificationParameter) = _priceFeed.getLastInvariant();
     //uint256 tokenSupply = _priceFeed.totalSupply();
     /**
     
@@ -153,8 +166,60 @@ contract BPT_Oracle is IOracleRelay {
     console.log("Price2:      ", price2);
      */
 
-    uint256 result = _calcOutGivenIn(balances, 0, 1, 1e18);
-    console.log("Result: ", result);
+    //uint256 result = _calcOutGivenIn(balances, 0, 1, 1e18);
+    //console.log("Result: ", result);
+
+    //check balances
+    //console.log("Starting balance 0 idx in: ", balances[0]);
+    //console.log("Starting balance 1 idx ot: ", balances[1]);
+
+    uint256[] memory calcedBalances = new uint256[](2);
+    calcedBalances[0] = _getTokenBalanceGivenInvariantAndAllOtherBalances(
+      amplificationParameter,
+      balances,
+      invariant,
+      0
+    );
+
+    calcedBalances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(
+      amplificationParameter,
+      balances,
+      invariant,
+      1
+    );
+    //console.log("Calced balance 0 idx in: ", calcedBalances[0]);
+    //console.log("Calced balance 1 idx ot: ", calcedBalances[1]);
+
+    uint256 out = _calcOutGivenIn(
+      calcedBalances,
+      0, //tokenIdxIn
+      1, //tokenIdxOut
+      1e18 //tokenAmountIn
+    );
+
+    console.log(1e18, " token 0 in results in ", out);
+
+    //compare this rate to the token 0 => token 1 trusted oracle price rate
+
+    uint256 truePrice0 = assetOracles[address(tokens[0])].currentValue();
+
+    uint256 truePrice1 = assetOracles[address(tokens[1])].currentValue();
+    console.log("True Price 0: ", truePrice0);
+    console.log("True Price 1: ", truePrice1);
+
+    (uint256 quotient, uint256 remainder, string memory result) = division(18, truePrice1, truePrice0);
+
+    uint256 trueRate = quotient + remainder;
+
+
+    console.log("trusted oracle rate: ", trueRate);
+
+    /**
+    apple costs 5
+    orange costs 8
+
+    1 orange paid in apples costs 8/5 = 1.6
+     */
   }
 
   // Computes how many tokens can be taken out of a pool if `tokenAmountIn` are sent, given the current balances.
@@ -191,7 +256,8 @@ contract BPT_Oracle is IOracleRelay {
 
     (uint256 invariant, uint256 amplificationParameter) = _priceFeed.getLastInvariant();
 
-    balances[tokenIndexIn] = add(balances[tokenIndexIn], tokenAmountIn);
+    balances[tokenIndexIn] = balances[tokenIndexIn] + tokenAmountIn;
+    //console.log("New balance idx in: ", balances[tokenIndexIn]);
 
     uint256 finalBalanceOut = _getTokenBalanceGivenInvariantAndAllOtherBalances(
       amplificationParameter,
@@ -204,12 +270,13 @@ contract BPT_Oracle is IOracleRelay {
     // calling `_getTokenBalanceGivenInvariantAndAllOtherBalances` which doesn't alter the balances array.
     balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn;
 
-    uint256 finalBalancesIndex = balances[tokenIndexOut];
-    uint256 finalBalancesToken = finalBalanceOut;
+    uint256 finalBalancesIdxIn = balances[tokenIndexOut];
 
-    console.log("Final sub");
-    console.log("Final sub index: ", finalBalancesIndex);
-    console.log("Final sub token: ", finalBalancesToken);
+    //console.log("Final sub");
+    //console.log("Redo idx out balance: ", balances[tokenIndexOut]); //712049.743081
+    //console.log("Final token out amnts: ", finalBalanceOut); //712048.612166
+
+    //console.log("Result: ", sub(sub(balances[tokenIndexOut], finalBalanceOut), 1));
 
     return sub(sub(balances[tokenIndexOut], finalBalanceOut), 1);
   }
@@ -321,36 +388,6 @@ contract BPT_Oracle is IOracleRelay {
     price = (totalValue / _priceFeed.totalSupply());
   }
 
-  function invariantFormula(IERC20[] memory tokens, uint256[] memory balances) internal view {
-    //int256 weightModifier = int256(1e18) / (int256(5e17).pow(int256(5e17)) * 2);
-    (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
-    uint256 a = amp * 2;
-    uint256 V = (invariant * a) - invariant;
-
-    uint256 K = V / a;
-
-    int256 totalPi = PRBMathSD59x18.fromInt(1e18);
-
-    uint256[] memory prices = new uint256[](tokens.length);
-
-    int256 weight = int256(5e17);
-
-    for (uint256 i = 0; i < tokens.length; i++) {
-      balances[i] = (balances[i] * (10 ** 18)) / (10 ** IERC20(address(tokens[i])).decimals());
-      prices[i] = assetOracles[address(tokens[i])].currentValue();
-
-      int256 val = int256(prices[i]).div(weight);
-
-      int256 indivPi = val.pow(weight);
-
-      totalPi = totalPi.mul(indivPi);
-    }
-
-    int256 numerator = (totalPi.mul(int256(K))).div(int256(1e18));
-    uint256 price = uint256((numerator.toInt().div(int256(_priceFeed.totalSupply()))));
-
-    console.log("Formula price result: ", price / 2);
-  }
 
   function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {
     total = 0;
