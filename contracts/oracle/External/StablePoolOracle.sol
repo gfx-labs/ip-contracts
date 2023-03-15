@@ -26,7 +26,7 @@ interface IBalancerPool {
  *
  */
 
-contract BPT_Oracle is IOracleRelay {
+contract StablePoolOracle is IOracleRelay {
   using PRBMathSD59x18 for *;
 
   bytes32 public immutable _poolId;
@@ -84,90 +84,118 @@ contract BPT_Oracle is IOracleRelay {
 
     //test
     getVirtualPrice(balances, tokens);
+    //rateOnly();
+    //newMath();
 
     uint256 naiveValue = sumBalances(tokens, balances);
     uint256 naivePrice = naiveValue / _priceFeed.totalSupply();
     require(naivePrice > 0, "invalid naive price");
 
-    uint256 robustPrice = getBPTprice(tokens, balances);
-    console.log("Robust price: ", robustPrice);
-    console.log("naive price: ", naivePrice);
-
-    require(robustPrice > 0, "invalid robust price");
-
-    // calculate buffer
-    uint256 buffer = (_widthNumerator * naivePrice) / _widthDenominator;
-
-    // create upper and lower bounds
-    uint256 upperBounds = naivePrice + buffer;
-    uint256 lowerBounds = naivePrice - buffer;
-
-    //console.log("naive Price: ", naivePrice, naivePrice / 1e18);
-    //console.log("Robust Price: ", robustPrice, robustPrice / 1e18);
-
-    // ensure the robust price is within bounds
-    require(robustPrice < upperBounds, "robustPrice too low");
-    require(robustPrice > lowerBounds, "robustPrice too high");
+    console.log("naivePrice: ", naivePrice);
 
     // return checked price
-    return robustPrice;
+    return naivePrice;
   }
 
-  /**
-   * @dev Calculates the spot price of token Y in terms of token X.
-   */
-  function getSpotPrice(uint256[] memory balances) internal view returns (uint256 pyx) {
-    (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
+  /**********************************************************************************************
+  // invariant                                                                                 //
+  // D = invariant                                                  D^(n+1)                    //
+  // A = amplification coefficient      A  n^n S + D = A D n^n + -----------                   //
+  // S = sum of balances                                             n^n P                     //
+  // P = product of balances                                                                   //
+  // n = number of tokens                                                                      //
+  **********************************************************************************************/
+  function newMath() internal view returns (uint256) {
+    (uint256 invariant, uint256 amplificationParameter) = _priceFeed.getLastInvariant();
+    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
+
+    uint256 n = balances.length;
+
+    uint256 A = amplificationParameter * n;
+
+    //A  2(n^n) S * P + D = A D n^n + D^(n+1)
+    uint256 RHS = A * invariant * (n ** n) + (invariant ** (n + 1));
+    console.log("RHS: ", RHS);
+
+    uint256 denominator = A * (2 * (n ** n));
+
+    //S * P + D = RHS / A  2(n^n)
+    RHS = RHS / denominator;
+
+    console.log("RHS: ", RHS);
+
+    //S * P + D = RHS
+    RHS = RHS - invariant;
+
+    //S * P = RHS
+
+    console.log("Sum + product = ", RHS);
+
+    uint256 S = balances[0] + balances[1];
+
+    uint256 P = balances[0] * balances[1];
+
+    uint256 S_P = S * P;
+    console.log("Expected S * P: ", S_P);
+  }
+
+  function rateOnly() internal view returns (uint256) {
+    uint256 rate = _priceFeed.getRate();
+    //console.log("Rate: ", rate); //1.030694183860377087
+
+    (uint256 invariant, uint256 amplificationParameter) = _priceFeed.getLastInvariant();
+
+    console.log("Invariant: ", invariant);
+    console.log("Amp Param: ", amplificationParameter);
+
+    uint256 result = (invariant * 1e18) / _priceFeed.totalSupply(); //1.030694074550969914
+    //console.log("result: ", result);
+
+    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
+
+    require(tokens.length == 2, "tokens length wrong");
+
+    uint256 truePrice0 = assetOracles[address(tokens[0])].currentValue();
+
+    uint256 truePrice1 = assetOracles[address(tokens[1])].currentValue();
+    //console.log("True Price 0: ", truePrice0);
+    //console.log("True Price 1: ", truePrice1);
+    uint256 a = avg(truePrice0, truePrice1);
+    //console.log("Avg: ", a);
+
+    uint256 S = balances[0] + balances[1];
+
+    uint256 P = balances[0] * balances[1];
+
+    uint256 S_P = S * P;
+    console.log("S_P: ", S_P);
+
+    //console.log("PRICE??:::: ", (a * rate) / 1e18);
+    console.log("avg price?: ", (a * result) / 1e18);
+    console.log("p0  price?: ", (truePrice0 * result) / 1e18);
+    console.log("p1  price?: ", (truePrice1 * result) / 1e18);
 
     /**
-    console.log("Invariant: ", invariant, invariant / 1e18);
-    console.log("Amp: ", amp);
-    console.log("Balance0: ", balances[0], balances[0] / 1e18);
-    console.log("Balance1: ", balances[1], balances[0] / 1e18);
+    avg price?:  18291087272101059390
+    p0  price?:  18291099746531003727
+    p1  price?:  18291074797671115053
+    naivePrice:  18326395901725071798
      */
 
-    uint256 a = amp * 2;
-    uint256 b = (invariant * a) - invariant;
-
-    uint256 axy2 = mulDown(((a * 2) * balances[0]), balances[1]);
-
-    // dx = a.x.y.2 + a.y^2 - b.y
-    uint256 derivativeX = mulDown(axy2 + (a * balances[0]), balances[1]) - (mulDown(b, balances[1]));
-
-    // dy = a.x.y.2 + a.x^2 - b.x
-    uint256 derivativeY = mulDown(axy2 + (a * balances[0]), balances[1]) - (mulDown(b, balances[0]));
-
-    pyx = divUpSpot(derivativeX, derivativeY);
+    /**
+  exchange 100 U.S. Dollars for 80 Euros, the exchange rate would be 1.25.
+  price0 = 17.7463907
+  price1 = 17.7463665
+   */
   }
 
-  /**
-   D invariant calculation in non-overflowing integer operations
-    iteratively
-    A * sum(x_i) * n**n + D = A * D * n**n + D**(n+1) / (n**n * prod(x_i))
-    Converging solution:
-    D[j+1] = (A * n**n * sum(x_i) - D[j]**(n+1) / (n**n prod(x_i))) / (A * n**n - 1)
-   */
+  function avg(uint256 thing0, uint256 thing1) internal pure returns (uint256 a) {
+    uint256 sum = thing0 + thing1;
+    a = sum / 2;
+  }
+
   function getVirtualPrice(uint256[] memory balances, IERC20[] memory tokens) internal view returns (uint256) {
     (uint256 invariant, uint256 amplificationParameter) = _priceFeed.getLastInvariant();
-    //uint256 tokenSupply = _priceFeed.totalSupply();
-    /**
-    
-    uint256 a = amp * 2;
-    uint256 V = (invariant * a) - invariant;
-
-    uint256 K = V / a;
-    uint256 rate = (K * 1e18) / tokenSupply;
-    console.log("Calculate: ", rate);
-    console.log("True rate: ", _priceFeed.getRate());
-
-    uint256 price1 = (_priceFeed.getRate() * assetOracles[address(tokens[0])].currentValue()) / 1e18;
-    console.log("Price1:      ", price1);
-    uint256 price2 = (_priceFeed.getRate() * assetOracles[address(tokens[1])].currentValue()) / 1e18;
-    console.log("Price2:      ", price2);
-     */
-
-    //uint256 result = _calcOutGivenIn(balances, 0, 1, 1e18);
-    //console.log("Result: ", result);
 
     //check balances
     console.log("Starting balance 0 idx in: ", balances[0]);
@@ -187,8 +215,8 @@ contract BPT_Oracle is IOracleRelay {
       invariant,
       1
     );
-    console.log("Calced balance 0 idx in: ", calcedBalances[0]);
-    console.log("Calced balance 1 idx ot: ", calcedBalances[1]);
+    console.log("Calced balance 0 idx in  : ", calcedBalances[0]);
+    console.log("Calced balance 1 idx ot  : ", calcedBalances[1]);
 
     uint256 out = _calcOutGivenIn(
       calcedBalances,
@@ -369,26 +397,6 @@ contract BPT_Oracle is IOracleRelay {
     require(b <= a, "SUB_OVERFLOW");
     uint256 c = a - b;
     return c;
-  }
-
-  function getBPTprice(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 price) {
-    //(IERC20[] memory tokens, uint256[] memory balances, ) = VAULT.getPoolTokens(poolId);
-
-    uint256 pyx = getSpotPrice(balances);
-    uint256[] memory reverse = new uint256[](2);
-    reverse[0] = balances[1];
-    reverse[1] = balances[0];
-
-    uint256 pxy = getSpotPrice(reverse);
-
-    //uint256 valueX = ((balances[0] * assetOracles[address(tokens[0])].currentValue()));
-    uint256 valueX = (((pxy * balances[0]) * assetOracles[address(tokens[0])].currentValue()) / 1e18);
-
-    uint256 valueY = (((pyx * balances[1]) * assetOracles[address(tokens[1])].currentValue()) / 1e18);
-
-    uint256 totalValue = valueX + valueY;
-
-    price = (totalValue / _priceFeed.totalSupply());
   }
 
   function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {

@@ -21,11 +21,13 @@ import {
   UniswapV3TokenOracleRelay__factory,
   VaultBPT__factory,
   WstETHRelay__factory,
+  StablePoolOracle,
+  StablePoolOracle__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
-import { BPT_Oracle__factory } from "../../../typechain-types/factories/oracle/External/BPT_Oracle.sol/BPT_Oracle__factory";
+import { StablePoolOracle__factory } from "../../../typechain-types/factories/oracle/External/BPT_Oracle.sol/StablePoolOracle__factory";
 
 
 
@@ -213,7 +215,7 @@ Deviation from simple price: -0.19266543%
 
 
     //wstETH/weth MetaStable pool
-    stEThMetaStablePoolOracle = await new BPT_Oracle__factory(s.Frank).deploy(
+    stEThMetaStablePoolOracle = await new StablePoolOracle__factory(s.Frank).deploy(
       "0x32296969Ef14EB0c6d29669C550D4a0449130230", //pool_address
       "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
@@ -235,7 +237,7 @@ Deviation from simple price: -0.19266543%
     const cappedRETH = "0x64eA012919FD9e53bDcCDc0Fc89201F484731f41"
     const rETH_Oracle = "0x69F3d75Fa1eaA2a46005D566Ec784FE9059bb04B"
 
-    const testStableOracle = await new BPT_Oracle__factory(s.Frank).deploy(
+    const testStableOracle = await new StablePoolOracle__factory(s.Frank).deploy(
       rETH_WETH_BPT, //pool_address
       "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [rETH, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
@@ -358,7 +360,7 @@ Deviation from simple price: -0.19266543%
    * This is the oracle used for the price of the reward token being listed
    */
   it("Aura LP token oracle", async () => {
-    auraStablePoolLPoracle = await new BPT_Oracle__factory(s.Frank).deploy(
+    auraStablePoolLPoracle = await new StablePoolOracle__factory(s.Frank).deploy(
       s.primeAuraBalLP.address,
       "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [primeBPT, s.auraBal.address],//prime BPT / auraBal
