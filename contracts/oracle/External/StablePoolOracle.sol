@@ -66,6 +66,8 @@ contract StablePoolOracle is IOracleRelay {
 
   function currentValue() external view override returns (uint256) {
     (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
+    (uint256 invariant, uint256 amplificationParameter) = _priceFeed.getLastInvariant();
+
     console.log("Data for: ", address(_priceFeed));
     /**
     uint256[] memory reverse = new uint256[](2);
@@ -83,9 +85,8 @@ contract StablePoolOracle is IOracleRelay {
    */
 
     //test
-    getVirtualPrice(balances, tokens);
+    //getVirtualPrice(balances, tokens);
     //rateOnly();
-    //newMath();
 
     uint256 naiveValue = sumBalances(tokens, balances);
     uint256 naivePrice = naiveValue / _priceFeed.totalSupply();
@@ -93,50 +94,35 @@ contract StablePoolOracle is IOracleRelay {
 
     console.log("naivePrice: ", naivePrice);
 
+    /// @notice The rate reported from the pool calculates a fresh invariant based on current balances
+    /// Calculating the rate using the last invariant prevents manipulation,
+    /// as such manipulation will distort the reported rate such that it does not match the calculatedRate
+    compareRate(invariant);
+
     // return checked price
     return naivePrice;
   }
 
-  /**********************************************************************************************
-  // invariant                                                                                 //
-  // D = invariant                                                  D^(n+1)                    //
-  // A = amplification coefficient      A  n^n S + D = A D n^n + -----------                   //
-  // S = sum of balances                                             n^n P                     //
-  // P = product of balances                                                                   //
-  // n = number of tokens                                                                      //
-  **********************************************************************************************/
-  function newMath() internal view returns (uint256) {
-    (uint256 invariant, uint256 amplificationParameter) = _priceFeed.getLastInvariant();
+  function uncheckedBalances() internal view returns (uint256) {
     (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
+  }
 
-    uint256 n = balances.length;
+  function calculateRate(uint256 v) internal view returns (uint256 calculatedRate) {
+    calculatedRate = (v * 1e18) / _priceFeed.totalSupply();
+  }
 
-    uint256 A = amplificationParameter * n;
+  function compareRate(uint256 v) internal view returns (bool) {
+    uint256 calculatedRate = calculateRate(v);
+    uint256 reportedRate = _priceFeed.getRate();
 
-    //A  2(n^n) S * P + D = A D n^n + D^(n+1)
-    uint256 RHS = A * invariant * (n ** n) + (invariant ** (n + 1));
-    console.log("RHS: ", RHS);
+    uint256 buffer = 1e14; //0.0001 => 0.001%
 
-    uint256 denominator = A * (2 * (n ** n));
+    // create upper and lower bounds
+    uint256 upperBounds = calculatedRate + buffer;
+    uint256 lowerBounds = calculatedRate - buffer;
 
-    //S * P + D = RHS / A  2(n^n)
-    RHS = RHS / denominator;
-
-    console.log("RHS: ", RHS);
-
-    //S * P + D = RHS
-    RHS = RHS - invariant;
-
-    //S * P = RHS
-
-    console.log("Sum + product = ", RHS);
-
-    uint256 S = balances[0] + balances[1];
-
-    uint256 P = balances[0] * balances[1];
-
-    uint256 S_P = S * P;
-    console.log("Expected S * P: ", S_P);
+    require(reportedRate < upperBounds, "reportedRate too low");
+    require(reportedRate > lowerBounds, "reportedRate too high");
   }
 
   function rateOnly() internal view returns (uint256) {
@@ -194,9 +180,15 @@ contract StablePoolOracle is IOracleRelay {
     a = sum / 2;
   }
 
+  /**
+  Sequence of events for balancer swap
+  approve relayer 0xC92E8bdf79f0507f65a392b0ab4667716BFE0110
+  approve 0xBA12222222228d8Ba445958a75a0704d566BF2C8 on tokenIn contract (balancer vault)
+   */
+
   function getVirtualPrice(uint256[] memory balances, IERC20[] memory tokens) internal view returns (uint256) {
     (uint256 invariant, uint256 amplificationParameter) = _priceFeed.getLastInvariant();
-
+    uint256 A = amplificationParameter * 2;
     //check balances
     console.log("Starting balance 0 idx in: ", balances[0]);
     console.log("Starting balance 1 idx ot: ", balances[1]);

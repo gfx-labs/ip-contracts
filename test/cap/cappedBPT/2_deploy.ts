@@ -10,6 +10,8 @@ import MerkleTree from "merkletreejs";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
 import { toNumber, getGas } from "../../../util/math"
+import { stealMoney } from "../../../util/money";
+
 import {
   AnchoredViewRelay__factory,
   BalancerStablePoolTokenOracle__factory,
@@ -22,12 +24,13 @@ import {
   VaultBPT__factory,
   WstETHRelay__factory,
   StablePoolOracle,
-  StablePoolOracle__factory
+  StablePoolOracle__factory,
+  RateProofOfConcept__factory,
+  IOracleRelay__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
-import { StablePoolOracle__factory } from "../../../typechain-types/factories/oracle/External/BPT_Oracle.sol/StablePoolOracle__factory";
 
 
 
@@ -149,6 +152,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
   const primeBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
 
+
   it("Check wstETH exchange rate relay", async () => {
 
     wstethRelay = await new WstETHRelay__factory(s.Frank).deploy()
@@ -156,6 +160,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
     //showBody("wstETH direct conversion price: ", await toNumber(await wstethRelay.currentValue()))
 
   })
+
 
 
   /**
@@ -211,7 +216,69 @@ Deviation from simple price: -0.19266543%
   // P = product of balances                                                                   //
   // n = number of tokens                                                                      //
   *********x************************************************************************************/
-  it("Deploy and check meta stable pool oracle", async () => {
+  it("Stable Pool Oracle rate proof of concept", async () => {
+    //Attempt manipulation, prove that the rates will diverge in such scenario
+    //deploy proof of concept oracle
+    /**
+     const pocOracle = await new RateProofOfConcept__factory(s.Frank).deploy(
+      "0x32296969Ef14EB0c6d29669C550D4a0449130230", //pool_address
+      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
+      ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
+      [wstethRelay.address, s.wethOracleAddr], //_oracles
+      BN("1"),
+      BN("100")
+    )
+     */
+
+    const rETH_WETH_BPT = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276"
+    const rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393"
+    const cappedRETH = "0x64eA012919FD9e53bDcCDc0Fc89201F484731f41"
+    const rETH_Oracle = "0x69F3d75Fa1eaA2a46005D566Ec784FE9059bb04B"
+
+    const pocOracle = await new RateProofOfConcept__factory(s.Frank).deploy(
+      rETH_WETH_BPT, //pool_address
+      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
+      [rETH, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
+      [rETH_Oracle, s.wethOracleAddr], //_oracles, weth oracle
+      BN("1"),
+      BN("100")
+    )
+
+    const wethOracle = IOracleRelay__factory.connect(s.wethOracleAddr, s.Frank)
+    const rethOracle = IOracleRelay__factory.connect(rETH_Oracle, s.Frank)
+
+    showBody("reth oracle price: ", await toNumber(await rethOracle.currentValue()))
+    showBody("weth oracle price: ", await toNumber(await wethOracle.currentValue()))
+
+    //record safe price
+    const initialPrice = await pocOracle.currentValue()
+    showBodyCyan("POC initial price: ", await toNumber(initialPrice))
+
+    //steal enough money to repay flash loan
+    let weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
+    const stealAmount = BN("70000e18") //70k weth
+    const borrowAmount = BN("69500e18")
+    
+    //fund contract to repay flash loan
+    await stealMoney(weth_minter, s.Dave.address, s.WETH.address, stealAmount)
+    await s.WETH.connect(s.Dave).transfer(pocOracle.address, stealAmount)
+    showBody("weth balance on poc contract: ", await toNumber(await s.WETH.balanceOf(pocOracle.address)))
+
+
+
+    //attempt manipulation and check price
+    await pocOracle.testFlashLoanManipulation(BN("1"), borrowAmount, {
+      gasPrice: 200000000000, //gas price of 200 gwei - extreeemely high
+      gasLimit: 2000000
+    })
+
+
+  })
+
+
+
+  /**
+   it("Deploy and check meta stable pool oracle", async () => {
 
 
     //wstETH/weth MetaStable pool
@@ -299,13 +366,13 @@ Deviation from simple price: -0.19266543%
     expect(await toNumber(await testStableOracle.currentValue())).to.be.closeTo(70, 5, "Oracle price within 1% of simple price")
   })
 
-  /**
-   * Uni v3 relay
-   * Balancer relay, new Balancer weighted pool relay??
-   * Current price ~$17
-   * aura token = 0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF
-   * auraBal = 0x616e8BfA43F920657B3497DBf40D6b1A02D4608d
-   */
+
+  // Uni v3 relay
+  // Balancer relay, new Balancer weighted pool relay??
+  // Current price ~$17
+  // aura token = 0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF
+  // auraBal = 0x616e8BfA43F920657B3497DBf40D6b1A02D4608d
+
   it("auraBal oracle", async () => {
     const uniPool = "0xFdeA35445489e608fb4F20B6E94CCFEa8353Eabd"//3k, meh liquidity
 
@@ -355,10 +422,8 @@ Deviation from simple price: -0.19266543%
 
   })
 
-  /**
-   * Set up oracle for stable pool 'prime' BPT / auraBal LP token 0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd
-   * This is the oracle used for the price of the reward token being listed
-   */
+  //   * Set up oracle for stable pool 'prime' BPT / auraBal LP token 0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd
+  //   * This is the oracle used for the price of the reward token being listed
   it("Aura LP token oracle", async () => {
     auraStablePoolLPoracle = await new StablePoolOracle__factory(s.Frank).deploy(
       s.primeAuraBalLP.address,
@@ -477,4 +542,5 @@ Deviation from simple price: -0.19266543%
     )
     await ceaseImpersonation(s.owner._address)
   })
+   */
 })

@@ -68,7 +68,7 @@ const main = async () => {
     cl
   );
 
-  const weekNum = 11
+  const weekNum = 12
   const week = BlockRounds.blockRanges[weekNum]
 
   const blockStart = week.start
