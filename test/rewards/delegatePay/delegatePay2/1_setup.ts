@@ -45,7 +45,7 @@ if (process.env.TENDERLY_KEY) {
  */
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(16708117)).to.not.throw;//14940917
+        expect(await reset(16850365)).to.not.throw;//14940917
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -60,12 +60,19 @@ describe("Token Setup", () => {
         s.delegateList = [
             {
                 minter: "0x070341aA5Ed571f0FB2c4a5641409B1A46b4961b",//Penn
-                amount: BN("75346000000000000000000")
+                amount: BN("57744e17")//5774.4
             },
             {
+                minter: "0xe967F2232a6030BCc1D05E2CC5Dfa8fBB3ce9B53",//Adonis
+                amount: BN("9522e18")//9522
+            }
+            /**
+             {
                 minter: "0x5fee8d7d02B0cfC08f0205ffd6d6B41877c86558",//IPTman
                 amount: BN("500000000000000000000000")//500,000
             }
+             */
+
         ]
     })
     it("connect to signers", async () => {

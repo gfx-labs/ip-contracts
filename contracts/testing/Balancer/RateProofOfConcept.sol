@@ -114,10 +114,6 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
     return naivePrice;
   }
 
-  function uncheckedBalances() internal view returns (uint256) {
-    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
-  }
-
   function calculateRate(uint256 v) internal view returns (uint256 calculatedRate) {
     calculatedRate = (v * 1e18) / _priceFeed.totalSupply();
   }
@@ -177,6 +173,14 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
     return true;
   }
 
+  /**
+  Trace through join pool
+  Able to get error from validate tokens
+  https://github.com/balancer/balancer-v2-monorepo/blob/d2794ef7d8f6d321cde36b7c536e8d51971688bd/pkg/vault/contracts/PoolBalances.sol#L124
+
+  Leads to onJoinPool on Base Pool
+  https://github.com/balancer/balancer-v2-monorepo/blob/77c1feff3e2c1380812b1f0cfe94750c2c5dcdce/pkg/pool-utils/contracts/BasePool.sol#L289
+   */
   function depositIntoPool(address asset) internal {
     (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
     //console.log("Balances 0 init: ", balances[0]);
