@@ -224,12 +224,12 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
     //console.log("Balances 1 init: ", balances[1]);
 
     IAsset[] memory assets = new IAsset[](2);
-    assets[0] = IAsset(address(tokens[0]));
-    assets[1] = IAsset(address(tokens[1]));
+    assets[1] = IAsset(address(tokens[0]));
+    assets[0] = IAsset(address(tokens[1]));
 
     uint256[] memory maxAmountsIn = new uint256[](2);
-    maxAmountsIn[0] = tokens[0].balanceOf(address(this)); //should be 0
-    maxAmountsIn[1] = tokens[1].balanceOf(address(this));
+    maxAmountsIn[1] = tokens[1].balanceOf(address(this)); //should be 0
+    maxAmountsIn[0] = tokens[0].balanceOf(address(this));
 
     //console.log("Asset0: ", address(assets[0]));
     //console.log("Asset1: ", address(assets[1]));
