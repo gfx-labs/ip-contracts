@@ -55,23 +55,26 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
   //Balancer Vault
   IBalancerVault public immutable VAULT; // = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
 
+  /**
   enum JoinKind {
     INIT,
     EXACT_TOKENS_IN_FOR_BPT_OUT,
     TOKEN_IN_FOR_EXACT_BPT_OUT,
     ALL_TOKENS_IN_FOR_EXACT_BPT_OUT
   }
+   */
+
+  // Legacy JoinKind - Applies to StablePool, MetaStablePool, StablePool V2
+  enum JoinKind {
+    INIT,
+    EXACT_TOKENS_IN_FOR_BPT_OUT,
+    TOKEN_IN_FOR_EXACT_BPT_OUT
+  }
 
   enum PoolSpecialization {
     GENERAL,
     MINIMAL_SWAP_INFO,
     TWO_TOKEN
-  }
-
-  struct TwoTokenPoolTokens {
-    IERC20 tokenA;
-    IERC20 tokenB;
-    mapping(bytes32 => TwoTokenPoolBalances) balances;
   }
 
   /**
@@ -228,14 +231,14 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
     maxAmountsIn[0] = tokens[0].balanceOf(address(this)); //should be 0
     maxAmountsIn[1] = tokens[1].balanceOf(address(this));
 
-    console.log("Asset0: ", address(assets[0]));
-    console.log("Asset1: ", address(assets[1]));
-    console.log("Asset0 had   : ", tokens[0].balanceOf(address(this)));
-    console.log("Asset1 had   : ", tokens[1].balanceOf(address(this)));
-    console.log("Max amount in 0: ", maxAmountsIn[0]);
-    console.log("Max amount in 1: ", maxAmountsIn[1]);
+    //console.log("Asset0: ", address(assets[0]));
+    //console.log("Asset1: ", address(assets[1]));
+    //console.log("Asset0 had   : ", tokens[0].balanceOf(address(this)));
+    //console.log("Asset1 had   : ", tokens[1].balanceOf(address(this)));
+    //console.log("Max amount in 0: ", maxAmountsIn[0]);
+    //console.log("Max amount in 1: ", maxAmountsIn[1]);
 
-    bytes memory data = abi.encode(JoinKind.EXACT_TOKENS_IN_FOR_BPT_OUT);
+    bytes memory data = abi.encode(JoinKind.TOKEN_IN_FOR_EXACT_BPT_OUT);
 
     //tokens[1].approve(0x1E19CF2D73a72Ef1332C882F20534B6519Be0276, tokens[1].balanceOf(address(this)));
     //tokens[1].approve(address(VAULT), tokens[1].balanceOf(address(this)));
@@ -244,18 +247,8 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
 
     IBalancerPool pool = IBalancerPool(address(_priceFeed));
 
-    _getPoolTokens(_poolId);
-    /**
-  pool.onJoinPool(
-      _poolId,
-      address(this),
-      address(this),
-      balances,
-      
-    )
-   */
+   
 
-    /**
     VAULT.joinPool(
       _poolId,
       address(this),
@@ -267,7 +260,7 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
         fromInternalBalance: false
       })
     );
-     */
+
     console.log("JOINED POOL");
   }
 
@@ -275,7 +268,7 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
   //Specialization:  2
   // _getTwoTokenPoolBalances in byte form, use these to verify?
   //https://github.com/balancer/balancer-v2-monorepo/blob/d2794ef7d8f6d321cde36b7c536e8d51971688bd/pkg/vault/contracts/balances/TwoTokenPoolsBalance.sol#L269
-  //The balances are tied to the pool ID (bytes) in a private mapping, investigate when mapping is updated? 
+  //The balances are tied to the pool ID (bytes) in a private mapping, investigate when mapping is updated?
   //NEXT get info on when lastInvariant is updated, only on exit pool? StablePool._updateInvariantAfterExit()
   function getBalances(bytes32 poolId, IERC20[] memory expectedTokens) private view returns (bytes32[] memory) {
     bytes32 pairHash = keccak256(abi.encodePacked(expectedTokens[0], expectedTokens[1])); //pair hash
@@ -385,6 +378,9 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
     total = 0;
     for (uint256 i = 0; i < tokens.length; i++) {
       total += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
+      console.log("");
+      console.log("Token: ", address(tokens[i]));
+      console.log("Price: ", (assetOracles[address(tokens[i])].currentValue()));
     }
   }
 
