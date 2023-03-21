@@ -6,6 +6,8 @@ import "../../_external/IERC20.sol";
 import "../../_external/balancer/IBalancerVault.sol";
 import "../../_external/balancer/IAsset.sol";
 
+import "../../_external/IWETH.sol";
+
 import "../../_external/PRBMath/PRBMathSD59x18.sol";
 
 //test wit Aave flash loan
@@ -32,6 +34,8 @@ interface IBalancerPool {
     bytes memory userData
   ) external returns (uint256[] memory amountsIn, uint256[] memory dueProtocolFeeAmounts);
 }
+
+
 
 /*****************************************
  *
@@ -224,12 +228,12 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
     //console.log("Balances 1 init: ", balances[1]);
 
     IAsset[] memory assets = new IAsset[](2);
-    assets[1] = IAsset(address(tokens[0]));
-    assets[0] = IAsset(address(tokens[1]));
+    assets[0] = IAsset(address(tokens[0]));
+    assets[1] = IAsset(address(tokens[1]));
 
     uint256[] memory maxAmountsIn = new uint256[](2);
-    maxAmountsIn[1] = tokens[1].balanceOf(address(this)); //should be 0
-    maxAmountsIn[0] = tokens[0].balanceOf(address(this));
+    maxAmountsIn[0] = tokens[0].balanceOf(address(this)); //should be 0
+    maxAmountsIn[1] = tokens[1].balanceOf(address(this));
 
     //console.log("Asset0: ", address(assets[0]));
     //console.log("Asset1: ", address(assets[1]));

@@ -257,7 +257,7 @@ Deviation from simple price: -0.19266543%
     //steal enough money to repay flash loan
     let weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
     const stealAmount = BN("70000e18") //70k weth
-    const borrowAmount = BN("69500e18")
+    const borrowAmount = BN("1e18")//BN("69500e18")
     
     //fund contract to repay flash loan
     await stealMoney(weth_minter, s.Dave.address, s.WETH.address, stealAmount)
