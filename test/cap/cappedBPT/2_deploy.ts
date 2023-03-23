@@ -228,7 +228,7 @@ Deviation from simple price: -0.19266543%
       BN("100")
     )
      */
-
+    const bptMinter = "0xb92bDDe847b689B7Ec3a4b900a8443DeBF8e27A4"
     const rETH_WETH_BPT = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276"
     const rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393"
     const cappedRETH = "0x64eA012919FD9e53bDcCDc0Fc89201F484731f41"
@@ -267,12 +267,15 @@ Deviation from simple price: -0.19266543%
 
     //attempt manipulation and check price
     /**
-     *  await pocOracle.testFlashLoanManipulation(BN("1"), borrowAmount, {
+       await pocOracle.testFlashLoanManipulation(BN("1"), borrowAmount, {
        gasPrice: 200000000000, //gas price of 200 gwei - extreeemely high
        gasLimit: 2000000
      })
      */
-
+    await pocOracle.testFlashLoanManipulation(BN("1"), borrowAmount, {
+      gasPrice: 200000000000, //gas price of 200 gwei - extreeemely high
+      gasLimit: 2000000
+    })
 
   })
 

