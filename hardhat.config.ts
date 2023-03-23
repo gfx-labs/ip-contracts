@@ -4,10 +4,9 @@ import "@nomiclabs/hardhat-ethers";
 import "hardhat-watcher";
 import "@openzeppelin/hardhat-upgrades";
 import "hardhat-gas-reporter";
-import "@tenderly/hardhat-tenderly";
 import "@nomiclabs/hardhat-etherscan";
-
 import "hardhat-docgen";
+//import "@tenderly/hardhat-tenderly";
 
 import { HardhatUserConfig } from "hardhat/types";
 import * as dotenv from "dotenv";
@@ -137,6 +136,14 @@ const config: HardhatUserConfig = {
     target: "ethers-v5",
     alwaysGenerateOverloads: true, // should overloads with full signatures like deposit(uint256) be generated always, even if there are no overloads?
   },
+
+  /**
+   tenderly: {
+    username: "jabot",
+    project: "IP_DEBUG"
+  }
+   */
+
 };
 
 export default config;

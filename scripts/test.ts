@@ -31,6 +31,9 @@ import { ProposalContext } from "./proposals/suite/proposal";
 
 import { tryNativeToHexString } from "@certusone/wormhole-sdk"
 
+import * as fs from 'fs';
+
+
 const { ethers, network, upgrades } = require("hardhat");
 
 async function main() {
@@ -60,16 +63,19 @@ async function main() {
         governorAddress
     );
 
+    const proposalText = fs.readFileSync('./scripts/proposal.md', 'utf8');
+
     const data = await gov.connect(deployer).populateTransaction.propose(
         out.targets,
         out.values,
         out.signatures,
         out.calldatas,
-        "This is a proposal to transfer 600 USDi to feems.eth for administering and reporting duties under the Recognized Delegate Program.",
+        proposalText,
         false
     )
 
     console.log(out)
+    console.log(JSON.stringify(data))
 
 }
 

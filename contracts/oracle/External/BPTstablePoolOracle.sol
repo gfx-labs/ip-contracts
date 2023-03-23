@@ -1,15 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "../../oracle/IOracleRelay.sol";
+import "../IOracleRelay.sol";
 import "../../_external/IERC20.sol";
 import "../../_external/balancer/IBalancerVault.sol";
-import "../../_external/balancer/IAsset.sol";
-
-import "../../_external/IWETH.sol";
-
-//test wit Aave flash loan
-import "../aaveFlashLoan/FlashLoanReceiverBase.sol";
 
 import "hardhat/console.sol";
 
@@ -30,7 +24,7 @@ interface IBalancerPool {
  *
  */
 
-contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
+contract BPTstablePoolOracle is IOracleRelay {
   bytes32 public immutable _poolId;
 
   uint256 public immutable _widthNumerator;
@@ -53,7 +47,7 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
     address[] memory _oracles,
     uint256 widthNumerator,
     uint256 widthDenominator
-  ) FlashLoanReceiverBase(ILendingPoolAddressesProvider(0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5)) {
+  ) {
     _priceFeed = IBalancerPool(pool_address);
 
     _poolId = _priceFeed.getPoolId();
@@ -66,7 +60,7 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
     _widthDenominator = widthDenominator;
   }
 
-  function currentValue() public view override returns (uint256) {
+  function currentValue() external view override returns (uint256) {
     (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(_poolId);
     //console.log("POOL ADDR: ", address(_priceFeed));
 
@@ -76,71 +70,12 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
     compareOutGivenIn(tokens, balances);
     /********************************************************/
 
-    /********************************************************/
-
     uint256 naivePrice = getNaivePrice(tokens, balances);
     //console.log("NAIVE PRICE: ", naivePrice);
     //verifyNaivePrice(naivePrice, naivePrice);
 
     // return checked price
     return naivePrice;
-  }
-
-  /*******************************Attempt Manipulation********************************/
-  function testFlashLoanManipulation(uint256 tokenBorrowIdx, uint256 amountBorrow) external payable {
-    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
-    (uint256 invariant, uint256 amplificationParameter) = _priceFeed.getLastInvariant();
-
-    //do flash loan
-    console.log("Borrowing: ", address(tokens[tokenBorrowIdx]));
-    aaveFlashLoan(address(tokens[tokenBorrowIdx]), amountBorrow);
-
-    //check price
-    console.log("Flash Loan done");
-    console.log("Current price: ", currentValue());
-  }
-
-  function aaveFlashLoan(address tokenBorrow, uint256 amountBorrow) internal {
-    //Aave expects an array, even though we are only going to pass 1
-    address[] memory assets = new address[](1);
-    assets[0] = tokenBorrow;
-
-    //Aave expects an array, even though we are only going to pass 1
-    uint256[] memory amounts = new uint256[](1);
-    amounts[0] = amountBorrow;
-
-    // 0 = no debt, 1 = stable, 2 = variable
-    uint256[] memory modes = new uint256[](1);
-    modes[0] = 0;
-
-    LENDING_POOL.flashLoan(
-      address(this), //who receives flash loan
-      assets, //borrowed assets, can be just 1
-      amounts, //amounts to borrow
-      modes, //what kind of loan - 0 for full repay
-      address(this), //address to receive debt if mode is !0
-      "0x",
-      0 //referralCode - not used
-    );
-  }
-
-  function executeOperation(
-    address[] calldata assets,
-    uint256[] calldata amounts,
-    uint256[] calldata premiums,
-    address /**initiator */, //not used
-    bytes calldata /**params */
-  ) external override returns (bool) {
-    depositIntoPool(assets[0]);
-
-    //approve aave to take from this contract to repay
-    uint256 amountOwing = amounts[0] + (premiums[0]);
-    IERC20(assets[0]).approve(address(LENDING_POOL), amountOwing);
-    return true;
-  }
-
-  function depositIntoPool(address asset) internal {
-    console.log("DEPOSIT INTO POOL");
   }
 
   /*******************************GET & CHECK NAIVE PRICE********************************/

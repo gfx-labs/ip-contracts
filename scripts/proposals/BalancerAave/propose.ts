@@ -134,6 +134,8 @@ async function main() {
         false
     )
 
+    console.log(data)
+
     fs.writeFileSync('./scripts/proposals/BalancerAave/proposalHexData.txt', JSON.stringify(data));
 
 }

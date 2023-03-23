@@ -20,10 +20,11 @@ import {
 } from "../../../typechain-types";
 import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
 import { ProposalContext } from "../suite/proposal";
-import { toNumber } from "../../../util/math";
+import { toNumber, getGas } from "../../../util/math";
 import { d } from "../DeploymentInfo"
 import { showBody } from "../../../util/format";
 import { reset } from "../../../util/block";
+
 import * as fs from 'fs';
 
 const { ethers, network, upgrades } = require("hardhat");
@@ -103,7 +104,7 @@ async function main() {
     console.log(out)
 
     console.log("Sending proposal from ", deployer.address)
-    await gov.connect(deployer).propose(
+    const result = await gov.connect(deployer).propose(
         out.targets,
         out.values,
         out.signatures,
@@ -111,6 +112,8 @@ async function main() {
         proposalText,
         false
     )
+    const gas = await getGas(result)
+    showBody("Gas to propose: ", gas)
 
     showBody("Done")
 
