@@ -62,7 +62,11 @@ contract BPTstablePoolOracle is IOracleRelay {
 
   function currentValue() external view override returns (uint256) {
     (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(_poolId);
-    //console.log("POOL ADDR: ", address(_priceFeed));
+    console.log("POOL ADDR: ", address(_priceFeed));
+    console.log("Token 0: ", address(tokens[0]));
+    console.log("Token 1: ", address(tokens[1]));
+    console.log("True price token 0: ", assetOracles[address(tokens[0])].currentValue());
+    console.log("True price token 1: ", assetOracles[address(tokens[1])].currentValue());
 
     /**************Check Robust Price Solutions**************/
     checkLastChangedBlock(lastChangeBlock);
@@ -116,6 +120,9 @@ contract BPTstablePoolOracle is IOracleRelay {
 
     uint256 reportedRate = _priceFeed.getRate();
 
+    console.log("Reported Rate: ", reportedRate);
+    console.log("Inverted rate: ", divide(1e18, reportedRate, 18));
+
     ///@notice theoreticly if the rates diverge, then the price may have been manipulated
     /// todo test this theory
     uint256 buffer = 1e14; //0.0001 => 0.001%
@@ -133,17 +140,63 @@ contract BPTstablePoolOracle is IOracleRelay {
     (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
     uint256 idxIn = 0;
     uint256 idxOut = 1;
-    uint256 tokenAmountIn = 1e20;
+    uint256 tokenAmountIn = 1e18;
 
-    //console.log("Compare OUT GIVEN IN");
+    // console.log("Compare OUT GIVEN IN");
     //console.log("Token in : ", address(tokens[idxIn]));
     //console.log("Token out: ", address(tokens[idxOut]));
 
     uint256 outGivenIn = _calcOutGivenIn(amp, balances, idxIn, idxOut, tokenAmountIn, v);
 
+    bool requireCalcedBalances = false;
+    if (outGivenIn == 0) {
+      requireCalcedBalances = true;
+
+      uint256[] memory calcedBalances = new uint256[](2);
+      calcedBalances[0] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 0);
+
+      calcedBalances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1);
+      outGivenIn = _calcOutGivenIn(amp, calcedBalances, idxIn, idxOut, tokenAmountIn, v);
+    }
+
+    console.log("Out given in : ", outGivenIn);
+
+    (uint256 calcedRate, uint256 expectedRate) = getOutGivenInRate(
+      outGivenIn,
+      assetOracles[address(tokens[0])].currentValue(),
+      assetOracles[address(tokens[1])].currentValue()
+    );
+    //simple out given in should be price 0 * expectedRate
+    uint256 expectedOutput = assetOracles[address(tokens[0])].currentValue() * expectedRate;
+    console.log("Expected ogi : ", divide(expectedOutput, 1e36, 18));
+
+    console.log("Expected Rate: ", expectedRate);
+    console.log("Calculat Rate: ", calcedRate);
+
+    // console.log("Required calced balances?: ", requireCalcedBalances);
+    // console.log("OUT GIVEN IN RESULT: ", outGivenIn);
     //console.log("OUT GIVEN IN RESULT: ", outGivenIn); //102.386021679385123944
-    ////console.log("True priec token 0: ", assetOracles[address(tokens[0])].currentValue());
-    ////console.log("True priec token 1: ", assetOracles[address(tokens[1])].currentValue());
+  }
+
+  function getSimpleRate(uint256 price0, uint256 price1) internal pure returns (uint256 expectedRate) {
+    //rate  p1 / p0
+    expectedRate = divide(price1, price0, 18);
+  }
+
+  function getOutGivenInRate(
+    uint256 ogi,
+    uint256 price0,
+    uint256 price1
+  ) internal view returns (uint256 calcedRate, uint256 expectedRate) {
+    expectedRate = getSimpleRate(price0, price1);
+
+    //calced rate (1e18 * p0) x = (ogi * p1)
+    //calced rate = (ogi * p1) / (1e18 * p0)
+    uint256 numerator = divide(ogi * price1, 1e18, 18);
+
+    uint256 denominator = divide((1e18 * price0), 1e18, 18);
+
+    calcedRate = divide(numerator, denominator, 18);
   }
 
   // Computes how many tokens can be taken out of a pool if `tokenAmountIn` are sent, given the current balances.
@@ -156,7 +209,7 @@ contract BPTstablePoolOracle is IOracleRelay {
     uint256 tokenIndexOut,
     uint256 tokenAmountIn,
     uint256 invariant
-  ) internal view returns (uint256) {
+  ) internal pure returns (uint256) {
     /**************************************************************************************************************
         // outGivenIn token x for y - polynomial equation to solve                                                   //
         // ay = amount out to calculate                                                                              //
@@ -281,6 +334,13 @@ contract BPTstablePoolOracle is IOracleRelay {
     require(b <= a, "SUB_OVERFLOW");
     uint256 c = a - b;
     return c;
+  }
+
+  function divide(uint256 numerator, uint256 denominator, uint256 factor) internal pure returns (uint256 result) {
+    uint256 q = (numerator / denominator) * 10 ** factor;
+    uint256 r = ((numerator * 10 ** factor) / denominator) % 10 ** factor;
+
+    return q + r;
   }
 
   /*******************************REQUIRED SETUP FUNCTIONS********************************/

@@ -17,8 +17,8 @@ import { AlchemyWebSocketProvider } from "@ethersproject/providers";
 import { ethers } from "hardhat";
 dotenv.config();
 
-const rpc_url = process.env.MAINNET_URL
-//const rpc_url = "https://mainnet.rpc.gfx.xyz/" //"https://brilliant.staging.gfx.town" //
+//const rpc_url = process.env.MAINNET_URL
+const rpc_url = "https://mainnet.rpc.gfx.xyz/" //"https://brilliant.staging.gfx.town" //
 const main = async () => {
 
   //const cl = new AlchemyWebSocketProvider(1, rpc_url!);
@@ -80,7 +80,7 @@ const main = async () => {
 
 
   //const weekNum = 1
-  const weekNum = 12
+  const weekNum = 13
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     //weekNum = weekNum + 1
     const blockStart = week.start

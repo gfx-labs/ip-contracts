@@ -120,69 +120,6 @@ describe("Deploy Cap Tokens and Oracles", () => {
      */
 
   })
-
-
-
-
 })
 
-
-
-describe("Setup, Queue, and Execute proposal", () => {
-  const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
-  const deployer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
-  const proposer = "0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908"//"0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
-  const prop = ethers.provider.getSigner(proposer)
-
-  let gov: GovernorCharlieDelegate;
-
-  let proposal: number
-
-  let out: any
-
-  const deployedOracle = "0x9Aa2Ccb26686dd7698778599cD0f4425a5231e18"
-
-
-  it("Check votes", async () => {
-
-    const votes = await s.IPT.getCurrentVotes(prop._address)
-    showBody("Votes: ", await toNumber(votes))
-
-  })
-
-  it("queue and execute", async () => {
-    //const votingPeriod = await gov.votingPeriod()
-    //const votingDelay = await gov.votingDelay()
-    gov = new GovernorCharlieDelegate__factory(prop).attach(
-      governorAddress
-    );
-
-    proposal = Number(await gov.proposalCount())
-    showBody("Proposal count: ", proposal);
-
-    const timelock = await gov.proposalTimelockDelay()
-
-    const block = await currentBlock()
-    const votes = await s.IPT.getPriorVotes(proposer, block.number - 2)
-    //expect(await toNumber(votes)).to.eq(45000000, "Correct number of votes delegated")
-
-    await impersonateAccount(proposer)
-
-    await gov.connect(prop).queue(proposal);
-    await mineBlock()
-
-    await fastForward(timelock.toNumber());
-    await mineBlock()
-
-    await gov.connect(prop).execute(proposal);
-    await mineBlock();
-
-    await ceaseImpersonation(proposer)
-
-
-
-
-  })
-
-})
 

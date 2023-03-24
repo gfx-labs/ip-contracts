@@ -99,12 +99,12 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
     (uint256 invariant, uint256 amplificationParameter) = _priceFeed.getLastInvariant();
 
     //do flash loan
-    console.log("Borrowing: ", address(tokens[tokenBorrowIdx]));
+    //console.log("Borrowing: ", address(tokens[tokenBorrowIdx]));
     aaveFlashLoan(address(tokens[tokenBorrowIdx]), amountBorrow);
 
     //check price
-    console.log("Flash Loan done");
-    console.log("Current price: ", currentValue());
+    //console.log("Flash Loan done");
+    //console.log("Current price: ", currentValue());
   }
 
   function aaveFlashLoan(address tokenBorrow, uint256 amountBorrow) internal {
@@ -147,7 +147,7 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
   }
 
   function depositIntoPool(address asset) internal {
-    console.log("DEPOSIT INTO POOL");
+    //console.log("DEPOSIT INTO POOL");
     (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
 
     IAsset[] memory assets = new IAsset[](2);
@@ -160,13 +160,13 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
 
     bytes memory data = abi.encode(JoinKind.TOKEN_IN_FOR_EXACT_BPT_OUT);
 
-    console.log("Asset0: ", address(assets[0]));
-    console.log("Asset1: ", address(assets[1]));
-    console.log("Asset0 had   : ", tokens[0].balanceOf(address(this)));
-    console.log("Asset1 had   : ", tokens[1].balanceOf(address(this)));
-    console.log("Max amount in 0: ", maxAmountsIn[0]);
-    console.log("Max amount in 1: ", maxAmountsIn[1]);
-    console.log("JOININGqqqq");
+    //console.log("Asset0: ", address(assets[0]));
+    //console.log("Asset1: ", address(assets[1]));
+    //console.log("Asset0 had   : ", tokens[0].balanceOf(address(this)));
+    //console.log("Asset1 had   : ", tokens[1].balanceOf(address(this)));
+    //console.log("Max amount in 0: ", maxAmountsIn[0]);
+    //console.log("Max amount in 1: ", maxAmountsIn[1]);
+    //console.log("JOININGqqqq");
 
     /// NEXT another idea, steal BPT and exit pool in bulk to move balances?
     VAULT.joinPool(
@@ -181,7 +181,7 @@ contract RateProofOfConcept is FlashLoanReceiverBase, IOracleRelay {
       })
     );
 
-    console.log("JOINED POOL");
+    //console.log("JOINED POOL");
   }
 
   /*******************************GET & CHECK NAIVE PRICE********************************/
