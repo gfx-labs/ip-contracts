@@ -6,6 +6,10 @@ import "../../_external/IERC20.sol";
 import "../../_external/balancer/IBalancerVault.sol";
 import "../../_external/balancer/LogExpMath.sol";
 
+import "./IBaseOracle.sol";
+import "./UsingBaseOracle.sol";
+import "./HomoraMath.sol";
+
 import "hardhat/console.sol";
 
 interface IBalancerPool {
@@ -37,7 +41,8 @@ interface IBalancerPool {
  *
  */
 
-contract BPTstablePoolOracle is IOracleRelay {
+contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
+  using HomoraMath for uint;
   bytes32 public immutable _poolId;
 
   uint256 public immutable _widthNumerator;
@@ -60,7 +65,7 @@ contract BPTstablePoolOracle is IOracleRelay {
     address[] memory _oracles,
     uint256 widthNumerator,
     uint256 widthDenominator
-  ) {
+  ) UsingBaseOracle(IBaseOracle(pool_address)) {
     _priceFeed = IBalancerPool(pool_address);
 
     _poolId = _priceFeed.getPoolId();
@@ -87,6 +92,8 @@ contract BPTstablePoolOracle is IOracleRelay {
     compareOutGivenIn(tokens, balances);
     uint256 spotRobustPrice = getBPTprice(tokens, balances);
     getOracleData();
+    uint256 pxPrice = getETHPx(address(_priceFeed));
+    simpleCalc();
     /********************************************************/
 
     uint256 naivePrice = getNaivePrice(tokens, balances);
@@ -129,6 +136,50 @@ contract BPTstablePoolOracle is IOracleRelay {
     require(lastChangeBlock < block.number, "Revert for manipulation resistance");
   }
 
+  /*******************************BASE ORACLE ALPHA METHOD********************************/
+
+  function getETHPx(address pool) public view override returns (uint) {
+    (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(_poolId);
+    address token0 = address(tokens[0]);
+    address token1 = address(tokens[1]);
+    uint totalSupply = _priceFeed.totalSupply();
+    uint r0 = balances[0];
+    uint r1 = balances[1];
+
+    uint sqrtK = HomoraMath.sqrt(r0 * r1).fdiv(totalSupply);
+
+    uint px0 = assetOracles[address(tokens[0])].currentValue() * 2 ** 112;
+    uint px1 = assetOracles[address(tokens[1])].currentValue() * 2 ** 112;
+    // fair token0 amt: sqrtK * sqrt(px1/px0)
+    // fair token1 amt: sqrtK * sqrt(px0/px1)
+    // fair lp price = 2 * sqrt(px0 * px1)
+    // split into 2 sqrts multiplication to prevent uint overflow (note the 2**112)
+
+    uint result = sqrtK.mul(2).mul(HomoraMath.sqrt(px0)).div(2 ** 56).mul(HomoraMath.sqrt(px1)).div(2 ** 56);
+    console.log("Modified112: ", result / 2 ** 112);
+    return result;
+  }
+
+  //https://cmichel.io/pricing-lp-tokens/
+  function simpleCalc() public view {
+    //2 sqrt(p0 p1 k)
+    //--------------
+    //      L
+    (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(_poolId);
+    (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
+
+    uint px0 = assetOracles[address(tokens[0])].currentValue();
+    uint px1 = assetOracles[address(tokens[1])].currentValue();
+
+    uint256 a = amp * 2;
+    uint256 V = (invariant * a) - invariant;
+
+    uint256 K = V / a;
+
+    uint256 numerator = 2 * HomoraMath.sqrt(px0 * px1 * V);
+    //console.log("Simple Math Result: ", numerator / _priceFeed.totalSupply());
+  }
+
   /*******************************UTILIZE METASTABLEPOOL LOG ORACLE********************************/
 
   function getOracleData() internal view {
@@ -167,8 +218,8 @@ contract BPTstablePoolOracle is IOracleRelay {
 
     uint256 pxy = getSpotPrice(reverse);
 
-    console.log("token 0 => 1 : ", pyx);
-    console.log("token 1 => 0 : ", pxy);
+    //console.log("token 0 => 1 : ", pyx);
+    //console.log("token 1 => 0 : ", pxy);
 
     //uint256 valueX = ((balances[0] * assetOracles[address(tokens[0])].currentValue()));
     uint256 valueX = (((pxy * balances[0]) * assetOracles[address(tokens[0])].currentValue()) / 1e18);
