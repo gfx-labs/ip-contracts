@@ -119,13 +119,6 @@ contract BPT_Oracle is IOracleRelay {
   function getSpotPrice(uint256[] memory balances) internal view returns (uint256 pyx) {
     (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
 
-    /**
-    console.log("Invariant: ", invariant, invariant / 1e18);
-    console.log("Amp: ", amp);
-    console.log("Balance0: ", balances[0], balances[0] / 1e18);
-    console.log("Balance1: ", balances[1], balances[0] / 1e18);
-     */
-
     uint256 a = amp * 2;
     uint256 b = (invariant * a) - invariant;
 

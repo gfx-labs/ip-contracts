@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "../IOracleRelay.sol";
 import "../../_external/IERC20.sol";
 import "../../_external/balancer/IBalancerVault.sol";
+import "../../_external/balancer/LogExpMath.sol";
 
 import "hardhat/console.sol";
 
@@ -15,6 +16,18 @@ interface IBalancerPool {
   function getLastInvariant() external view returns (uint256, uint256);
 
   function getRate() external view returns (uint256);
+
+  //metaStablePool only
+  function getOracleMiscData()
+    external
+    view
+    returns (
+      int256 logInvariant,
+      int256 logTotalSupply,
+      uint256 oracleSampleCreationTimestamp,
+      uint256 oracleIndex,
+      bool oracleEnabled
+    );
 }
 
 /*****************************************
@@ -65,17 +78,21 @@ contract BPTstablePoolOracle is IOracleRelay {
     console.log("POOL ADDR: ", address(_priceFeed));
     console.log("Token 0: ", address(tokens[0]));
     console.log("Token 1: ", address(tokens[1]));
-    console.log("True price token 0: ", assetOracles[address(tokens[0])].currentValue());
-    console.log("True price token 1: ", assetOracles[address(tokens[1])].currentValue());
+    console.log("Token0 price : ", assetOracles[address(tokens[0])].currentValue());
+    console.log("Token1 price : ", assetOracles[address(tokens[1])].currentValue());
 
     /**************Check Robust Price Solutions**************/
     checkLastChangedBlock(lastChangeBlock);
     compareRates();
     compareOutGivenIn(tokens, balances);
+    uint256 spotRobustPrice = getBPTprice(tokens, balances);
+    getOracleData();
     /********************************************************/
 
     uint256 naivePrice = getNaivePrice(tokens, balances);
-    //console.log("NAIVE PRICE: ", naivePrice);
+    console.log("RBST  price: ", spotRobustPrice);
+    console.log("NAIVE PRICE: ", naivePrice);
+
     //verifyNaivePrice(naivePrice, naivePrice);
 
     // return checked price
@@ -112,6 +129,103 @@ contract BPTstablePoolOracle is IOracleRelay {
     require(lastChangeBlock < block.number, "Revert for manipulation resistance");
   }
 
+  /*******************************UTILIZE METASTABLEPOOL LOG ORACLE********************************/
+
+  function getOracleData() internal view {
+    if (address(_priceFeed) != 0x3dd0843A028C86e0b760b1A76929d1C5Ef93a2dd) {
+      (
+        int256 logInvariant,
+        int256 logTotalSupply,
+        uint256 oracleSampleCreationTimestamp,
+        uint256 oracleIndex,
+        bool oracleEnabled
+      ) = _priceFeed.getOracleMiscData();
+
+      uint256 v = fromLowResLog(logInvariant);
+      uint256 ts = fromLowResLog(logTotalSupply);
+
+      uint256 oracleRate = (v * 1e18) / ts;
+      console.log("Oracle rate  : ", oracleRate);
+    }
+  }
+
+  /**
+   * @dev Restores `value` from logarithmic space. `value` is expected to be the result of a call to `toLowResLog`,
+   * any other function that returns 4 decimals fixed point logarithms, or the sum of such values.
+   */
+  function fromLowResLog(int256 value) internal pure returns (uint256) {
+    int256 _LOG_COMPRESSION_FACTOR = 1e14;
+    return uint256(LogExpMath.exp(value * _LOG_COMPRESSION_FACTOR));
+  }
+
+  /*******************************CALCULATE SPOT PRICE********************************/
+  function getBPTprice(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 price) {
+    uint256 pyx = getSpotPrice(balances);
+    uint256[] memory reverse = new uint256[](2);
+    reverse[0] = balances[1];
+    reverse[1] = balances[0];
+
+    uint256 pxy = getSpotPrice(reverse);
+
+    console.log("token 0 => 1 : ", pyx);
+    console.log("token 1 => 0 : ", pxy);
+
+    //uint256 valueX = ((balances[0] * assetOracles[address(tokens[0])].currentValue()));
+    uint256 valueX = (((pxy * balances[0]) * assetOracles[address(tokens[0])].currentValue()) / 1e18);
+
+    uint256 valueY = (((pyx * balances[1]) * assetOracles[address(tokens[1])].currentValue()) / 1e18);
+
+    uint256 totalValue = valueX + valueY;
+
+    price = (totalValue / _priceFeed.totalSupply());
+  }
+
+  /**
+   * @dev Calculates the spot price of token Y in terms of token X.
+   */
+  function getSpotPrice(uint256[] memory balances) internal view returns (uint256 pyx) {
+    (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
+
+    uint256 a = amp * 2;
+    uint256 b = (invariant * a) - invariant;
+
+    uint256 axy2 = mulDown(((a * 2) * balances[0]), balances[1]);
+
+    // dx = a.x.y.2 + a.y^2 - b.y
+    uint256 derivativeX = mulDown(axy2 + (a * balances[0]), balances[1]) - (mulDown(b, balances[1]));
+
+    // dy = a.x.y.2 + a.x^2 - b.x
+    uint256 derivativeY = mulDown(axy2 + (a * balances[0]), balances[1]) - (mulDown(b, balances[0]));
+
+    pyx = divUpSpot(derivativeX, derivativeY);
+  }
+
+  function mulDown(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 product = a * b;
+    require(a == 0 || product / a == b, "overflow");
+
+    return product / 1e18;
+  }
+
+  function divUpSpot(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0, "Zero Division");
+
+    if (a == 0) {
+      return 0;
+    } else {
+      uint256 aInflated = a * 1e18;
+      require(aInflated / a == 1e18, "divUp error - mull overflow"); // mul overflow
+
+      // The traditional divUp formula is:
+      // divUp(x, y) := (x + y - 1) / y
+      // To avoid intermediate overflow in the addition, we distribute the division and get:
+      // divUp(x, y) := (x - 1) / y + 1
+      // Note that this requires x != 0, which we already tested for.
+
+      return ((aInflated - 1) / b) + 1;
+    }
+  }
+
   /*******************************COMPARE RATES********************************/
   function compareRates() internal view {
     (uint256 v /**uint256 amp */, ) = _priceFeed.getLastInvariant();
@@ -119,7 +233,9 @@ contract BPTstablePoolOracle is IOracleRelay {
     uint256 calculatedRate = (v * 1e18) / _priceFeed.totalSupply();
 
     uint256 reportedRate = _priceFeed.getRate();
+    console.log("Invariant: ", v);
 
+    console.log("computed rate: ", calculatedRate);
     console.log("Reported Rate: ", reportedRate);
     console.log("Inverted rate: ", divide(1e18, reportedRate, 18));
 
@@ -136,6 +252,8 @@ contract BPTstablePoolOracle is IOracleRelay {
   }
 
   /*******************************GET VIRTUAL PRICE USING outGivenIn********************************/
+  //idea https://github.com/balancer/balancer-v2-monorepo/blob/d2794ef7d8f6d321cde36b7c536e8d51971688bd/pkg/vault/contracts/balances/TwoTokenPoolsBalance.sol#L334
+  //decode cash vs managed to see if maybe the input balances are wrong somehow
   function compareOutGivenIn(IERC20[] memory tokens, uint256[] memory balances) internal view {
     (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
     uint256 idxIn = 0;
@@ -159,8 +277,6 @@ contract BPTstablePoolOracle is IOracleRelay {
       outGivenIn = _calcOutGivenIn(amp, calcedBalances, idxIn, idxOut, tokenAmountIn, v);
     }
 
-    console.log("Out given in : ", outGivenIn);
-
     (uint256 calcedRate, uint256 expectedRate) = getOutGivenInRate(
       outGivenIn,
       assetOracles[address(tokens[0])].currentValue(),
@@ -168,10 +284,12 @@ contract BPTstablePoolOracle is IOracleRelay {
     );
     //simple out given in should be price 0 * expectedRate
     uint256 expectedOutput = assetOracles[address(tokens[0])].currentValue() * expectedRate;
-    console.log("Expected ogi : ", divide(expectedOutput, 1e36, 18));
-
     console.log("Expected Rate: ", expectedRate);
-    console.log("Calculat Rate: ", calcedRate);
+    console.log("Out given in : ", outGivenIn);
+
+    console.log("Expected OGI : ", divide(expectedOutput, 1e36, 18));
+
+    console.log("Computed Rate: ", calcedRate);
 
     // console.log("Required calced balances?: ", requireCalcedBalances);
     // console.log("OUT GIVEN IN RESULT: ", outGivenIn);
@@ -187,11 +305,9 @@ contract BPTstablePoolOracle is IOracleRelay {
     uint256 ogi,
     uint256 price0,
     uint256 price1
-  ) internal view returns (uint256 calcedRate, uint256 expectedRate) {
+  ) internal pure returns (uint256 calcedRate, uint256 expectedRate) {
     expectedRate = getSimpleRate(price0, price1);
 
-    //calced rate (1e18 * p0) x = (ogi * p1)
-    //calced rate = (ogi * p1) / (1e18 * p0)
     uint256 numerator = divide(ogi * price1, 1e18, 18);
 
     uint256 denominator = divide((1e18 * price0), 1e18, 18);
