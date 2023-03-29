@@ -88,16 +88,16 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
 
     /**************Check Robust Price Solutions**************/
     checkLastChangedBlock(lastChangeBlock);
-    compareRates();
+    //compareRates();
     compareOutGivenIn(tokens, balances);
     uint256 spotRobustPrice = getBPTprice(tokens, balances);
-    getOracleData();
-    uint256 pxPrice = getETHPx(address(_priceFeed));
-    simpleCalc();
+    //getOracleData();
+    //uint256 pxPrice = getETHPx(address(_priceFeed));
+    //simpleCalc();
     /********************************************************/
 
     uint256 naivePrice = getNaivePrice(tokens, balances);
-    console.log("RBST  price: ", spotRobustPrice);
+    //console.log("RBST  price: ", spotRobustPrice);
     console.log("NAIVE PRICE: ", naivePrice);
 
     //verifyNaivePrice(naivePrice, naivePrice);
@@ -146,6 +146,9 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
     uint r0 = balances[0];
     uint r1 = balances[1];
 
+    console.log("Actual0: ", balances[0]);
+    console.log("Actual1: ", balances[1]);
+
     uint sqrtK = HomoraMath.sqrt(r0 * r1).fdiv(totalSupply);
 
     uint px0 = assetOracles[address(tokens[0])].currentValue() * 2 ** 112;
@@ -156,32 +159,53 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
     // split into 2 sqrts multiplication to prevent uint overflow (note the 2**112)
 
     uint result = sqrtK.mul(2).mul(HomoraMath.sqrt(px0)).div(2 ** 56).mul(HomoraMath.sqrt(px1)).div(2 ** 56);
-    console.log("Modified112: ", result / 2 ** 112);
+    //console.log("SqrtReserve: ", result / 2 ** 112);
     return result;
   }
 
-  //https://cmichel.io/pricing-lp-tokens/
   function simpleCalc() public view {
-    //2 sqrt(p0 p1 k)
-    //--------------
-    //      L
+    //trying hard numbers
+    /**
+  //this works according to   //https://cmichel.io/pricing-lp-tokens/
+    uint r0 = 10000e18;
+    uint r1 = 200e18;
+
+    uint p0 = 650e18;
+    uint p1 = 22000e18;
+
+    uint K = r0 * r1;
+    uint P = divide(p0, p1, 18);
+
+    uint reserve0 = HomoraMath.sqrt(divide(K, P, 18));
+    console.log(reserve0);
+
+    uint reserve1 = HomoraMath.sqrt(K * P) / 1e9;
+    console.log(reserve1);
+
+    //safe price would be ((reserve0 * p0) + (reserve1 * p1)) / totalSupply
+   */
+
     (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(_poolId);
     (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
 
     uint px0 = assetOracles[address(tokens[0])].currentValue();
     uint px1 = assetOracles[address(tokens[1])].currentValue();
 
-    uint256 a = amp * 2;
-    uint256 V = (invariant * a) - invariant;
+    uint K = balances[0] * balances[1];
+    uint P = divide(px0, px1, 18);
+    uint fairReserve0 = HomoraMath.sqrt(divide(K, P, 18));
+    uint fairReserve1 = HomoraMath.sqrt(K * P) / 1e9;
 
-    uint256 K = V / a;
+    uint fairValue0 = (fairReserve0 * px0) / 1e18;
+    uint fairValue1 = (fairReserve1 * px1) / 1e18;
 
-    uint256 numerator = 2 * HomoraMath.sqrt(px0 * px1 * V);
-    //console.log("Simple Math Result: ", numerator / _priceFeed.totalSupply());
+    console.log("Comput0: ", fairValue0);
+    console.log("Comput1: ", fairValue1);
+    uint result = divide((fairValue0 + fairValue1), _priceFeed.totalSupply(), 18);
+    console.log("FairReserve: ", result);
   }
 
   /*******************************UTILIZE METASTABLEPOOL LOG ORACLE********************************/
-
   function getOracleData() internal view {
     if (address(_priceFeed) != 0x3dd0843A028C86e0b760b1A76929d1C5Ef93a2dd) {
       (
@@ -315,6 +339,11 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
     //console.log("Token in : ", address(tokens[idxIn]));
     //console.log("Token out: ", address(tokens[idxOut]));
 
+    console.log("Actual balance 0: ", balances[0]);
+    console.log("Actual balance 1: ", balances[1]);
+
+    console.log("Calced balance 0: ", _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 0));
+    console.log("Calced balance 1: ", _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1));
     uint256 outGivenIn = _calcOutGivenIn(amp, balances, idxIn, idxOut, tokenAmountIn, v);
 
     bool requireCalcedBalances = false;
@@ -335,12 +364,12 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
     );
     //simple out given in should be price 0 * expectedRate
     uint256 expectedOutput = assetOracles[address(tokens[0])].currentValue() * expectedRate;
-    console.log("Expected Rate: ", expectedRate);
-    console.log("Out given in : ", outGivenIn);
+    //console.log("Expected Rate: ", expectedRate);
+    //console.log("Out given in : ", outGivenIn);
 
-    console.log("Expected OGI : ", divide(expectedOutput, 1e36, 18));
+    //console.log("Expected OGI : ", divide(expectedOutput, 1e36, 18));
 
-    console.log("Computed Rate: ", calcedRate);
+    //console.log("Computed Rate: ", calcedRate);
 
     // console.log("Required calced balances?: ", requireCalcedBalances);
     // console.log("OUT GIVEN IN RESULT: ", outGivenIn);
@@ -376,7 +405,7 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
     uint256 tokenIndexOut,
     uint256 tokenAmountIn,
     uint256 invariant
-  ) internal pure returns (uint256) {
+  ) internal view returns (uint256) {
     /**************************************************************************************************************
         // outGivenIn token x for y - polynomial equation to solve                                                   //
         // ay = amount out to calculate                                                                              //
@@ -389,10 +418,7 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
         // P = product of final balances but y                                                                       //
         **************************************************************************************************************/
 
-    // Amount out, so we round down overall.
-    //console.log("Pre balance token in: ", balances[tokenIndexIn]);
     balances[tokenIndexIn] = balances[tokenIndexIn] + (tokenAmountIn);
-    //console.log("pst balance token in: ", balances[tokenIndexIn]);
 
     uint256 finalBalanceOut = _getTokenBalanceGivenInvariantAndAllOtherBalances(
       amplificationParameter,
@@ -400,19 +426,13 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
       invariant,
       tokenIndexOut
     );
-
-    // No need to use checked arithmetic since `tokenAmountIn` was actually added to the same balance right before
-    // calling `_getTokenBalanceGivenInvariantAndAllOtherBalances` which doesn't alter the balances array.
     balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn;
-    //console.log("end balance token in: ", balances[tokenIndexIn]);
 
-    //console.log("Balance token out: ", balances[tokenIndexOut]);
-    //console.log("Final balance out: ", finalBalanceOut);
+    console.log("Final balance out: ", finalBalanceOut);
 
     if (balances[tokenIndexOut] > finalBalanceOut) {
       return sub(sub(balances[tokenIndexOut], finalBalanceOut), 1);
     } else {
-      //console.log("Balances failed");
       return 0;
     }
   }
@@ -458,7 +478,6 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
       uint256 denominator = ((tokenBalance * 2) + b) - invariant;
 
       tokenBalance = divUp(numerator, denominator);
-
       if (tokenBalance > prevTokenBalance) {
         if (tokenBalance - prevTokenBalance <= 1) {
           return tokenBalance;
