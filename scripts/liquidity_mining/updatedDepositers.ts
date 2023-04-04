@@ -11,7 +11,7 @@ import { ERC20Detailed__factory, IUSDI__factory, IVaultController__factory, Vaul
 import { BigNumber, utils } from "ethers";
 import { BN } from "../../util/number";
 import Decimal from "decimal.js";
-import { BlockRounds } from "./q3_data";
+import { BlockRounds } from "./q4_data";
 import { ethers } from "hardhat";
 import { writeFileSync } from "fs";
 import { sleep } from "../proposals/suite/proposal";
@@ -23,8 +23,8 @@ const threshold = BN("1e18")
 
 dotenv.config();
 
-//const rpc_url =  "https://brilliant.staging.gfx.town" //"https://mainnet.rpc.gfx.xyz/"//
-const rpc_url = process.env.MAINNET_URL
+const rpc_url =  "https://mainnet.rpc.gfx.xyz/"//"https://brilliant.staging.gfx.town" //
+//const rpc_url = process.env.MAINNET_URL
 
 const USDI_ADDR = "0x2A54bA2964C8Cd459Dc568853F79813a60761B58"
 
@@ -48,7 +48,7 @@ const main = async () => {
     "0x266d1020a84b9e8b0ed320831838152075f8c4ca", //gov
     "0x9008d19f58aabd9ed0d60971565aa8510560ab41", //cow
     "0x818e9ae6b8355b17e3a221351e67b6f2cf803ce0", //yearn strat
-    "0xa6e8772af29b29B9202a073f8E36f447689BEef6"
+    "0xa6e8772af29b29B9202a073f8E36f447689BEef6"  //gfx labs
   ]
 
   const formatBlacklist = blacklist.map(function (x) { return x.toUpperCase() })
@@ -68,7 +68,7 @@ const main = async () => {
     cl
   );
 
-  const weekNum = 13
+  const weekNum = 0
   const week = BlockRounds.blockRanges[weekNum]
 
   const blockStart = week.start
@@ -175,8 +175,8 @@ const main = async () => {
     let pm = runBlock(b)
     pms.push(pm)
     idx = idx + 1
-    if (idx % 25 == 0) {
-      console.log("Loop 25")
+    if (idx % 500 == 0) {
+      console.log("Loop 500")
       await Promise.all(pms)
       pms = []
     }

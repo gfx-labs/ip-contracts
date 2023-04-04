@@ -86,14 +86,29 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
     console.log("Token0 price : ", assetOracles[address(tokens[0])].currentValue());
     console.log("Token1 price : ", assetOracles[address(tokens[1])].currentValue());
 
+    console.log("Rate: ", _priceFeed.getRate());
+
     /**************Check Robust Price Solutions**************/
     checkLastChangedBlock(lastChangeBlock);
     //compareRates();
-    compareOutGivenIn(tokens, balances);
+    //compareOutGivenIn(tokens, balances);
+    compareTokenBalances(tokens, balances);
+    /**
+    uint256 expectedOGI = divide(
+      assetOracles[address(tokens[0])].currentValue(),
+      assetOracles[address(tokens[1])].currentValue(),
+      18
+    );
+    console.log("Expected Out giveni: ", expectedOGI);
+     */
     uint256 spotRobustPrice = getBPTprice(tokens, balances);
     //getOracleData();
     //uint256 pxPrice = getETHPx(address(_priceFeed));
     //simpleCalc();
+    //getMinSafePrice(tokens);
+    uint256[] memory amountsIn = balances;
+    amountsIn[0] += 1e18;
+    //calcBptOut(balances, amountsIn);
     /********************************************************/
 
     uint256 naivePrice = getNaivePrice(tokens, balances);
@@ -134,6 +149,168 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
   /*******************************CHECK FOR LAST CHANGE BLOCK********************************/
   function checkLastChangedBlock(uint256 lastChangeBlock) internal view {
     require(lastChangeBlock < block.number, "Revert for manipulation resistance");
+  }
+
+  /*******************************CALCULATE BPT OUT********************************/
+
+  function calcBptOut(uint256[] memory _balances, uint256[] memory amountsIn) internal view returns (uint256) {
+    console.log("CALC BPT OUT");
+    uint256 bptTotalSupply = _priceFeed.totalSupply();
+    uint256 swapFeePercentage = 0;
+    (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
+
+    console.log("invariant: ", v);
+    console.log("calculate: ", _calculateInvariant(amp, _balances));
+
+    uint256[] memory balances = new uint256[](2);
+    balances[0] = _getTokenBalanceGivenInvariantAndAllOtherBalances(
+      amp,
+      _balances,
+      _calculateInvariant(amp, _balances),
+      0
+    );
+    balances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(
+      amp,
+      _balances,
+      _calculateInvariant(amp, _balances),
+      1
+    );
+
+    // First loop calculates the sum of all token balances, which will be used to calculate
+    // the current weights of each token, relative to this sum
+    uint256 sumBalances = 0;
+    for (uint256 i = 0; i < balances.length; i++) {
+      sumBalances = sumBalances + (balances[i]);
+    }
+
+    // Calculate the weighted balance ratio without considering fees
+    uint256[] memory balanceRatiosWithFee = new uint256[](amountsIn.length);
+    // The weighted sum of token balance ratios with fee
+    uint256 invariantRatioWithFees = 0;
+    for (uint256 i = 0; i < balances.length; i++) {
+      uint256 currentWeight = divide(balances[i], sumBalances, 18);
+      balanceRatiosWithFee[i] = balances[i] + divide((amountsIn[i]), balances[i], 18);
+
+      invariantRatioWithFees = invariantRatioWithFees + (mulDown(balanceRatiosWithFee[i], currentWeight));
+    }
+
+    // Second loop calculates new amounts in, taking into account the fee on the percentage excess
+    uint256[] memory newBalances = new uint256[](balances.length);
+    for (uint256 i = 0; i < balances.length; i++) {
+      uint256 amountInWithoutFee;
+
+      // Check if the balance ratio is greater than the ideal ratio to charge fees or not
+      if (balanceRatiosWithFee[i] > invariantRatioWithFees) {
+        console.log("invariantRatioWithFees: ", invariantRatioWithFees);
+        uint256 nonTaxableAmount = mulDown(balances[i], sub(invariantRatioWithFees, 1e18));
+        console.log("amountsIn[i]    : ", amountsIn[i]);
+        console.log("nonTaxableAmount: ", nonTaxableAmount);
+
+        uint256 taxableAmount = sub(amountsIn[i], nonTaxableAmount);
+        // No need to use checked arithmetic for the swap fee, it is guaranteed to be lower than 50%
+        amountInWithoutFee = nonTaxableAmount + (mulDown(taxableAmount, 1e18 - swapFeePercentage));
+      } else {
+        amountInWithoutFee = amountsIn[i];
+      }
+
+      newBalances[i] = balances[i] + (amountInWithoutFee);
+    }
+
+    // Get current and new invariants, taking swap fees into account
+    uint256 currentInvariant = _calculateInvariant(amp, balances);
+    uint256 newInvariant = _calculateInvariant(amp, newBalances);
+    uint256 invariantRatio = divDown(newInvariant, currentInvariant);
+
+    // If the invariant didn't increase for any reason, we simply don't mint BPT
+    if (invariantRatio > 1e18) {
+      uint256 result = mulDown(bptTotalSupply, invariantRatio - 1e18);
+      console.log("Result: ", result);
+      return result;
+    } else {
+      return 0;
+    }
+  }
+
+  function _calculateInvariant(
+    uint256 amplificationParameter,
+    uint256[] memory balances
+  ) internal pure returns (uint256) {
+    uint256 _AMP_PRECISION = 1e3;
+    /**********************************************************************************************
+        // invariant                                                                                 //
+        // D = invariant                                                  D^(n+1)                    //
+        // A = amplification coefficient      A  n^n S + D = A D n^n + -----------                   //
+        // S = sum of balances                                             n^n P                     //
+        // P = product of balances                                                                   //
+        // n = number of tokens                                                                      //
+        **********************************************************************************************/
+
+    // Always round down, to match Vyper's arithmetic (which always truncates).
+
+    uint256 sum = 0; // S in the Curve version
+    uint256 numTokens = balances.length;
+    for (uint256 i = 0; i < numTokens; i++) {
+      sum = sum + (balances[i]);
+    }
+    if (sum == 0) {
+      return 0;
+    }
+
+    uint256 prevInvariant; // Dprev in the Curve version
+    uint256 invariant = sum; // D in the Curve version
+    uint256 ampTimesTotal = amplificationParameter * numTokens; // Ann in the Curve version
+
+    for (uint256 i = 0; i < 255; i++) {
+      uint256 D_P = invariant;
+
+      for (uint256 j = 0; j < numTokens; j++) {
+        // (D_P * invariant) / (balances[j] * numTokens)
+        D_P = divDown(mul(D_P, invariant), mul(balances[j], numTokens));
+      }
+
+      prevInvariant = invariant;
+
+      invariant = divDown(
+        mul(
+          // (ampTimesTotal * sum) / AMP_PRECISION + D_P * numTokens
+          (divDown(mul(ampTimesTotal, sum), _AMP_PRECISION) + (mul(D_P, numTokens))),
+          invariant
+        ),
+        // ((ampTimesTotal - _AMP_PRECISION) * invariant) / _AMP_PRECISION + (numTokens + 1) * D_P
+        (divDown(mul((ampTimesTotal - _AMP_PRECISION), invariant), _AMP_PRECISION) + (mul((numTokens + 1), D_P)))
+      );
+
+      if (invariant > prevInvariant) {
+        if (invariant - prevInvariant <= 1) {
+          return invariant;
+        }
+      } else if (prevInvariant - invariant <= 1) {
+        return invariant;
+      }
+    }
+
+    revert("STABLE_INVARIANT_DIDNT_CONVERGE");
+  }
+
+  /*******************************USE MIN SAFE PRICE********************************/
+  ///@notice this returns a price that is typically slightly less than the naive price
+  /// it should be safe to use this price, though it will be slightly less than the true naive price,
+  /// so borrowing power will be slightly less than expected
+  function getMinSafePrice(IERC20[] memory tokens) internal view returns (uint256 minSafePrice) {
+    //uint256 rate = _priceFeed.getRate();
+
+    (uint256 v /**uint256 amp */, ) = _priceFeed.getLastInvariant();
+
+    uint256 calculatedRate = (v * 1e18) / _priceFeed.totalSupply();
+
+    //get min price
+    uint256 p0 = assetOracles[address(tokens[0])].currentValue();
+    uint256 p1 = assetOracles[address(tokens[1])].currentValue();
+
+    uint256 pm = p0 < p1 ? p0 : p1;
+
+    minSafePrice = (pm * calculatedRate) / 1e18;
+    console.log("Min safe price: ", minSafePrice);
   }
 
   /*******************************BASE ORACLE ALPHA METHOD********************************/
@@ -326,6 +503,75 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
     require(reportedRate > lowerBounds, "reportedRate too high");
   }
 
+  /*******************************COMPARE CALCULATED TOKEN BALANCES********************************/
+  /**
+  We can compare the results of _getTokenBalanceGivenInvariantAndAllOtherBalances in a similar way to calcOutGivenIn
+
+  we need to know if its a metaStablePool or a regular stable pool
+
+
+  For StablePools, we can compare _getTokenBalanceGivenInvariantAndAllOtherBalances => final balance out to actual balance 1 by:
+  actual balance 1 - final balance out == out given in
+
+  If this holds true, than the naive price should be manipulation resistant
+
+
+  For MetaStablePools
+
+  */
+  function compareTokenBalances(IERC20[] memory tokens, uint256[] memory _balances) internal view {
+    (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
+
+    uint256[] memory balances = _balances;
+
+    uint256[] memory startingBalances = balances;
+
+    uint256 tokenAmountIn = 1e18;
+    uint256 tokenIndexIn = 0;
+    uint256 tokenIndexOut = 1;
+
+    balances[tokenIndexIn] = balances[tokenIndexIn] + (tokenAmountIn);
+
+    uint256 finalBalanceOut = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, tokenIndexOut);
+    balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn;
+
+    //for MetaStablePools use calced balances for both
+    uint256 result;
+    if (startingBalances[1] < finalBalanceOut) {
+      console.log("MetaStablePool");
+
+      balances = startingBalances;
+      balances[0] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, tokenIndexIn);
+      balances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, tokenIndexOut);
+
+      balances[tokenIndexIn] = balances[tokenIndexIn] + (tokenAmountIn);
+
+      finalBalanceOut = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, tokenIndexOut);
+      balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn;
+
+      result = startingBalances[1] - finalBalanceOut;
+      console.log("Result: ", result);
+      console.log("Compar: ", 1e18);
+    }else{
+      result = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, tokenIndexOut) - finalBalanceOut;
+      console.log("Result: ", result);
+      console.log("Compar: ", 1e18);
+    }
+
+    //console.log("Final balance out: ", finalBalanceOut);
+    //console.log("Actual1 minus final: ", startingBalances[1] - finalBalanceOut);
+    //console.log("Compare to 1e18::::: ", 1e18);
+    //console.log("Result: ", (startingBalances[1] - finalBalanceOut) - 1);
+    //console.log(sub(sub(balances[tokenIndexOut], finalBalanceOut), 1));
+    /**
+    if (balances[tokenIndexOut] > finalBalanceOut) {
+      return sub(sub(balances[tokenIndexOut], finalBalanceOut), 1);
+    } else {
+      return 0;
+    }s
+     */
+  }
+
   /*******************************GET VIRTUAL PRICE USING outGivenIn********************************/
   //idea https://github.com/balancer/balancer-v2-monorepo/blob/d2794ef7d8f6d321cde36b7c536e8d51971688bd/pkg/vault/contracts/balances/TwoTokenPoolsBalance.sol#L334
   //decode cash vs managed to see if maybe the input balances are wrong somehow
@@ -348,6 +594,7 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
 
     bool requireCalcedBalances = false;
     if (outGivenIn == 0) {
+      console.log("OGI == 0, MetaStablePool");
       requireCalcedBalances = true;
 
       uint256[] memory calcedBalances = new uint256[](2);
@@ -372,7 +619,9 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
     //console.log("Computed Rate: ", calcedRate);
 
     // console.log("Required calced balances?: ", requireCalcedBalances);
-    // console.log("OUT GIVEN IN RESULT: ", outGivenIn);
+    console.log("OUT GIVEN IN RESULT: ", outGivenIn);
+    //expected out given in should be price0 / price1
+
     //console.log("OUT GIVEN IN RESULT: ", outGivenIn); //102.386021679385123944
   }
 
