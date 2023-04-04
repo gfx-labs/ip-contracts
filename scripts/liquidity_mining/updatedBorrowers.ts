@@ -7,7 +7,7 @@ import {
 import { CallContext } from "ethereum-multicall/dist/esm/models";
 import { IVaultController__factory, Vault__factory } from "../../typechain-types";
 import Decimal from "decimal.js";
-import { BlockRounds } from "./q3_data";
+import { BlockRounds } from "./q4_data";
 
 import { utils, BigNumber } from "ethers";
 
@@ -16,6 +16,10 @@ import { sleep } from "../proposals/suite/proposal";
 import { AlchemyWebSocketProvider } from "@ethersproject/providers";
 import { ethers } from "hardhat";
 dotenv.config();
+
+
+const vaultBlacklist = [100]
+
 
 //const rpc_url = process.env.MAINNET_URL
 const rpc_url = "https://mainnet.rpc.gfx.xyz/" //"https://brilliant.staging.gfx.town" //
@@ -78,34 +82,34 @@ const main = async () => {
     return v.callsReturnContext[0].returnValues[0];
   });
 
-
   //const weekNum = 1
-  const weekNum = 13
+  const weekNum = 0
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     //weekNum = weekNum + 1
     const blockStart = week.start
     const blockEnd = week.end
     const totalLiabilities = new Map<string, Decimal>();
     const usedBlocks: number[] = [blockStart];
-//   const filter = vc.filters.InterestEvent(null, null, null)
-//  const filtered = await vc.queryFilter(filter, blockStart, blockEnd)
-//  console.log("Interest Events found: ", filtered.length)
-//  for (let i = 0; i < filtered.length; i++) {
-//    usedBlocks.push(filtered[i].blockNumber)
-//  }
-//  //need more blocks to make the values more accurate, 100 random filler blocks
-//  for (let j = 0; j < 200; j++) {
-//    let R = (Math.floor(Math.random() * (blockEnd - blockStart))) + blockStart
-//    if (!usedBlocks.includes(R)) {
-//      usedBlocks.push(R)
-//    }
-//  }
-//  usedBlocks.push(blockEnd)
-    const runBlock = async (block:number)=> {
+    //   const filter = vc.filters.InterestEvent(null, null, null)
+    //  const filtered = await vc.queryFilter(filter, blockStart, blockEnd)
+    //  console.log("Interest Events found: ", filtered.length)
+    //  for (let i = 0; i < filtered.length; i++) {
+    //    usedBlocks.push(filtered[i].blockNumber)
+    //  }
+    //  //need more blocks to make the values more accurate, 100 random filler blocks
+    //  for (let j = 0; j < 200; j++) {
+    //    let R = (Math.floor(Math.random() * (blockEnd - blockStart))) + blockStart
+    //    if (!usedBlocks.includes(R)) {
+    //      usedBlocks.push(R)
+    //    }
+    //  }
+    //  usedBlocks.push(blockEnd)
+    const runBlock = async (block: number) => {
       let summaries;
       try {
         const vaultCount = await vc.vaultsMinted({ blockTag: block });
         summaries = await vc.vaultSummaries(1, vaultCount, { blockTag: block })
+        //process.exit()
       } catch (e) {
         console.log("ERROR ON BLOCK", block, e)
         return
@@ -115,12 +119,20 @@ const main = async () => {
       //get vault liability relative to total for this block
       //calculate total for all vaults each block?
       summaries.forEach((v) => {
-        let val = new Decimal(v.vaultLiability.toString());
-        totalMinted = totalMinted.add(val);
+        if (v.id.toNumber() != 100) {
+          let val = new Decimal(v.vaultLiability.toString());
+          totalMinted = totalMinted.add(val);
+        }
+
       });
       summaries.forEach((v, idx) => {
         let minter = minters[idx];
-        let val = new Decimal(v.vaultLiability.toString());
+        let val: Decimal
+        if (v.id.toNumber() == 100) {
+          val = new Decimal("0");
+        } else {
+          val = new Decimal(v.vaultLiability.toString());
+        }
         if (!totalLiabilities.has(minter)) {
           totalLiabilities.set(minter, new Decimal(0));
         }
@@ -130,18 +142,18 @@ const main = async () => {
         );
       });
       blocks = blocks + 1;
-      console.log(`Block ${block} done, ${blocks/(blockEnd-blockStart)}`, totalMinted.div(1e9).div(1e9));
+      console.log(`Block ${block} done, ${blocks / (blockEnd - blockStart)}`, totalMinted.div(1e9).div(1e9));
     }
 
 
-    let pms  = []
+    let pms = []
     let blocks = 0;
     let idx = 0
     for (let b = blockStart; b <= blockEnd; b++) {
       let pm = runBlock(b)
       pms.push(pm)
       idx = idx + 1
-      if(idx % 250 ==  0) {
+      if (idx % 250 == 0) {
         await Promise.all(pms)
         pms = []
       }
