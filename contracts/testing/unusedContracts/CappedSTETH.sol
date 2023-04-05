@@ -5,10 +5,18 @@ import "../../_external/IERC20Metadata.sol";
 import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
-
-import "../../lending/IStETH.sol";
+import "../../_external/IERC20Metadata.sol";
 
 import {SafeERC20} from "../../_external/extensions/SafeERC20.sol";
+
+
+interface IStETH is IERC20 {
+    function getPooledEthByShares(uint256 _sharesAmount) external view returns (uint256);
+
+    function getSharesByPooledEth(uint256 _pooledEthAmount) external view returns (uint256);
+
+    function submit(address _referral) external payable returns (uint256);
+}
 
 /**
  * @title StETH token wrapper with static balances.

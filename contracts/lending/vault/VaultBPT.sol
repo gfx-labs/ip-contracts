@@ -1,22 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-//import "../_external/IWETH.sol";
+import "../controller/VotingVaultController.sol";
 
-import "../IUSDI.sol";
+import "../../IUSDI.sol";
+import "../IVault.sol";
+import "../IVaultController.sol";
 
-import "./IVault.sol";
-import "./IVaultController.sol";
-import "./VotingVaultController.sol";
+import "../../_external/CompLike.sol";
+import "../../_external/IERC20.sol";
+import "../../_external/Context.sol";
+import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
-import "../_external/CompLike.sol";
-import "../_external/IERC20.sol";
-import "../_external/Context.sol";
-import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
-
-import "../_external/balancer/IGauge.sol";
-
-import "hardhat/console.sol";
+import "../../_external/balancer/IGauge.sol";
 
 interface IRewardsPool {
   function stakeAll() external returns (bool);

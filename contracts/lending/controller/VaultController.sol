@@ -2,21 +2,20 @@
 
 pragma solidity 0.8.9;
 
-import "../IUSDI.sol";
+import "../../IUSDI.sol";
+import "../IVault.sol";
+import "../IVaultController.sol";
 
-import "./Vault.sol";
-import "./IVault.sol";
+import "../vault/Vault.sol";
 
-import "./IVaultController.sol";
+import "../../oracle/OracleMaster.sol";
+import "../../curve/CurveMaster.sol";
 
-import "../oracle/OracleMaster.sol";
-import "../curve/CurveMaster.sol";
-
-import "../_external/IERC20.sol";
-import "../_external/compound/ExponentialNoError.sol";
-import "../_external/openzeppelin/OwnableUpgradeable.sol";
-import "../_external/openzeppelin/Initializable.sol";
-import "../_external/openzeppelin/PausableUpgradeable.sol";
+import "../../_external/IERC20.sol";
+import "../../_external/compound/ExponentialNoError.sol";
+import "../../_external/openzeppelin/OwnableUpgradeable.sol";
+import "../../_external/openzeppelin/Initializable.sol";
+import "../../_external/openzeppelin/PausableUpgradeable.sol";
 
 /// @title Controller of all vaults in the USDi borrow/lend system
 /// @notice VaultController contains all business logic for borrowing and lending through the protocol.
@@ -450,7 +449,7 @@ contract VaultController is
     // finally, deliver tokens to liquidator
     vault.controllerTransfer(asset_address, _msgSender(), tokens_to_liquidate);
 
-    // this mainly prevents reentrancy 
+    // this mainly prevents reentrancy
     require(get_vault_borrowing_power(vault) <= _vaultLiability(id), "overliquidation");
 
     // emit the event

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "../IUSDI.sol";
-import "./IVault.sol";
-import "./IVaultController.sol";
+import "../../IUSDI.sol";
+import "../IVault.sol";
+import "../IVaultController.sol";
 
-import "../_external/CompLike.sol";
-import "../_external/IERC20.sol";
-import "../_external/Context.sol";
-import "../_external/openzeppelin/SafeERC20Upgradeable.sol";
+import "../../_external/CompLike.sol";
+import "../../_external/IERC20.sol";
+import "../../_external/Context.sol";
+import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
 /// @title Vault
 /// @notice our implentation of maker-vault like vault

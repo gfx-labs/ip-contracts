@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
-import "../lending/VaultController.sol";
+import "../lending/controller/VaultController.sol";
 import "./IVaultController2.sol";
 
 contract VaultController2 is VaultController, IVaultController2 {
