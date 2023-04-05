@@ -72,11 +72,11 @@ contract GovernorCharlieDelegateStorage is GovernorCharlieDelegatorStorage {
   bool public initialized;
 
   /// @notice The number of votes to reject an optimistic proposal
-  uint256 public optimisticQuorumVotes; 
+  uint256 public optimisticQuorumVotes;
 
   /// @notice The delay period before voting begins
-  uint256 public optimisticVotingDelay; 
+  uint256 public optimisticVotingDelay;
 
   /// @notice The maximum number of seconds an address can be whitelisted for
-  uint256 public maxWhitelistPeriod; 
+  uint256 public maxWhitelistPeriod;
 }

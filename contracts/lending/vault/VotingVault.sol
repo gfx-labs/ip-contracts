@@ -54,12 +54,7 @@ contract VotingVault is Context {
   /// @param vault_address address of the vault this is attached to
   /// @param controller_address address of the vault controller
   /// @param voting_controller_address address of the voting vault controller
-  constructor(
-    uint96 id_,
-    address vault_address,
-    address controller_address,
-    address voting_controller_address
-  ) {
+  constructor(uint96 id_, address vault_address, address controller_address, address voting_controller_address) {
     _vaultInfo = VaultInfo(id_, vault_address);
     _controller = IVaultController(controller_address);
     _votingController = VotingVaultController(voting_controller_address);
@@ -88,11 +83,7 @@ contract VotingVault is Context {
   /// @param _token token to transfer
   /// @param _to person to send the coins to
   /// @param _amount amount of coins to move
-  function controllerTransfer(
-    address _token,
-    address _to,
-    uint256 _amount
-  ) external onlyVaultController {
+  function controllerTransfer(address _token, address _to, uint256 _amount) external onlyVaultController {
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
 

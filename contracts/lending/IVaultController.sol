@@ -71,25 +71,13 @@ interface IVaultController is VaultControllerEvents {
   // vault management business
   function mintVault() external returns (address);
 
-  function liquidateVault(
-    uint96 id,
-    address asset_address,
-    uint256 tokenAmount
-  ) external returns (uint256);
+  function liquidateVault(uint96 id, address asset_address, uint256 tokenAmount) external returns (uint256);
 
   function borrowUsdi(uint96 id, uint192 amount) external;
 
-  function borrowUSDIto(
-    uint96 id,
-    uint192 amount,
-    address target
-  ) external;
+  function borrowUSDIto(uint96 id, uint192 amount, address target) external;
 
-  function borrowUSDCto(
-    uint96 id,
-    uint192 usdc_amount,
-    address target
-  ) external;
+  function borrowUSDCto(uint96 id, uint192 usdc_amount, address target) external;
 
   function repayUSDi(uint96 id, uint192 amount) external;
 

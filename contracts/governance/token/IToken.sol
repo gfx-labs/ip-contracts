@@ -29,11 +29,7 @@ interface ITokenDelegate {
 
   function transfer(address dst, uint256 rawAmount) external returns (bool);
 
-  function transferFrom(
-    address src,
-    address dst,
-    uint256 rawAmount
-  ) external returns (bool);
+  function transferFrom(address src, address dst, uint256 rawAmount) external returns (bool);
 
   //function mint(address dst, uint256 rawAmount) external;
 
@@ -49,14 +45,7 @@ interface ITokenDelegate {
 
   function delegate(address delegatee) external;
 
-  function delegateBySig(
-    address delegatee,
-    uint256 nonce,
-    uint256 expiry,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
-  ) external;
+  function delegateBySig(address delegatee, uint256 nonce, uint256 expiry, uint8 v, bytes32 r, bytes32 s) external;
 
   function getCurrentVotes(address account) external view returns (uint96);
 

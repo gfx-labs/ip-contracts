@@ -13,7 +13,6 @@ import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
-
 /// @title CappedGovToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
@@ -103,8 +102,8 @@ contract CappedGovToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   }
 
   function transferFrom(
-    address, /*sender*/
-    address, /*recipient*/
+    address /*sender*/,
+    address /*recipient*/,
     uint256 /*amount*/
   ) public pure override returns (bool) {
     // allowances are never granted, as the VotingVault does not grant allowances.

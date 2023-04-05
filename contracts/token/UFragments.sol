@@ -56,8 +56,8 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
   }
 
   uint256 private constant DECIMALS = 18;
-  uint256 private constant MAX_UINT256 = 2**256 - 1;
-  uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 1 * 10**DECIMALS;
+  uint256 private constant MAX_UINT256 = 2 ** 256 - 1;
+  uint256 private constant INITIAL_FRAGMENTS_SUPPLY = 1 * 10 ** DECIMALS;
 
   // _totalGons is a multiple of INITIAL_FRAGMENTS_SUPPLY so that _gonsPerFragment is an integer.
   // Use the highest value that fits in a uint256 for max granularity.
@@ -90,8 +90,8 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
     __ERC20Detailed_init(name, symbol, uint8(DECIMALS));
 
     //set og initial values
-    _totalGons = INITIAL_FRAGMENTS_SUPPLY * 10**48;
-    MAX_SUPPLY = 2**128 - 1;
+    _totalGons = INITIAL_FRAGMENTS_SUPPLY * 10 ** 48;
+    MAX_SUPPLY = 2 ** 128 - 1;
 
     _totalSupply = INITIAL_FRAGMENTS_SUPPLY;
     _gonBalances[address(0x0)] = _totalGons; //send starting supply to a burner address so _totalSupply is never 0
@@ -209,11 +209,7 @@ contract UFragments is Initializable, OwnableUpgradeable, ERC20Detailed {
    * @param to The address you want to transfer to.
    * @param value The amount of tokens to be transferred.
    */
-  function transferFrom(
-    address from,
-    address to,
-    uint256 value
-  ) external override validRecipient(to) returns (bool) {
+  function transferFrom(address from, address to, uint256 value) external override validRecipient(to) returns (bool) {
     _allowedFragments[from][msg.sender] = _allowedFragments[from][msg.sender] - value;
 
     uint256 gonValue = value * _gonsPerFragment;

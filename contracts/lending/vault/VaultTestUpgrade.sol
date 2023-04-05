@@ -44,11 +44,7 @@ contract testUpgrade is Initializable, OwnableUpgradeable {
   /// @param amount of underlying asset to retrieve by burning cap tokens
   /// @param voting_vault holding the underlying
   /// @param target to receive the underlying
-  function retrieveUnderlying(
-    uint256 amount,
-    address voting_vault,
-    address target
-  ) public {
+  function retrieveUnderlying(uint256 amount, address voting_vault, address target) public {
     require(voting_vault != address(0x0), "invalid vault");
 
     address underlying_address = _CappedToken_underlying[_msgSender()];

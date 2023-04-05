@@ -218,11 +218,7 @@ contract VaultBPT is Context {
   /// @param _token token to transfer
   /// @param _to person to send the coins to
   /// @param _amount amount of coins to move
-  function controllerTransfer(
-    address _token,
-    address _to,
-    uint256 _amount
-  ) external onlyVaultController {
+  function controllerTransfer(address _token, address _to, uint256 _amount) external onlyVaultController {
     if (isStaked[_token] == true) {
       _unstakeAuraLP(IERC20(_token), (_token == _votingController._auraBal()));
     }

@@ -8,7 +8,7 @@ import "../../_external/uniswap/TickMath.sol";
 /// @title Oracle that wraps a univ3 pool
 /// @notice This oracle is for tokens that do not have a stable Uniswap V3 pair against USDC
 /// if quote_token_is_token0 == true, then the reciprocal is returned
-/// quote_token refers to the token we are comparing to, so for an Aave price in ETH, Aave is the target and Eth is the quote 
+/// quote_token refers to the token we are comparing to, so for an Aave price in ETH, Aave is the target and Eth is the quote
 contract UniswapV3TokenOracleRelay is IOracleRelay {
   bool public immutable _quoteTokenIsToken0;
   IUniswapV3PoolDerivedState public immutable _pool;
@@ -25,13 +25,7 @@ contract UniswapV3TokenOracleRelay is IOracleRelay {
   /// @param quote_token_is_token0 true if eth is token 0, or false if eth is token 1
   /// @param mul numerator of scalar
   /// @param div denominator of scalar
-  constructor(
-    uint32 lookback,
-    address pool_address,
-    bool quote_token_is_token0,
-    uint256 mul,
-    uint256 div
-  ) {
+  constructor(uint32 lookback, address pool_address, bool quote_token_is_token0, uint256 mul, uint256 div) {
     _lookback = lookback;
     _mul = mul;
     _div = div;
@@ -40,7 +34,7 @@ contract UniswapV3TokenOracleRelay is IOracleRelay {
   }
 
   /// @notice the current reported value of the oracle
-  /// @return usdPrice - the price in USD terms 
+  /// @return usdPrice - the price in USD terms
   /// @dev implementation in getLastSeconds
   function currentValue() external view override returns (uint256) {
     uint256 priceInEth = getLastSeconds(_lookback);
@@ -78,12 +72,12 @@ contract UniswapV3TokenOracleRelay is IOracleRelay {
     } else {
       tick = int24(int56(bigTick));
     }
-    
+
     // we use 1e18 bc this is what we're going to use in exp
     // basically, you need the "price" amount of the quote in order to buy 1 base
     // or, 1 base is worth this much quote;
 
-    price = (1e9 * ((uint256(TickMath.getSqrtRatioAtTick(tick))))) / (2**(2 * 48));
+    price = (1e9 * ((uint256(TickMath.getSqrtRatioAtTick(tick))))) / (2 ** (2 * 48));
 
     price = price * price;
 

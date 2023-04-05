@@ -29,12 +29,7 @@ contract AnchoredViewV2 is IOracleRelay {
   /// @param main_address address of OracleRelay to use as main
   /// @param widthNumerator numerator of the allowable deviation width
   /// @param widthDenominator denominator of the allowable deviation width
-  constructor(
-    address anchor_address,
-    address main_address,
-    uint256 widthNumerator,
-    uint256 widthDenominator
-  ) {
+  constructor(address anchor_address, address main_address, uint256 widthNumerator, uint256 widthDenominator) {
     _anchorAddress = anchor_address;
     _anchorRelay = IOracleRelay(anchor_address);
 
@@ -49,7 +44,6 @@ contract AnchoredViewV2 is IOracleRelay {
   /// @return current value of oracle
   /// @dev implementation in getLastSecond
   function currentValue() external view override returns (uint256) {
-
     IOracleMaster oracle = IOracleMaster(VaultController.getOracleMaster());
     uint256 ethPrice = oracle.getLivePrice(WETH);
     uint256 priceInEth = getLastSecond();

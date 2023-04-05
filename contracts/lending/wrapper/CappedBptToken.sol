@@ -83,11 +83,7 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   /// @param amount of underlying to deposit
   /// @param vaultId recipient vault of tokens
   /// @param stake deposit + stake in 1 TX, only for auraBal or aura LPs
-  function deposit(
-    uint256 amount,
-    uint96 vaultId,
-    bool stake
-  ) public nonReentrant {
+  function deposit(uint256 amount, uint96 vaultId, bool stake) public nonReentrant {
     require(amount > 0, "Cannot deposit 0");
     VaultBPT bptVault = VaultBPT(_votingVaultController.BPTvaultAddress(vaultId));
     require(address(bptVault) != address(0x0), "invalid voting vault");
@@ -125,8 +121,8 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   }
 
   function transferFrom(
-    address, /*sender*/
-    address, /*recipient*/
+    address /*sender*/,
+    address /*recipient*/,
     uint256 /*amount*/
   ) public pure override returns (bool) {
     // allowances are never granted, as the VotingVault does not grant allowances.

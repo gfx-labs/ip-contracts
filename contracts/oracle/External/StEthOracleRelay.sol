@@ -22,11 +22,7 @@ contract StEthOracleRelay is IOracleRelay {
   /// @param  feed_address address of curve feed
   /// @param mul numerator of scalar
   /// @param div denominator of scalar
-  constructor(
-    address feed_address,
-    uint256 mul,
-    uint256 div
-  ) {
+  constructor(address feed_address, uint256 mul, uint256 div) {
     _priceFeed = ICurvePoolFeed(feed_address);
     _multiply = mul;
     _divide = div;
@@ -42,14 +38,12 @@ contract StEthOracleRelay is IOracleRelay {
 
   ///@notice get the price in USD terms, after having converted from ETH terms
   function getLastSecond() private view returns (uint256) {
-
     (uint256 currentPrice, bool isSafe) = _priceFeed.current_price();
     require(isSafe, "Curve Oracle: Not Safe");
 
     uint256 ethPrice = _oracle.getLivePrice(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     currentPrice = (currentPrice * ethPrice) / 1e18;
-
 
     require(currentPrice > 0, "Curve: px < 0");
     uint256 scaled = (uint256(currentPrice) * _multiply) / _divide;

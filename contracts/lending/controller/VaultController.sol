@@ -288,11 +288,7 @@ contract VaultController is
   /// @param id vault to borrow against
   /// @param amount amount of USDi to borrow
   /// @param target address to receive borrowed USDi
-  function borrowUSDIto(
-    uint96 id,
-    uint192 amount,
-    address target
-  ) external override {
+  function borrowUSDIto(uint96 id, uint192 amount, address target) external override {
     _borrowUSDi(id, amount, target);
   }
 
@@ -301,11 +297,7 @@ contract VaultController is
   /// @param amount amount of USDi to borrow
   /// @param target address to receive borrowed USDi
   /// @dev pays interest
-  function _borrowUSDi(
-    uint96 id,
-    uint192 amount,
-    address target
-  ) internal paysInterest whenNotPaused {
+  function _borrowUSDi(uint96 id, uint192 amount, address target) internal paysInterest whenNotPaused {
     // grab the vault by id if part of our system. revert if not
     IVault vault = getVault(id);
     // only the minter of the vault may borrow from their vault
@@ -335,11 +327,7 @@ contract VaultController is
   /// @param id vault to borrow against
   /// @param usdc_amount amount of USDC to borrow
   /// @param target address to receive borrowed USDC
-  function borrowUSDCto(
-    uint96 id,
-    uint192 usdc_amount,
-    address target
-  ) external override paysInterest whenNotPaused {
+  function borrowUSDCto(uint96 id, uint192 usdc_amount, address target) external override paysInterest whenNotPaused {
     uint256 amount = usdc_amount * 1e12;
 
     // grab the vault by id if part of our system. revert if not
@@ -469,7 +457,7 @@ contract VaultController is
     (
       uint256 tokenAmount, // bad fill price
 
-    ) = _liquidationMath(id, asset_address, 2**256 - 1);
+    ) = _liquidationMath(id, asset_address, 2 ** 256 - 1);
     return tokenAmount;
   }
 

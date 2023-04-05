@@ -52,11 +52,7 @@ contract Vault is IVault, Context {
   /// @param id_ unique id of the vault, ever increasing and tracked by VaultController
   /// @param minter_ address of the person who created this vault
   /// @param controller_address address of the VaultController
-  constructor(
-    uint96 id_,
-    address minter_,
-    address controller_address
-  ) {
+  constructor(uint96 id_, address minter_, address controller_address) {
     _vaultInfo = VaultInfo(id_, minter_);
     _controller = IVaultController(controller_address);
   }
@@ -111,11 +107,7 @@ contract Vault is IVault, Context {
   /// @param _token token to transfer
   /// @param _to person to send the coins to
   /// @param _amount amount of coins to move
-  function controllerTransfer(
-    address _token,
-    address _to,
-    uint256 _amount
-  ) external override onlyVaultController {
+  function controllerTransfer(address _token, address _to, uint256 _amount) external override onlyVaultController {
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
   }
 

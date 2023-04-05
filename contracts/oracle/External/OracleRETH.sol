@@ -10,8 +10,6 @@ interface IrEethOracleFeed {
 }
 
 contract OracleRETH is IOracleRelay {
-  
-
   IrEethOracleFeed public constant _priceFeed = IrEethOracleFeed(0xae78736Cd615f374D3085123A210448E74Fc6393);
   IOracleRelay public constant ethOracle = IOracleRelay(0x22B01826063564CBe01Ef47B96d623b739F82Bf2);
 

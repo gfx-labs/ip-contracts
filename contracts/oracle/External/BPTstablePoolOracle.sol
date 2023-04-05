@@ -42,7 +42,7 @@ interface IBalancerPool {
  */
 
 contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
-  using HomoraMath for uint;
+  using HomoraMath for uint256;
   bytes32 public immutable _poolId;
 
   uint256 public immutable _widthNumerator;
@@ -315,27 +315,27 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
 
   /*******************************BASE ORACLE ALPHA METHOD********************************/
 
-  function getETHPx(address pool) public view override returns (uint) {
+  function getETHPx(address pool) public view override returns (uint256) {
     (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(_poolId);
     address token0 = address(tokens[0]);
     address token1 = address(tokens[1]);
-    uint totalSupply = _priceFeed.totalSupply();
-    uint r0 = balances[0];
-    uint r1 = balances[1];
+    uint256 totalSupply = _priceFeed.totalSupply();
+    uint256 r0 = balances[0];
+    uint256 r1 = balances[1];
 
     console.log("Actual0: ", balances[0]);
     console.log("Actual1: ", balances[1]);
 
-    uint sqrtK = HomoraMath.sqrt(r0 * r1).fdiv(totalSupply);
+    uint256 sqrtK = HomoraMath.sqrt(r0 * r1).fdiv(totalSupply);
 
-    uint px0 = assetOracles[address(tokens[0])].currentValue() * 2 ** 112;
-    uint px1 = assetOracles[address(tokens[1])].currentValue() * 2 ** 112;
+    uint256 px0 = assetOracles[address(tokens[0])].currentValue() * 2 ** 112;
+    uint256 px1 = assetOracles[address(tokens[1])].currentValue() * 2 ** 112;
     // fair token0 amt: sqrtK * sqrt(px1/px0)
     // fair token1 amt: sqrtK * sqrt(px0/px1)
     // fair lp price = 2 * sqrt(px0 * px1)
     // split into 2 sqrts multiplication to prevent uint overflow (note the 2**112)
 
-    uint result = sqrtK.mul(2).mul(HomoraMath.sqrt(px0)).div(2 ** 56).mul(HomoraMath.sqrt(px1)).div(2 ** 56);
+    uint256 result = sqrtK.mul(2).mul(HomoraMath.sqrt(px0)).div(2 ** 56).mul(HomoraMath.sqrt(px1)).div(2 ** 56);
     //console.log("SqrtReserve: ", result / 2 ** 112);
     return result;
   }
@@ -365,20 +365,20 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
     (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(_poolId);
     (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
 
-    uint px0 = assetOracles[address(tokens[0])].currentValue();
-    uint px1 = assetOracles[address(tokens[1])].currentValue();
+    uint256 px0 = assetOracles[address(tokens[0])].currentValue();
+    uint256 px1 = assetOracles[address(tokens[1])].currentValue();
 
-    uint K = balances[0] * balances[1];
-    uint P = divide(px0, px1, 18);
-    uint fairReserve0 = HomoraMath.sqrt(divide(K, P, 18));
-    uint fairReserve1 = HomoraMath.sqrt(K * P) / 1e9;
+    uint256 K = balances[0] * balances[1];
+    uint256 P = divide(px0, px1, 18);
+    uint256 fairReserve0 = HomoraMath.sqrt(divide(K, P, 18));
+    uint256 fairReserve1 = HomoraMath.sqrt(K * P) / 1e9;
 
-    uint fairValue0 = (fairReserve0 * px0) / 1e18;
-    uint fairValue1 = (fairReserve1 * px1) / 1e18;
+    uint256 fairValue0 = (fairReserve0 * px0) / 1e18;
+    uint256 fairValue1 = (fairReserve1 * px1) / 1e18;
 
     console.log("Comput0: ", fairValue0);
     console.log("Comput1: ", fairValue1);
-    uint result = divide((fairValue0 + fairValue1), _priceFeed.totalSupply(), 18);
+    uint256 result = divide((fairValue0 + fairValue1), _priceFeed.totalSupply(), 18);
     console.log("FairReserve: ", result);
   }
 
@@ -552,7 +552,7 @@ contract BPTstablePoolOracle is UsingBaseOracle, IBaseOracle, IOracleRelay {
       result = startingBalances[1] - finalBalanceOut;
       console.log("Result: ", result);
       console.log("Compar: ", 1e18);
-    }else{
+    } else {
       result = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, tokenIndexOut) - finalBalanceOut;
       console.log("Result: ", result);
       console.log("Compar: ", 1e18);

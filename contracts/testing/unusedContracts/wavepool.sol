@@ -17,11 +17,7 @@ interface IERC20 {
 
   function approve(address spender, uint256 amount) external returns (bool);
 
-  function transferFrom(
-    address sender,
-    address recipient,
-    uint256 amount
-  ) external returns (bool);
+  function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
   event Transfer(address indexed from, address indexed to, uint256 value);
   event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -180,12 +176,7 @@ contract WavePool {
   /// @param amount amount of usdc
   /// @param key the total amount the points the user may claim - ammount allocated in whitelist
   /// @param merkleProof a proof proving that the caller may redeem up to `key` points
-  function getPoints(
-    uint256 wave,
-    uint256 amount,
-    uint256 key,
-    bytes32[] memory merkleProof
-  ) public {
+  function getPoints(uint256 wave, uint256 amount, uint256 key, bytes32[] memory merkleProof) public {
     require(isEnabled(wave) == true, "not enabled");
     uint256 target = _data[wave][msg.sender].claimed + amount;
 
@@ -223,11 +214,7 @@ contract WavePool {
   //solhint-disable-next-line max-line-length
   //merkle logic: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/c9bdb1f0ae168e00a942270f2b85d6a7d3293550/contracts/utils/cryptography/MerkleProof.sol
   //MIT: OpenZeppelin Contracts v4.3.2 (utils/cryptography/MerkleProof.sol)
-  function verifyProof(
-    bytes32[] memory proof,
-    bytes32 root,
-    bytes32 leaf
-  ) internal pure returns (bool) {
+  function verifyProof(bytes32[] memory proof, bytes32 root, bytes32 leaf) internal pure returns (bool) {
     return processProof(proof, leaf) == root;
   }
 
