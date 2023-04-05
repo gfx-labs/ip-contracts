@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.9;
 
-import "./IBaseOracle.sol";
+import "../IBaseOracle.sol";
 
 contract UsingBaseOracle {
   IBaseOracle public immutable base; // Base oracle source

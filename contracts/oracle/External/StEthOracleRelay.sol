@@ -2,9 +2,10 @@
 pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
-import "./ICurvePoolFeed.sol";
 import "../../lending/IVaultController.sol";
 import "../IOracleMaster.sol";
+
+import "../../thirdparty/curve/ICurvePoolFeed.sol";
 
 /// @title Oracle that wraps a chainlink oracle
 /// @notice The oracle returns (chainlinkPrice) * mul / div

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "../IBaseOracle.sol";
 import "../IOracleRelay.sol";
 import "../../_external/IERC20.sol";
 import "../../_external/balancer/IBalancerVault.sol";
 import "../../_external/balancer/LogExpMath.sol";
 
-import "./IBaseOracle.sol";
 import "./UsingBaseOracle.sol";
 import "./HomoraMath.sol";
 
