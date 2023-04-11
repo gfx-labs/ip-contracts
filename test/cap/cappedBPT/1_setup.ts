@@ -57,7 +57,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(16579684)).to.not.throw;//14940917
+        expect(await reset(16579684)).to.not.throw;//16579684, 14940917
     });
     it("set automine", async () => {
         expect(await network.provider.send("evm_setAutomine", [true])).to.not
@@ -133,82 +133,7 @@ describe("Token Setup", () => {
         await stealMoney(auraBalWhale, s.Bob.address, s.auraBal.address, s.AuraBalAmount)
 
         await stealMoney(auraLPminter, s.Bob.address, s.primeAuraBalLP.address, s.AuraLPamount)
-
-
-        /**
-         //await stealMoney(auraLPrewardsMinter, s.Bob.address, s.primeAuraBalRewardToken.address, s.AuraLPrewardsAmount)
-        let balance = await s.primeAuraBalRewardToken.balanceOf(auraLPrewardsMinter)
-        showBody("Balance: ", await toNumber(balance))
-        await impersonateAccount(auraLPrewardsMinter)
-        const minter =  ethers.provider.getSigner(auraLPrewardsMinter)
-        await s.primeAuraBalRewardToken.connect(minter).transfer(s.Bob.address, s.AuraLPrewardsAmount)
-        await ceaseImpersonation(auraLPrewardsMinter)
-         */
     })
 
-
-
-
-
-    /**
-     * steal BPT
-     */
-
-
-
-
-
-    /**
-     * BPT == LP tokens received for depositing into a pool
-     * 
-     * gauges  == Stake BPTs to earn BAL
-     * Boost up to 2.5x based on veBAL balance     
-     * 
-     * veBAL - voting escrow BAL - https://docs.balancer.fi/ecosystem/vebal-and-gauges/vebal/how-vebal-works
-     * obtain by locking BPT from BAL/WETH 
-     * lock BPT ==> receive veBAL - not transferrable 
-     * 0.00877 veBAL
-     * locked for 1-52 weeks
-     * 
-     * veBAL == gauges?
-     * 
-     * AUROA
-     * Lock the same BPT for auraBAL which is liquid
-     * exchange auraBAL == veBAL 1:1
-     * Auroa supports 80/20 BAL/WETH BPT - https://docs.aura.finance/aura/what-is-aura/for-usdbal-stakers
-     * is this the BPT we are going to support, or others too? 
-     * 
-     * 
-     * 
-     * PLAN
-     * send BPT to special vault
-     * there you can stake on gauges and earn BAL
-     * need to claim? 
-     * 
-     * 
-     * 
-     */
-
-
-    /**
-     * BPT plan 
-     * 
-     * deposit BPT or staked BPT receipt token
-     * these exchange 1:1 for eachother at any time, no lock
-     * 
-     * BPT functionality only needs a deposit/withdraw support function
-     * 1 parameter, how much, uses msg.sender
-     * 
-     * Can't support the 'primary' BPT 80/20 BAL/WETH 0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56
-     * because this one is only locked for some amount of time for veBAL
-     * veBAL can't be transferred nor swapped for the BPT if locked, so liquidations won't work
-     * I think
-     */
-
-    /**
-     * AURA PLAN
-     * 
-     * TODO
-     */
 
 });
