@@ -8,7 +8,7 @@ import "../../_external/balancer/IAsset.sol";
 
 import "../../_external/balancer/LogExpMath.sol";
 
-import "../../oracle/External/IBaseOracle.sol";
+import "../../oracle/IBaseOracle.sol";
 import "../../oracle/External/UsingBaseOracle.sol";
 import "../../oracle/External/HomoraMath.sol";
 

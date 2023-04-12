@@ -28,5 +28,5 @@ interface ITestOracle {
 
   function getTimeWeightedAverage(OracleAverageQuery[] memory queries) external view returns (uint256[] memory);
 
-function getAuthorizer() external view returns (address);
+  function getAuthorizer() external view returns (address);
 }

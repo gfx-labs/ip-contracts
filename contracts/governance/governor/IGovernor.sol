@@ -39,15 +39,12 @@ interface IGovernorCharlieDelegate {
 
   function cancel(uint256 proposalId) external;
 
-  function getActions(uint256 proposalId)
+  function getActions(
+    uint256 proposalId
+  )
     external
     view
-    returns (
-      address[] memory targets,
-      uint256[] memory values,
-      string[] memory signatures,
-      bytes[] memory calldatas
-    );
+    returns (address[] memory targets, uint256[] memory values, string[] memory signatures, bytes[] memory calldatas);
 
   function getReceipt(uint256 proposalId, address voter) external view returns (Receipt memory);
 
@@ -55,19 +52,9 @@ interface IGovernorCharlieDelegate {
 
   function castVote(uint256 proposalId, uint8 support) external;
 
-  function castVoteWithReason(
-    uint256 proposalId,
-    uint8 support,
-    string calldata reason
-  ) external;
+  function castVoteWithReason(uint256 proposalId, uint8 support, string calldata reason) external;
 
-  function castVoteBySig(
-    uint256 proposalId,
-    uint8 support,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
-  ) external;
+  function castVoteBySig(uint256 proposalId, uint8 support, uint8 v, bytes32 r, bytes32 s) external;
 
   function isWhitelisted(address account) external view returns (bool);
 

@@ -37,7 +37,7 @@ contract WUSDI is IWUSDI, ERC20, ERC20Permit {
   // Constants
 
   /// @dev The maximum wUSDI supply.
-  uint256 public constant MAX_wUSDI_SUPPLY = 10000000 * (10**18); // 10 M
+  uint256 public constant MAX_wUSDI_SUPPLY = 10000000 * (10 ** 18); // 10 M
 
   //--------------------------------------------------------------------------
   // Attributes
@@ -50,11 +50,7 @@ contract WUSDI is IWUSDI, ERC20, ERC20Permit {
   /// @param usdi The usdi ERC20 token address.
   /// @param name_ The wUSDI ERC20 name.
   /// @param symbol_ The wUSDI ERC20 symbol.
-  constructor(
-    address usdi,
-    string memory name_,
-    string memory symbol_
-  ) ERC20(name_, symbol_) ERC20Permit(name_) {
+  constructor(address usdi, string memory name_, string memory symbol_) ERC20(name_, symbol_) ERC20Permit(name_) {
     _usdi = usdi;
   }
 
@@ -233,12 +229,7 @@ contract WUSDI is IWUSDI, ERC20, ERC20Permit {
   /// @param to The beneficiary wallet.
   /// @param usdi_amount The amount of usdi_amount to deposit.
   /// @param wUSDI_amount The amount of wUSDI_amount to mint.
-  function _deposit(
-    address from,
-    address to,
-    uint256 usdi_amount,
-    uint256 wUSDI_amount
-  ) private {
+  function _deposit(address from, address to, uint256 usdi_amount, uint256 wUSDI_amount) private {
     IERC20(_usdi).safeTransferFrom(from, address(this), usdi_amount);
 
     _mint(to, wUSDI_amount);
@@ -249,12 +240,7 @@ contract WUSDI is IWUSDI, ERC20, ERC20Permit {
   /// @param to The beneficiary wallet.
   /// @param usdi_amount The amount of usdi_amount to withdraw.
   /// @param wUSDI_amount The amount of wUSDI_amount to burn.
-  function _withdraw(
-    address from,
-    address to,
-    uint256 usdi_amount,
-    uint256 wUSDI_amount
-  ) private {
+  function _withdraw(address from, address to, uint256 usdi_amount, uint256 wUSDI_amount) private {
     _burn(from, wUSDI_amount);
 
     IERC20(_usdi).safeTransfer(to, usdi_amount);

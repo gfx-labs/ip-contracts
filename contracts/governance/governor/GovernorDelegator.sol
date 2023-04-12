@@ -6,17 +6,8 @@ import "./IGovernor.sol";
 import "./GovernorStorage.sol";
 
 contract GovernorCharlieDelegator is GovernorCharlieDelegatorStorage, GovernorCharlieEvents, IGovernorCharlieDelegator {
-  constructor(
-    address ipt_,
-    address implementation_
-  ) {
-    delegateTo(
-      implementation_,
-      abi.encodeWithSignature(
-        "initialize(address)",
-        ipt_
-      )
-    );
+  constructor(address ipt_, address implementation_) {
+    delegateTo(implementation_, abi.encodeWithSignature("initialize(address)", ipt_));
     address oldImplementation = implementation;
     implementation = implementation_;
     emit NewImplementation(oldImplementation, implementation);

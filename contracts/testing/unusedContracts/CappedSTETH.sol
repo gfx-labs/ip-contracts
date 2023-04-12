@@ -5,10 +5,17 @@ import "../../_external/IERC20Metadata.sol";
 import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
-
-import "../../lending/IStETH.sol";
+import "../../_external/IERC20Metadata.sol";
 
 import {SafeERC20} from "../../_external/extensions/SafeERC20.sol";
+
+interface IStETH is IERC20 {
+  function getPooledEthByShares(uint256 _sharesAmount) external view returns (uint256);
+
+  function getSharesByPooledEth(uint256 _pooledEthAmount) external view returns (uint256);
+
+  function submit(address _referral) external payable returns (uint256);
+}
 
 /**
  * @title StETH token wrapper with static balances.
@@ -41,11 +48,7 @@ contract CappedSTETH is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   /// @param name_ name of capped token
   /// @param symbol_ symbol of capped token
   /// @param underlying_ the address of underlying
-  function initialize(
-    string memory name_,
-    string memory symbol_,
-    address underlying_
-  ) public initializer {
+  function initialize(string memory name_, string memory symbol_, address underlying_) public initializer {
     __Ownable_init();
     __ERC20_init(name_, symbol_);
     _underlying = IERC20Metadata(underlying_);

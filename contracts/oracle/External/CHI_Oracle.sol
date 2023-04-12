@@ -13,7 +13,7 @@ interface IPot {
 
 contract CHI_Oracle is IOracleRelay {
   IPot public immutable pot;
-  uint256 private constant ONE = 10**27;
+  uint256 private constant ONE = 10 ** 27;
 
   constructor(IPot _pot) {
     pot = _pot;
@@ -22,7 +22,6 @@ contract CHI_Oracle is IOracleRelay {
   function currentValue() external view override returns (uint256 wad) {
     wad = readDrip() / 1e9;
   }
-
 
   /// @notice logic and math pulled directly from the pot contract
   /// https://github.com/makerdao/dss/commit/17187f7d47be2f4c71d218785e1155474bbafe8a
@@ -39,11 +38,7 @@ contract CHI_Oracle is IOracleRelay {
     require(y == 0 || (z = x * y) / y == x);
   }
 
-  function rpow(
-    uint256 x,
-    uint256 n,
-    uint256 base
-  ) internal pure returns (uint256 z) {
+  function rpow(uint256 x, uint256 n, uint256 base) internal pure returns (uint256 z) {
     assembly {
       switch x
       case 0 {

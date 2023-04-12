@@ -4,11 +4,6 @@ pragma solidity 0.8.9;
 import "../IOracleRelay.sol";
 import "../../_external/IERC20.sol";
 import "../../_external/balancer/IBalancerVault.sol";
-import "../../_external/balancer/LogExpMath.sol";
-
-import "./IBaseOracle.sol";
-import "./UsingBaseOracle.sol";
-import "./HomoraMath.sol";
 
 import "hardhat/console.sol";
 
@@ -79,12 +74,13 @@ contract BPTstablePoolOracle is IOracleRelay {
 
   function currentValue() external view override returns (uint256) {
     (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(_poolId);
+    (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
 
     checkLastChangedBlock(lastChangeBlock);
 
     uint256 naivePrice = getNaivePrice(tokens, balances);
-    uint256 robustPrice = calcBptOut(tokens, balances);
-    
+    uint256 robustPrice = calcBptOut(tokens, balances, amp, v);
+
     verifyNaivePrice(naivePrice, robustPrice);
 
     return naivePrice;
@@ -121,21 +117,17 @@ contract BPTstablePoolOracle is IOracleRelay {
   }
 
   /*******************************CALCULATE BPT OUT********************************/
-
-  function calcBptOut(IERC20[] memory tokens, uint256[] memory _balances) internal view returns (uint256 output) {
-    (, /**uint256 v */ uint256 amp) = _priceFeed.getLastInvariant();
-
+  function calcBptOut(
+    IERC20[] memory tokens,
+    uint256[] memory _balances,
+    uint256 amp,
+    uint256 v
+  ) internal view returns (uint256 output) {
     uint256 currentV = _calculateInvariant(amp, _balances);
     uint256 factor = 20;
 
-    //console.log("Bal0: ", _balances[0]);
-    //console.log("Bal1: ", _balances[1]);
-
     _balances[0] = _balances[0] + 10 ** factor;
     _balances[1] = _balances[1] + 10 ** factor;
-
-    //console.log("Amt0: ", _balances[0]);
-    //console.log("Amt1: ", _balances[1]);
 
     uint256 newInvariant = _calculateInvariant(amp, _balances);
 
@@ -148,9 +140,10 @@ contract BPTstablePoolOracle is IOracleRelay {
       assetOracles[address(tokens[1])].currentValue();
 
     output = divide(numerator, result, factor);
-
   }
 
+  ///@notice The invariant should be resistant to changes in the pool balances due to swaps
+  ///@notice The invariant should scale with the total supply of LP tokens
   function _calculateInvariant(
     uint256 amplificationParameter,
     uint256[] memory balances
@@ -185,19 +178,16 @@ contract BPTstablePoolOracle is IOracleRelay {
 
       for (uint256 j = 0; j < numTokens; j++) {
         // (D_P * invariant) / (balances[j] * numTokens)
-        D_P = divDown(mul(D_P, invariant), mul(balances[j], numTokens));
+        D_P = divDown((D_P * invariant), (balances[j] * numTokens));
       }
 
       prevInvariant = invariant;
 
       invariant = divDown(
-        mul(
-          // (ampTimesTotal * sum) / AMP_PRECISION + D_P * numTokens
-          (divDown(mul(ampTimesTotal, sum), _AMP_PRECISION) + (mul(D_P, numTokens))),
-          invariant
-        ),
+        // (ampTimesTotal * sum) / AMP_PRECISION + D_P * numTokens
+        ((divDown((ampTimesTotal * sum), _AMP_PRECISION) + ((D_P * numTokens))) * invariant),
         // ((ampTimesTotal - _AMP_PRECISION) * invariant) / _AMP_PRECISION + (numTokens + 1) * D_P
-        (divDown(mul((ampTimesTotal - _AMP_PRECISION), invariant), _AMP_PRECISION) + (mul((numTokens + 1), D_P)))
+        (divDown(((ampTimesTotal - _AMP_PRECISION) * invariant), _AMP_PRECISION) + (((numTokens + 1) * D_P)))
       );
 
       if (invariant > prevInvariant) {
@@ -212,26 +202,21 @@ contract BPTstablePoolOracle is IOracleRelay {
     revert("STABLE_INVARIANT_DIDNT_CONVERGE");
   }
 
-  /*******************************USE MIN SAFE PRICE********************************/
-  ///@notice this returns a price that is typically slightly less than the naive price
-  /// it should be safe to use this price, though it will be slightly less than the true naive price,
-  /// so borrowing power will be slightly less than expected
-  function getMinSafePrice(IERC20[] memory tokens) internal view returns (uint256 minSafePrice) {
-    //uint256 rate = _priceFeed.getRate();
-
-    (uint256 v /**uint256 amp */, ) = _priceFeed.getLastInvariant();
-
-    uint256 calculatedRate = (v * 1e18) / _priceFeed.totalSupply();
-
-    //get min price
-    uint256 p0 = assetOracles[address(tokens[0])].currentValue();
-    uint256 p1 = assetOracles[address(tokens[1])].currentValue();
-
-    uint256 pm = p0 < p1 ? p0 : p1;
-
-    minSafePrice = (pm * calculatedRate) / 1e18;
+  /*******************************SETUP FUNCTIONS********************************/
+  function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {
+    total = 0;
+    for (uint256 i = 0; i < tokens.length; i++) {
+      total += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
+    }
   }
 
+  function registerOracles(address[] memory _tokens, address[] memory _oracles) internal {
+    for (uint256 i = 0; i < _tokens.length; i++) {
+      assetOracles[_tokens[i]] = IOracleRelay(_oracles[i]);
+    }
+  }
+
+  /*******************************PURE MATH FUNCTIONS********************************/
   function mulDown(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 product = a * b;
     require(a == 0 || product / a == b, "overflow");
@@ -244,30 +229,10 @@ contract BPTstablePoolOracle is IOracleRelay {
     return a / b;
   }
 
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    require(a == 0 || c / a == b, "mul: overflow");
-    return c;
-  }
-
   function divide(uint256 numerator, uint256 denominator, uint256 factor) internal pure returns (uint256 result) {
     uint256 q = (numerator / denominator) * 10 ** factor;
     uint256 r = ((numerator * 10 ** factor) / denominator) % 10 ** factor;
 
     return q + r;
-  }
-
-  /*******************************REQUIRED SETUP FUNCTIONS********************************/
-  function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {
-    total = 0;
-    for (uint256 i = 0; i < tokens.length; i++) {
-      total += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
-    }
-  }
-
-  function registerOracles(address[] memory _tokens, address[] memory _oracles) internal {
-    for (uint256 i = 0; i < _tokens.length; i++) {
-      assetOracles[_tokens[i]] = IOracleRelay(_oracles[i]);
-    }
   }
 }

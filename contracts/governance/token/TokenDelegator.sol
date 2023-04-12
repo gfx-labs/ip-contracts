@@ -6,12 +6,7 @@ import "./IToken.sol";
 import "./TokenStorage.sol";
 
 contract InterestProtocolToken is TokenDelegatorStorage, TokenEvents, ITokenDelegator {
-  constructor(
-    address account_,
-    address owner_,
-    address implementation_,
-    uint256 initialSupply_
-  ) {
+  constructor(address account_, address owner_, address implementation_, uint256 initialSupply_) {
     require(implementation_ != address(0), "TokenDelegator: invalid address");
     owner = owner_;
     delegateTo(implementation_, abi.encodeWithSignature("initialize(address,uint256)", account_, initialSupply_));

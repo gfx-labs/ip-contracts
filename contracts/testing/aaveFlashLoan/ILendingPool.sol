@@ -5,8 +5,8 @@ interface ILendingPool {
   function flashLoan(
     address receiverAddress,
     address[] calldata assets,
-    uint[] calldata amounts,
-    uint[] calldata modes,
+    uint256[] calldata amounts,
+    uint256[] calldata modes,
     address onBehalfOf,
     bytes calldata params,
     uint16 referralCode

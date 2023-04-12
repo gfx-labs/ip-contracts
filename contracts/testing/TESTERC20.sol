@@ -19,12 +19,7 @@ contract TESTERC20 {
   event Transfer(address indexed from, address indexed to, uint256 value);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 
-  constructor(
-    string memory name_,
-    string memory symbol_,
-    uint8 decimals_,
-    uint64 givemul_
-  ) {
+  constructor(string memory name_, string memory symbol_, uint8 decimals_, uint64 givemul_) {
     _name = name_;
     _symbol = symbol_;
     _decimals = decimals_;
@@ -47,7 +42,7 @@ contract TESTERC20 {
   }
 
   function publicMint() external {
-    _mint(msg.sender, (10**_decimals) * _givemul);
+    _mint(msg.sender, (10 ** _decimals) * _givemul);
   }
 
   function delegate(address a) public {
@@ -121,11 +116,7 @@ contract TESTERC20 {
    * - the caller must have allowance for ``from``'s tokens of at least
    * `amount`.
    */
-  function transferFrom(
-    address from,
-    address to,
-    uint256 amount
-  ) public returns (bool) {
+  function transferFrom(address from, address to, uint256 amount) public returns (bool) {
     address spender = msg.sender;
     _spendAllowance(from, spender, amount);
     _transfer(from, to, amount);
@@ -149,11 +140,7 @@ contract TESTERC20 {
     return true;
   }
 
-  function _transfer(
-    address from,
-    address to,
-    uint256 amount
-  ) internal {
+  function _transfer(address from, address to, uint256 amount) internal {
     require(from != address(0), "transfer from the zero address");
     require(to != address(0), "transfer to the zero address");
 
@@ -233,11 +220,7 @@ contract TESTERC20 {
    * - `owner` cannot be the zero address.
    * - `spender` cannot be the zero address.
    */
-  function _approve(
-    address owner,
-    address spender,
-    uint256 amount
-  ) internal {
+  function _approve(address owner, address spender, uint256 amount) internal {
     require(owner != address(0), "approve from the zero address");
     require(spender != address(0), "approve to the zero address");
 
@@ -253,11 +236,7 @@ contract TESTERC20 {
    *
    * Might emit an {Approval} event.
    */
-  function _spendAllowance(
-    address owner,
-    address spender,
-    uint256 amount
-  ) internal {
+  function _spendAllowance(address owner, address spender, uint256 amount) internal {
     uint256 currentAllowance = allowance(owner, spender);
     if (currentAllowance != type(uint256).max) {
       require(currentAllowance >= amount, "insufficient allowance");
@@ -281,11 +260,7 @@ contract TESTERC20 {
    *
    * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
    */
-  function _beforeTokenTransfer(
-    address from,
-    address to,
-    uint256 amount
-  ) internal {}
+  function _beforeTokenTransfer(address from, address to, uint256 amount) internal {}
 
   /**
    * @dev Hook that is called after any transfer of tokens. This includes
@@ -301,11 +276,7 @@ contract TESTERC20 {
    *
    * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
    */
-  function _afterTokenTransfer(
-    address from,
-    address to,
-    uint256 amount
-  ) internal {}
+  function _afterTokenTransfer(address from, address to, uint256 amount) internal {}
 }
 
 // solhint-enable comprehensive-interface

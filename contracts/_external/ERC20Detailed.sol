@@ -22,11 +22,7 @@ abstract contract ERC20Detailed is Initializable, IERC20 {
     }
      */
 
-  function __ERC20Detailed_init(
-    string memory name_,
-    string memory symbol_,
-    uint8 decimals_
-  ) public initializer {
+  function __ERC20Detailed_init(string memory name_, string memory symbol_, uint8 decimals_) public initializer {
     _name = name_;
     _symbol = symbol_;
     _decimals = decimals_;

@@ -23,17 +23,13 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   uint256 public _cap;
 
   /// @notice This must remain constant for conversions to work, the cap is separate
-  uint256 public constant MAX_SUPPLY = 10000000 * (10**18); // 10 M
+  uint256 public constant MAX_SUPPLY = 10000000 * (10 ** 18); // 10 M
 
   /// @notice initializer for contract
   /// @param name_ name of capped token
   /// @param symbol_ symbol of capped token
   /// @param underlying_ the address of underlying
-  function initialize(
-    string memory name_,
-    string memory symbol_,
-    address underlying_
-  ) public initializer {
+  function initialize(string memory name_, string memory symbol_, address underlying_) public initializer {
     __Ownable_init();
     __ERC20_init(name_, symbol_);
     _underlying = IERC20Metadata(underlying_);
@@ -72,7 +68,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   }
 
   function underlyingScalar() public view returns (uint256) {
-    return (10**(18 - _underlying_decimals));
+    return (10 ** (18 - _underlying_decimals));
   }
 
   /// @notice get underlying ratio
@@ -208,7 +204,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   function withdrawAll() external returns (uint256) {
     uint256 cappedTokenAmount = balanceOf(_msgSender());
     uint256 underlyingAmount = _capped_to_underlying(cappedTokenAmount, _query_Underlying_Supply());
-    
+
     require(underlyingAmount <= _underlying.balanceOf(address(this)), "Insufficient funds in bank");
 
     _withdraw(_msgSender(), _msgSender(), underlyingAmount, cappedTokenAmount);
@@ -265,11 +261,10 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   }
 
   /// @notice assumes underlying is decimal 18
-  function _underlying_to_capped(uint256 underlyingAmount, uint256 underlyingTotalSupply)
-    private
-    pure
-    returns (uint256)
-  {
+  function _underlying_to_capped(
+    uint256 underlyingAmount,
+    uint256 underlyingTotalSupply
+  ) private pure returns (uint256) {
     return (underlyingAmount * MAX_SUPPLY) / underlyingTotalSupply;
   }
 
@@ -282,12 +277,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   /// @param to The beneficiary wallet.
   /// @param underlyingAmount The amount of underlyingAmount to deposit.
   /// @param cappedTokenAmount The amount of cappedTokenAmount to mint.
-  function _deposit(
-    address from,
-    address to,
-    uint256 underlyingAmount,
-    uint256 cappedTokenAmount
-  ) private {
+  function _deposit(address from, address to, uint256 underlyingAmount, uint256 cappedTokenAmount) private {
     IERC20(address(_underlying)).safeTransferFrom(from, address(this), underlyingAmount);
 
     _mint(to, cappedTokenAmount);
@@ -298,12 +288,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   /// @param to The beneficiary wallet.
   /// @param underlyingAmount The amount of underlyingAmount to withdraw.
   /// @param cappedTokenAmount The amount of cappedTokenAmount to burn.
-  function _withdraw(
-    address from,
-    address to,
-    uint256 underlyingAmount,
-    uint256 cappedTokenAmount
-  ) private {
+  function _withdraw(address from, address to, uint256 underlyingAmount, uint256 cappedTokenAmount) private {
     _burn(from, cappedTokenAmount);
 
     IERC20(address(_underlying)).safeTransfer(to, underlyingAmount);
