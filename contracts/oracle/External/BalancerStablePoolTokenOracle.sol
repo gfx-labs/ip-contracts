@@ -116,16 +116,5 @@ contract BalancerStablePoolTokenOracle is IOracleRelay {
       return ((aInflated - 1) / b) + 1;
     }
   }
-  /**
-  function divide(
-    uint256 numerator,
-    uint256 denominator,
-    uint256 factor
-  ) internal pure returns (uint256) {
-    uint256 q = (numerator / denominator) * 10**factor;
-    uint256 r = ((numerator * 10**factor) / denominator) % 10**factor;
-
-    return q + r;
-  }
-   */
+  
 }

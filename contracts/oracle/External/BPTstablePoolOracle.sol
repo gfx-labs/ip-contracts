@@ -77,11 +77,11 @@ contract BPTstablePoolOracle is IOracleRelay {
     (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
 
     checkLastChangedBlock(lastChangeBlock);
-
+    compareOutGivenIn(tokens, balances);
     uint256 naivePrice = getNaivePrice(tokens, balances);
-    uint256 robustPrice = calcBptOut(tokens, balances, amp, v);
+    //uint256 robustPrice = calcBptOut(tokens, balances, amp, v);
 
-    verifyNaivePrice(naivePrice, robustPrice);
+    //verifyNaivePrice(naivePrice, robustPrice);
 
     return naivePrice;
   }
@@ -114,6 +114,222 @@ contract BPTstablePoolOracle is IOracleRelay {
   /*******************************CHECK FOR LAST CHANGE BLOCK********************************/
   function checkLastChangedBlock(uint256 lastChangeBlock) internal view {
     require(lastChangeBlock < block.number, "Revert for manipulation resistance");
+  }
+
+  /*******************************OUT GIVEN IN********************************/
+  function compareOutGivenIn(IERC20[] memory tokens, uint256[] memory balances) internal view {
+    (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
+    uint256 idxIn = 0;
+    uint256 idxOut = 1;
+    uint256 tokenAmountIn = 1e18;
+
+    // console.log("Compare OUT GIVEN IN");
+    //console.log("Token in : ", address(tokens[idxIn]));
+    //console.log("Token out: ", address(tokens[idxOut]));
+
+    console.log("Actual balance 0: ", balances[0]);
+    console.log("Actual balance 1: ", balances[1]);
+
+    console.log("Calced balance 0: ", _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 0));
+    console.log("Calced balance 1: ", _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1));
+    uint256 finalBalanceOut = _calcOutGivenIn(amp, balances, idxIn, idxOut, tokenAmountIn, v);
+    uint256 outGivenIn = 0;
+
+    if (balances[idxOut] < finalBalanceOut) {
+      console.log("MetaStablePool");
+
+      uint256[] memory calcedBalances = new uint256[](2);
+      calcedBalances[0] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 0);
+
+      calcedBalances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1);
+      finalBalanceOut = _calcOutGivenIn(amp, calcedBalances, idxIn, idxOut, tokenAmountIn, v);
+    }
+
+    outGivenIn = sub(sub(balances[idxOut], finalBalanceOut), 1);
+    console.log("OGI: ", outGivenIn);
+
+    (uint256 calcedRate, uint256 expectedRate) = getOutGivenInRate(
+      outGivenIn,
+      assetOracles[address(tokens[0])].currentValue(),
+      assetOracles[address(tokens[1])].currentValue()
+    );
+
+    console.log("Expected Rate: ", expectedRate);
+    console.log("calculat Rate: ", calcedRate);
+    /**
+    if (balances[tokenIndexOut] > finalBalanceOut) {
+      return sub(sub(balances[tokenIndexOut], finalBalanceOut), 1);
+    } else {
+      return 0;
+    }
+     */
+
+    /**
+    bool requireCalcedBalances = false;
+    if (outGivenIn == 0) {
+      console.log("OGI == 0, MetaStablePool");
+      requireCalcedBalances = true;
+
+      uint256[] memory calcedBalances = new uint256[](2);
+      calcedBalances[0] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 0);
+
+      calcedBalances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1);
+      outGivenIn = _calcOutGivenIn(amp, calcedBalances, idxIn, idxOut, tokenAmountIn, v);
+    }
+
+    (uint256 calcedRate, uint256 expectedRate) = getOutGivenInRate(
+      outGivenIn,
+      assetOracles[address(tokens[0])].currentValue(),
+      assetOracles[address(tokens[1])].currentValue()
+    );
+
+    uint256 expectedOutput = assetOracles[address(tokens[0])].currentValue() * expectedRate;
+
+    console.log("OUT GIVEN IN RESULT: ", outGivenIn);
+     */
+  }
+
+  function getSimpleRate(uint256 price0, uint256 price1) internal pure returns (uint256 expectedRate) {
+    //rate  p1 / p0
+    expectedRate = divide(price1, price0, 18);
+  }
+
+  function getOutGivenInRate(
+    uint256 ogi,
+    uint256 price0,
+    uint256 price1
+  ) internal pure returns (uint256 calcedRate, uint256 expectedRate) {
+    expectedRate = getSimpleRate(price0, price1);
+
+    uint256 numerator = divide(ogi * price1, 1e18, 18);
+
+    uint256 denominator = divide((1e18 * price0), 1e18, 18);
+
+    calcedRate = divide(numerator, denominator, 18);
+  }
+
+  // Computes how many tokens can be taken out of a pool if `tokenAmountIn` are sent, given the current balances.
+  // The amplification parameter equals: A n^(n-1)
+  // The invariant should be rounded up.
+  function _calcOutGivenIn(
+    uint256 amplificationParameter,
+    uint256[] memory balances,
+    uint256 tokenIndexIn,
+    uint256 tokenIndexOut,
+    uint256 tokenAmountIn,
+    uint256 invariant
+  ) internal view returns (uint256) {
+    /**************************************************************************************************************
+        // outGivenIn token x for y - polynomial equation to solve                                                   //
+        // ay = amount out to calculate                                                                              //
+        // by = balance token out                                                                                    //
+        // y = by - ay (finalBalanceOut)                                                                             //
+        // D = invariant                                               D                     D^(n+1)                 //
+        // A = amplification coefficient               y^2 + ( S - ----------  - D) * y -  ------------- = 0         //
+        // n = number of tokens                                    (A * n^n)               A * n^2n * P              //
+        // S = sum of final balances but y                                                                           //
+        // P = product of final balances but y                                                                       //
+        **************************************************************************************************************/
+
+    balances[tokenIndexIn] = balances[tokenIndexIn] + (tokenAmountIn);
+
+    uint256 finalBalanceOut = _getTokenBalanceGivenInvariantAndAllOtherBalances(
+      amplificationParameter,
+      balances,
+      invariant,
+      tokenIndexOut
+    );
+    balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn;
+
+    console.log("Final balance out: ", finalBalanceOut);
+    return finalBalanceOut;
+    /**
+    if (balances[tokenIndexOut] > finalBalanceOut) {
+      return sub(sub(balances[tokenIndexOut], finalBalanceOut), 1);
+    } else {
+      return 0;
+    }
+     */
+  }
+
+  // This function calculates the balance of a given token (tokenIndex)
+  // given all the other balances and the invariant
+  function _getTokenBalanceGivenInvariantAndAllOtherBalances(
+    uint256 amplificationParameter,
+    uint256[] memory balances,
+    uint256 invariant,
+    uint256 tokenIndex
+  ) internal pure returns (uint256) {
+    // Rounds result up overall
+    uint256 _AMP_PRECISION = 1e3;
+
+    uint256 ampTimesTotal = amplificationParameter * balances.length;
+    uint256 sum = balances[0];
+    uint256 P_D = balances[0] * balances.length;
+    for (uint256 j = 1; j < balances.length; j++) {
+      P_D = divDown(mul(mul(P_D, balances[j]), balances.length), invariant);
+      sum = add(sum, balances[j]);
+    }
+    // No need to use safe math, based on the loop above `sum` is greater than or equal to `balances[tokenIndex]`
+    sum = sum - balances[tokenIndex];
+
+    uint256 inv2 = mul(invariant, invariant);
+    // We remove the balance from c by multiplying it
+    uint256 c = mul(mul(divUp(inv2, mul(ampTimesTotal, P_D)), _AMP_PRECISION), balances[tokenIndex]);
+    uint256 b = sum + mul(divDown(invariant, ampTimesTotal), _AMP_PRECISION);
+
+    // We iterate to find the balance
+    uint256 prevTokenBalance = 0;
+    // We multiply the first iteration outside the loop with the invariant to set the value of the
+    // initial approximation.
+    uint256 tokenBalance = divUp(add(inv2, c), add(invariant, b));
+
+    for (uint256 i = 0; i < 255; i++) {
+      prevTokenBalance = tokenBalance;
+
+      //tokenBalance = divUp(add(mul(tokenBalance, tokenBalance), c), sub(add(mul(tokenBalance, 2), b), invariant));
+
+      uint256 numerator = (tokenBalance * tokenBalance) + c;
+      uint256 denominator = ((tokenBalance * 2) + b) - invariant;
+
+      tokenBalance = divUp(numerator, denominator);
+      if (tokenBalance > prevTokenBalance) {
+        if (tokenBalance - prevTokenBalance <= 1) {
+          return tokenBalance;
+        }
+      } else if (prevTokenBalance - tokenBalance <= 1) {
+        return tokenBalance;
+      }
+    }
+    revert("STABLE_GET_BALANCE_DIDNT_CONVERGE");
+  }
+
+  function divUp(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0, "divUp: Zero division");
+
+    if (a == 0) {
+      return 0;
+    } else {
+      return 1 + (a - 1) / b;
+    }
+  }
+
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    require(a == 0 || c / a == b, "mul: overflow");
+    return c;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    require(c >= a, "ADD_OVERFLOW");
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b <= a, "SUB_OVERFLOW");
+    uint256 c = a - b;
+    return c;
   }
 
   /*******************************CALCULATE BPT OUT********************************/

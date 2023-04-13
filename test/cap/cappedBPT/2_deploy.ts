@@ -292,7 +292,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
       primeBPToracle.address
     )
     await auraBalRelay.deployed()
-    //showBodyCyan("AuraBal invariant relay price: ", await toNumber(await auraBalRelay.currentValue()))
+    showBodyCyan("AuraBal invariant token relay price: ", await toNumber(await auraBalRelay.currentValue()))
 
     //anchorView
     auraBalAnchorView = await new AnchoredViewRelay__factory(s.Frank).deploy(
