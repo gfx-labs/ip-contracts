@@ -169,8 +169,8 @@ describe("Setup oracles, deploy and register cap tokens", () => {
       "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
       [wstethRelay.address, s.wethOracleAddr], //_oracles
-      BN("1"),
-      BN("100")
+      BN("20"),
+      BN("10000")
     )
     await mineBlock()
 
@@ -191,8 +191,8 @@ describe("Setup oracles, deploy and register cap tokens", () => {
       "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [rETH, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
       [rETH_Oracle, s.wethOracleAddr], //_oracles, weth oracle
-      BN("1"),
-      BN("100")
+      BN("150"),
+      BN("10000")
     )
     await mineBlock()
 
@@ -313,8 +313,8 @@ describe("Setup oracles, deploy and register cap tokens", () => {
       "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [primeBPT, s.auraBal.address],//prime BPT / auraBal
       [primeBPToracle.address, auraBalAnchorView.address],//prime BPT oracle / auraBal oracle
-      BN("1"),
-      BN("100")
+      BN("230"),
+      BN("10000")
     )
     await auraStablePoolLPoracle.deployed()
     showBodyCyan("Balancer auraBal StablePool price: ", await toNumber(await auraStablePoolLPoracle.currentValue()))

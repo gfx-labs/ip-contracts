@@ -21,7 +21,7 @@ interface IBalancerPool {
     external
     view
     returns (
-      int256 logInvariant,
+      int256 loutGivenInnvariant,
       int256 logTotalSupply,
       uint256 oracleSampleCreationTimestamp,
       uint256 oracleIndex,
@@ -73,15 +73,25 @@ contract BPTstablePoolOracle is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
-    (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(_poolId);
-    (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
+    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
 
-    checkLastChangedBlock(lastChangeBlock);
-    compareOutGivenIn(tokens, balances);
+    //simulate manipulation
+    //uint256[] memory manipulated = manipulateBalances(tokens, balances, 10000e18);
+
+    uint256 tokenAmountIn = 1000e18;
+
+    uint256 outGivenIn = compareOutGivenIn(balances, tokenAmountIn);
+
+    (uint256 calcedRate, uint256 expectedRate) = getOutGivenInExchangeRate(
+      outGivenIn,
+      tokenAmountIn,
+      assetOracles[address(tokens[0])].currentValue(),
+      assetOracles[address(tokens[1])].currentValue()
+    );
+
+    verifyExchangeRate(expectedRate, calcedRate);
+
     uint256 naivePrice = getNaivePrice(tokens, balances);
-    //uint256 robustPrice = calcBptOut(tokens, balances, amp, v);
-
-    //verifyNaivePrice(naivePrice, robustPrice);
 
     return naivePrice;
   }
@@ -93,117 +103,53 @@ contract BPTstablePoolOracle is IOracleRelay {
     require(naivePrice > 0, "invalid naive price");
   }
 
-  function verifyNaivePrice(uint256 naivePrice, uint256 robustPrice) internal view {
-    require(robustPrice > 0, "invalid robust price"); //todo move this to the used robust price
-
-    // calculate buffer
-    uint256 buffer = (_widthNumerator * naivePrice) / _widthDenominator;
-
-    // create upper and lower bounds
-    uint256 upperBounds = naivePrice + buffer;
-    uint256 lowerBounds = naivePrice - buffer;
-
-    ////console.log("naive Price: ", naivePrice, naivePrice / 1e18);
-    ////console.log("Robust Price: ", robustPrice, robustPrice / 1e18);
-
-    // ensure the robust price is within bounds
-    require(robustPrice < upperBounds, "robustPrice too low");
-    require(robustPrice > lowerBounds, "robustPrice too high");
-  }
-
-  /*******************************CHECK FOR LAST CHANGE BLOCK********************************/
-  function checkLastChangedBlock(uint256 lastChangeBlock) internal view {
-    require(lastChangeBlock < block.number, "Revert for manipulation resistance");
-  }
-
   /*******************************OUT GIVEN IN********************************/
-  function compareOutGivenIn(IERC20[] memory tokens, uint256[] memory balances) internal view {
+  function compareOutGivenIn(
+    uint256[] memory balances,
+    uint256 tokenAmountIn
+  ) internal view returns (uint256 outGivenIn) {
     (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
     uint256 idxIn = 0;
     uint256 idxOut = 1;
-    uint256 tokenAmountIn = 1e18;
+    uint256[] memory calcedBalances = new uint256[](2);
+    calcedBalances[0] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 0);
 
-    // console.log("Compare OUT GIVEN IN");
-    //console.log("Token in : ", address(tokens[idxIn]));
-    //console.log("Token out: ", address(tokens[idxOut]));
-
-    console.log("Actual balance 0: ", balances[0]);
-    console.log("Actual balance 1: ", balances[1]);
-
-    console.log("Calced balance 0: ", _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 0));
-    console.log("Calced balance 1: ", _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1));
-    uint256 finalBalanceOut = _calcOutGivenIn(amp, balances, idxIn, idxOut, tokenAmountIn, v);
-    uint256 outGivenIn = 0;
-
-    if (balances[idxOut] < finalBalanceOut) {
-      console.log("MetaStablePool");
-
-      uint256[] memory calcedBalances = new uint256[](2);
-      calcedBalances[0] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 0);
-
-      calcedBalances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1);
-      finalBalanceOut = _calcOutGivenIn(amp, calcedBalances, idxIn, idxOut, tokenAmountIn, v);
-    }
+    calcedBalances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1);
+    uint256 finalBalanceOut = _calcOutGivenIn(amp, calcedBalances, idxIn, idxOut, tokenAmountIn, v);
 
     outGivenIn = sub(sub(balances[idxOut], finalBalanceOut), 1);
-    console.log("OGI: ", outGivenIn);
-
-    (uint256 calcedRate, uint256 expectedRate) = getOutGivenInRate(
-      outGivenIn,
-      assetOracles[address(tokens[0])].currentValue(),
-      assetOracles[address(tokens[1])].currentValue()
-    );
-
-    console.log("Expected Rate: ", expectedRate);
-    console.log("calculat Rate: ", calcedRate);
-    /**
-    if (balances[tokenIndexOut] > finalBalanceOut) {
-      return sub(sub(balances[tokenIndexOut], finalBalanceOut), 1);
-    } else {
-      return 0;
-    }
-     */
-
-    /**
-    bool requireCalcedBalances = false;
-    if (outGivenIn == 0) {
-      console.log("OGI == 0, MetaStablePool");
-      requireCalcedBalances = true;
-
-      uint256[] memory calcedBalances = new uint256[](2);
-      calcedBalances[0] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 0);
-
-      calcedBalances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1);
-      outGivenIn = _calcOutGivenIn(amp, calcedBalances, idxIn, idxOut, tokenAmountIn, v);
-    }
-
-    (uint256 calcedRate, uint256 expectedRate) = getOutGivenInRate(
-      outGivenIn,
-      assetOracles[address(tokens[0])].currentValue(),
-      assetOracles[address(tokens[1])].currentValue()
-    );
-
-    uint256 expectedOutput = assetOracles[address(tokens[0])].currentValue() * expectedRate;
-
-    console.log("OUT GIVEN IN RESULT: ", outGivenIn);
-     */
   }
 
-  function getSimpleRate(uint256 price0, uint256 price1) internal pure returns (uint256 expectedRate) {
-    //rate  p1 / p0
+  function percentChange(uint256 a, uint256 b) internal pure returns (uint256 delta) {
+    uint256 max = a > b ? a : b;
+    uint256 min = b != max ? b : a;
+    delta = divide((max - min), min, 18);
+  }
+
+  ///@notice ensure the exchange rate is within the expected range
+  ///@notice ensuring the price is in bounds prevents price manipulation
+  function verifyExchangeRate(uint256 expectedRate, uint256 outGivenInRate) internal view {
+    uint256 delta = percentChange(expectedRate, outGivenInRate);
+    uint256 buffer = divide(_widthNumerator, _widthDenominator, 18);
+
+    require(delta < buffer, "Price out of bounds");
+  }
+
+  function getSimpleExchangeRate(uint256 price0, uint256 price1) internal pure returns (uint256 expectedRate) {
     expectedRate = divide(price1, price0, 18);
   }
 
-  function getOutGivenInRate(
-    uint256 ogi,
+  function getOutGivenInExchangeRate(
+    uint256 outGivenIn,
+    uint256 tokenAmountIn,
     uint256 price0,
     uint256 price1
   ) internal pure returns (uint256 calcedRate, uint256 expectedRate) {
-    expectedRate = getSimpleRate(price0, price1);
+    expectedRate = getSimpleExchangeRate(price0, price1);
 
-    uint256 numerator = divide(ogi * price1, 1e18, 18);
+    uint256 numerator = divide(outGivenIn * price1, 1e18, 18);
 
-    uint256 denominator = divide((1e18 * price0), 1e18, 18);
+    uint256 denominator = divide((tokenAmountIn * price0), 1e18, 18);
 
     calcedRate = divide(numerator, denominator, 18);
   }
@@ -218,7 +164,7 @@ contract BPTstablePoolOracle is IOracleRelay {
     uint256 tokenIndexOut,
     uint256 tokenAmountIn,
     uint256 invariant
-  ) internal view returns (uint256) {
+  ) internal pure returns (uint256) {
     /**************************************************************************************************************
         // outGivenIn token x for y - polynomial equation to solve                                                   //
         // ay = amount out to calculate                                                                              //
@@ -240,8 +186,6 @@ contract BPTstablePoolOracle is IOracleRelay {
       tokenIndexOut
     );
     balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn;
-
-    console.log("Final balance out: ", finalBalanceOut);
     return finalBalanceOut;
     /**
     if (balances[tokenIndexOut] > finalBalanceOut) {
@@ -336,9 +280,11 @@ contract BPTstablePoolOracle is IOracleRelay {
   function calcBptOut(
     IERC20[] memory tokens,
     uint256[] memory _balances,
-    uint256 amp,
-    uint256 v
+    uint256 amp
   ) internal view returns (uint256 output) {
+    //simulate a huge swap
+    //_balances = manipulateBalances(_balances, 14000e18);
+
     uint256 currentV = _calculateInvariant(amp, _balances);
     uint256 factor = 20;
 
@@ -356,6 +302,17 @@ contract BPTstablePoolOracle is IOracleRelay {
       assetOracles[address(tokens[1])].currentValue();
 
     output = divide(numerator, result, factor);
+  }
+
+  function manipulateBalances(
+    uint256[] memory balances,
+    uint256 tokenAmountIn
+  ) internal view returns (uint256[] memory manipulatedBalances) {
+    manipulatedBalances = new uint256[](2);
+
+    //simulate balance change after gigantic swap
+    manipulatedBalances[0] = balances[0] - tokenAmountIn;
+    manipulatedBalances[1] = balances[1] + compareOutGivenIn(balances, tokenAmountIn);
   }
 
   ///@notice The invariant should be resistant to changes in the pool balances due to swaps
