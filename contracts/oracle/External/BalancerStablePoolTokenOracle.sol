@@ -69,6 +69,8 @@ contract BalancerStablePoolTokenOracle is IOracleRelay {
     ) = VAULT.getPoolTokens(_poolId);
     uint256 pyx = getSpotPrice(balances);
 
+    console.log("PYX: ", pyx);
+
     return (pyx * knownTokenOracle.currentValue()) / 1e18;
   }
 

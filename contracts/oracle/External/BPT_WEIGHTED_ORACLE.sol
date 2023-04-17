@@ -35,7 +35,7 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
   mapping(address => IOracleRelay) public assetOracles;
 
   //Balancer Vault
-  IBalancerVault public immutable VAULT; // = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+  IBalancerVault public immutable VAULT;
 
   /**
    * @param pool_address - Balancer pool address
@@ -52,7 +52,10 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
 
     VAULT = balancerVault;
 
-    registerOracles(_tokens, _oracles);
+    //register oracles
+    for (uint256 i = 0; i < _tokens.length; i++) {
+      assetOracles[_tokens[i]] = IOracleRelay(_oracles[i]);
+    }
 
     _widthNumerator = widthNumerator;
     _widthDenominator = widthDenominator;
@@ -82,11 +85,7 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
     return robustPrice;
   }
 
-  function getBPTprice(
-    IERC20[] memory tokens,
-    //uint256[] memory balances,
-    int256 totalSupply
-  ) internal view returns (uint256 price) {
+  function getBPTprice(IERC20[] memory tokens, int256 totalSupply) internal view returns (uint256 price) {
     uint256[] memory weights = _priceFeed.getNormalizedWeights();
 
     int256 totalPi = PRBMathSD59x18.fromInt(1e18);
@@ -94,7 +93,6 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
     uint256[] memory prices = new uint256[](tokens.length);
 
     for (uint256 i = 0; i < tokens.length; i++) {
-      //balances[i] = (balances[i] * (10**18)) / (10**IERC20(address(tokens[i])).decimals());
       prices[i] = assetOracles[address(tokens[i])].currentValue();
 
       int256 val = int256(prices[i]).div(int256(weights[i]));

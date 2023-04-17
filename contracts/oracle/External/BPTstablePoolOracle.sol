@@ -13,27 +13,14 @@ interface IBalancerPool {
   function totalSupply() external view returns (uint256);
 
   function getLastInvariant() external view returns (uint256, uint256);
-
-  function getRate() external view returns (uint256);
-
-  //metaStablePool only
-  function getOracleMiscData()
-    external
-    view
-    returns (
-      int256 loutGivenInnvariant,
-      int256 logTotalSupply,
-      uint256 oracleSampleCreationTimestamp,
-      uint256 oracleIndex,
-      bool oracleEnabled
-    );
 }
 
 /*****************************************
  *
- * This relay gets a USD price for BPT LP token from a balancer MetaStablePool
- * This can be used as a stand alone oracle as the price is checked 2 separate ways
- *
+ * This relay gets a USD price for BPT LP token from a balancer MetaStablePool or StablePool
+ * Comparing the results of outGivenIn to known safe oracles for the underlying assets,
+ * we can safely determine if manipulation has transpired.
+ * After confirming that the naive price is safe, we return the naive price.
  */
 
 contract BPTstablePoolOracle is IOracleRelay {
@@ -66,7 +53,10 @@ contract BPTstablePoolOracle is IOracleRelay {
 
     VAULT = balancerVault;
 
-    registerOracles(_tokens, _oracles);
+    //register oracles
+    for (uint256 i = 0; i < _tokens.length; i++) {
+      assetOracles[_tokens[i]] = IOracleRelay(_oracles[i]);
+    }
 
     _widthNumerator = widthNumerator;
     _widthDenominator = widthDenominator;
@@ -74,9 +64,6 @@ contract BPTstablePoolOracle is IOracleRelay {
 
   function currentValue() external view override returns (uint256) {
     (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
-
-    //simulate manipulation
-    //uint256[] memory manipulated = manipulateBalances(tokens, balances, 10000e18);
 
     uint256 tokenAmountIn = 1000e18;
 
@@ -98,10 +85,14 @@ contract BPTstablePoolOracle is IOracleRelay {
 
   /*******************************GET & CHECK NAIVE PRICE********************************/
   function getNaivePrice(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 naivePrice) {
-    uint256 naiveValue = sumBalances(tokens, balances);
+    uint256 naiveValue = 0;
+    for (uint256 i = 0; i < tokens.length; i++) {
+      naiveValue += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
+    }
     naivePrice = naiveValue / _priceFeed.totalSupply();
     require(naivePrice > 0, "invalid naive price");
   }
+
   /*******************************OUT GIVEN IN********************************/
   function compareOutGivenIn(
     uint256[] memory balances,
@@ -165,16 +156,16 @@ contract BPTstablePoolOracle is IOracleRelay {
     uint256 invariant
   ) internal pure returns (uint256) {
     /**************************************************************************************************************
-        // outGivenIn token x for y - polynomial equation to solve                                                   //
-        // ay = amount out to calculate                                                                              //
-        // by = balance token out                                                                                    //
-        // y = by - ay (finalBalanceOut)                                                                             //
-        // D = invariant                                               D                     D^(n+1)                 //
-        // A = amplification coefficient               y^2 + ( S - ----------  - D) * y -  ------------- = 0         //
-        // n = number of tokens                                    (A * n^n)               A * n^2n * P              //
-        // S = sum of final balances but y                                                                           //
-        // P = product of final balances but y                                                                       //
-        **************************************************************************************************************/
+    // outGivenIn token x for y - polynomial equation to solve                                                   //
+    // ay = amount out to calculate                                                                              //
+    // by = balance token out                                                                                    //
+    // y = by - ay (finalBalanceOut)                                                                             //
+    // D = invariant                                               D                     D^(n+1)                 //
+    // A = amplification coefficient               y^2 + ( S - ----------  - D) * y -  ------------- = 0         //
+    // n = number of tokens                                    (A * n^n)               A * n^2n * P              //
+    // S = sum of final balances but y                                                                           //
+    // P = product of final balances but y                                                                       //
+    **************************************************************************************************************/
 
     balances[tokenIndexIn] = balances[tokenIndexIn] + (tokenAmountIn);
 
@@ -243,20 +234,6 @@ contract BPTstablePoolOracle is IOracleRelay {
       }
     }
     revert("STABLE_GET_BALANCE_DIDNT_CONVERGE");
-  }
-
-  /*******************************SETUP FUNCTIONS********************************/
-  function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {
-    total = 0;
-    for (uint256 i = 0; i < tokens.length; i++) {
-      total += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
-    }
-  }
-
-  function registerOracles(address[] memory _tokens, address[] memory _oracles) internal {
-    for (uint256 i = 0; i < _tokens.length; i++) {
-      assetOracles[_tokens[i]] = IOracleRelay(_oracles[i]);
-    }
   }
 
   /*******************************PURE MATH FUNCTIONS********************************/
