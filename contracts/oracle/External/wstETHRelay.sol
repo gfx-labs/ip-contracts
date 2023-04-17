@@ -12,7 +12,7 @@ interface IwstETH {
 /*****************************************
  *
  * This relay gets a USD price for wstETH using the direct conversion from the wstETH contract
- * And comparing to a known safe price for stETH
+ * and comparing to a known safe price for stETH
  */
 
 contract wstETHRelay is IOracleRelay {

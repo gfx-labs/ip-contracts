@@ -30,6 +30,7 @@ interface IBalancerFeed {
 /*****************************************
  *
  * This relay gets a USD price for a pegged asset from a balancer StablePool
+ * StablePools don't provide a TWAP, unlike MetaStablePools
  * Price is calculated using a known safe price for one asset in the pool to derive the price for the other via the exchange rate
  * The exchange rate is calculated using the invariant, thereby making the derived price resistant to manipulation
  *

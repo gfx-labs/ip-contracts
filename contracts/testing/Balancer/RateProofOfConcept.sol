@@ -8,9 +8,9 @@ import "../../_external/balancer/IAsset.sol";
 
 import "../../_external/balancer/LogExpMath.sol";
 
-import "../../oracle/IBaseOracle.sol";
-import "../../oracle/External/UsingBaseOracle.sol";
-import "../../oracle/External/HomoraMath.sol";
+import "./IBaseOracle.sol";
+import "./UsingBaseOracle.sol";
+import "../../_external/HomoraMath.sol";
 
 import "../../_external/IWETH.sol";
 
@@ -108,7 +108,7 @@ contract RateProofOfConcept is UsingBaseOracle, IBaseOracle, IOracleRelay {
     );
     console.log("Expected Out giveni: ", expectedOGI);
      */
-    uint256 spotRobustPrice = getBPTprice(tokens, balances);
+    //uint256 spotRobustPrice = getBPTprice(tokens, balances);
     //getOracleData();
     //uint256 pxPrice = getETHPx(address(_priceFeed));
     //simpleCalc();
@@ -161,8 +161,7 @@ contract RateProofOfConcept is UsingBaseOracle, IBaseOracle, IOracleRelay {
   function calcBptOutWithFairBalances(
     uint256[] memory _balances,
     uint256 v,
-    uint256 amp,
-    uint256 factor
+    uint256 amp
   ) internal view returns (uint256 result) {
     //calculate 'fair' balances
 
@@ -199,13 +198,13 @@ contract RateProofOfConcept is UsingBaseOracle, IBaseOracle, IOracleRelay {
     result = 1;
   }
 
-  function calcBptOut(IERC20[] memory tokens, uint256[] memory _balances) internal view returns (uint256) {
+  function calcBptOut(IERC20[] memory tokens, uint256[] memory _balances) internal view {
     (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
 
     uint256 currentV = _calculateInvariant(amp, _balances);
     uint256 factor = 20;
 
-    uint256 vResult = calcBptOutWithFairBalances(_balances, v, amp, factor);
+    uint256 vResult = calcBptOutWithFairBalances(_balances, v, amp);
 
     //console.log("Bal0: ", _balances[0]);
     //console.log("Bal1: ", _balances[1]);
@@ -317,10 +316,10 @@ contract RateProofOfConcept is UsingBaseOracle, IBaseOracle, IOracleRelay {
 
   /*******************************BASE ORACLE ALPHA METHOD********************************/
 
-  function getETHPx(address pool) public view override returns (uint) {
-    (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(_poolId);
-    address token0 = address(tokens[0]);
-    address token1 = address(tokens[1]);
+  function getETHPx(address /**priceFeed */) public view override returns (uint) {
+    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
+    //address token0 = address(tokens[0]);
+    //address token1 = address(tokens[1]);
     uint totalSupply = _priceFeed.totalSupply();
     uint r0 = balances[0];
     uint r1 = balances[1];
@@ -364,8 +363,8 @@ contract RateProofOfConcept is UsingBaseOracle, IBaseOracle, IOracleRelay {
     //safe price would be ((reserve0 * p0) + (reserve1 * p1)) / totalSupply
    */
 
-    (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock) = VAULT.getPoolTokens(_poolId);
-    (uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
+    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
+    //(uint256 invariant, uint256 amp) = _priceFeed.getLastInvariant();
 
     uint px0 = assetOracles[address(tokens[0])].currentValue();
     uint px1 = assetOracles[address(tokens[1])].currentValue();
@@ -385,6 +384,7 @@ contract RateProofOfConcept is UsingBaseOracle, IBaseOracle, IOracleRelay {
   }
 
   /*******************************UTILIZE METASTABLEPOOL LOG ORACLE********************************/
+  /**
   function getOracleData() internal view {
     if (address(_priceFeed) != 0x3dd0843A028C86e0b760b1A76929d1C5Ef93a2dd) {
       (
@@ -402,6 +402,7 @@ contract RateProofOfConcept is UsingBaseOracle, IBaseOracle, IOracleRelay {
       console.log("Oracle rate  : ", oracleRate);
     }
   }
+   */
 
   /**
    * @dev Restores `value` from logarithmic space. `value` is expected to be the result of a call to `toLowResLog`,
@@ -521,7 +522,7 @@ contract RateProofOfConcept is UsingBaseOracle, IBaseOracle, IOracleRelay {
   For MetaStablePools
 
   */
-  function compareTokenBalances(IERC20[] memory tokens, uint256[] memory _balances) internal view {
+  function compareTokenBalances(IERC20[] memory /**tokens */, uint256[] memory _balances) internal view {
     (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
 
     uint256[] memory balances = _balances;
@@ -577,7 +578,7 @@ contract RateProofOfConcept is UsingBaseOracle, IBaseOracle, IOracleRelay {
   /*******************************GET VIRTUAL PRICE USING outGivenIn********************************/
   //idea https://github.com/balancer/balancer-v2-monorepo/blob/d2794ef7d8f6d321cde36b7c536e8d51971688bd/pkg/vault/contracts/balances/TwoTokenPoolsBalance.sol#L334
   //decode cash vs managed to see if maybe the input balances are wrong somehow
-  function compareOutGivenIn(IERC20[] memory tokens, uint256[] memory balances) internal view {
+  function compareOutGivenIn(IERC20[] memory /**tokens */, uint256[] memory balances) internal view {
     (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
     uint256 idxIn = 0;
     uint256 idxOut = 1;
@@ -606,13 +607,15 @@ contract RateProofOfConcept is UsingBaseOracle, IBaseOracle, IOracleRelay {
       outGivenIn = _calcOutGivenIn(amp, calcedBalances, idxIn, idxOut, tokenAmountIn, v);
     }
 
+    /**
     (uint256 calcedRate, uint256 expectedRate) = getOutGivenInRate(
       outGivenIn,
       assetOracles[address(tokens[0])].currentValue(),
       assetOracles[address(tokens[1])].currentValue()
     );
+     */
     //simple out given in should be price 0 * expectedRate
-    uint256 expectedOutput = assetOracles[address(tokens[0])].currentValue() * expectedRate;
+    //uint256 expectedOutput = assetOracles[address(tokens[0])].currentValue() * expectedRate;
     //console.log("Expected Rate: ", expectedRate);
     //console.log("Out given in : ", outGivenIn);
 

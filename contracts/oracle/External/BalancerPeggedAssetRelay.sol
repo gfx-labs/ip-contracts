@@ -27,7 +27,7 @@ interface IRateProvider {
 
 /*****************************************
  *
- * This relay gets a USD price for a wrapped asset from a balancer MetaStablePool
+ * This relay gets a USD TWAP for a wrapped asset from a balancer MetaStablePool
  *
  */
 
@@ -80,17 +80,4 @@ contract BalancerPeggedAssetRelay is IOracleRelay {
     uint256 result = _priceFeed.getTimeWeightedAverage(inputs)[0];
     return result;
   }
-
-  /**
-  function divide(
-    uint256 numerator,
-    uint256 denominator,
-    uint256 factor
-  ) internal pure returns (uint256) {
-    uint256 q = (numerator / denominator) * 10**factor;
-    uint256 r = ((numerator * 10**factor) / denominator) % 10**factor;
-
-    return q + r;
-  }
-   */
 }

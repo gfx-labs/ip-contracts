@@ -102,7 +102,6 @@ contract BPTstablePoolOracle is IOracleRelay {
     naivePrice = naiveValue / _priceFeed.totalSupply();
     require(naivePrice > 0, "invalid naive price");
   }
-
   /*******************************OUT GIVEN IN********************************/
   function compareOutGivenIn(
     uint256[] memory balances,
