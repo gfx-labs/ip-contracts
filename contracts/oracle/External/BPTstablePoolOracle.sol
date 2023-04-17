@@ -117,7 +117,7 @@ contract BPTstablePoolOracle is IOracleRelay {
     calcedBalances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1);
     uint256 finalBalanceOut = _calcOutGivenIn(amp, calcedBalances, idxIn, idxOut, tokenAmountIn, v);
 
-    outGivenIn = sub(sub(balances[idxOut], finalBalanceOut), 1);
+    outGivenIn = ((balances[idxOut] - finalBalanceOut) - 1);
   }
 
   function percentChange(uint256 a, uint256 b) internal pure returns (uint256 delta) {
@@ -211,27 +211,25 @@ contract BPTstablePoolOracle is IOracleRelay {
     uint256 sum = balances[0];
     uint256 P_D = balances[0] * balances.length;
     for (uint256 j = 1; j < balances.length; j++) {
-      P_D = divDown(mul(mul(P_D, balances[j]), balances.length), invariant);
-      sum = add(sum, balances[j]);
+      P_D = (((P_D * balances[j]) * balances.length) / invariant);
+      sum = sum + balances[j];
     }
     // No need to use safe math, based on the loop above `sum` is greater than or equal to `balances[tokenIndex]`
     sum = sum - balances[tokenIndex];
 
-    uint256 inv2 = mul(invariant, invariant);
+    uint256 inv2 = (invariant * invariant);
     // We remove the balance from c by multiplying it
-    uint256 c = mul(mul(divUp(inv2, mul(ampTimesTotal, P_D)), _AMP_PRECISION), balances[tokenIndex]);
-    uint256 b = sum + mul(divDown(invariant, ampTimesTotal), _AMP_PRECISION);
+    uint256 c = ((divUp(inv2, (ampTimesTotal * P_D)) * _AMP_PRECISION) * balances[tokenIndex]);
+    uint256 b = sum + ((invariant / ampTimesTotal) * _AMP_PRECISION);
 
     // We iterate to find the balance
     uint256 prevTokenBalance = 0;
     // We multiply the first iteration outside the loop with the invariant to set the value of the
     // initial approximation.
-    uint256 tokenBalance = divUp(add(inv2, c), add(invariant, b));
+    uint256 tokenBalance = divUp((inv2 + c), (invariant + b));
 
     for (uint256 i = 0; i < 255; i++) {
       prevTokenBalance = tokenBalance;
-
-      //tokenBalance = divUp(add(mul(tokenBalance, tokenBalance), c), sub(add(mul(tokenBalance, 2), b), invariant));
 
       uint256 numerator = (tokenBalance * tokenBalance) + c;
       uint256 denominator = ((tokenBalance * 2) + b) - invariant;
@@ -246,133 +244,6 @@ contract BPTstablePoolOracle is IOracleRelay {
       }
     }
     revert("STABLE_GET_BALANCE_DIDNT_CONVERGE");
-  }
-
-  function divUp(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b != 0, "divUp: Zero division");
-
-    if (a == 0) {
-      return 0;
-    } else {
-      return 1 + (a - 1) / b;
-    }
-  }
-
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    require(a == 0 || c / a == b, "mul: overflow");
-    return c;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    require(c >= a, "ADD_OVERFLOW");
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b <= a, "SUB_OVERFLOW");
-    uint256 c = a - b;
-    return c;
-  }
-
-  /*******************************CALCULATE BPT OUT********************************/
-  function calcBptOut(
-    IERC20[] memory tokens,
-    uint256[] memory _balances,
-    uint256 amp
-  ) internal view returns (uint256 output) {
-    //simulate a huge swap
-    //_balances = manipulateBalances(_balances, 14000e18);
-
-    uint256 currentV = _calculateInvariant(amp, _balances);
-    uint256 factor = 20;
-
-    _balances[0] = _balances[0] + 10 ** factor;
-    _balances[1] = _balances[1] + 10 ** factor;
-
-    uint256 newInvariant = _calculateInvariant(amp, _balances);
-
-    uint256 invariantRatio = divide(newInvariant, currentV, 18);
-
-    uint256 result = mulDown(_priceFeed.totalSupply(), (invariantRatio - 1e18));
-
-    //price0 + price1
-    uint256 numerator = assetOracles[address(tokens[0])].currentValue() +
-      assetOracles[address(tokens[1])].currentValue();
-
-    output = divide(numerator, result, factor);
-  }
-
-  function manipulateBalances(
-    uint256[] memory balances,
-    uint256 tokenAmountIn
-  ) internal view returns (uint256[] memory manipulatedBalances) {
-    manipulatedBalances = new uint256[](2);
-
-    //simulate balance change after gigantic swap
-    manipulatedBalances[0] = balances[0] - tokenAmountIn;
-    manipulatedBalances[1] = balances[1] + compareOutGivenIn(balances, tokenAmountIn);
-  }
-
-  ///@notice The invariant should be resistant to changes in the pool balances due to swaps
-  ///@notice The invariant should scale with the total supply of LP tokens
-  function _calculateInvariant(
-    uint256 amplificationParameter,
-    uint256[] memory balances
-  ) internal pure returns (uint256) {
-    uint256 _AMP_PRECISION = 1e3;
-    /**********************************************************************************************
-        // invariant                                                                                 //
-        // D = invariant                                                  D^(n+1)                    //
-        // A = amplification coefficient      A  n^n S + D = A D n^n + -----------                   //
-        // S = sum of balances                                             n^n P                     //
-        // P = product of balances                                                                   //
-        // n = number of tokens                                                                      //
-        **********************************************************************************************/
-
-    // Always round down, to match Vyper's arithmetic (which always truncates).
-
-    uint256 sum = 0; // S in the Curve version
-    uint256 numTokens = balances.length;
-    for (uint256 i = 0; i < numTokens; i++) {
-      sum = sum + (balances[i]);
-    }
-    if (sum == 0) {
-      return 0;
-    }
-
-    uint256 prevInvariant; // Dprev in the Curve version
-    uint256 invariant = sum; // D in the Curve version
-    uint256 ampTimesTotal = amplificationParameter * numTokens; // Ann in the Curve version
-
-    for (uint256 i = 0; i < 255; i++) {
-      uint256 D_P = invariant;
-
-      for (uint256 j = 0; j < numTokens; j++) {
-        // (D_P * invariant) / (balances[j] * numTokens)
-        D_P = divDown((D_P * invariant), (balances[j] * numTokens));
-      }
-
-      prevInvariant = invariant;
-
-      invariant = divDown(
-        // (ampTimesTotal * sum) / AMP_PRECISION + D_P * numTokens
-        ((divDown((ampTimesTotal * sum), _AMP_PRECISION) + ((D_P * numTokens))) * invariant),
-        // ((ampTimesTotal - _AMP_PRECISION) * invariant) / _AMP_PRECISION + (numTokens + 1) * D_P
-        (divDown(((ampTimesTotal - _AMP_PRECISION) * invariant), _AMP_PRECISION) + (((numTokens + 1) * D_P)))
-      );
-
-      if (invariant > prevInvariant) {
-        if (invariant - prevInvariant <= 1) {
-          return invariant;
-        }
-      } else if (prevInvariant - invariant <= 1) {
-        return invariant;
-      }
-    }
-
-    revert("STABLE_INVARIANT_DIDNT_CONVERGE");
   }
 
   /*******************************SETUP FUNCTIONS********************************/
@@ -397,9 +268,14 @@ contract BPTstablePoolOracle is IOracleRelay {
     return product / 1e18;
   }
 
-  function divDown(uint256 a, uint256 b) internal pure returns (uint256) {
-    require(b != 0, "divDown: Zero division");
-    return a / b;
+  function divUp(uint256 a, uint256 b) internal pure returns (uint256) {
+    require(b != 0, "divUp: Zero division");
+
+    if (a == 0) {
+      return 0;
+    } else {
+      return 1 + (a - 1) / b;
+    }
   }
 
   function divide(uint256 numerator, uint256 denominator, uint256 factor) internal pure returns (uint256 result) {
