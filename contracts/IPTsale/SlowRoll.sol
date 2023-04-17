@@ -17,11 +17,7 @@ interface IERC20 {
 
   function approve(address spender, uint256 amount) external returns (bool);
 
-  function transferFrom(
-    address sender,
-    address recipient,
-    uint256 amount
-  ) external returns (bool);
+  function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
   event Transfer(address indexed from, address indexed to, uint256 value);
   event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -30,7 +26,6 @@ interface IERC20 {
 /// @title slowroll is the third gen wave contract
 // solhint-disable comprehensive-interface
 contract SlowRoll {
-
   /// user defined variables
   uint256 public _maxQuantity; // max quantity available in wave
   uint64 public _startPrice; // start price
@@ -42,7 +37,6 @@ contract SlowRoll {
   uint64 public _endTime; // start time of the wave + waveDuration
   uint256 public _soldQuantity; // amount currently sold in wave
   /// end contract controlled values
-
 
   // the token used to claim points, USDC
   IERC20 public _pointsToken = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // usdc
@@ -61,20 +55,23 @@ contract SlowRoll {
     _maxQuantity = 1_000_000 * 1e18; // 1_00_000 IPT, in wei - max IPT sold per day
     _startPrice = 250_000; // 25 cents
     _maxPrice = 500_000; // 50 cents
-    _waveDuration = 60*60*22; // 22 hours in seconds
+    _waveDuration = 60 * 60 * 22; // 22 hours in seconds
   }
 
   function setMaxQuantity(uint256 maxQuantity_) external onlyOwner {
     _maxQuantity = maxQuantity_;
   }
+
   function setStartPrice(uint64 startPrice_) external onlyOwner {
     _startPrice = startPrice_;
-    require(_startPrice < _maxPrice,"start not < max");
+    require(_startPrice < _maxPrice, "start not < max");
   }
+
   function setMaxPrice(uint64 maxPrice_) external onlyOwner {
     _maxPrice = maxPrice_;
-    require(_startPrice < _maxPrice,"start not < max");
+    require(_startPrice < _maxPrice, "start not < max");
   }
+
   function setWaveDuration(uint64 waveDuration_) external onlyOwner {
     _waveDuration = waveDuration_;
   }
@@ -82,6 +79,7 @@ contract SlowRoll {
   function forceNewDay() external onlyOwner {
     new_day();
   }
+
   ///@notice sends reward tokens to the receiver
   function withdraw(uint256 amount) external onlyOwner {
     giveTo(_owner, amount);
@@ -94,9 +92,7 @@ contract SlowRoll {
 
   /// @notice submit usdc to be converted
   /// @param amount amount of usdc
-  function getPoints(
-    uint256 amount
-  ) public {
+  function getPoints(uint256 amount) public {
     try_new_day();
     uint256 currentPrice = current_price();
     uint256 rewardAmount = reward_amount(amount, currentPrice);
@@ -108,12 +104,12 @@ contract SlowRoll {
 
   /// ALL FUNCTIONS BELOW SHOULD BE INTERNAL
 
-  function canClaim() internal view returns (bool){
+  function canClaim() internal view returns (bool) {
     return _maxQuantity >= _soldQuantity;
   }
 
   function try_new_day() internal {
-    if(uint64(block.timestamp) > _endTime) {
+    if (uint64(block.timestamp) > _endTime) {
       new_day();
     }
   }
@@ -127,7 +123,7 @@ contract SlowRoll {
   function current_price() internal view returns (uint256) {
     // this is sold %, in 1e18 terms, multiplied by the difference between the start and max current_price
     // this will give us the amount to increase the price, in 1e18 terms
-    uint256 scalar = (_soldQuantity * 1e18 / _maxQuantity) * (_maxPrice - _startPrice);
+    uint256 scalar = ((_soldQuantity * 1e18) / _maxQuantity) * (_maxPrice - _startPrice);
     // the price therefore is that number / 1e18 + the start price
     return (scalar / 1e18) + _startPrice;
   }
@@ -136,8 +132,8 @@ contract SlowRoll {
   /// @param amount the amount of USDC
   /// @param price is the amount of USDC, in usdc base units, to buy 1e18 of IPT
   /// @return the amount of IPT that the usdc amount entitles to.
-  function reward_amount(uint256 amount, uint256 price ) internal pure returns (uint256) {
-    return 1e18 * amount / price;
+  function reward_amount(uint256 amount, uint256 price) internal pure returns (uint256) {
+    return (1e18 * amount) / price;
   }
 
   /// @notice function which transfer the point token

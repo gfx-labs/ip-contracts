@@ -6,9 +6,13 @@ import {IERC20} from "./_external/IERC20.sol";
 interface IWUSDI is IERC20 {
   /** view functions */
   function underlying() external view returns (address);
+
   function totalUnderlying() external view returns (uint256);
-  function balanceOfUnderlying(address owner) external view returns (uint256); 
+
+  function balanceOfUnderlying(address owner) external view returns (uint256);
+
   function underlyingToWrapper(uint256 usdi_amount) external view returns (uint256);
+
   function wrapperToUnderlying(uint256 wUSDI_amount) external view returns (uint256);
 
   /** write functions */

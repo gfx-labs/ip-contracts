@@ -16,11 +16,7 @@ contract ChainlinkOracleRelay is IOracleRelay {
   /// @param  feed_address address of chainlink feed
   /// @param mul numerator of scalar
   /// @param div denominator of scalar
-  constructor(
-    address feed_address,
-    uint256 mul,
-    uint256 div
-  ) {
+  constructor(address feed_address, uint256 mul, uint256 div) {
     _aggregator = IAggregator(feed_address);
     _multiply = mul;
     _divide = div;

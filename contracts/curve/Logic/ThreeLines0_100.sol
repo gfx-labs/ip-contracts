@@ -21,15 +21,8 @@ contract ThreeLines0_100 is ICurveSlave {
   /// @param r2 y value at x >= s2 && x < 1e18
   /// @param s1 x value of first breakpoint
   /// @param s2 x value of second breakpoint
-  constructor(
-    int256 r0,
-    int256 r1,
-    int256 r2,
-    int256 s1,
-    int256 s2
-  ) {
-
-    require((0 < r2) && (r2 < r1) && ( r1 < r0), "Invalid curve");
+  constructor(int256 r0, int256 r1, int256 r2, int256 s1, int256 s2) {
+    require((0 < r2) && (r2 < r1) && (r1 < r0), "Invalid curve");
     require((0 < s1) && (s1 < s2) && (s2 < 1e18), "Invalid breakpoint values");
 
     _r0 = r0;
@@ -72,12 +65,7 @@ contract ThreeLines0_100 is ICurveSlave {
   /// @param distance distance to interpolate. "x" in our equation
   /// @param b y intercept, "b" in our equation
   /// @return value of g(x)
-  function linearInterpolation(
-    int256 rise,
-    int256 run,
-    int256 distance,
-    int256 b
-  ) private pure returns (int256) {
+  function linearInterpolation(int256 rise, int256 run, int256 distance, int256 b) private pure returns (int256) {
     // 6 digits of precision should be more than enough
     int256 mE6 = (rise * 1e6) / run;
     // simply multiply the slope by the distance traveled and add the intercept

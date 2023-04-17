@@ -236,10 +236,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
     }
 
     // solhint-disable-next-line avoid-low-level-calls
-    (
-      bool success, /*bytes memory returnData*/
-
-    ) = target.call{value: value}(callData);
+    (bool success /*bytes memory returnData*/, ) = target.call{value: value}(callData);
     require(success, "tx execution reverted.");
 
     emit ExecuteTransaction(txHash, target, value, signature, data, eta);
@@ -307,16 +304,13 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @return signatures proposal signatures
    * @return calldatas proposal calldatae
    */
-  function getActions(uint256 proposalId)
+  function getActions(
+    uint256 proposalId
+  )
     external
     view
     override
-    returns (
-      address[] memory targets,
-      uint256[] memory values,
-      string[] memory signatures,
-      bytes[] memory calldatas
-    )
+    returns (address[] memory targets, uint256[] memory values, string[] memory signatures, bytes[] memory calldatas)
   {
     Proposal storage p = proposals[proposalId];
     return (p.targets, p.values, p.signatures, p.calldatas);
@@ -379,11 +373,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @param support The support value for the vote. 0=against, 1=for, 2=abstain
    * @param reason The reason given for the vote by the voter
    */
-  function castVoteWithReason(
-    uint256 proposalId,
-    uint8 support,
-    string calldata reason
-  ) external override {
+  function castVoteWithReason(uint256 proposalId, uint8 support, string calldata reason) external override {
     emit VoteCast(_msgSender(), proposalId, support, castVoteInternal(_msgSender(), proposalId, support), reason);
   }
 
@@ -391,13 +381,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @notice Cast a vote for a proposal by signature
    * @dev external override function that accepts EIP-712 signatures for voting on proposals.
    */
-  function castVoteBySig(
-    uint256 proposalId,
-    uint8 support,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
-  ) external override {
+  function castVoteBySig(uint256 proposalId, uint8 support, uint8 v, bytes32 r, bytes32 s) external override {
     bytes32 domainSeparator = keccak256(
       abi.encode(DOMAIN_TYPEHASH, keccak256(bytes(name)), getChainIdInternal(), address(this))
     );
@@ -421,11 +405,7 @@ contract GovernorCharlieDelegate is GovernorCharlieDelegateStorage, GovernorChar
    * @param support The support value for the vote. 0=against, 1=for, 2=abstain
    * @return The number of votes cast
    */
-  function castVoteInternal(
-    address voter,
-    uint256 proposalId,
-    uint8 support
-  ) internal returns (uint96) {
+  function castVoteInternal(address voter, uint256 proposalId, uint8 support) internal returns (uint96) {
     require(state(proposalId) == ProposalState.Active, "voting is closed");
     require(support <= 2, "invalid vote type");
     Proposal storage proposal = proposals[proposalId];

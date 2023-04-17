@@ -30,13 +30,8 @@ contract UniswapV2OracleRelay is IOracleRelay {
 
   /// @notice all values set at construction time
 
-///@param targetToken is the token we want the price of, in terms of the other token
-  constructor(
-    IUniswapV2Pair pair,
-    address targetToken,
-    uint256 mul,
-    uint256 div
-  ) {
+  ///@param targetToken is the token we want the price of, in terms of the other token
+  constructor(IUniswapV2Pair pair, address targetToken, uint256 mul, uint256 div) {
     _mul = mul;
     _div = div;
 

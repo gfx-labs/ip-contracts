@@ -60,11 +60,7 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
-    (
-      IERC20[] memory tokens,
-      uint256[] memory balances, /**uint256 lastChangeBlock */
-
-    ) = VAULT.getPoolTokens(_poolId);
+    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
     uint256 robustPrice = getBPTprice(tokens, int256(_priceFeed.totalSupply()));
     require(robustPrice > 0, "invalid robust price");
 

@@ -30,13 +30,7 @@ contract GeneralizedBalancerOracle is IOracleRelay {
   IBalancerFeed private immutable _priceFeed;
   IOracleRelay public constant ethOracle = IOracleRelay(0x22B01826063564CBe01Ef47B96d623b739F82Bf2);
 
-  constructor(
-    uint32 lookback,
-    address pool_address,
-    bool invert,
-    uint256 mul,
-    uint256 div
-  ) {
+  constructor(uint32 lookback, address pool_address, bool invert, uint256 mul, uint256 div) {
     _priceFeed = IBalancerFeed(pool_address);
     _multiply = mul;
     _divide = div;
@@ -48,7 +42,6 @@ contract GeneralizedBalancerOracle is IOracleRelay {
   function currentValue() external view override returns (uint256) {
     uint256 priceInEth = getLastSecond();
     uint256 ethPrice = ethOracle.currentValue();
-
 
     ///ethPrice to assets per 1 eth
     if (_invert) {
@@ -83,15 +76,10 @@ contract GeneralizedBalancerOracle is IOracleRelay {
     return result;
   }
 
-  function divide(
-    uint256 numerator,
-    uint256 denominator,
-    uint256 factor
-  ) internal pure returns (uint256) {
-    uint256 q = (numerator / denominator) * 10**factor;
-    uint256 r = ((numerator * 10**factor) / denominator) % 10**factor;
+  function divide(uint256 numerator, uint256 denominator, uint256 factor) internal pure returns (uint256) {
+    uint256 q = (numerator / denominator) * 10 ** factor;
+    uint256 r = ((numerator * 10 ** factor) / denominator) % 10 ** factor;
 
     return q + r;
   }
 }
-

@@ -21,11 +21,7 @@ contract CappedToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   /// @param name_ name of capped token
   /// @param symbol_ symbol of capped token
   /// @param underlying_ the address of underlying
-  function initialize(
-    string memory name_,
-    string memory symbol_,
-    address underlying_
-  ) public initializer {
+  function initialize(string memory name_, string memory symbol_, address underlying_) public initializer {
     __Ownable_init();
     __ERC20_init(name_, symbol_);
     _underlying = IERC20Metadata(underlying_);
@@ -53,7 +49,7 @@ contract CappedToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   }
 
   function underlyingScalar() public view returns (uint256) {
-    return (10**(18 - _underlying_decimals));
+    return (10 ** (18 - _underlying_decimals));
   }
 
   /// @notice get underlying ratio

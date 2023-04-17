@@ -61,11 +61,7 @@ abstract contract ERC1967Upgrade {
    *
    * Emits an {Upgraded} event.
    */
-  function _upgradeToAndCall(
-    address newImplementation,
-    bytes memory data,
-    bool forceCall
-  ) internal {
+  function _upgradeToAndCall(address newImplementation, bytes memory data, bool forceCall) internal {
     _upgradeTo(newImplementation);
     if (data.length > 0 || forceCall) {
       Address.functionDelegateCall(newImplementation, data);
@@ -77,11 +73,7 @@ abstract contract ERC1967Upgrade {
    *
    * Emits an {Upgraded} event.
    */
-  function _upgradeToAndCallSecure(
-    address newImplementation,
-    bytes memory data,
-    bool forceCall
-  ) internal {
+  function _upgradeToAndCallSecure(address newImplementation, bytes memory data, bool forceCall) internal {
     address oldImplementation = _getImplementation();
 
     // Initial upgrade and setup call
@@ -177,11 +169,7 @@ abstract contract ERC1967Upgrade {
    *
    * Emits a {BeaconUpgraded} event.
    */
-  function _upgradeBeaconToAndCall(
-    address newBeacon,
-    bytes memory data,
-    bool forceCall
-  ) internal {
+  function _upgradeBeaconToAndCall(address newBeacon, bytes memory data, bool forceCall) internal {
     _setBeacon(newBeacon);
     emit BeaconUpgraded(newBeacon);
     if (data.length > 0 || forceCall) {

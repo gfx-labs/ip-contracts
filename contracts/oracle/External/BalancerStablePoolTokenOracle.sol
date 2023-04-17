@@ -51,11 +51,7 @@ contract BalancerStablePoolTokenOracle is IOracleRelay {
    * @param _tokenB - address of the token whose price is known
    * @param _oracleB - address of the oracle relay for the known safe price for the known token
    */
-  constructor(
-    address pool_address,
-    address _tokenB,
-    address _oracleB
-  ) {
+  constructor(address pool_address, address _tokenB, address _oracleB) {
     _priceFeed = IBalancerFeed(pool_address);
     _poolId = _priceFeed.getPoolId();
 
@@ -65,8 +61,9 @@ contract BalancerStablePoolTokenOracle is IOracleRelay {
 
   function currentValue() external view override returns (uint256) {
     (
-      /**IERC20[] memory tokens */,
-      uint256[] memory balances, /**uint256 lastChangeBlock */
+      ,
+      /**IERC20[] memory tokens */
+      uint256[] memory balances /**uint256 lastChangeBlock */,
 
     ) = VAULT.getPoolTokens(_poolId);
     uint256 pyx = getSpotPrice(balances);
@@ -119,16 +116,5 @@ contract BalancerStablePoolTokenOracle is IOracleRelay {
       return ((aInflated - 1) / b) + 1;
     }
   }
-  /**
-  function divide(
-    uint256 numerator,
-    uint256 denominator,
-    uint256 factor
-  ) internal pure returns (uint256) {
-    uint256 q = (numerator / denominator) * 10**factor;
-    uint256 r = ((numerator * 10**factor) / denominator) % 10**factor;
-
-    return q + r;
-  }
-   */
+  
 }

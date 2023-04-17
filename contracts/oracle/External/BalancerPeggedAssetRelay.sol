@@ -28,7 +28,7 @@ interface IRateProvider {
 /*****************************************
  *
  * This relay gets a USD price for a wrapped asset from a balancer MetaStablePool
- * 
+ *
  */
 
 contract BalancerPeggedAssetRelay is IOracleRelay {
@@ -41,17 +41,11 @@ contract BalancerPeggedAssetRelay is IOracleRelay {
   IOracleRelay public constant ethOracle = IOracleRelay(0x22B01826063564CBe01Ef47B96d623b739F82Bf2);
 
   /**
-  * @param lookback - How many seconds to look back when generating TWAP
-  * @param pool_address - Balancer MetaStablePool address
-  * @param rateProvider - Provides the rate for the peg, typically can be found at @param pool_address.getRateProviders()
-  */
-  constructor(
-    uint32 lookback,
-    address pool_address,
-    address rateProvider,
-    uint256 mul,
-    uint256 div
-  ) {
+   * @param lookback - How many seconds to look back when generating TWAP
+   * @param pool_address - Balancer MetaStablePool address
+   * @param rateProvider - Provides the rate for the peg, typically can be found at @param pool_address.getRateProviders()
+   */
+  constructor(uint32 lookback, address pool_address, address rateProvider, uint256 mul, uint256 div) {
     _priceFeed = IBalancerFeed(pool_address);
     _rateProvider = IRateProvider(rateProvider);
     _multiply = mul;

@@ -62,13 +62,9 @@ contract ERC721Upgradeable is
   /**
    * @dev See {IERC165-supportsInterface}.
    */
-  function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(ERC165Upgradeable, IERC165Upgradeable)
-    returns (bool)
-  {
+  function supportsInterface(
+    bytes4 interfaceId
+  ) public view virtual override(ERC165Upgradeable, IERC165Upgradeable) returns (bool) {
     return
       interfaceId == type(IERC721Upgradeable).interfaceId ||
       interfaceId == type(IERC721MetadataUpgradeable).interfaceId ||
@@ -166,11 +162,7 @@ contract ERC721Upgradeable is
   /**
    * @dev See {IERC721-transferFrom}.
    */
-  function transferFrom(
-    address from,
-    address to,
-    uint256 tokenId
-  ) public virtual override {
+  function transferFrom(address from, address to, uint256 tokenId) public virtual override {
     //solhint-disable-next-line max-line-length
     require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
 
@@ -180,23 +172,14 @@ contract ERC721Upgradeable is
   /**
    * @dev See {IERC721-safeTransferFrom}.
    */
-  function safeTransferFrom(
-    address from,
-    address to,
-    uint256 tokenId
-  ) public virtual override {
+  function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
     safeTransferFrom(from, to, tokenId, "");
   }
 
   /**
    * @dev See {IERC721-safeTransferFrom}.
    */
-  function safeTransferFrom(
-    address from,
-    address to,
-    uint256 tokenId,
-    bytes memory _data
-  ) public virtual override {
+  function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory _data) public virtual override {
     require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: transfer caller is not owner nor approved");
     _safeTransfer(from, to, tokenId, _data);
   }
@@ -219,12 +202,7 @@ contract ERC721Upgradeable is
    *
    * Emits a {Transfer} event.
    */
-  function _safeTransfer(
-    address from,
-    address to,
-    uint256 tokenId,
-    bytes memory _data
-  ) internal virtual {
+  function _safeTransfer(address from, address to, uint256 tokenId, bytes memory _data) internal virtual {
     _transfer(from, to, tokenId);
     require(_checkOnERC721Received(from, to, tokenId, _data), "ERC721: transfer to non ERC721Receiver implementer");
   }
@@ -272,11 +250,7 @@ contract ERC721Upgradeable is
    * @dev Same as {xref-ERC721-_safeMint-address-uint256-}[`_safeMint`], with an additional `data` parameter which is
    * forwarded in {IERC721Receiver-onERC721Received} to contract recipients.
    */
-  function _safeMint(
-    address to,
-    uint256 tokenId,
-    bytes memory _data
-  ) internal virtual {
+  function _safeMint(address to, uint256 tokenId, bytes memory _data) internal virtual {
     _mint(to, tokenId);
     require(
       _checkOnERC721Received(address(0), to, tokenId, _data),
@@ -343,11 +317,7 @@ contract ERC721Upgradeable is
    *
    * Emits a {Transfer} event.
    */
-  function _transfer(
-    address from,
-    address to,
-    uint256 tokenId
-  ) internal virtual {
+  function _transfer(address from, address to, uint256 tokenId) internal virtual {
     require(ERC721Upgradeable.ownerOf(tokenId) == from, "ERC721: transfer of token that is not own");
     require(to != address(0), "ERC721: transfer to the zero address");
 
@@ -378,11 +348,7 @@ contract ERC721Upgradeable is
    *
    * Emits a {ApprovalForAll} event.
    */
-  function _setApprovalForAll(
-    address owner,
-    address operator,
-    bool approved
-  ) internal virtual {
+  function _setApprovalForAll(address owner, address operator, bool approved) internal virtual {
     require(owner != operator, "ERC721: approve to caller");
     _operatorApprovals[owner][operator] = approved;
     emit ApprovalForAll(owner, operator, approved);
@@ -435,11 +401,7 @@ contract ERC721Upgradeable is
    *
    * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
    */
-  function _beforeTokenTransfer(
-    address from,
-    address to,
-    uint256 tokenId
-  ) internal virtual {}
+  function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal virtual {}
 
   uint256[44] private __gap;
 }

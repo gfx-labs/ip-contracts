@@ -249,7 +249,7 @@ contract RateProofOfConceptOld is FlashLoanReceiverBase, IOracleRelay {
 
     IBalancerPool pool = IBalancerPool(address(_priceFeed));
 
-    /// NEXT another idea, steal BPT and exit pool in bulk to move balances? 
+    /// NEXT another idea, steal BPT and exit pool in bulk to move balances?
     VAULT.joinPool(
       _poolId,
       address(this),
