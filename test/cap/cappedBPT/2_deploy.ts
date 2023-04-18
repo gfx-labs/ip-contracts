@@ -14,7 +14,6 @@ import { stealMoney } from "../../../util/money";
 
 import {
   AnchoredViewRelay__factory,
-  BalancerStablePoolTokenOracle__factory,
   BPT_WEIGHTED_ORACLE__factory,
   CappedBptToken__factory,
   IOracleRelay,
@@ -22,7 +21,6 @@ import {
   UniswapV3TokenOracleRelay__factory,
   VaultBPT__factory,
   WstETHRelay__factory,
-  StablePoolOracle,
   RateProofOfConcept__factory,
   IOracleRelay__factory,
   BPTstablePoolOracle__factory
@@ -141,9 +139,8 @@ describe("Setup oracles, deploy and register cap tokens", () => {
   let stEThMetaStablePoolOracle: IOracleRelay
   let weightedPoolOracle: IOracleRelay
 
-  let auraUniRelay: IOracleRelay
+  let auraUniOracle: IOracleRelay
   let auraBalRelay: IOracleRelay
-  let auraBalAnchorView: IOracleRelay
   let auraStablePoolLPoracle: IOracleRelay
   let primeBPToracle: IOracleRelay
 
@@ -232,7 +229,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
       BN("1"),
       BN("1")
     )
-    await uniAuraRelay.deployed()     
+    await uniAuraRelay.deployed()
 
     const testWeightedOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       wethAuraBPT, //pool_address
@@ -258,7 +255,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
   it("auraBal oracle", async () => {
     const uniPool = "0xFdeA35445489e608fb4F20B6E94CCFEa8353Eabd"//3k, meh liquidity
 
-    auraUniRelay = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
+    auraUniOracle = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
       500,
       uniPool,
       false,
@@ -266,12 +263,10 @@ describe("Setup oracles, deploy and register cap tokens", () => {
       BN("1")
     )
     await mineBlock()
-    await auraUniRelay.deployed()
+    await auraUniOracle.deployed()
 
-    //showBodyCyan("AuraBal uni relay price: ", await toNumber(await auraUniRelay.currentValue()))
+    //showBodyCyan("AuraBal uni relay price: ", await toNumber(await auraUniOracle.currentValue()))
 
-    //aura relay using balancer
-    const balancerPool = "0x3dd0843A028C86e0b760b1A76929d1C5Ef93a2dd" //auraBal/"veBal" BPT stable pool (B-80BAL-20WETH - 0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56)
 
     primeBPToracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       primeBPT,
@@ -283,27 +278,8 @@ describe("Setup oracles, deploy and register cap tokens", () => {
     )
 
     await primeBPToracle.deployed()
-    //showBody("Prime BPT oracle price: ", await toNumber(await primeBPToracle.currentValue()))
-
-    //todo double check this
-    auraBalRelay = await new BalancerStablePoolTokenOracle__factory(s.Frank).deploy(
-      balancerPool,
-      primeBPT,
-      primeBPToracle.address
-    )
-    await auraBalRelay.deployed()
-    showBodyCyan("AuraBal invariant token relay price: ", await toNumber(await auraBalRelay.currentValue()))
-
-    //anchorView
-    auraBalAnchorView = await new AnchoredViewRelay__factory(s.Frank).deploy(
-      auraUniRelay.address,
-      auraBalRelay.address,
-      BN("10"),
-      BN("100")
-    )
-    await auraBalAnchorView.deployed()
-    showBodyCyan("AuraBal anchor view result: ", await toNumber(await auraBalAnchorView.currentValue()))
-  })
+    showBody("Prime BPT oracle price: ", await toNumber(await primeBPToracle.currentValue()))  
+})
 
   //   * Set up oracle for stable pool 'prime' BPT / auraBal LP token 0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd
   //   * This is the oracle used for the price of the reward token being listed
@@ -312,7 +288,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
       s.primeAuraBalLP.address,
       "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [primeBPT, s.auraBal.address],//prime BPT / auraBal
-      [primeBPToracle.address, auraBalAnchorView.address],//prime BPT oracle / auraBal oracle
+      [primeBPToracle.address, auraUniOracle.address],//prime BPT oracle / auraBal oracle
       BN("230"),
       BN("10000")
     )
@@ -321,7 +297,6 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     //showBody("Feed addr: ", s.primeAuraBalLP.address)
     //showBody("Underlying price for prime BPT: ", await toNumber(await primeBPToracle.currentValue()))
-    //showBody("Underlying price for aura Bal : ", await toNumber(await auraBalAnchorView.currentValue()))
   })
 
   it("Deploy and Register gaugeToken", async () => {
@@ -378,7 +353,7 @@ describe("Setup oracles, deploy and register cap tokens", () => {
     await s.VotingVaultController.connect(s.owner).registerUnderlying(s.auraBal.address, s.CappedAuraBal.address)
 
     //register oracle
-    await s.Oracle.connect(s.owner).setRelay(s.CappedAuraBal.address, auraBalAnchorView.address)
+    await s.Oracle.connect(s.owner).setRelay(s.CappedAuraBal.address, auraUniOracle.address)
     //showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedAuraBal.address)))
 
     //register on vault controller

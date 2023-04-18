@@ -5,8 +5,6 @@ import "../IOracleRelay.sol";
 import "../../_external/IERC20.sol";
 import "../../_external/balancer/IBalancerVault.sol";
 
-import "hardhat/console.sol";
-
 interface IBalancerPool {
   function getPoolId() external view returns (bytes32);
 
@@ -34,10 +32,15 @@ contract BPTstablePoolOracle is IOracleRelay {
   mapping(address => IOracleRelay) public assetOracles;
 
   //Balancer Vault
-  IBalancerVault public immutable VAULT; // = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+  IBalancerVault public immutable VAULT;
 
   /**
    * @param pool_address - Balancer StablePool or MetaStablePool address
+   * @param balancerVault is the address for the Balancer Vault contract
+   * @param _tokens should be length 2 and contain both underlying assets for the pool
+   * @param _oracles shoulb be length 2 and contain a safe external on-chain oracle for each @param _tokens in the same order
+   * @notice the quotient of @param widthNumerator and @param widthDenominator should be the percent difference the exchange rate
+   * is able to diverge from the expected exchange rate derived from just the external oracles
    */
   constructor(
     address pool_address,
@@ -67,9 +70,9 @@ contract BPTstablePoolOracle is IOracleRelay {
 
     uint256 tokenAmountIn = 1000e18;
 
-    uint256 outGivenIn = compareOutGivenIn(balances, tokenAmountIn);
+    uint256 outGivenIn = getOutGivenIn(balances, tokenAmountIn);
 
-    (uint256 calcedRate, uint256 expectedRate) = getOutGivenInExchangeRate(
+    (uint256 calcedRate, uint256 expectedRate) = getExchangeRates(
       outGivenIn,
       tokenAmountIn,
       assetOracles[address(tokens[0])].currentValue(),
@@ -84,36 +87,14 @@ contract BPTstablePoolOracle is IOracleRelay {
   }
 
   /*******************************GET & CHECK NAIVE PRICE********************************/
+  ///@notice get the naive price by dividing the TVL/total BPT supply
   function getNaivePrice(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 naivePrice) {
-    uint256 naiveValue = 0;
+    uint256 naiveTVL = 0;
     for (uint256 i = 0; i < tokens.length; i++) {
-      naiveValue += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
+      naiveTVL += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
     }
-    naivePrice = naiveValue / _priceFeed.totalSupply();
+    naivePrice = naiveTVL / _priceFeed.totalSupply();
     require(naivePrice > 0, "invalid naive price");
-  }
-
-  /*******************************OUT GIVEN IN********************************/
-  function compareOutGivenIn(
-    uint256[] memory balances,
-    uint256 tokenAmountIn
-  ) internal view returns (uint256 outGivenIn) {
-    (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
-    uint256 idxIn = 0;
-    uint256 idxOut = 1;
-    uint256[] memory calcedBalances = new uint256[](2);
-    calcedBalances[0] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 0);
-
-    calcedBalances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1);
-    uint256 finalBalanceOut = _calcOutGivenIn(amp, calcedBalances, idxIn, idxOut, tokenAmountIn, v);
-
-    outGivenIn = ((balances[idxOut] - finalBalanceOut) - 1);
-  }
-
-  function percentChange(uint256 a, uint256 b) internal pure returns (uint256 delta) {
-    uint256 max = a > b ? a : b;
-    uint256 min = b != max ? b : a;
-    delta = divide((max - min), min, 18);
   }
 
   ///@notice ensure the exchange rate is within the expected range
@@ -125,23 +106,22 @@ contract BPTstablePoolOracle is IOracleRelay {
     require(delta < buffer, "Price out of bounds");
   }
 
-  function getSimpleExchangeRate(uint256 price0, uint256 price1) internal pure returns (uint256 expectedRate) {
-    expectedRate = divide(price1, price0, 18);
-  }
+  /*******************************OUT GIVEN IN********************************/
+  function getOutGivenIn(uint256[] memory balances, uint256 tokenAmountIn) internal view returns (uint256 outGivenIn) {
+    (uint256 v, uint256 amp) = _priceFeed.getLastInvariant();
+    uint256 idxIn = 0;
+    uint256 idxOut = 1;
 
-  function getOutGivenInExchangeRate(
-    uint256 outGivenIn,
-    uint256 tokenAmountIn,
-    uint256 price0,
-    uint256 price1
-  ) internal pure returns (uint256 calcedRate, uint256 expectedRate) {
-    expectedRate = getSimpleExchangeRate(price0, price1);
+    //first calculate the balances, math doesn't work with reported balances on their own
+    uint256[] memory calcedBalances = new uint256[](2);
+    calcedBalances[0] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 0);
+    calcedBalances[1] = _getTokenBalanceGivenInvariantAndAllOtherBalances(amp, balances, v, 1);
 
-    uint256 numerator = divide(outGivenIn * price1, 1e18, 18);
+    //get the ending balance for output token (always index 1)
+    uint256 finalBalanceOut = _calcOutGivenIn(amp, calcedBalances, idxIn, idxOut, tokenAmountIn, v);
 
-    uint256 denominator = divide((tokenAmountIn * price0), 1e18, 18);
-
-    calcedRate = divide(numerator, denominator, 18);
+    //outGivenIn is a function of the actual starting balance, not the calculated balance
+    outGivenIn = ((balances[idxOut] - finalBalanceOut) - 1);
   }
 
   // Computes how many tokens can be taken out of a pool if `tokenAmountIn` are sent, given the current balances.
@@ -176,6 +156,8 @@ contract BPTstablePoolOracle is IOracleRelay {
       tokenIndexOut
     );
     balances[tokenIndexIn] = balances[tokenIndexIn] - tokenAmountIn;
+
+    //we simply return finalBalanceOut here, and get outGivenIn elsewhere
     return finalBalanceOut;
     /**
     if (balances[tokenIndexOut] > finalBalanceOut) {
@@ -237,6 +219,37 @@ contract BPTstablePoolOracle is IOracleRelay {
   }
 
   /*******************************PURE MATH FUNCTIONS********************************/
+  ///@notice get exchange rates
+  function getExchangeRates(
+    uint256 outGivenIn,
+    uint256 tokenAmountIn,
+    uint256 price0,
+    uint256 price1
+  ) internal pure returns (uint256 calcedRate, uint256 expectedRate) {
+    expectedRate = divide(price1, price0, 18);
+
+    uint256 numerator = divide(outGivenIn * price1, 1e18, 18);
+
+    uint256 denominator = divide((tokenAmountIn * price0), 1e18, 18);
+
+    calcedRate = divide(numerator, denominator, 18);
+  }
+
+  ///@notice get the percent deviation from a => b as a decimal e18
+  function percentChange(uint256 a, uint256 b) internal pure returns (uint256 delta) {
+    uint256 max = a > b ? a : b;
+    uint256 min = b != max ? b : a;
+    delta = divide((max - min), min, 18);
+  }
+
+  ///@notice floating point division at @param factor scale
+  function divide(uint256 numerator, uint256 denominator, uint256 factor) internal pure returns (uint256 result) {
+    uint256 q = (numerator / denominator) * 10 ** factor;
+    uint256 r = ((numerator * 10 ** factor) / denominator) % 10 ** factor;
+
+    return q + r;
+  }
+
   function mulDown(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 product = a * b;
     require(a == 0 || product / a == b, "overflow");
@@ -252,12 +265,5 @@ contract BPTstablePoolOracle is IOracleRelay {
     } else {
       return 1 + (a - 1) / b;
     }
-  }
-
-  function divide(uint256 numerator, uint256 denominator, uint256 factor) internal pure returns (uint256 result) {
-    uint256 q = (numerator / denominator) * 10 ** factor;
-    uint256 r = ((numerator * 10 ** factor) / denominator) % 10 ** factor;
-
-    return q + r;
   }
 }
