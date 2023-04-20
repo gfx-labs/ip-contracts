@@ -45,8 +45,8 @@ const YFI_ADDR = "0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e"
 const chainlinkDataFeed_YFI = "0xa027702dbb89fbd58938e4324ac03b58d812b0e1"
 const uniPool_YFI = "0x2E8dAf55F212BE91D3fA882ccEAb193A08fddeB2"//10k YFI/wETH pool
 const YFI_CAP = BN("350e18")
-const YFI_LiqInc = BN("7000000000000000")//0.0075 / 0.75%
-const YFI_LTV = BN("1e17")//BN("1e18").sub(this.CHAI_LiqInc).sub(1)
+const YFI_LiqInc = BN("7000000000000000")
+const YFI_LTV = BN("1e17")
 
 
 let CappedLINK: CappedGovToken
