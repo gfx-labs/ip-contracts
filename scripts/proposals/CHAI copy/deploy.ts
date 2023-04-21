@@ -35,18 +35,14 @@ const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 
 const LINK_ADDR = "0x514910771AF9Ca656af840dff83E8264EcF986CA"
 const chainlinkDataFeed_LINK = "0x2c1d072e956affc0d435cb7ac38ef18d24d9127c"
-const uniPool_LINK = "0xa6Cc3C2531FdaA6Ae1A3CA84c2855806728693e8"//3k LINK/USDC pool
+const uniPool_LINK = "0xa6Cc3C2531FdaA6Ae1A3CA84c2855806728693e8"//3k LINK/wETH pool
 const LINK_CAP = BN("375000e18")
-const LINK_LiqInc = BN("7500000000000000")
-const LINK_LTV = BN("75e16")
 
 
 const YFI_ADDR = "0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e"
 const chainlinkDataFeed_YFI = "0xa027702dbb89fbd58938e4324ac03b58d812b0e1"
 const uniPool_YFI = "0x2E8dAf55F212BE91D3fA882ccEAb193A08fddeB2"//10k YFI/wETH pool
 const YFI_CAP = BN("350e18")
-const YFI_LiqInc = BN("7000000000000000")
-const YFI_LTV = BN("1e17")
 
 
 let CappedLINK: CappedGovToken
@@ -104,8 +100,6 @@ const deployCapTokens = async (deployer: SignerWithAddress) => {
     await initYFI.wait()
     console.log("Capped YFI Initialized", CappedYFI.address)
 
-
-
 }
 
 const deployOracles = async (deployer: SignerWithAddress) => {
@@ -148,32 +142,32 @@ const deployOracles = async (deployer: SignerWithAddress) => {
         chainlinkDataFeed_YFI,
         BN("1e10"),
         BN("1")
-      )
-      await clRelayYFI.deployed()
-      //showBody("ChainYFI data feed price: ", await toNumber(await clRelayYFI.currentValue()))
-  
-      //uni v3 oracle
-      const uniRelayYFI = await new UniswapV3TokenOracleRelay__factory(deployer).deploy(
+    )
+    await clRelayYFI.deployed()
+    //showBody("ChainYFI data feed price: ", await toNumber(await clRelayYFI.currentValue()))
+
+    //uni v3 oracle
+    const uniRelayYFI = await new UniswapV3TokenOracleRelay__factory(deployer).deploy(
         14400,
         uniPool_YFI,
         false,
         BN("1"),
         BN("1")
-      )
-      await uniRelayYFI.deployed()
-      //showBody("uni v3 relay price: ", await toNumber(await uniRelayYFI.currentValue()))
-  
-  
-      anchorViewYFI = await new AnchoredViewRelay__factory(deployer).deploy(
+    )
+    await uniRelayYFI.deployed()
+    //showBody("uni v3 relay price: ", await toNumber(await uniRelayYFI.currentValue()))
+
+
+    anchorViewYFI = await new AnchoredViewRelay__factory(deployer).deploy(
         uniRelayYFI.address,
         clRelayYFI.address,
         BN("5"),
         BN("100")
-      )
-      await anchorViewYFI.deployed()
-      showBody("YFI anchor view deployed: ", anchorViewYFI.address)
-      showBodyCyan("ANCHOR VIEW YFI PRICE: ", await toNumber(await anchorViewYFI.currentValue()))
-  
+    )
+    await anchorViewYFI.deployed()
+    showBody("YFI anchor view deployed: ", anchorViewYFI.address)
+    showBodyCyan("ANCHOR VIEW YFI PRICE: ", await toNumber(await anchorViewYFI.currentValue()))
+
 }
 
 const deploy = async (deployer: SignerWithAddress) => {
@@ -197,16 +191,29 @@ const deploy = async (deployer: SignerWithAddress) => {
 
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy
-    await network.provider.send("evm_setAutomine", [true])
-    await reset(17089428)
+    //await network.provider.send("evm_setAutomine", [true])
+    //await reset(17089428)
 
 
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
+    console.log("Deployer: ", deployer.address)
+    //console.log("Other adr: ", accounts[1].address)
 
     await deploy(deployer)
 
 }
+/**
+ implementation 0xF8243ECF8f734452B184A1dF3AD3cD92fC93B58a
+ proxy admin: 0x3D9d8c08dC16Aa104b5B24aBDd1aD857e2c0D8C5
+
+
+hh verify --network mainnet 0x5F39aD3df3eD9Cf383EeEE45218c33dA86479165 "0xF8243ECF8f734452B184A1dF3AD3cD92fC93B58a" "0x3D9d8c08dC16Aa104b5B24aBDd1aD857e2c0D8C5" "0x"
+
+hh verify --network mainnet --constructor-args ./scripts/arguments.js 0x5F39aD3df3eD9Cf383EeEE45218c33dA86479165
+
+
+ */
 
 main()
     .then(() => process.exit(0))
@@ -214,4 +221,33 @@ main()
         console.error(error);
         process.exit(1);
     });
+/**
+ todo reset proxy admin to previous bytecode match?
+ */
 
+
+/**
+link anchor view
+chainlink relay addr: 0x52F3140074cdF69C8f7151728B1ecc19af39Beea 
+uni relay addr: 0xd79ef1a8632c78fab8331f7ae74ff93e60e2cdc2  
+
+YFI anchor view
+chainlink relay addr: 0x0f11ba0a10384ce496d45b1db0586b6c3ad47050 
+uni relay addr: 0x5739082f906acc9967e2b23ed5a718b49580133a 
+
+
+ * 
+ Deployer:  0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89
+Capped LINK deployed to:  0x5F39aD3df3eD9Cf383EeEE45218c33dA86479165
+Capped LINK Initialized 0x5F39aD3df3eD9Cf383EeEE45218c33dA86479165
+Capped YFI deployed to:  0xe2C1d2E7aA4008081CAAFc350A040246b9EBB579
+Capped YFI Initialized 0xe2C1d2E7aA4008081CAAFc350A040246b9EBB579
+All Cap Tokens deployed
+    ↓   LINK anchor view deployed:  0x8415011818C398dC40258f699a7cb58C85953F43
+    ↓   ANCHOR VIEW LINK PRICE:  7.15743192
+    ↓   YFI anchor view deployed:  0x924854279824c9c05da81d3CD1fBde30Ea3C71b6
+    ↓   ANCHOR VIEW YFI PRICE:  8,191.327
+All oracles have been deployed successfully
+Set LINK cap to:  375000
+Set YFI cap to:  350
+ */

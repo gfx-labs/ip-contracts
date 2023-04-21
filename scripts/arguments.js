@@ -1,8 +1,6 @@
 module.exports = [
-    14400,
-    "0x07A6E955bA4345BAe83Ac2A6fAa771fddd8A2011",
-    false,
-    1000000000000,
-    1
+    "0xF8243ECF8f734452B184A1dF3AD3cD92fC93B58a",
+    "0x3D9d8c08dC16Aa104b5B24aBDd1aD857e2c0D8C5",
+    "0x"
 ];
 
