@@ -9,11 +9,13 @@ export class TestScope extends MainnetAddresses {
     USDI!: USDI;
     USDC!: IERC20;
     WETH!: IERC20;
-    UNI!: IVOTE;
+    BAL!: IVOTE;
     WBTC!: IERC20;
 
-    wstETH_wETH!: IERC20;
-    BPT_AMOUNT = BN("100e18")
+    wstETH_wETH!: IERC20
+    gaugeToken!: IERC20
+    rewardToken!: IERC20
+    BPT_AMOUNT = BN("50e18")
     CappedWSTETH_wETH!: CappedBptToken
     BPT_CAP = this.BPT_AMOUNT
     BPT_LiqInc = BN("7500000000000000")

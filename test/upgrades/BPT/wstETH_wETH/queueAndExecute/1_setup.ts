@@ -31,6 +31,7 @@ import {
     IVOTE,
     IVOTE__factory,
 } from "../../../../../typechain-types";
+import { IERC20 } from "@certusone/wormhole-sdk/lib/cjs/ethers-contracts";
 
 require("chai").should();
 
@@ -71,7 +72,8 @@ describe("Initial Setup - wstETH/wETH - B-stETH-STABLE-gauge", () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank);
         s.WETH = IERC20__factory.connect(s.wethAddress, s.Frank);
 
-        s.UNI = IVOTE__factory.connect(s.uniAddress, s.Frank)
+        //BAL is standard reward
+        s.BAL = IVOTE__factory.connect("0xba100000625a3754423978a60c9317c58a424e3D", s.Frank)
         /**
          * BPT: 0x32296969Ef14EB0c6d29669C550D4a0449130230
          * GAUGE: 0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE
@@ -79,7 +81,9 @@ describe("Initial Setup - wstETH/wETH - B-stETH-STABLE-gauge", () => {
          * Aura Gauge: 0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE - list this, matches GAUGE
          * Aura Rewards: 0xe4683Fe8F53da14cA5DAc4251EaDFb3aa614d528 - not liquid, get this after stake from vault
          */
-        s.wstETH_wETH = IERC20__factory.connect("0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE", s.Frank)
+        s.wstETH_wETH = IERC20__factory.connect("0x32296969Ef14EB0c6d29669C550D4a0449130230", s.Frank)
+        s.gaugeToken = IERC20__factory.connect("0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE", s.Frank)
+        s.rewardToken = IERC20__factory.connect("0xe4683Fe8F53da14cA5DAc4251EaDFb3aa614d528", s.Frank)
 
     });
 
@@ -106,7 +110,7 @@ describe("Initial Setup - wstETH/wETH - B-stETH-STABLE-gauge", () => {
         }
         await s.Frank.sendTransaction(tx)
 
-        const BPT_whale = "0xe8343fd029561289CF7359175EE84DA121817C71"
+        const BPT_whale = "0x21ac89788d52070D23B8EaCEcBD3Dc544178DC60"
         //steal gauge tokens
         await stealMoney(BPT_whale, s.Bob.address, s.wstETH_wETH.address, s.BPT_AMOUNT)
 

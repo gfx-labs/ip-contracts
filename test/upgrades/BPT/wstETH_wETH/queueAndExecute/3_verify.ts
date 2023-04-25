@@ -24,6 +24,7 @@ import {
     OneYear,
 } from "../../../../../util/block";
 import { toNumber, getGas } from "../../../../../util/math";
+import { IERC20__factory } from "@certusone/wormhole-sdk/lib/cjs/ethers-contracts";
 
 const usdcAmount = BN("50e6")
 const usdiAmount = BN("50e18")
@@ -101,19 +102,48 @@ describe("Verify Upgraded Contracts", () => {
 })
 
 describe("Deposit and verify functions", () => {
-    it("deposit naked gauge token and stake in a single TX", async () => {
+    it("deposit BPT and stake in a single TX", async () => {
         await s.wstETH_wETH.connect(s.Bob).approve(s.CappedWSTETH_wETH.address, s.BPT_AMOUNT)
-        showBody(await toNumber(await s.wstETH_wETH.balanceOf(s.Bob.address)))
-        await s.CappedWSTETH_wETH.connect(s.Bob).deposit(s.BPT_AMOUNT, s.BobVaultID, true)
+        const result = await s.CappedWSTETH_wETH.connect(s.Bob).deposit(s.BPT_AMOUNT, s.BobVaultID, true)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to deposit and stake: ", gas)
 
         //check destinations
-        //gauge tokens should be in BPT vault
+        //BPT should be staked staked and reward tokens in vault (not gauge tokens)
         let balance = await s.wstETH_wETH.balanceOf(s.BobBptVault.address)
-        showBody("gauge balance bpt vault: ", balance)
+        expect(balance).to.eq(0, "All BPTs staked, balance 0")
+
+        balance = await s.gaugeToken.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(0, "All BPTs staked for reward tokens, gauge token balance 0")
+
+        balance = await s.rewardToken.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(s.BPT_AMOUNT, "Reward tokens in BPT vault")
+
 
         //cap tokens should be in standard vault
         balance = await s.CappedWSTETH_wETH.balanceOf(s.BobVault.address)
-        showBody("Cap balance standard vault: ", balance)
+        expect(balance).to.eq(s.BPT_AMOUNT, "Cap tokens in standard vault")
+    })
+
+    it("Claim rewards", async () => {
+        let startBAL = await s.BAL.balanceOf(s.Bob.address)
+        expect(startBAL).to.eq(0, "Bob starts with 0 BAL")
+
+        //this pool has extra rewards in the form of LDO
+        let extraRewardToken = IERC20__factory.connect("0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32", s.Frank)
+        let balance = await extraRewardToken.balanceOf(s.Bob.address)
+        expect(balance).to.eq(0, "Bob starts with 0 reward tokens")
+
+
+        let result = await s.BobBptVault.claimAuraLpRewards(s.wstETH_wETH.address, true)
+        let gas = await getGas(result)
+        showBodyCyan("Gas to claim rewards: ", gas)
+
+        let balRewards = await s.BAL.balanceOf(s.Bob.address)
+        expect(balRewards).to.be.gt(0, "Received BAL rewards")
+        balance = await extraRewardToken.balanceOf(s.Bob.address)
+        expect(balance).to.be.gt(0, "Received extra rewards")
+
     })
 })
 
