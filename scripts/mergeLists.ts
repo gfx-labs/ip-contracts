@@ -20,23 +20,15 @@ import { reset, currentBlock } from "../util/block"
 import { stealMoney } from "../util/money"
 import exp from "constants";
 import { expect } from "chai";
-import * as readline from 'node:readline';
 import { stdin, stdout } from 'process';
 import { mergeLists } from "../util/math"
-import { each } from "underscore";
 import { min } from "bn.js";
 import { writeFileSync } from "fs";
-import { json } from "stream/consumers";
 
 const { ethers, network, upgrades } = require("hardhat");
 
-<<<<<<< HEAD
-const LPS = require('../rewardtree/lenders_16949454-16999437')
-const BORROWERS = require('../rewardtree/borrowers_16949454-16999437')
-=======
-const LPS = require('../rewardtree/lenders_16999438-17049421')
-const BORROWERS = require('../rewardtree/borrowers_16999438-17049421')
->>>>>>> aaa2a915104bd5e5ced3c59d40d421ec5f214865
+const LPS = require('../rewardtree/lenders_17049422-17099405')
+const BORROWERS = require('../rewardtree/borrowers_17049422-17099405')
 
 
 //for format minter:amount  ===>> {minter: minter, amount: amount}
@@ -100,8 +92,8 @@ async function main() {
         formatObject[object.minter] = object.amount
     }
 
-    writeFileSync(`rewardtree/mergedAndFormatWeek42.json`, JSON.stringify(valueAdjusted), 'utf8')
-    writeFileSync(`rewardtree/week42Object.json`, JSON.stringify(formatObject), 'utf8')
+    writeFileSync(`rewardtree/mergedAndFormatWeek43.json`, JSON.stringify(valueAdjusted), 'utf8')
+    writeFileSync(`rewardtree/week43Object.json`, JSON.stringify(formatObject), 'utf8')
 
     console.log("DONE")
 

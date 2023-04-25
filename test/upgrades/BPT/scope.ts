@@ -12,32 +12,17 @@ export class TestScope extends MainnetAddresses {
     UNI!: IVOTE;
     WBTC!: IERC20;
 
-    LINK!: IERC20;
-    LINK_AMOUNT = BN("10000e18")
-    CappedLINK!: CappedGovToken
-    LINK_CAP = BN("375000e18")
-    LINK_LiqInc = BN("7500000000000000")
-    LINK_LTV = BN("75e16")
+    wstETH_wETH!: IERC20;
+    BPT_AMOUNT = BN("100e18")
+    CappedWSTETH_wETH!: CappedGovToken
+    BPT_CAP = BN("375000e18")
+    BPT_LiqInc = BN("7500000000000000")
+    BPT_LTV = BN("75e16")
 
     wETH_LTV = BN("5e17")
-    COMP_LTV = BN("4e17")
-    UNI_LTV = BN("4e17")
-    wBTC_LTV = BN("80e16")
 
     ProxyAdmin!: ProxyAdmin;
     VaultController!: IVaultController;
-
-    CappedRETH!: CappedGovToken
-    rETH_LiqInc = BN("1e17")
-    rETH_LTV = BN("75e16")
-    rETH_Cap = BN("3000e18")
-    rETH_Amount = BN("10e18")
-
-    CappedCBETH!: CappedGovToken
-    cbETH_LiqInc = BN("1e17")
-    cbETH_LTV = BN("75e16")
-    cbETH_Cap = BN("4200e18")
-    cbETH_Amount = BN("10e18")
 
     //owner!: String
     pauser!: String
@@ -71,12 +56,14 @@ export class TestScope extends MainnetAddresses {
     Eric!: SignerWithAddress   // eric only holds ETH and generally does not use IP unless a clean slate is needed
     Gus!: SignerWithAddress    // gus is the control, we can compare balances of those who wrapped to his to ensure all rebases are correct
 
-    accounts!:SignerWithAddress[]
+    accounts!: SignerWithAddress[]
 
     BobVault!: IVault
     BobVaultID!: BigNumber
     BobVotingVault!: VotingVault
+    BobBptVault!: VaultBPT
     CarolVotingVault!: VotingVault
+    CarolBptVault!: VaultBPT
     DeployerVotingVault!: VotingVault
     DeployerVaultID = 1
     DeployerVault!: IVault
@@ -89,16 +76,14 @@ export class TestScope extends MainnetAddresses {
     owner = ethers.provider.getSigner(this.IP_OWNER)
 
     IP_DEPLOYER = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
-    DEPLOYER =  ethers.provider.getSigner(this.IP_DEPLOYER)
+    DEPLOYER = ethers.provider.getSigner(this.IP_DEPLOYER)
     VotingVaultController!: VotingVaultController
 
     IPT!: InterestProtocolTokenDelegate;
     cIPT!: CappedGovToken
 
- 
 
-    CappedMatic!: CappedGovToken
-    MaticCap = BN("50000000e18")
+
 
     USDC_AMOUNT = BN("1000e6")
 

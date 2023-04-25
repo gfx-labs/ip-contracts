@@ -1,11 +1,10 @@
-import { VaultController__factory } from "../../typechain-types/factories/lending/VaultController__factory";
 import * as dotenv from "dotenv";
 import {
   Multicall,
   ContractCallContext,
 } from "ethereum-multicall";
 import { CallContext } from "ethereum-multicall/dist/esm/models";
-import { IVaultController__factory, Vault__factory } from "../../typechain-types";
+import { IVaultController__factory, VaultController__factory, Vault__factory } from "../../typechain-types";
 import Decimal from "decimal.js";
 import { BlockRounds } from "./q4_data";
 
@@ -83,7 +82,7 @@ const main = async () => {
   });
 
   //const weekNum = 1
-  const weekNum = 2
+  const weekNum = 3
   for (const week of [BlockRounds.blockRanges[weekNum]]) {
     //weekNum = weekNum + 1
     const blockStart = week.start
