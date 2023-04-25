@@ -169,6 +169,7 @@ contract VaultBPT is Context {
 
     IRewardsPool rp = IRewardsPool(rewardsToken);
 
+    //rewards (including extra) will be sent to this contract
     rp.getReward(address(this), claimExtra);
 
     address minter = IVault(_vaultInfo.vault_address).minter();

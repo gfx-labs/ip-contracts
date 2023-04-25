@@ -111,8 +111,12 @@ describe("Initial Setup - wstETH/wETH - B-stETH-STABLE-gauge", () => {
         await s.Frank.sendTransaction(tx)
 
         const BPT_whale = "0x21ac89788d52070D23B8EaCEcBD3Dc544178DC60"
-        //steal gauge tokens
+        //steal BPTs
         await stealMoney(BPT_whale, s.Bob.address, s.wstETH_wETH.address, s.BPT_AMOUNT)
+        await stealMoney(BPT_whale, s.Carol.address, s.wstETH_wETH.address, s.BPT_AMOUNT)
+
+        await stealMoney(bank, s.Bob.address, s.USDC.address, s.Bob_USDC)
+        await stealMoney(bank, s.Dave.address, s.usdcAddress, s.Dave_USDC)
 
     });
 });

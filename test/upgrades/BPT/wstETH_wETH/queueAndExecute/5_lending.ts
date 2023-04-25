@@ -9,40 +9,26 @@ import { stealMoney } from "../../../../../util/money"
 import { IVault__factory } from "../../../../../typechain-types";
 require("chai").should();
 
-let firstBorrowIF: BigNumber
-describe("Check starting values", () => {
-    it("Check starting balance", async () => {
-        const startCappedLINK = await s.CappedLINK.balanceOf(s.BobVault.address)
 
-        let balance = await s.WETH.balanceOf(s.BobVault.address)
-        expect(balance).to.eq(0, "Bob's vault holds 0")
-
-        let liability = await s.VaultController.vaultLiability(s.BobVaultID)
-        expect(liability).to.eq(0, "Bob's vault has no outstanding debt")
-    })
-
-    it("Check borrow power / LTV", async () => {
-        let borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
-        expect(borrowPower).to.be.gt(0, "There exists a borrow power against capped token")
-
-        let balance = await s.CappedLINK.balanceOf(s.BobVault.address)
-        let price = await s.Oracle.getLivePrice(s.CappedLINK.address)
-        const LINKval = (balance.mul(price)).div(BN("1e18"))
-        const LINKBorrowPower = LINKval.mul(s.LINK_LTV).div(BN("1e18"))
-
-
-
-
-
-        const expectedBorrowPower = (LINKBorrowPower)
-        //const totalValue = LINKval.add(UNI_VAL)//dydxVal.add(LINKval).add(crvVal)
-        //let expectedBorrowPower = (totalValue.mul(s.LINK_LTV)).div(BN("1e18"))
-        expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 1, "Borrow power is correct")
-    })
-})
 
 describe("Lending", () => {
     const borrowAmount = BN("500e18")
+
+    it("Check borrow power && LTV", async () => {
+        let borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
+        expect(borrowPower).to.be.gt(0, "There exists a borrow power against capped token")
+
+        //aura bal
+        let balance = await s.CappedWSTETH_wETH.balanceOf(s.BobVault.address)
+        let price = await s.Oracle.getLivePrice(s.CappedWSTETH_wETH.address)
+        let totalValue = (balance.mul(price)).div(BN("1e18"))
+
+
+        let expectedBorrowPower = (totalValue.mul(s.BPT_LTV)).div(BN("1e18"))
+        expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 0.0001, "Borrow power is correct")
+
+    })
+
 
 
     it("Borrow a small amount against capped tokens", async () => {
@@ -78,18 +64,15 @@ describe("Lending", () => {
 
         await s.USDI.connect(s.Bob).approve(s.VaultController.address, await s.USDI.balanceOf(s.Bob.address))
         await s.VaultController.connect(s.Bob).repayAllUSDi(s.BobVaultID)
-        //await mineBlock()
-        //await mineBlock()
         await advanceBlockHeight(1)
         await fastForward(OneDay)
-
 
         const liability = await s.VaultController.vaultLiability(s.BobVaultID)
         expect(liability).to.eq(0, "Loan repaid")
     })
 
-
 })
+
 
 
 describe("Liquidations", () => {
@@ -131,7 +114,7 @@ describe("Liquidations", () => {
 
     it("Try to withdraw when vault is underwater", async () => {
         const amount = BN("250e18")
-        expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedLINK.address, amount)).to.be.revertedWith("over-withdrawal")
+        expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedWSTETH_wETH.address, amount)).to.be.revertedWith("over-withdrawal")
     })
 
     it("Liquidate", async () => {
@@ -141,37 +124,36 @@ describe("Liquidations", () => {
 
         await s.USDC.connect(s.Dave).approve(s.USDI.address, await s.USDC.balanceOf(s.Dave.address))
         await s.USDI.connect(s.Dave).deposit(await s.USDC.balanceOf(s.Dave.address))
-        await mineBlock()
 
-
-        const tokensToLiquidate = await s.VaultController.tokensToLiquidate(s.BobVaultID, s.CappedLINK.address)
+        const tokensToLiquidate = await s.VaultController.tokensToLiquidate(s.BobVaultID, s.CappedWSTETH_wETH.address)
         T2L = tokensToLiquidate
         expect(tokensToLiquidate).to.be.gt(0, "Capped Tokens are liquidatable")
 
-        const price = await s.Oracle.getLivePrice(s.CappedLINK.address)
+        const price = await s.Oracle.getLivePrice(s.CappedWSTETH_wETH.address)
         expect(price).to.be.gt(0, "Valid price")
 
         const liquidationValue = (price.mul(tokensToLiquidate)).div(BN("1e18"))
 
-        const startSupply = await s.CappedLINK.totalSupply()
+        const startSupply = await s.CappedWSTETH_wETH.totalSupply()
 
         const startingUSDI = await s.USDI.balanceOf(s.Dave.address)
 
-        const startingCappedLINK = await s.CappedLINK.balanceOf(s.BobVault.address)
+        const startingCappedWSTETH_wETH = await s.CappedWSTETH_wETH.balanceOf(s.BobVault.address)
 
-        let startLINK = await s.LINK.balanceOf(s.Dave.address)
+        let startwstETH_wETH = await s.wstETH_wETH.balanceOf(s.Dave.address)
 
-        const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedLINK.address, BN("1e50"))
+        const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedWSTETH_wETH.address, BN("1e50"))
 
-        let supply = await s.CappedLINK.totalSupply()
 
-        expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 2, "Total supply reduced as Capped LINK is liquidated")
+        let supply = await s.CappedWSTETH_wETH.totalSupply()
 
-        let endCapLINK = await s.CappedLINK.balanceOf(s.BobVault.address)
-        expect(await toNumber(endCapLINK)).to.be.closeTo(await toNumber(startingCappedLINK.sub(tokensToLiquidate)), 2, "Expected amount liquidated")
+        expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 2, "Total supply reduced as Capped wstETH_wETH is liquidated")
 
-        let endLINK = await s.LINK.balanceOf(s.Dave.address)
-        expect(await toNumber(endLINK.sub(startLINK))).to.be.closeTo(await toNumber(tokensToLiquidate), 1, "Dave received the underlying LINK")
+        let endCapwstETH_wETH = await s.CappedWSTETH_wETH.balanceOf(s.BobVault.address)
+        expect(await toNumber(endCapwstETH_wETH)).to.be.closeTo(await toNumber(startingCappedWSTETH_wETH.sub(tokensToLiquidate)), 2, "Expected amount liquidated")
+
+        let endwstETH_wETH = await s.wstETH_wETH.balanceOf(s.Dave.address)
+        expect(await toNumber(endwstETH_wETH.sub(startwstETH_wETH))).to.be.closeTo(await toNumber(tokensToLiquidate), 1, "Dave received the underlying wstETH_wETH")
 
         const usdiSpent = startingUSDI.sub(await s.USDI.balanceOf(s.Dave.address))
 
@@ -182,11 +164,12 @@ describe("Liquidations", () => {
 
 
         const profit = liquidationValue.sub(usdiSpent)
-        const expected = (liquidationValue.mul(s.LINK_LiqInc)).div(BN("1e18"))
+        const expected = (liquidationValue.mul(s.BPT_LiqInc)).div(BN("1e18"))
 
         expect(await toNumber(profit)).to.be.closeTo(await toNumber(expected), 5, "Expected profit achieved")
 
     })
+
 
     it("repay all", async () => {
 
@@ -202,24 +185,26 @@ describe("Liquidations", () => {
 
 
     it("Withdraw after loan", async () => {
-        const voteVaultLINK = await s.LINK.balanceOf(s.BobVotingVault.address)
-        expect(voteVaultLINK).to.be.gt(0, "Vote vault holds underlying")
-        const vaultCappedLINK = await s.CappedLINK.balanceOf(s.BobVault.address)
+        const voteVaultwstETH_wETH = await s.wstETH_wETH.balanceOf(s.BobBptVault.address)
+        const expectedCollateralRemaining = s.BPT_AMOUNT.sub(T2L)
+    
+        expect(await toNumber(voteVaultwstETH_wETH)).to.be.closeTo(await toNumber(expectedCollateralRemaining), 0.001, "BPT vault holds underlying")
+        const vaultCappedWSTETH_wETH = await s.CappedWSTETH_wETH.balanceOf(s.BobVault.address)
 
-        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedLINK.address, vaultCappedLINK)
+        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedWSTETH_wETH.address, vaultCappedWSTETH_wETH)
         await mineBlock()
 
-        let balance = await s.LINK.balanceOf(s.BobVotingVault.address)
-        expect(await toNumber(balance)).to.eq(0, "All LINK withdrawn")
+        let balance = await s.wstETH_wETH.balanceOf(s.BobVotingVault.address)
+        expect(await toNumber(balance)).to.eq(0, "All wstETH_wETH withdrawn")
 
-        balance = await s.CappedLINK.balanceOf(s.BobVault.address)
-        expect(await toNumber(balance)).to.eq(0, "All CappedLINK removed from vault")
+        balance = await s.CappedWSTETH_wETH.balanceOf(s.BobVault.address)
+        expect(await toNumber(balance)).to.eq(0, "All CappedWSTETH_wETH removed from vault")
 
-        const supply = await s.CappedLINK.totalSupply()
-        expect(supply).to.eq(0, "All New CappedLINK Burned")
+        const supply = await s.CappedWSTETH_wETH.totalSupply()
+        expect(supply).to.eq(0, "All New CappedWSTETH_wETH Burned")
 
-        balance = await s.LINK.balanceOf(s.Bob.address)
-        expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.LINK_AMOUNT.sub(T2L)), 5, "Bob received collateral - liquidated amount")
+        balance = await s.wstETH_wETH.balanceOf(s.Bob.address)
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.BPT_AMOUNT.sub(T2L)), 5, "Bob received collateral - liquidated amount")
 
     })
 
@@ -234,13 +219,15 @@ describe("Liquidations", () => {
         const _votingVaultAddress_vaultId = await s.VotingVaultController._votingVaultAddress_vaultId(s.BobVotingVault.address)
         expect(_votingVaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
 
-        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.LINK.address)
-        expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedLINK.address.toUpperCase(), "Underlying => Capped is correct")
+        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.wstETH_wETH.address)
+        expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedWSTETH_wETH.address.toUpperCase(), "Underlying => Capped is correct")
 
-        const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedLINK.address)
-        expect(_CappedToken_underlying.toUpperCase()).to.eq(s.LINK.address.toUpperCase(), "Capped => Underlying correct")
+        const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedWSTETH_wETH.address)
+        expect(_CappedToken_underlying.toUpperCase()).to.eq(s.wstETH_wETH.address.toUpperCase(), "Capped => Underlying correct")
     })
+
 })
+
 
 
 

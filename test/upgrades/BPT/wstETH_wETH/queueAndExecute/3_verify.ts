@@ -102,14 +102,40 @@ describe("Verify Upgraded Contracts", () => {
 })
 
 describe("Deposit and verify functions", () => {
-    it("deposit BPT and stake in a single TX", async () => {
+    it("deposit BPT", async () => {
         await s.wstETH_wETH.connect(s.Bob).approve(s.CappedWSTETH_wETH.address, s.BPT_AMOUNT)
-        const result = await s.CappedWSTETH_wETH.connect(s.Bob).deposit(s.BPT_AMOUNT, s.BobVaultID, true)
+        const result = await s.CappedWSTETH_wETH.connect(s.Bob).deposit(s.BPT_AMOUNT, s.BobVaultID, false)
         const gas = await getGas(result)
-        showBodyCyan("Gas to deposit and stake: ", gas)
+        showBodyCyan("Gas to deposit only: ", gas)
 
         //check destinations
-        //BPT should be staked staked and reward tokens in vault (not gauge tokens)
+        //BPT should be in BPT vault (not gauge tokens nor reward token)
+        let balance = await s.wstETH_wETH.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(s.BPT_AMOUNT, "BPT amount in vault is correct")
+
+        balance = await s.gaugeToken.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(0, "All BPTs staked for reward tokens, gauge token balance 0")
+
+        balance = await s.rewardToken.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(0, "Not yet any reward tokens in BPT vault")
+
+        //cap tokens should be in standard vault
+        balance = await s.CappedWSTETH_wETH.balanceOf(s.BobVault.address)
+        expect(balance).to.eq(s.BPT_AMOUNT, "Cap tokens in standard vault")
+    })
+
+    it("Stake", async () => {
+
+        const result = await s.BobBptVault.stakeAuraLP(s.wstETH_wETH.address)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to stake only: ", gas)
+
+        //confirm staked
+        let staked = await s.BobBptVault.isStaked(s.wstETH_wETH.address)
+        expect(staked).to.eq(true, "BPT is staked")
+
+        //check destinations
+        //BPT should be staked and reward tokens in vault (not gauge tokens)
         let balance = await s.wstETH_wETH.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(0, "All BPTs staked, balance 0")
 
@@ -120,218 +146,86 @@ describe("Deposit and verify functions", () => {
         expect(balance).to.eq(s.BPT_AMOUNT, "Reward tokens in BPT vault")
 
 
-        //cap tokens should be in standard vault
-        balance = await s.CappedWSTETH_wETH.balanceOf(s.BobVault.address)
-        expect(balance).to.eq(s.BPT_AMOUNT, "Cap tokens in standard vault")
     })
 
     it("Claim rewards", async () => {
         let startBAL = await s.BAL.balanceOf(s.Bob.address)
         expect(startBAL).to.eq(0, "Bob starts with 0 BAL")
 
-        //this pool has extra rewards in the form of LDO
-        let extraRewardToken = IERC20__factory.connect("0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32", s.Frank)
-        let balance = await extraRewardToken.balanceOf(s.Bob.address)
-        expect(balance).to.eq(0, "Bob starts with 0 reward tokens")
-
-
-        let result = await s.BobBptVault.claimAuraLpRewards(s.wstETH_wETH.address, true)
+        //extra rewards are turned off by this pool currently
+        //gas to claim with extra ~926k
+        //gas to claim without extra ~865k 
+        let result = await s.BobBptVault.claimAuraLpRewards(s.wstETH_wETH.address, false)
         let gas = await getGas(result)
         showBodyCyan("Gas to claim rewards: ", gas)
 
         let balRewards = await s.BAL.balanceOf(s.Bob.address)
         expect(balRewards).to.be.gt(0, "Received BAL rewards")
-        balance = await extraRewardToken.balanceOf(s.Bob.address)
-        expect(balance).to.be.gt(0, "Received extra rewards")
 
     })
-})
-
-/**
- 
-
-
-
-describe("Testing CappedToken functions", () => {
-    let gusVaultId: BigNumber
-    let gusVault: IVault
-    let gusVotingVault: VotingVault
-
-    it("Try to transfer", async () => {
-        expect(s.CappedLINK.connect(s.Bob).transfer(s.Carol.address, BN("1e18"))).to.be.revertedWith("only vaults")
-        expect(s.CappedLINK.connect(s.Bob).transfer(s.Carol.address, BN("1e18"))).to.be.revertedWith("only vaults")
-
-    })
-
-
-    it("Deposit underlying", async () => {
-        expect(await s.LINK.balanceOf(s.Bob.address)).to.eq(s.LINK_AMOUNT, "Bob has the expected amount of LINK")
-
-        let caBalance = await s.CappedLINK.balanceOf(s.BobVault.address)
-        expect(caBalance).to.eq(0, "Bob's vault holds 0 capped LINK at the start")
-
-        await s.LINK.connect(s.Bob).approve(s.CappedLINK.address, s.LINK_AMOUNT)
-        await s.CappedLINK.connect(s.Bob).deposit(s.LINK_AMOUNT, s.BobVaultID)
-        await mineBlock()
-
-
-
-
-        caBalance = await s.CappedLINK.balanceOf(s.BobVault.address)
-        expect(caBalance).to.eq(s.LINK_AMOUNT, "Bob's vault received the capped LINK tokens")
-
-
-    })
-
-    it("Try to exceed the LINK cap", async () => {
-
-        await impersonateAccount(s.owner._address)
-        await s.CappedLINK.connect(s.owner).setCap(s.LINK_AMOUNT)
-        await mineBlock()
-        await ceaseImpersonation(s.owner._address)
-
-        const cap = await s.CappedLINK.getCap()
-        expect(cap).to.eq(s.LINK_AMOUNT, "Cap is still correct")
-        expect(await s.CappedLINK.totalSupply()).to.eq(cap, "Cap reached")
-
-        await s.LINK.connect(s.Gus).approve(s.CappedLINK.address, 1)
-        await mineBlock()
-        expect(s.CappedLINK.connect(s.Gus).deposit(1, s.BobVaultID)).to.be.revertedWith("cap reached")
-
-        await impersonateAccount(s.owner._address)
-        await s.CappedLINK.connect(s.owner).setCap(s.LINK_CAP)
-        await mineBlock()
-        await ceaseImpersonation(s.owner._address)
-    })
-
     
+    it("withdraw staked BPT", async () => {
 
+        //withdraw staked tokens
+        const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedWSTETH_wETH.address, s.BPT_AMOUNT)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to withdraw and unstake: ", gas)
 
-    it("No vault", async () => {
-        const amount = BN("5e18")
-        const startBal = await s.LINK.balanceOf(s.Gus.address)
-        expect(startBal).to.eq(s.LINK_AMOUNT, "Balance correct")
+        //check destinations
+        let totalSupply = await s.CappedWSTETH_wETH.totalSupply()
+        expect(totalSupply).to.eq(0, "All cap tokens redeemed for underlying")
 
-        //await s.LINK.connect(s.Gus).approve(s.CappedLINK.address, amount) // LINK is not ERC20 - no approval
-        //showBody("Approved")
-        expect(s.CappedLINK.connect(s.Gus).deposit(amount, 99999)).to.be.revertedWith("invalid vault")
+        let balance = await s.wstETH_wETH.balanceOf(s.Bob.address)
+        expect(balance).to.eq(s.BPT_AMOUNT, "Bob received correct amount of BPT")
 
-    })
+        balance = await s.rewardToken.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(0, "All reward tokens unstaked")
 
-    it("Deposit LINK with no voting vault", async () => {
-        const amount = BN("5e18")
+        balance = await s.gaugeToken.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(0, "No Gauge tokens in the vault")
 
-        const startBal = await s.LINK.balanceOf(s.Gus.address)
-        expect(startBal).to.eq(s.LINK_AMOUNT, "Balance correct")
-
-
-        //mint regular vault for gus
-        await expect(s.VaultController.connect(s.Gus).mintVault()).to.not
-            .reverted;
-        await mineBlock();
-        gusVaultId = await s.VaultController.vaultsMinted()
-        let vaultAddress = await s.VaultController.vaultAddress(gusVaultId)
-        gusVault = IVault__factory.connect(vaultAddress, s.Gus);
-        expect(await gusVault.minter()).to.eq(s.Gus.address);
-
-        //await s.LINK.connect(s.Gus).approve(s.CappedLINK.address, amount)
-        expect(s.CappedLINK.connect(s.Gus).deposit(amount, gusVaultId)).to.be.revertedWith("invalid voting vault")
-    })
-
-
-
-    it("Eronious transfer of LINK and then withdraw with no voting vault", async () => {
-        //transfer some underlying to cap contract instead of deposit?
-        const transferAmount = BN("5e18")
-        let balance = await s.LINK.balanceOf(s.Gus.address)
-        expect(balance).to.eq(s.LINK_AMOUNT, "Starting LINK amount correct")
-        await s.LINK.connect(s.Gus).transfer(s.CappedLINK.address, transferAmount)
-        await mineBlock()
-
-        //try to withdraw - no voting vault
-        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedLINK.address, transferAmount)).to.be.revertedWith("only vaults")
+        balance = await s.wstETH_wETH.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(0, "All BPT withdrawn")
 
     })
 
-    it("Try to withdraw eronious transfer after minting a voting vault", async () => {
-        const transferAmount = BN("5e18")
+    it("Deposit and stake for future tests", async () => {
+        await s.wstETH_wETH.connect(s.Bob).approve(s.CappedWSTETH_wETH.address, s.BPT_AMOUNT)
+        const result = await s.CappedWSTETH_wETH.connect(s.Bob).deposit(s.BPT_AMOUNT, s.BobVaultID, true)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to deposit and stake: ", gas)
 
-        //mint a voting vault
-        await s.VotingVaultController.connect(s.Gus).mintVault(gusVaultId)
-        await mineBlock()
+        //confirm staked
+        let staked = await s.BobBptVault.isStaked(s.wstETH_wETH.address)
+        expect(staked).to.eq(true, "BPT is staked")
 
-        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedLINK.address, transferAmount)).to.be.revertedWith("ERC20: burn amount exceeds balance")
+        //check destinations
+        //BPT should be staked and reward tokens in vault (not gauge tokens)
+        let balance = await s.wstETH_wETH.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(0, "All BPTs staked, balance 0")
 
+        balance = await s.gaugeToken.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(0, "All BPTs staked for reward tokens, gauge token balance 0")
+
+        balance = await s.rewardToken.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(s.BPT_AMOUNT, "Reward tokens in BPT vault")
     })
 
-    it("Try to withdraw more capped LINK than is possible given some cap tokens", async () => {
-
-        await impersonateAccount(s.owner._address)
-        await s.CappedLINK.connect(s.owner).setCap(BN("51e24"))
-        await mineBlock()
-        await ceaseImpersonation(s.owner._address)
-
-        let b = await s.LINK.balanceOf(s.Gus.address)
-
-        const allowance = await s.LINK.allowance(s.Gus.address, s.CappedLINK.address)
-
-        await s.LINK.connect(s.Gus).approve(s.CappedLINK.address, b.sub(allowance))
-        await mineBlock()
-
-        await s.CappedLINK.connect(s.Gus).deposit(BN("1e18"), gusVaultId)
-        await mineBlock()
-
-        let balance = await s.CappedLINK.balanceOf(gusVault.address)
-        expect(balance).to.eq(BN("1e18"), "Balance is correct")
-
-        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedLINK.address, BN("5e18"))).to.be.revertedWith("only cap token")
-
-        //Withdraw the amount that was deposited
-        await gusVault.connect(s.Gus).withdrawErc20(s.CappedLINK.address, BN("1e18"))
-        await mineBlock()
-
-        //return cap to expected amount
-        await impersonateAccount(s.owner._address)
-        await s.CappedLINK.connect(s.owner).setCap(s.LINK_CAP)
-        await mineBlock()
-        await ceaseImpersonation(s.owner._address)
-
+    //test for breaking the rules
+    it("Try to transfer", async () => {
+        await expect(s.CappedWSTETH_wETH.connect(s.Bob).transfer(s.Carol.address, BN("1e18"))).to.be.revertedWith("only vaults")
     })
-
 
     it("Try to withdraw from a vault that is not yours", async () => {
-        const amount = BN("250e18")
-
-        await expect(s.BobVault.connect(s.Carol).withdrawErc20(s.CappedLINK.address, amount)).to.be.revertedWith("sender not minter")
-
-
+        await expect(s.BobVault.connect(s.Carol).withdrawErc20(s.CappedWSTETH_wETH.address, s.BPT_AMOUNT)).to.be.revertedWith("sender not minter")
     })
 
-    it("Withdraw Underlying LINK", async () => {
-
-        const amount = await s.CappedLINK.balanceOf(s.BobVault.address)
-
-        const startBal = await s.LINK.balanceOf(s.Bob.address)
-        const startCapBal = amount
-
-        expect(startCapBal).to.be.gt(s.LINK_AMOUNT.sub(1), "Enough Capped LINK")
-
-        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedLINK.address, amount).catch(console.log)
-        await mineBlock()
-
-        let balance = await s.LINK.balanceOf(s.Bob.address).catch(console.log)
-        expect(balance).to.eq(startBal.add(amount), "LINK balance changed as expected")
-
-        balance = await s.CappedLINK.balanceOf(s.BobVault.address).catch(console.log)
-        expect(balance).to.eq(startCapBal.sub(amount), "CappedBal balance changed as expected")
-
-        //Deposit again to reset for further tests
-        await s.LINK.connect(s.Bob).approve(s.CappedLINK.address, amount)
-        await s.CappedLINK.connect(s.Bob).deposit(amount, s.BobVaultID)
-        await mineBlock()
+    it("Try to exceed the cap", async () => {
+        await expect(s.CappedWSTETH_wETH.connect(s.Carol).deposit(BN("1e18"), s.CaroLVaultID, true)).to.be.revertedWith("cap reached")
     })
 
-  
+    it("Try to withdraw cap tokens you don't own", async () => {
+        await expect(s.CarolVault.connect(s.Carol).withdrawErc20(s.CappedWSTETH_wETH.address, BN("1e18"))).to.be.reverted
+    })
 })
 
- */
