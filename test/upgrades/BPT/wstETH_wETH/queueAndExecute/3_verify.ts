@@ -101,8 +101,19 @@ describe("Verify Upgraded Contracts", () => {
 })
 
 describe("Deposit and verify functions", () => {
-    it("deposit naked gauge token", async () => {
+    it("deposit naked gauge token and stake in a single TX", async () => {
+        await s.wstETH_wETH.connect(s.Bob).approve(s.CappedWSTETH_wETH.address, s.BPT_AMOUNT)
+        showBody(await toNumber(await s.wstETH_wETH.balanceOf(s.Bob.address)))
+        await s.CappedWSTETH_wETH.connect(s.Bob).deposit(s.BPT_AMOUNT, s.BobVaultID, true)
 
+        //check destinations
+        //gauge tokens should be in BPT vault
+        let balance = await s.wstETH_wETH.balanceOf(s.BobBptVault.address)
+        showBody("gauge balance bpt vault: ", balance)
+
+        //cap tokens should be in standard vault
+        balance = await s.CappedWSTETH_wETH.balanceOf(s.BobVault.address)
+        showBody("Cap balance standard vault: ", balance)
     })
 })
 

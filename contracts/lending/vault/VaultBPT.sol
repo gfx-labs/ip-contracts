@@ -14,6 +14,9 @@ import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
 import "../../_external/balancer/IGauge.sol";
 
+//testing
+import "hardhat/console.sol";
+
 interface IRewardsPool {
   function stakeAll() external returns (bool);
 
@@ -134,13 +137,25 @@ contract VaultBPT is Context {
 
   /** auraBal && aura LP token staking */
   ///@param lp underlying lp
+  ///@param lp is NOT the gauge token, but the actual LP
+  ///@notice unfortunately, there is no simple way to stake directly from the gauge token to the Aura rewards token
   function stakeAuraLP(IERC20 lp) external returns (bool) {
+    console.log("Stake aura lp: ", address(lp));
     require(isStaked[address(lp)] == false, "already staked");
     isStaked[address(lp)] = true;
+    (address rewardsToken, uint256 pid) = _votingController.getAuraLpData(address(lp));
+    console.log("Rewards token: ", rewardsToken);
+    IRewardsPool rp = IRewardsPool(rewardsToken);
+    lp.approve(rewardsToken, lp.balanceOf(address(this)));
+    console.log("Approved");
 
+    rp.stakeAll();
+    //require(rp.stakeAll(), "auraBal staking failed");
+    return true;
+
+    /**
     //stake auraBal directly on rewards pool
     if (address(lp) == _votingController._auraBal()) {
-      (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
       IRewardsPool rp = IRewardsPool(rewardsToken);
       lp.approve(rewardsToken, lp.balanceOf(address(this)));
 
@@ -151,14 +166,13 @@ contract VaultBPT is Context {
     //else we stake other LPs via booster contract
     IBooster booster = IBooster(_votingController._auraBooster());
 
-    (, uint256 pid) = _votingController.getAuraLpData(address(lp));
-
     //approve booster
     lp.approve(address(booster), lp.balanceOf(address(this)));
 
     //deposit via booster
     require(booster.depositAll(pid, true), "Deposit failed");
     return true;
+     */
   }
 
   /// @param lp - the aura LP token address, or auraBal address
@@ -196,6 +210,7 @@ contract VaultBPT is Context {
   }
 
   /// @notice manual unstake
+  /// todo needed?
   function unstakeAuraLP(IERC20 lp) external onlyMinter {
     //_unstakeAuraLP(lp);
   }

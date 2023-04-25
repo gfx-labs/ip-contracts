@@ -82,7 +82,7 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   /// @notice gaugeToken is fungible 1:1 with underlying BPT
   /// @param amount of underlying to deposit
   /// @param vaultId recipient vault of tokens
-  /// @param stake deposit + stake in 1 TX, only for auraBal or aura LPs
+  /// @param stake deposit + stake in 1 TX, for auraBal or aura LPs
   function deposit(uint256 amount, uint96 vaultId, bool stake) public nonReentrant {
     require(amount > 0, "Cannot deposit 0");
     VaultBPT bptVault = VaultBPT(_votingVaultController.BPTvaultAddress(vaultId));

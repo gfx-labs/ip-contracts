@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, ThreeLines0_100__factory } from "../../../typechain-types";
+import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, ThreeLines0_100__factory, CappedBptToken } from "../../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../../util/addresser";
 import { BN } from "../../../util/number";
 
@@ -14,8 +14,8 @@ export class TestScope extends MainnetAddresses {
 
     wstETH_wETH!: IERC20;
     BPT_AMOUNT = BN("100e18")
-    CappedWSTETH_wETH!: CappedGovToken
-    BPT_CAP = BN("375000e18")
+    CappedWSTETH_wETH!: CappedBptToken
+    BPT_CAP = this.BPT_AMOUNT
     BPT_LiqInc = BN("7500000000000000")
     BPT_LTV = BN("75e16")
 

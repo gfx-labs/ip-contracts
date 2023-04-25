@@ -27,7 +27,8 @@ import {
   IOracleRelay,
   UniswapV3OracleRelay__factory,
   WstETHRelay__factory,
-  BPTstablePoolOracle__factory
+  BPTstablePoolOracle__factory,
+  CappedBptToken__factory
 } from "../../../../../typechain-types";
 import {
   advanceBlockHeight,
@@ -110,7 +111,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
   const balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
   it("Deploy Capped wstETH_wETH", async () => {
     s.CappedWSTETH_wETH = await DeployContractWithProxy(
-      new CappedGovToken__factory(s.Frank),
+      new CappedBptToken__factory(s.Frank),
       s.Frank,
       s.ProxyAdmin,
       "CappedWSTETH/WETH",
@@ -119,6 +120,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
       s.VaultController.address,
       s.VotingVaultController.address
     )
+    await s.CappedWSTETH_wETH.connect(s.Frank).setCap(s.BPT_CAP)
   })
 
   //todo backup oracle/anchorView for wstETH
