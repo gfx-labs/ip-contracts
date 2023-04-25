@@ -215,9 +215,9 @@ describe("Setup, Queue, and Execute proposal", () => {
     const gaugeToken = s.wstETH_wETH.address
     const rewardToken = "0xe4683Fe8F53da14cA5DAc4251EaDFb3aa614d528"
     
-    const registerLPdata = await new VotingVaultController__factory(prop).
-    attach(s.VotingVaultController.address).
-    populateTransaction.registerAuraLpData(gaugeToken, rewardToken, PID)
+    const populateAuraLpData = await new VotingVaultController__factory(prop).attach(s.VotingVaultController.address).
+      populateTransaction.registerAuraLpData(gaugeToken, rewardToken, PID)
+
 
     proposal.addStep(upgradeVVC, "upgrade(address,address)")
     proposal.addStep(addOracle, "setRelay(address,address)")
@@ -225,7 +225,8 @@ describe("Setup, Queue, and Execute proposal", () => {
     proposal.addStep(register_VVC, "registerUnderlying(address,address)")
     proposal.addStep(registerAuraBal, "registerAuraBal(address)")
     proposal.addStep(registerAuraBooster, "registerAuraBooster(address)")
-    proposal.addStep(registerLPdata, "registerAuraLpData(address,address,uint256")
+    proposal.addStep(populateAuraLpData, "registerAuraLpData(address,address,uint256)")
+
     out = proposal.populateProposal()
     //showBody(out)
   })
@@ -273,7 +274,6 @@ describe("Setup, Queue, and Execute proposal", () => {
     await ceaseImpersonation(proposer)
 
   })
-
 
 
 })

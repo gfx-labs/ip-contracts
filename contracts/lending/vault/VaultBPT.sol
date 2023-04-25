@@ -46,6 +46,13 @@ interface IVirtualRewardPool {
 
 interface IBooster {
   function depositAll(uint256 _pid, bool _stake) external returns (bool);
+
+  function poolInfo(
+    uint256 pid
+  )
+    external
+    view
+    returns (address lptoken, address token, address gauge, address crvRewards, address stash, bool shutdown);
 }
 
 contract VaultBPT is Context {

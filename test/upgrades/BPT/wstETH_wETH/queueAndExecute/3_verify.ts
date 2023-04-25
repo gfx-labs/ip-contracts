@@ -80,20 +80,6 @@ describe("Verify Upgraded Contracts", () => {
         expect(vaultInfo.vault_address).to.eq(s.CarolVault.address, "Vault address is correct")
     })
 
-    it("test", async () => {
-        const PID = BN("29")
-        const gaugeToken = s.wstETH_wETH.address
-        const rewardToken = "0xe4683Fe8F53da14cA5DAc4251EaDFb3aa614d528"
-
-        await impersonateAccount(s.owner._address)
-        
-        // call pid on reward token to get pid
-        await s.VotingVaultController.connect(s.owner).registerAuraLpData(gaugeToken, rewardToken, PID)
-
-        await ceaseImpersonation(s.owner._address)
-
-    })
-
     it("Mint BPT vaults", async () => {
         const result = await s.VotingVaultController.connect(s.Bob).mintBptVault(s.BobVaultID)
         const gas = await getGas(result)
