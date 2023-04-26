@@ -28,7 +28,8 @@ import {
   UniswapV3OracleRelay__factory,
   WstETHRelay__factory,
   BPTstablePoolOracle__factory,
-  CappedBptToken__factory
+  CappedBptToken__factory,
+  BPT_WEIGHTED_ORACLE__factory
 } from "../../../../../typechain-types";
 import {
   advanceBlockHeight,
@@ -90,14 +91,8 @@ describe("Verify Contracts", () => {
 
 
 
-
-
-const wstETH = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"
-const B_stETH_STABLE = "0x32296969Ef14EB0c6d29669C550D4a0449130230"
-
+let auraBalOracle: IOracleRelay
 let vvcImplementationAddr: String
-let stEThMetaStablePoolOracle: IOracleRelay
-let wstethRelay: IOracleRelay
 describe("Upgrade Voting Vault Controller for BPT collateral", () => {
   it("Deploy new implementation", async () => {
     const implementation = await new VotingVaultController__factory(s.Frank).deploy()
@@ -109,48 +104,43 @@ describe("Upgrade Voting Vault Controller for BPT collateral", () => {
 describe("Deploy Cap Tokens and Oracles", () => {
   const wethOracleAddr = "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"
   const balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
-  it("Deploy Capped wstETH_wETH", async () => {
-    s.CappedWSTETH_wETH = await DeployContractWithProxy(
+  it("Deploy Capped AuraBal", async () => {
+    s.CappedAuraBal = await DeployContractWithProxy(
       new CappedBptToken__factory(s.Frank),
       s.Frank,
       s.ProxyAdmin,
-      "CappedWSTETH/WETH",
-      "cWSTETH/WETH",
-      s.wstETH_wETH.address,
+      "CappedAuraBal",
+      "cAuraBal",
+      s.AuraBal.address,
       s.VaultController.address,
       s.VotingVaultController.address
     )
-    await s.CappedWSTETH_wETH.connect(s.Frank).setCap(s.BPT_CAP)
+    await s.CappedAuraBal.connect(s.Frank).setCap(s.BPT_CAP)
   })
 
-  //todo backup oracle/anchorView for wstETH
-  it("Check wstETH exchange rate relay", async () => {
-    wstethRelay = await new WstETHRelay__factory(s.Frank).deploy()
-    await wstethRelay.deployed()
-    //showBody("wstETH direct conversion price: ", await toNumber(await wstethRelay.currentValue()))
-  })
+  it("AuraBal oracle system", async () => {
+    const uniPool = "0xFdeA35445489e608fb4F20B6E94CCFEa8353Eabd"//3k, meh liquidity
 
-  it("Deploy and check meta stable pool oracle", async () => {
-
-    //wstETH/weth MetaStable pool
-    stEThMetaStablePoolOracle = await new BPTstablePoolOracle__factory(s.Frank).deploy(
-      B_stETH_STABLE, //pool_address
-      balancerVault,
-      [wstETH, s.wethAddress], //_tokens
-      [wstethRelay.address, wethOracleAddr], //_oracles
-      BN("20"),
-      BN("10000")
+    auraBalOracle = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
+      500,
+      uniPool,
+      false,
+      BN("1"),
+      BN("1")
     )
-    await stEThMetaStablePoolOracle.deployed()
+    await mineBlock()
+    await auraBalOracle.deployed()
+    showBodyCyan("AuraBal uni relay price: ", await toNumber(await auraBalOracle.currentValue()))
 
-    showBodyCyan("stETh MetaStablePool BPT price: ", await toNumber(await (await stEThMetaStablePoolOracle.currentValue())))
 
   })
+
 })
 
 
 
 
+ 
 describe("Setup, Queue, and Execute proposal", () => {
   const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
   const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
@@ -181,24 +171,24 @@ describe("Setup, Queue, and Execute proposal", () => {
     const addOracle = await new OracleMaster__factory(prop).
       attach(s.Oracle.address).
       populateTransaction.setRelay(
-        s.CappedWSTETH_wETH.address,
-        stEThMetaStablePoolOracle.address
+        s.CappedAuraBal.address,
+        auraBalOracle.address
       )
 
     const list = await new VaultController__factory(prop).
       attach(s.VaultController.address).
       populateTransaction.registerErc20(
-        s.CappedWSTETH_wETH.address,
+        s.CappedAuraBal.address,
         s.BPT_LTV,
-        s.CappedWSTETH_wETH.address,
+        s.CappedAuraBal.address,
         s.BPT_LiqInc
       )
 
     const register_VVC = await new VotingVaultController__factory(prop).
       attach(s.VotingVaultController.address).
       populateTransaction.registerUnderlying(
-        s.wstETH_wETH.address,
-        s.CappedWSTETH_wETH.address
+        s.AuraBal.address,
+        s.CappedAuraBal.address
       )
 
     //first time setup for VotingVault controller for BPTs
@@ -213,9 +203,9 @@ describe("Setup, Queue, and Execute proposal", () => {
     //this is so we can assosiate each listed gauge token with its reward token
     //reward token is what is recived for staking the gauge token
     //call PID on reward token to get PID
-    const PID = BN("29")
-    const gaugeToken = s.wstETH_wETH.address
-    const rewardToken = "0xe4683Fe8F53da14cA5DAc4251EaDFb3aa614d528"
+    const PID = BN("0")
+    const gaugeToken = s.AuraBal.address
+    const rewardToken = "0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2"
     
     const populateAuraLpData = await new VotingVaultController__factory(prop).attach(s.VotingVaultController.address).
       populateTransaction.registerAuraLpData(gaugeToken, rewardToken, PID)
@@ -248,7 +238,7 @@ describe("Setup, Queue, and Execute proposal", () => {
       out.values,
       out.signatures,
       out.calldatas,
-      "B-stETH-STABLE-gauge",
+      "AuraBal",
       false
     )
     await mineBlock()
@@ -280,5 +270,6 @@ describe("Setup, Queue, and Execute proposal", () => {
 
 })
 
+ 
 
 
