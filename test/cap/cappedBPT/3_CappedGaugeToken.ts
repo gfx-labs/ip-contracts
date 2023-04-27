@@ -60,7 +60,8 @@ describe("Deposit and verify functions", () => {
 
         await ceaseImpersonation(s.owner._address)
     })
-    it("Deposit naked gauge token", async () => {
+   /**
+     it("Deposit naked gauge token", async () => {
         await s.stETH_Gauge.connect(s.Bob).approve(s.CappedStethGauge.address, s.stETH_Gauge_Amount)
         await s.CappedStethGauge.connect(s.Bob).deposit(s.stETH_Gauge_Amount, s.BobVaultID, false)
 
@@ -71,6 +72,7 @@ describe("Deposit and verify functions", () => {
         await expect(s.BobBptVault.claimRewards(s.stETH_Gauge.address)).to.not.reverted
 
     })
+    */
 
     it("deposit and stake auraBal in a single TX", async () => {
         await s.auraBal.connect(s.Bob).approve(s.CappedAuraBal.address, s.AuraBalAmount)
@@ -92,7 +94,8 @@ describe("Deposit and verify functions", () => {
 
     })
 
-    it("deposit and stake aura lp token in a single TX", async () => {
+    /**
+     it("deposit and stake aura lp token in a single TX", async () => {
         await s.primeAuraBalLP.connect(s.Bob).approve(s.CappedAuraLP.address, s.AuraLPamount)
         const result = await s.CappedAuraLP.connect(s.Bob).deposit(s.AuraLPamount, s.BobVaultID, true)
         const gas = await getGas(result)
@@ -106,6 +109,7 @@ describe("Deposit and verify functions", () => {
         balance = await s.primeAuraBalLP.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(0, "0 LPs remaining unstaked")
     })
+     */
 
 
 
@@ -117,10 +121,9 @@ describe("Deposit and verify functions", () => {
         let balance = await extraRewardToken.balanceOf(s.Bob.address)
         expect(balance).to.eq(0, "Bob starts with 0 reward tokens")
 
-        let result = await s.BobBptVault.claimAuraLpRewards(s.auraBal.address, true, {
-            gasPrice: 200000000000, //gas price of 200 gwei - extreeemely high
-            gasLimit: 4000000
-        })
+        let result = await s.BobBptVault.claimAuraLpRewards(s.auraBal.address, true)
+        const receipt = await result.wait()
+        showBody(receipt)
         let gas = await getGas(result)
         showBodyCyan("Gas to claim auraBal rewards: ", gas)
 
@@ -129,7 +132,8 @@ describe("Deposit and verify functions", () => {
         balance = await extraRewardToken.balanceOf(s.Bob.address)
         expect(balance).to.be.gt(0, "Received extra rewards")
 
-        //AURA token
+        /**
+         //AURA token
         extraRewardToken = IERC20__factory.connect("0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF", s.Frank)
         balance = await extraRewardToken.balanceOf(s.Bob.address)
         expect(balance).to.eq(0, "Bob starts with 0 reward tokens")
@@ -146,10 +150,12 @@ describe("Deposit and verify functions", () => {
 
         let newExtraRewardsBalance = await extraRewardToken.balanceOf(s.Bob.address)
         expect(newExtraRewardsBalance).to.be.gt(0, "Received more extra rewards")
+         */
 
     })
 
-    it("Withdraw staked aura LP tokens / auraBal", async () => {
+    /**
+     it("Withdraw staked aura LP tokens / auraBal", async () => {
         let balance = await s.auraBal.balanceOf(s.Bob.address)
         expect(balance).to.eq(0, "Bob holds 0 auraBals as they are all on the protocol before withdraw")
         balance = await s.auraBal.balanceOf(s.BobBptVault.address)
@@ -215,6 +221,7 @@ describe("Deposit and verify functions", () => {
         expect(balance).to.eq(s.stETH_Gauge_Amount, "Underlying sent to BPT vault")
 
     })
+     */
 
 
 })

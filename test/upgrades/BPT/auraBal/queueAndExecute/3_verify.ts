@@ -19,6 +19,7 @@ import {
 import {
     advanceBlockHeight,
     fastForward,
+    hardhat_mine,
     mineBlock,
     OneWeek,
     OneYear,
@@ -143,21 +144,35 @@ describe("Deposit and verify functions", () => {
     })
 
     it("Claim rewards", async () => {
+
+        //confirm staked
+        let staked = await s.BobBptVault.isStaked(s.AuraBal.address)
+        expect(staked).to.eq(true, "BPT is staked")
+
         let startBAL = await s.BAL.balanceOf(s.Bob.address)
         expect(startBAL).to.eq(0, "Bob starts with 0 BAL")
 
-        //extra rewards are turned off by this pool currently
-        //gas to claim with extra ~926k
-        //gas to claim without extra ~865k 
-        let result = await s.BobBptVault.claimAuraLpRewards(s.AuraBal.address, false)
+        //extra rewards turned on: bb-a-usd 0xA13a9247ea42D743238089903570127DdA72fE44
+        let extraRewardToken = IERC20__factory.connect("0xA13a9247ea42D743238089903570127DdA72fE44", s.Frank)
+        let balance = await extraRewardToken.balanceOf(s.Bob.address)
+        expect(balance).to.eq(0, "Bob starts with 0 reward tokens")
+
+        let result = await s.BobBptVault.claimAuraLpRewards(s.AuraBal.address, true)
+        const receipt = await result.wait()
+        showBody(receipt)
         let gas = await getGas(result)
         showBodyCyan("Gas to claim rewards: ", gas)
 
         let balRewards = await s.BAL.balanceOf(s.Bob.address)
+        showBody("Bal rewards: ", balRewards)
         //expect(balRewards).to.be.gt(0, "Received BAL rewards")
 
+        let newExtraRewardsBalance = await extraRewardToken.balanceOf(s.Bob.address)
+        showBody("Extra rewards: ", newExtraRewardsBalance)
+        //expect(newExtraRewardsBalance).to.be.gt(0, "Received more extra rewards")
+
     })
-    
+
     it("withdraw staked BPT", async () => {
 
         //withdraw staked tokens

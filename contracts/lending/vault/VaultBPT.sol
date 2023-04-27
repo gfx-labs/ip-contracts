@@ -14,10 +14,17 @@ import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
 import "../../_external/balancer/IGauge.sol";
 
+//testing
+import "hardhat/console.sol";
+
 interface IRewardsPool {
   function stakeAll() external returns (bool);
 
   function getReward() external returns (bool);
+
+  function earned(address account) external view returns (uint256);
+
+  function rewards(address account) external view returns (uint256);
 
   function getReward(address _account, bool _claimExtras) external returns (bool);
 
@@ -143,6 +150,7 @@ contract VaultBPT is Context {
 
     //stake auraBal directly on rewards pool
     if (address(lp) == _votingController._auraBal()) {
+      console.log("staking auraBal, ", address(lp));
       IRewardsPool rp = IRewardsPool(rewardsToken);
       lp.approve(rewardsToken, lp.balanceOf(address(this)));
 
@@ -168,6 +176,17 @@ contract VaultBPT is Context {
     (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
 
     IRewardsPool rp = IRewardsPool(rewardsToken);
+
+    ///compare starting params
+    console.log("checking starting params");
+    console.log("block: ", block.number);
+    console.log("token: ", address(lp));
+    console.log("tokenBal: ", lp.balanceOf(address(this)));
+    console.log("rewrdBal: ", IERC20(rewardsToken).balanceOf(address(this)));
+    console.log("claimExtra: ", claimExtra);
+    console.log("staked: ", isStaked[address(lp)]);
+    console.log("Rewards token: ", rewardsToken);
+    console.log("earned: ", rp.earned(address(this)));
 
     //rewards (including extra) will be sent to this contract
     rp.getReward(address(this), claimExtra);

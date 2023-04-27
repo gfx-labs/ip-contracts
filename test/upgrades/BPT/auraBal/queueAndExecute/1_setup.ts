@@ -3,6 +3,7 @@ import { ethers, network, tenderly } from "hardhat";
 import { stealMoney } from "../../../../../util/money";
 import { showBody } from "../../../../../util/format";
 import { BN } from "../../../../../util/number";
+import { toNumber } from "../../../../../util/math";
 import { s } from "../scope";
 import { d } from "../../DeploymentInfo";
 import { advanceBlockHeight, reset, mineBlock } from "../../../../../util/block";
@@ -48,7 +49,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(17119430)).to.not.throw;
+        expect(await reset(16526261)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [true])).to.not
@@ -103,7 +104,10 @@ describe("Initial Setup - wstETH/wETH - B-stETH-STABLE-gauge", () => {
         }
         await s.Frank.sendTransaction(tx)
 
-        const auraBal_whale = "0xc02A0fFc3a2B142954848f3605B341c42d1D58f4"
+        //const auraBal_whale = "0xc02A0fFc3a2B142954848f3605B341c42d1D58f4"
+        const auraBal_whale = "0x11b82a90b3Ba3ae5C7D430980cA10e8cE208c1c3"
+
+        showBody("Whale blance: ", await toNumber(await s.AuraBal.balanceOf(auraBal_whale)))
         //steal BPTs
         await stealMoney(auraBal_whale, s.Bob.address, s.AuraBal.address, s.BPT_AMOUNT)
         await stealMoney(auraBal_whale, s.Carol.address, s.AuraBal.address, s.BPT_AMOUNT)
