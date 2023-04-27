@@ -20,6 +20,7 @@ import {
     advanceBlockHeight,
     fastForward,
     hardhat_mine,
+    hardhat_mine_timed,
     mineBlock,
     OneWeek,
     OneYear,
@@ -105,28 +106,9 @@ describe("Verify Upgraded Contracts", () => {
 describe("Deposit and verify functions", () => {
     it("deposit BPT", async () => {
         await s.AuraBal.connect(s.Bob).approve(s.CappedAuraBal.address, s.BPT_AMOUNT)
-        const result = await s.CappedAuraBal.connect(s.Bob).deposit(s.BPT_AMOUNT, s.BobVaultID, false)
+        const result = await s.CappedAuraBal.connect(s.Bob).deposit(s.BPT_AMOUNT, s.BobVaultID, true)
         const gas = await getGas(result)
-        showBodyCyan("Gas to deposit only: ", gas)
-
-        //check destinations
-        //BPT should be in BPT vault (not gauge tokens nor reward token)
-        let balance = await s.AuraBal.balanceOf(s.BobBptVault.address)
-        expect(balance).to.eq(s.BPT_AMOUNT, "BPT amount in vault is correct")
-
-        balance = await s.rewardToken.balanceOf(s.BobBptVault.address)
-        expect(balance).to.eq(0, "Not yet any reward tokens in BPT vault")
-
-        //cap tokens should be in standard vault
-        balance = await s.CappedAuraBal.balanceOf(s.BobVault.address)
-        expect(balance).to.eq(s.BPT_AMOUNT, "Cap tokens in standard vault")
-    })
-
-    it("Stake", async () => {
-
-        const result = await s.BobBptVault.stakeAuraLP(s.AuraBal.address)
-        const gas = await getGas(result)
-        showBodyCyan("Gas to stake only: ", gas)
+        showBodyCyan("Gas to deposit and stake: ", gas)
 
         //confirm staked
         let staked = await s.BobBptVault.isStaked(s.AuraBal.address)
@@ -139,9 +121,13 @@ describe("Deposit and verify functions", () => {
 
         balance = await s.rewardToken.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(s.BPT_AMOUNT, "Reward tokens in BPT vault")
-
-
     })
+
+    it("advance time", async () => {
+        await hardhat_mine_timed(500, 15)
+    })
+
+
 
     it("Claim rewards", async () => {
 
@@ -159,7 +145,7 @@ describe("Deposit and verify functions", () => {
 
         let result = await s.BobBptVault.claimAuraLpRewards(s.AuraBal.address, true)
         const receipt = await result.wait()
-        showBody(receipt)
+        //showBody(receipt)
         let gas = await getGas(result)
         showBodyCyan("Gas to claim rewards: ", gas)
 
@@ -197,9 +183,27 @@ describe("Deposit and verify functions", () => {
 
     it("Deposit and stake for future tests", async () => {
         await s.AuraBal.connect(s.Bob).approve(s.CappedAuraBal.address, s.BPT_AMOUNT)
-        const result = await s.CappedAuraBal.connect(s.Bob).deposit(s.BPT_AMOUNT, s.BobVaultID, true)
+        const result = await s.CappedAuraBal.connect(s.Bob).deposit(s.BPT_AMOUNT, s.BobVaultID, false)
         const gas = await getGas(result)
-        showBodyCyan("Gas to deposit and stake: ", gas)
+        showBodyCyan("Gas to deposit without stake: ", gas)
+
+
+        //BPT should be in BPT vault (not gauge tokens nor reward token)
+        let balance = await s.AuraBal.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(s.BPT_AMOUNT, "BPT amount in vault is correct")
+
+        balance = await s.rewardToken.balanceOf(s.BobBptVault.address)
+        expect(balance).to.eq(0, "Not yet any reward tokens in BPT vault")
+
+        //cap tokens should be in standard vault
+        balance = await s.CappedAuraBal.balanceOf(s.BobVault.address)
+        expect(balance).to.eq(s.BPT_AMOUNT, "Cap tokens in standard vault")
+    })
+    it("Stake", async () => {
+
+        const result = await s.BobBptVault.stakeAuraLP(s.AuraBal.address)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to stake only: ", gas)
 
         //confirm staked
         let staked = await s.BobBptVault.isStaked(s.AuraBal.address)
@@ -212,6 +216,8 @@ describe("Deposit and verify functions", () => {
 
         balance = await s.rewardToken.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(s.BPT_AMOUNT, "Reward tokens in BPT vault")
+
+
     })
 
     //test for breaking the rules

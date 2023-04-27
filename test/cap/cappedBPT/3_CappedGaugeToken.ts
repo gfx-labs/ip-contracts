@@ -123,7 +123,7 @@ describe("Deposit and verify functions", () => {
 
         let result = await s.BobBptVault.claimAuraLpRewards(s.auraBal.address, true)
         const receipt = await result.wait()
-        showBody(receipt)
+        //showBody(receipt)
         let gas = await getGas(result)
         showBodyCyan("Gas to claim auraBal rewards: ", gas)
 
