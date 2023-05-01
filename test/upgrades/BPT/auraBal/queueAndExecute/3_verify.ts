@@ -101,6 +101,18 @@ describe("Verify Upgraded Contracts", () => {
         expect(info.id).to.eq(s.CaroLVaultID, "ID is correct, vault minted successfully")
     })
 
+    it("Verify upgrade and registrations on VVC", async () => {
+        const registeredAuraBal = await s.VotingVaultController._auraBal()
+        expect(registeredAuraBal).to.eq(s.AuraBal.address, "AuraBal registered correctly")
+
+        const registeredAuraBooster = await s.VotingVaultController._auraBooster()
+        expect(registeredAuraBooster).to.eq("0xA57b8d98dAE62B26Ec3bcC4a365338157060B234", "Aura Booster registered correctly")
+
+        const lpData = await s.VotingVaultController._auraLpData(s.AuraBal.address)
+        expect(lpData.rewardToken).to.eq(s.rewardToken.address, "Reward token in LP data correctly")
+        expect(lpData.pid).to.eq(BN("0"), "PID registered correctly")
+    })
+
 })
 
 describe("Deposit and verify functions", () => {

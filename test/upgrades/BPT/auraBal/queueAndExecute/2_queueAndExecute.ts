@@ -4,6 +4,7 @@ import { expect, assert } from "chai";
 import { showBody, showBodyCyan } from "../../../../../util/format";
 import { impersonateAccount, ceaseImpersonation } from "../../../../../util/impersonator"
 import * as fs from 'fs';
+import { mine, time } from "@nomicfoundation/hardhat-network-helpers";
 
 import { BN } from "../../../../../util/number";
 import {
@@ -29,7 +30,8 @@ import {
   WstETHRelay__factory,
   BPTstablePoolOracle__factory,
   CappedBptToken__factory,
-  BPT_WEIGHTED_ORACLE__factory
+  BPT_WEIGHTED_ORACLE__factory,
+  VotingVaultController
 } from "../../../../../typechain-types";
 import {
   advanceBlockHeight,
@@ -38,11 +40,13 @@ import {
   mineBlock,
   OneWeek,
   OneYear,
-  currentBlock
+  currentBlock,
+  hardhat_mine_timed
 } from "../../../../../util/block";
-import { toNumber } from "../../../../../util/math";
+import { getGas, toNumber } from "../../../../../util/math";
 import { ProposalContext } from "../../../../../scripts/proposals/suite/proposal";
 import { DeployContractWithProxy, DeployContract } from "../../../../../util/deploy";
+import { timeLog } from "console";
 
 
 require("chai").should();
@@ -69,7 +73,7 @@ describe("Verify Contracts", () => {
   it("mint vaults for testing", async () => {
     //showBody("bob mint vault")
     await expect(s.VaultController.connect(s.Bob).mintVault()).to.not.reverted;
-    await mineBlock();
+    ;
     s.BobVaultID = await s.VaultController.vaultsMinted()
     let vaultAddress = await s.VaultController.vaultAddress(s.BobVaultID)
     s.BobVault = IVault__factory.connect(vaultAddress, s.Bob);
@@ -78,7 +82,7 @@ describe("Verify Contracts", () => {
     //showBody("carol mint vault")
     await expect(s.VaultController.connect(s.Carol).mintVault()).to.not
       .reverted;
-    await mineBlock();
+    ;
     s.CaroLVaultID = await s.VaultController.vaultsMinted()
     vaultAddress = await s.VaultController.vaultAddress(s.CaroLVaultID)
     s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
@@ -91,17 +95,22 @@ describe("Verify Contracts", () => {
 
 
 
-let auraBalOracle: IOracleRelay
-let vvcImplementationAddr: String
+let implementation: VotingVaultController
+let impAddr: any
+
 describe("Upgrade Voting Vault Controller for BPT collateral", () => {
   it("Deploy new implementation", async () => {
-    const implementation = await new VotingVaultController__factory(s.Frank).deploy()
-    await mineBlock()
+    implementation = await new VotingVaultController__factory(s.Frank).deploy()
+
     await implementation.deployed()
-    vvcImplementationAddr = implementation.address
+    impAddr = implementation.address
   })
 })
+
+let auraBalOracle: IOracleRelay
+
 describe("Deploy Cap Tokens and Oracles", () => {
+
   const wethOracleAddr = "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"
   const balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
   it("Deploy Capped AuraBal", async () => {
@@ -128,11 +137,9 @@ describe("Deploy Cap Tokens and Oracles", () => {
       BN("1"),
       BN("1")
     )
-    await mineBlock()
+
     await auraBalOracle.deployed()
     showBodyCyan("AuraBal uni relay price: ", await toNumber(await auraBalOracle.currentValue()))
-
-
   })
 
 })
@@ -140,7 +147,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
 
 
 
- 
+const booster = "0xA57b8d98dAE62B26Ec3bcC4a365338157060B234"
 describe("Setup, Queue, and Execute proposal", () => {
   const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
   const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
@@ -163,65 +170,78 @@ describe("Setup, Queue, and Execute proposal", () => {
     //upgrade VVC
     const upgradeVVC = await new ProxyAdmin__factory(prop).
       attach(s.ProxyAdmin.address).
-      populateTransaction.upgrade(
-        s.VotingVaultController.address,
-        vvcImplementationAddr.toString()
-      )
-
-    const addOracle = await new OracleMaster__factory(prop).
-      attach(s.Oracle.address).
-      populateTransaction.setRelay(
-        s.CappedAuraBal.address,
-        auraBalOracle.address
-      )
-
-    const list = await new VaultController__factory(prop).
-      attach(s.VaultController.address).
-      populateTransaction.registerErc20(
-        s.CappedAuraBal.address,
-        s.BPT_LTV,
-        s.CappedAuraBal.address,
-        s.BPT_LiqInc
-      )
-
-    const register_VVC = await new VotingVaultController__factory(prop).
-      attach(s.VotingVaultController.address).
-      populateTransaction.registerUnderlying(
-        s.AuraBal.address,
-        s.CappedAuraBal.address
-      )
+      populateTransaction.upgrade(s.VotingVaultController.address, impAddr)
 
     //first time setup for VotingVault controller for BPTs
     const registerAuraBal = await new VotingVaultController__factory(prop).
       attach(s.VotingVaultController.address).
-      populateTransaction.registerAuraBal("0x616e8BfA43F920657B3497DBf40D6b1A02D4608d")
+      populateTransaction.registerAuraBal(s.AuraBal.address)
 
     const registerAuraBooster = await new VotingVaultController__factory(prop).attach(s.VotingVaultController.address).
-      populateTransaction.registerAuraBooster("0xA57b8d98dAE62B26Ec3bcC4a365338157060B234")
+      populateTransaction.registerAuraBooster(booster)
 
-    //register LP data for new capped gauge token
-    //this is so we can assosiate each listed gauge token with its reward token
-    //reward token is what is recived for staking the gauge token
+    //register LP data for new capped BPT
+    //this is so we can assosiate each listed BPT with its reward token
+    //reward token is what is recived for staking the LP token via the booster
     //call PID on reward token to get PID
-    const PID = BN("0")
-    const asset = s.AuraBal.address
-    const rewardToken = s.rewardToken.address
-    
     const populateAuraLpData = await new VotingVaultController__factory(prop).attach(s.VotingVaultController.address).
-      populateTransaction.registerAuraLpData(asset, rewardToken, PID)
+      populateTransaction.registerAuraLpData(s.AuraBal.address, s.rewardToken.address, s.PID)
+
+    const addOracle = await new OracleMaster__factory(prop).
+      attach(s.Oracle.address).
+      populateTransaction.setRelay(s.CappedAuraBal.address, auraBalOracle.address)
+
+    const list = await new VaultController__factory(prop).
+      attach(s.VaultController.address).
+      populateTransaction.registerErc20(s.CappedAuraBal.address, s.BPT_LTV, s.CappedAuraBal.address, s.BPT_LiqInc)
+
+    const register_VVC = await new VotingVaultController__factory(prop).
+      attach(s.VotingVaultController.address).
+      populateTransaction.registerUnderlying(s.AuraBal.address, s.CappedAuraBal.address)
 
 
+    //test
+    const calcInterest = await new VaultController__factory(prop).attach(s.VaultController.address).
+      populateTransaction.calculateInterest()
+
+
+
+    //upgrade and setup new features
     proposal.addStep(upgradeVVC, "upgrade(address,address)")
-    proposal.addStep(addOracle, "setRelay(address,address)")
-    proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")
-    proposal.addStep(register_VVC, "registerUnderlying(address,address)")
     proposal.addStep(registerAuraBal, "registerAuraBal(address)")
     proposal.addStep(registerAuraBooster, "registerAuraBooster(address)")
     proposal.addStep(populateAuraLpData, "registerAuraLpData(address,address,uint256)")
 
+    //legacy listing arguments
+    proposal.addStep(addOracle, "setRelay(address,address)")
+    proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")
+    proposal.addStep(register_VVC, "registerUnderlying(address,address)")
+
+
+    proposal.addStep(calcInterest, "calculateInterest()")
+
+
     out = proposal.populateProposal()
     //showBody(out)
   })
+
+  it("reduce timelock to prevent reward payout error", async () => {
+    /**
+     * For some strange reason, fast forwarding more than this number prevents rewards from being paid
+     * when redeeming auraBal rewards
+     * 
+     * For this reason, the timelock delay has been reduced for these tests
+     * Rewards should still pay on mainnet when the normal timelock delay passes organicly 
+     */
+    //const magicNumber = BN("169718")
+    const magicNumber = BN("140000")
+    await impersonateAccount(s.owner._address)
+    await gov.connect(s.owner)._setDelay(magicNumber)
+    await ceaseImpersonation(s.owner._address)
+
+  })
+
+
 
   it("queue and execute", async () => {
     const votingPeriod = await gov.votingPeriod()
@@ -241,35 +261,105 @@ describe("Setup, Queue, and Execute proposal", () => {
       "AuraBal",
       false
     )
-    await mineBlock()
+
     proposal = Number(await gov.proposalCount())
     showBodyCyan("Advancing a lot of blocks...")
     await hardhat_mine(votingDelay.toNumber());
 
     await gov.connect(prop).castVote(proposal, 1)
-    await mineBlock()
 
     showBodyCyan("Advancing a lot of blocks again...")
     await hardhat_mine(votingPeriod.toNumber());
-    await mineBlock()
 
     await gov.connect(prop).queue(proposal);
-    await mineBlock()
 
     await fastForward(timelock.toNumber());
-    await mineBlock()
 
-    await gov.connect(prop).execute(proposal);
-    await mineBlock();
-
+    const result = await gov.connect(prop).execute(proposal);
+    const gas = await getGas(result)
+    showBodyCyan("Gas to execute: ", gas)
 
     await ceaseImpersonation(proposer)
 
   })
 
 
+  /**
+  it("test more things", async () => {
+    const blockTime = 15
+    const votingDelay = BN("13140")
+    const votingPeriod = BN("40320")
+    const timelock = BN("172800")
+    const magicNumber = BN("169718")
+    //await hardhat_mine_timed(votingDelay.toNumber(), blockTime);
+    //await hardhat_mine_timed(votingPeriod.toNumber(), blockTime);
+    await hardhat_mine(votingDelay.toNumber())
+    await hardhat_mine(votingDelay.toNumber())
+
+    let block = await currentBlock()
+    let beginTime = block.timestamp
+
+    // mine a new block with timestamp `newTimestamp`
+    //await time.increaseTo(beginTime + timelock.toNumber());
+
+    // set the timestamp of the next block but don't mine a new block
+    await fastForward(magicNumber.toNumber())
+
+    //await hardhat_mine_timed(timelock.toNumber(), 0)
+    //await advanceBlockHeight(timelock.toNumber())
+    //await fastForward(magicNumber.toNumber())
+    //await advanceBlockHeight(2)
+
+
+
+    //await hardhat_mine_timed(timelock.toNumber() / blockTime, blockTime)
+    //await fastForward(timelock.toNumber());
+
+    let endBlock = await currentBlock()
+    let endTime = endBlock.timestamp
+    let difference = endTime - beginTime
+    showBody("Dif: ", difference)
+
+  })
+
+
+
+  it("TEST do some things manually instead of preposal", async () => {
+    await impersonateAccount(s.owner._address)
+
+    await s.ProxyAdmin.connect(s.owner).upgrade(s.VotingVaultController.address, impAddr)
+
+    await s.VotingVaultController.connect(s.owner).registerAuraBal(s.AuraBal.address)
+
+    await s.VotingVaultController.connect(s.owner).registerAuraBooster(booster)
+
+    // call pid on reward token to get pid
+    await s.VotingVaultController.connect(s.owner).registerAuraLpData(s.AuraBal.address, s.rewardToken.address, s.PID)
+
+    //register oracle
+    await s.Oracle.connect(s.owner).setRelay(s.CappedAuraBal.address, auraBalOracle.address)
+
+    //register VVC
+    await s.VotingVaultController.connect(s.owner).registerUnderlying(s.AuraBal.address, s.CappedAuraBal.address)
+
+    //register on vault controller
+
+    await s.VaultController.connect(s.owner).registerErc20(s.CappedAuraBal.address, s.BPT_LTV, s.CappedAuraBal.address, s.BPT_LiqInc)
+
+
+    await ceaseImpersonation(s.owner._address)
+  })
+
+   */
+
+
+
+
+
+
+
 })
 
- 
+
 
 

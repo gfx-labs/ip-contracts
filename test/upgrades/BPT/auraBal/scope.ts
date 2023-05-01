@@ -13,6 +13,7 @@ export class TestScope extends MainnetAddresses {
     WBTC!: IERC20;
 
     AuraBal!:IERC20
+    PID = 0
 
     gaugeToken!: IERC20
     rewardToken!: IERC20

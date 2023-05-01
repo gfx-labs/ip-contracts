@@ -173,19 +173,19 @@ contract VaultBPT is Context {
   /// @param claimExtra - claim extra token rewards, uses more gas
   function claimAuraLpRewards(IERC20 lp, bool claimExtra) external {
     //get rewards pool
-    (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
-
+    (address rewardsToken, uint256 PID) = _votingController.getAuraLpData(address(lp));
     IRewardsPool rp = IRewardsPool(rewardsToken);
 
     ///compare starting params
     console.log("checking starting params");
+    console.log("Rewards token: ", rewardsToken);
+    console.log("PID: ", PID);
     console.log("block: ", block.number);
     console.log("token: ", address(lp));
     console.log("tokenBal: ", lp.balanceOf(address(this)));
     console.log("rewrdBal: ", IERC20(rewardsToken).balanceOf(address(this)));
     console.log("claimExtra: ", claimExtra);
     console.log("staked: ", isStaked[address(lp)]);
-    console.log("Rewards token: ", rewardsToken);
     console.log("earned: ", rp.earned(address(this)));
 
     //rewards (including extra) will be sent to this contract
