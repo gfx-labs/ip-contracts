@@ -18,8 +18,6 @@ import {
   OracleMaster__factory,
   VaultController__factory,
   VotingVaultController__factory,
-  GeneralizedBalancerOracle,
-  GeneralizedBalancerOracle__factory,
   OracleRETH,
   BalancerPeggedAssetRelay,
   UniswapV2OracleRelay__factory,
@@ -104,7 +102,7 @@ describe("Setup, Queue, and Execute proposal", () => {
 
   let gov: GovernorCharlieDelegate;
 
-  let proposal: number
+  let proposal: number = 23 //LINK
 
   let out: any
 
@@ -128,26 +126,17 @@ describe("Setup, Queue, and Execute proposal", () => {
   })
 
   it("queue and execute", async () => {
-    const votingPeriod = await gov.votingPeriod()
-    const votingDelay = await gov.votingDelay()
-    const timelock = await gov.proposalTimelockDelay()
 
-    const block = await currentBlock()
-    const votes = await s.IPT.getPriorVotes(proposer, block.number - 2)
-    expect(await toNumber(votes)).to.eq(45000000, "Correct number of votes delegated")
+    const timelock = await gov.proposalTimelockDelay()
 
     await impersonateAccount(proposer)
 
-
     //only queue as of this block
     await gov.connect(prop).queue(proposal);
-    await mineBlock()
 
     await fastForward(timelock.toNumber());
-    await mineBlock()
 
     await gov.connect(prop).execute(proposal);
-    await mineBlock();
 
 
     await ceaseImpersonation(proposer)

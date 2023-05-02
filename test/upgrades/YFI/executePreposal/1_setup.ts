@@ -9,8 +9,6 @@ import { advanceBlockHeight, reset, mineBlock } from "../../../../util/block";
 import {
     AnchoredViewRelay,
     AnchoredViewRelay__factory,
-    ChainlinkOracleRelay,
-    ChainlinkOracleRelay__factory,
     CurveMaster,
     CurveMaster__factory,
     IERC20,
@@ -39,7 +37,7 @@ require("chai").should();
 // configurable variables
 const weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
 const bank = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28"
-const CHAI_WHALE = "0x602f2E120A9956F2Ad1cE47cED286fcEfbBa9f8C"
+const YFI_WHALE = "0xF977814e90dA44bFA03b6295A0616a897441aceC"
 
 if (process.env.TENDERLY_KEY) {
     if (process.env.TENDERLY_ENABLE == "true") {
@@ -50,7 +48,7 @@ if (process.env.TENDERLY_KEY) {
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(16898336)).to.not.throw;
+        expect(await reset(17175538)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [true])).to.not
@@ -58,7 +56,7 @@ describe("hardhat settings", () => {
     });
 });
 
-describe("Initial Setup - CHAI", () => {
+describe("Initial Setup - YFI", () => {
     it("connect to signers", async () => {
         s.accounts = await ethers.getSigners();
         s.Frank = s.accounts[0];
@@ -74,7 +72,7 @@ describe("Initial Setup - CHAI", () => {
         s.WETH = IERC20__factory.connect(s.wethAddress, s.Frank);
 
         s.UNI = IVOTE__factory.connect(s.uniAddress, s.Frank)
-        s.CHAI = IERC20__factory.connect("0x06AF07097C9Eeb7fD685c692751D5C66dB49c215", s.Frank)
+        s.YFI = IERC20__factory.connect("0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e", s.Frank)
 
     });
 
@@ -121,9 +119,9 @@ describe("Initial Setup - CHAI", () => {
 
         await stealMoney(bank, s.Dave.address, s.USDC.address, s.Dave_USDC)
 
-        await stealMoney(CHAI_WHALE, s.Bob.address, s.CHAI.address, s.CHAI_AMOUNT)
-        await stealMoney(CHAI_WHALE, s.Carol.address, s.CHAI.address, s.CHAI_AMOUNT)
-        await stealMoney(CHAI_WHALE, s.Gus.address, s.CHAI.address, s.CHAI_AMOUNT)
+        await stealMoney(YFI_WHALE, s.Bob.address, s.YFI.address, s.YFI_AMOUNT)
+        await stealMoney(YFI_WHALE, s.Carol.address, s.YFI.address, s.YFI_AMOUNT)
+        await stealMoney(YFI_WHALE, s.Gus.address, s.YFI.address, s.YFI_AMOUNT)
 
 
         //Eric should not hold any USDC for the tests
