@@ -10,15 +10,17 @@ import "../IVaultController.sol";
 import "../../_external/CompLike.sol";
 import "../../_external/IERC721.sol";
 import "../../_external/Context.sol";
-import "../../_external/openzeppelin/SafeERC721Upgradeable.sol";
+
+//not sure this is a thing
+//import "../../_external/openzeppelin/SafeERC721Upgradeable.sol";
 
 import "../../_external/balancer/IGauge.sol";
 
 //testing
 import "hardhat/console.sol";
 
-contract VaultBPT is Context {
-  using SafeERC721Upgradeable for IERC721;
+contract VaultNft is Context {
+  //using SafeERC721Upgradeable for IERC721;
 
   /// @title VaultInfo struct
   /// @notice This vault holds the underlying token
@@ -90,7 +92,8 @@ contract VaultBPT is Context {
     address _to,
     uint256 _tokenId
   ) external onlyVaultController {
-    SafeERC721Upgradeable.safeTransfer(IERC721Upgradeable(_token, _to, _tokenId);
+    //todo
+    //SafeERC721Upgradeable.safeTransfer(IERC721Upgradeable(_token, _to, _tokenId);
   }
 
   /// @notice function used by the NftVaultController to transfer tokens
@@ -103,6 +106,7 @@ contract VaultBPT is Context {
     address _to,
     uint256 _tokenId
   ) external onlyNftVaultController {
-    SafeERC721Upgradeable.safeTransfer(IERC721Upgradeable(_token, _to, _tokenId);
+    //todo
+    //SafeERC721Upgradeable.safeTransfer(IERC721Upgradeable(_token, _to, _tokenId);
   }
 }

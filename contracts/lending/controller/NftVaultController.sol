@@ -3,8 +3,8 @@ pragma solidity 0.8.9;
 
 import "../IVaultController.sol";
 
-import "../vault/NftVault.sol";
-import "../vault/VaultBPT.sol";
+import "../vault/VaultNft.sol";
+//import "../vault/VaultBPT.sol";
 
 import "../../_external/IERC20Metadata.sol";
 import "../../_external/openzeppelin/ERC20Upgradeable.sol";
@@ -37,7 +37,7 @@ contract NftVaultController is Initializable, OwnableUpgradeable {
   /// @notice register an underlying nft token pair
   /// note that registring a token as a nft token allows it to transfer the balance of the corresponding token at will
   /// @param underlying_address address of underlying
-  /// @param wrapper_token address of nft wrapper token
+  /// @param capped_token address of nft wrapper token
   function registerUnderlying(address underlying_address, address capped_token) external onlyOwner {
     _underlying_CollateralToken[underlying_address] = capped_token;
     _CollateralToken_underlying[capped_token] = underlying_address;
@@ -51,7 +51,7 @@ contract NftVaultController is Initializable, OwnableUpgradeable {
     require(nft_vault != address(0x0), "invalid vault");
     address underlying_address = _CollateralToken_underlying[_msgSender()];
     require(underlying_address != address(0x0), "only capped token");
-    NftVault nftVault = NftVault(nft_vault);
+    VaultNft nftVault = VaultNft(nft_vault);
     nftVault.nftVaultControllerTransfer(underlying_address, target, tokenId);
   }
 
@@ -64,7 +64,7 @@ contract NftVaultController is Initializable, OwnableUpgradeable {
       if (vault_address != address(0)) {
         // mint the vault itself, deploying the contract
         address nft_vault_address = address(
-          new NftVault(id, vault_address, address(_vaultController), address(this))
+          new VaultNft(id, vault_address, address(_vaultController), address(this))
         );
         // add the vault to our system
         _vaultId_nftVaultAddress[id] = nft_vault_address;
