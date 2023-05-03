@@ -18,11 +18,6 @@ import {
   OracleMaster__factory,
   VaultController__factory,
   VotingVaultController__factory,
-  ChainlinkOracleRelay,
-  ChainlinkOracleRelay__factory,
-  ChainlinkTokenOracleRelay__factory,
-  GeneralizedBalancerOracle,
-  GeneralizedBalancerOracle__factory,
   OracleRETH,
   BalancerPeggedAssetRelay,
   UniswapV2OracleRelay__factory,
@@ -30,7 +25,8 @@ import {
   ProxyAdmin__factory,
   CHI_Oracle__factory,
   IOracleRelay,
-  TransparentUpgradeableProxy__factory
+  UniswapV3OracleRelay__factory,
+  ChainlinkOracleRelay__factory
 } from "../../../../typechain-types";
 import {
   advanceBlockHeight,
@@ -44,10 +40,8 @@ import {
 import { toNumber } from "../../../../util/math";
 import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
 import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
-import { OracleRETH__factory } from "../../../../typechain-types/factories/oracle/External/OracleRETH.sol/OracleRETH__factory";
-import { BalancerPeggedAssetRelay__factory } from "../../../../typechain-types/factories/oracle/External/BalancerPeggedAssetRelay.sol";
 
-let chaiAnchor: IOracleRelay
+let anchorViewYFI: IOracleRelay
 
 
 
@@ -90,36 +84,59 @@ describe("Verify Contracts", () => {
     vaultAddress = await s.VaultController.vaultAddress(s.CaroLVaultID)
     s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
     expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
-    await s.WETH.connect(s.Carol).transfer(s.CarolVault.address, await s.WETH.balanceOf(s.Carol.address))
 
+    await s.WETH.connect(s.Carol).transfer(s.CarolVault.address, await s.WETH.balanceOf(s.Carol.address))
   });
 });
 
 
+describe("Setup, Queue, and Execute proposal", () => {
+  const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
+  const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
+  const prop = ethers.provider.getSigner(proposer)
 
-describe("Deploy Cap Tokens and Oracles", () => {
+  let gov: GovernorCharlieDelegate;
 
-  const cCHAIaddr = "0xDdAD1d1127A7042F43CFC209b954cFc37F203897"
-  const oldImp = "0xB9cb624D4b21E0239bB149B1B1F1992A0eB351b8"
+  let proposal: number = 24 //YFI
 
-  it("Set capped chai to old implementation", async () => {
+  let out: any
 
-    s.CappedCHAI = CappedGovToken__factory.connect(cCHAIaddr, s.Frank)
+  const cappedTokenDeploy = "0xe2C1d2E7aA4008081CAAFc350A040246b9EBB579"
+  it("connect to mainnet deploys", async () => {
+    s.CappedYFI = CappedGovToken__factory.connect(cappedTokenDeploy, s.Frank)
+  })
 
-    const proxy = TransparentUpgradeableProxy__factory.connect(cCHAIaddr, s.Frank)
-
+  it("transfer ownership for tests", async () => {
     await impersonateAccount(s.deployer._address)
-    showBodyCyan("TRYING")
-    await s.CappedCHAI.connect(s.deployer).transferOwnership(s.owner._address)
+    await s.CappedYFI.connect(s.deployer).transferOwnership(governorAddress)
     await ceaseImpersonation(s.deployer._address)
 
-    /**
-     await impersonateAccount(s.owner._address)
-    s.ProxyAdmin.connect(s.owner).upgrade(s.CappedCHAI.address, oldImp)
-    await ceaseImpersonation(s.owner._address)
-     */
+  })
+
+  it("connect to governor", async () => {
+    gov = new GovernorCharlieDelegate__factory(prop).attach(
+      governorAddress
+    );
+  })
+  
+  it("queue and execute", async () => {
+    const timelock = await gov.proposalTimelockDelay()
+
+    await impersonateAccount(proposer)
+
+    //only queue as of this block
+    await gov.connect(prop).queue(proposal);
+
+    await fastForward(timelock.toNumber());
+
+    await gov.connect(prop).execute(proposal);
+
+
+    await ceaseImpersonation(proposer)
 
   })
+
+
 })
 
 

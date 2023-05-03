@@ -16,7 +16,7 @@ export class TestScope extends MainnetAddresses {
     YFI_AMOUNT = BN("100e18")
     CappedYFI!: CappedGovToken
     YFI_CAP = BN("350e18")
-    YFI_LiqInc = BN("7000000000000000")//0.0075 / 0.75%
+    YFI_LiqInc = BN("100000000000000000")
     YFI_LTV = BN("7e17")
 
     wETH_LTV = BN("5e17")

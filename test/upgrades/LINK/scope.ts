@@ -16,7 +16,7 @@ export class TestScope extends MainnetAddresses {
     LINK_AMOUNT = BN("10000e18")
     CappedLINK!: CappedGovToken
     LINK_CAP = BN("375000e18")
-    LINK_LiqInc = BN("7500000000000000")
+    LINK_LiqInc = BN("75000000000000000")
     LINK_LTV = BN("75e16")
 
     wETH_LTV = BN("5e17")

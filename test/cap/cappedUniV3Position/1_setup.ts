@@ -5,10 +5,10 @@ import { showBody } from "../../../util/format";
 import { BN } from "../../../util/number";
 import { s } from "./scope";
 import { d } from "../DeploymentInfo";
-import { toNumber } from "../../../util/math"
-import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
-import { BigNumber, BytesLike } from "ethers";
-import { IERC20__factory, INonfungiblePositionManager__factory, IOracleRelay__factory, OracleMaster__factory, ProxyAdmin__factory, USDI__factory, VaultController__factory, VotingVaultController__factory } from "../../../typechain-types";
+import { getArgs, toNumber } from "../../../util/math"
+import { advanceBlockHeight, reset, mineBlock, currentBlock } from "../../../util/block";
+import { BigNumber, BigNumberish, BytesLike } from "ethers";
+import { IERC20__factory, INonfungiblePositionManager__factory, IOracleRelay__factory, OracleMaster__factory, ProxyAdmin__factory, TestContract__factory, Test__factory, USDI__factory, VaultController__factory, VotingVaultController__factory } from "../../../typechain-types";
 //import { assert } from "console";
 
 import {
@@ -27,6 +27,7 @@ import {
     Pool,
     Position,
 } from '@uniswap/v3-sdk'
+import { PromiseOrValue } from "../../../typechain-types/common";
 
 require("chai").should();
 
@@ -101,6 +102,20 @@ describe("Token Setup", () => {
 
 });
 
+type MintParams = {
+    token0: PromiseOrValue<string>,
+    token1: PromiseOrValue<string>,
+    fee: PromiseOrValue<BigNumberish>,
+    tickLower: PromiseOrValue<BigNumberish>,
+    tickUpper: PromiseOrValue<BigNumberish>,
+    amount0Desired: PromiseOrValue<BigNumberish>,
+    amount1Desired: PromiseOrValue<BigNumberish>,
+    amount0Min: PromiseOrValue<BigNumberish>,
+    amount1Min: PromiseOrValue<BigNumberish>,
+    recipient: PromiseOrValue<string>,
+    deadline: PromiseOrValue<BigNumberish>
+}
+
 describe("Mint position", () => {
     const nfpManagerAddr = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
     const nfpManager = INonfungiblePositionManager__factory.connect(nfpManagerAddr, s.Frank)
@@ -130,7 +145,8 @@ describe("Mint position", () => {
                 poolContract.slot0(),
             ])
 
-        const pool = new Pool(
+      /**
+         const pool = new Pool(
             token0,
             token1,
             fee,
@@ -138,12 +154,45 @@ describe("Mint position", () => {
             liquidity,
             slot0[1]
         )
+       */
+
+        
 
         const nut = nearestUsableTick(slot0[1], tickSpacing)
         const tickLower = nut - (tickSpacing * 2)
         const tickUpper = nut + (tickSpacing * 2)
         showBody(tickLower)
         showBody(tickUpper)
+
+        const intermediary = await new TestContract__factory(s.Frank).deploy()
+        await intermediary.deployed()
+
+        const block = await currentBlock()
+
+        const params: MintParams = {
+            token0: token0,
+            token1: token1,
+            fee: fee,
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            amount0Desired: s.wBTC_Amount,
+            amount1Desired: s.WETH_AMOUNT,
+            amount0Min: BN("0"),
+            amount1Min: BN("0"),
+            recipient: s.Bob.address,
+            deadline: block.timestamp + 500 
+        }
+        
+        showBody("BlockNum: ", block.number)
+        showBody("Deadline: ", params.deadline)
+
+        //await intermediary.doTheMint(params)
+
+        //mint position
+        const result = await nfpManager.connect(s.Bob).mint(params)
+        const args = await getArgs(result)
+        showBody(args)
+        
 
     })
 })
