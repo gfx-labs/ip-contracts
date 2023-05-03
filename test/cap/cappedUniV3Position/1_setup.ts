@@ -161,8 +161,7 @@ describe("Mint position", () => {
         const nut = nearestUsableTick(slot0[1], tickSpacing)
         const tickLower = nut - (tickSpacing * 2)
         const tickUpper = nut + (tickSpacing * 2)
-        showBody(tickLower)
-        showBody(tickUpper)
+
 
         const intermediary = await new TestContract__factory(s.Frank).deploy()
         await intermediary.deployed()
@@ -182,17 +181,20 @@ describe("Mint position", () => {
             recipient: s.Bob.address,
             deadline: block.timestamp + 500 
         }
-        
-        showBody("BlockNum: ", block.number)
-        showBody("Deadline: ", params.deadline)
-
-        //await intermediary.doTheMint(params)
-
+    
         //mint position
         const result = await nfpManager.connect(s.Bob).mint(params)
         const args = await getArgs(result)
-        showBody(args)
-        
+        const tokenId = args.tokenId
+        await mineBlock()
 
+        //showBody(nfpManager)
+        
+        //const positions = await nfpManager.positions(150)
+        //showBody(positions)
+
+        showBody(await nfpManager.balanceOf(s.Bob.address))
+
+        
     })
 })
