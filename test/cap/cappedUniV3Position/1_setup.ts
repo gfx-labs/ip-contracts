@@ -8,25 +8,10 @@ import { d } from "../DeploymentInfo";
 import { getArgs, toNumber } from "../../../util/math"
 import { advanceBlockHeight, reset, mineBlock, currentBlock } from "../../../util/block";
 import { BigNumber, BigNumberish, BytesLike } from "ethers";
-import { IERC20__factory, INonfungiblePositionManager__factory, IOracleRelay__factory, OracleMaster__factory, ProxyAdmin__factory, TestContract__factory, Test__factory, USDI__factory, VaultController__factory, VotingVaultController__factory } from "../../../typechain-types";
+import { IERC20__factory, INFPmanager__factory, INonfungiblePositionManager__factory, IOracleRelay__factory, OracleMaster__factory, ProxyAdmin__factory, USDI__factory, VaultController__factory, VotingVaultController__factory } from "../../../typechain-types";
 //import { assert } from "console";
 
-import {
-    abi as FACTORY_ABI,
-} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
-import {
-    abi as POOL_ABI,
-} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
-import {
-    abi as ROUTERV3,
-} from "@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json"
-import {
-    MintOptions,
-    nearestUsableTick,
-    NonfungiblePositionManager,
-    Pool,
-    Position,
-} from '@uniswap/v3-sdk'
+
 import { PromiseOrValue } from "../../../typechain-types/common";
 
 require("chai").should();
@@ -66,7 +51,7 @@ describe("Token Setup", () => {
         s.WETH = IERC20__factory.connect(s.wethAddress, s.Frank)
         s.WBTC = IERC20__factory.connect(s.wbtcAddress, s.Frank)
         s.wethOracle = IOracleRelay__factory.connect(s.wethOracleAddr, s.Frank)
-
+        s.wbtcOracle = IOracleRelay__factory.connect(s.wbtcOracleAddr, s.Frank)
 
     });
 
@@ -102,99 +87,3 @@ describe("Token Setup", () => {
 
 });
 
-type MintParams = {
-    token0: PromiseOrValue<string>,
-    token1: PromiseOrValue<string>,
-    fee: PromiseOrValue<BigNumberish>,
-    tickLower: PromiseOrValue<BigNumberish>,
-    tickUpper: PromiseOrValue<BigNumberish>,
-    amount0Desired: PromiseOrValue<BigNumberish>,
-    amount1Desired: PromiseOrValue<BigNumberish>,
-    amount0Min: PromiseOrValue<BigNumberish>,
-    amount1Min: PromiseOrValue<BigNumberish>,
-    recipient: PromiseOrValue<string>,
-    deadline: PromiseOrValue<BigNumberish>
-}
-
-describe("Mint position", () => {
-    const nfpManagerAddr = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
-    const nfpManager = INonfungiblePositionManager__factory.connect(nfpManagerAddr, s.Frank)
-    const wETHwBTC_pool_addr = "0xCBCdF9626bC03E24f779434178A73a0B4bad62eD"
-
-
-    //const token0 = s.WBTC
-    //const token1 = s.WETH
-    it("Approve", async () => {
-        await s.WBTC.connect(s.Bob).approve(nfpManagerAddr, s.wBTC_Amount)
-        await s.WETH.connect(s.Bob).approve(nfpManagerAddr, s.WETH_AMOUNT)
-    })
-
-    it("Create instance of pool", async () => {
-        const poolContract = new ethers.Contract(
-            wETHwBTC_pool_addr,
-            POOL_ABI,
-            ethers.provider
-        )
-        const [token0, token1, fee, tickSpacing, liquidity, slot0] =
-            await Promise.all([
-                poolContract.token0(),
-                poolContract.token1(),
-                poolContract.fee(),
-                poolContract.tickSpacing(),
-                poolContract.liquidity(),
-                poolContract.slot0(),
-            ])
-
-      /**
-         const pool = new Pool(
-            token0,
-            token1,
-            fee,
-            slot0[0],
-            liquidity,
-            slot0[1]
-        )
-       */
-
-        
-
-        const nut = nearestUsableTick(slot0[1], tickSpacing)
-        const tickLower = nut - (tickSpacing * 2)
-        const tickUpper = nut + (tickSpacing * 2)
-
-
-        const intermediary = await new TestContract__factory(s.Frank).deploy()
-        await intermediary.deployed()
-
-        const block = await currentBlock()
-
-        const params: MintParams = {
-            token0: token0,
-            token1: token1,
-            fee: fee,
-            tickLower: tickLower,
-            tickUpper: tickUpper,
-            amount0Desired: s.wBTC_Amount,
-            amount1Desired: s.WETH_AMOUNT,
-            amount0Min: BN("0"),
-            amount1Min: BN("0"),
-            recipient: s.Bob.address,
-            deadline: block.timestamp + 500 
-        }
-    
-        //mint position
-        const result = await nfpManager.connect(s.Bob).mint(params)
-        const args = await getArgs(result)
-        const tokenId = args.tokenId
-        await mineBlock()
-
-        //showBody(nfpManager)
-        
-        //const positions = await nfpManager.positions(150)
-        //showBody(positions)
-
-        showBody(await nfpManager.balanceOf(s.Bob.address))
-
-        
-    })
-})

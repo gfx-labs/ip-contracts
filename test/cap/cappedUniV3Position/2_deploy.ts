@@ -1,15 +1,15 @@
-import { s } from "../scope";
+import { s } from "./scope";
 import { d } from "../DeploymentInfo";
 import { upgrades, ethers } from "hardhat";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
 import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear, hardhat_mine } from "../../../util/block";
-import { utils, BigNumber } from "ethers";
+import { utils, BigNumber, BigNumberish } from "ethers";
 import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
-import { toNumber, getGas } from "../../../util/math"
+import { toNumber, getGas, getArgs } from "../../../util/math"
 import { stealMoney } from "../../../util/money";
 
 import {
@@ -23,13 +23,34 @@ import {
   WstETHRelay__factory,
   RateProofOfConcept__factory,
   IOracleRelay__factory,
-  BPTstablePoolOracle__factory
+  BPTstablePoolOracle__factory,
+  INFPmanager__factory,
+  INonfungiblePositionManager__factory,
+  UniV3LPoracle__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
+import { PromiseOrValue } from "../../../typechain-types/common";
 
-
+import {
+  abi as FACTORY_ABI,
+} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
+import {
+  abi as POOL_ABI,
+} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
+import {
+  abi as ROUTERV3,
+} from "@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json"
+import {
+  MintOptions,
+  nearestUsableTick,
+  NonfungiblePositionManager,
+  Pool,
+  Position,
+} from '@uniswap/v3-sdk'
+const nfpManagerAddr = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
+const wETHwBTC_pool_addr = "0xCBCdF9626bC03E24f779434178A73a0B4bad62eD"
 
 require("chai").should();
 describe("Check Interest Protocol contracts", () => {
@@ -84,321 +105,128 @@ describe("Check Interest Protocol contracts", () => {
   });
 });
 
+type MintParams = {
+  token0: PromiseOrValue<string>,
+  token1: PromiseOrValue<string>,
+  fee: PromiseOrValue<BigNumberish>,
+  tickLower: PromiseOrValue<BigNumberish>,
+  tickUpper: PromiseOrValue<BigNumberish>,
+  amount0Desired: PromiseOrValue<BigNumberish>,
+  amount1Desired: PromiseOrValue<BigNumberish>,
+  amount0Min: PromiseOrValue<BigNumberish>,
+  amount1Min: PromiseOrValue<BigNumberish>,
+  recipient: PromiseOrValue<string>,
+  deadline: PromiseOrValue<BigNumberish>
+}
 
-describe("Upgrade Voting Vault Controller", () => {
+describe("Mint position", () => {
+  //const token0 = s.WBTC
+  //const token1 = s.WETH
+  it("Approve", async () => {
+    await s.WBTC.connect(s.Bob).approve(nfpManagerAddr, s.wBTC_Amount)
+    await s.WETH.connect(s.Bob).approve(nfpManagerAddr, s.WETH_AMOUNT)
+  })
 
-  it("Deploy new implementation", async () => {
-    const bptControllerFactory = await ethers.getContractFactory("VotingVaultController")
-    const implementation = await bptControllerFactory.deploy()
-    await mineBlock()
-    await implementation.deployed()
+  it("Create instance of pool", async () => {
+    const nfpManager = INonfungiblePositionManager__factory.connect(nfpManagerAddr, s.Frank)
 
-    const tx = {
-      to: s.owner._address,
-      value: BN("1e18")
+    const poolContract = new ethers.Contract(
+      wETHwBTC_pool_addr,
+      POOL_ABI,
+      ethers.provider
+    )
+    const [fee, tickSpacing, slot0] =
+      await Promise.all([
+        poolContract.fee(),
+        poolContract.tickSpacing(),
+        poolContract.slot0(),
+      ])
+    showBody(slot0)
+
+    /**
+       const pool = new Pool(
+          token0,
+          token1,
+          fee,
+          slot0[0],
+          liquidity,
+          slot0[1]
+      )
+     */
+
+
+
+    const nut = nearestUsableTick(slot0[1], tickSpacing)
+    const tickLower = nut - (tickSpacing * 2)
+    const tickUpper = nut + (tickSpacing * 2)
+
+
+    //const intermediary = await new TestContract__factory(s.Frank).deploy()
+    //await intermediary.deployed()
+
+    const block = await currentBlock()
+
+    const params: MintParams = {
+      token0: s.WBTC.address,
+      token1: s.WETH.address,
+      fee: fee,
+      tickLower: tickLower,
+      tickUpper: tickUpper,
+      amount0Desired: s.wBTC_Amount,
+      amount1Desired: s.WETH_AMOUNT,
+      amount0Min: BN("0"),
+      amount1Min: BN("0"),
+      recipient: s.Bob.address,
+      deadline: block.timestamp + 500
     }
-    await s.Frank.sendTransaction(tx)
+
+    //mint position
+    const result = await nfpManager.connect(s.Bob).mint(params)
+    const args = await getArgs(result)
+    const tokenId = args.tokenId
     await mineBlock()
 
-    //upgrade
-    await impersonateAccount(s.owner._address)
-    await s.ProxyAdmin.connect(s.owner).upgrade(s.VotingVaultController.address, implementation.address)
-    //register auraBal
-    await s.VotingVaultController.connect(s.owner).registerAuraBal(s.auraBal.address)
-    await ceaseImpersonation(s.owner._address)
+    const manager = INFPmanager__factory.connect(nfpManagerAddr, s.Frank)
+    const [
+      nonce,
+      operator,
+      token0,
+      token1,
+      _fee,
+      tLow,
+      tUp,
+      liquidity,
+      feeGrowthInside0LastX128,
+      feeGrowthInside1LastX128,
+      tokensOwed0,
+      tokensOwed1
+    ] = await nfpManager.positions(tokenId)
+    /**
+     const [nonce, operator, , , , , , , feeGrowthInside0LastX128, feeGrowthInside1LastX128, tokensOwed0, tokensOwed1] = await manager.positions(tokenId)
 
-    expect(await s.VotingVaultController._vaultController()).to.eq(s.VaultController.address, "Upgrade successful")
-
-
+    showBody("TokensOwed0: ", tokensOwed0)
+    showBody("TokensOwed1: ", tokensOwed1)
+     */
+    showBody("TokensOwed0: ", tokensOwed0)
+    showBody("TokensOwed1: ", tokensOwed1)
+    showBody("liquidity: ", await toNumber(liquidity))
 
   })
-
-  it("Mint BPT vaults", async () => {
-    const result = await s.VotingVaultController.connect(s.Bob).mintBptVault(s.BobVaultID)
-    const gas = await getGas(result)
-    showBodyCyan("Gas to mint BPT vault: ", gas)
-
-    s.BobBptVault = VaultBPT__factory.connect(await s.VotingVaultController.BPTvaultAddress(s.BobVaultID), s.Bob)
-
-    let info = await s.BobBptVault._vaultInfo()
-    expect(info.id).to.eq(s.BobVaultID, "ID is correct, vault minted successfully")
-
-    await s.VotingVaultController.connect(s.Carol).mintBptVault(s.CaroLVaultID)
-    await mineBlock()
-    s.CarolBptVault = VaultBPT__factory.connect(await s.VotingVaultController.BPTvaultAddress(s.CaroLVaultID), s.Carol)
-
-    info = await s.CarolBptVault._vaultInfo()
-    expect(info.id).to.eq(s.CaroLVaultID, "ID is correct, vault minted successfully")
-  })
-
 })
 
-describe("Setup oracles, deploy and register cap tokens", () => {
+describe("deploy oracles and cap tokens", () => {
+  let UniV3LPoracle: IOracleRelay
 
-  let wstethRelay: IOracleRelay
-  let stEThMetaStablePoolOracle: IOracleRelay
-  let weightedPoolOracle: IOracleRelay
+  it("deploly oracles", async () => {
+    UniV3LPoracle = await new UniV3LPoracle__factory(s.Frank).deploy(
+      wETHwBTC_pool_addr,
+      s.wbtcOracle.address,
+      s.wethOracle.address,
+      await s.WBTC.decimals(),
+      await s.WETH.decimals()
+    )
+    await UniV3LPoracle.deployed()
 
-  let auraUniOracle: IOracleRelay
-  let auraBalRelay: IOracleRelay
-  let auraStablePoolLPoracle: IOracleRelay
-  let primeBPToracle: IOracleRelay
-
-  const BAL_TOKEN_ORACLE = "0xf5E0e2827F60580304522E2C38177DFeC7a428a4"
-
-  const primeBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
-
-
-  it("Check wstETH exchange rate relay", async () => {
-
-    wstethRelay = await new WstETHRelay__factory(s.Frank).deploy()
-    await mineBlock()
-    //showBody("wstETH direct conversion price: ", await toNumber(await wstethRelay.currentValue()))
-
+    showBody(await UniV3LPoracle.currentValue())
   })
-
-  it("Deploy and check meta stable pool oracle", async () => {
-
-
-    //wstETH/weth MetaStable pool
-    stEThMetaStablePoolOracle = await new BPTstablePoolOracle__factory(s.Frank).deploy(
-      "0x32296969Ef14EB0c6d29669C550D4a0449130230", //pool_address
-      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
-      ["0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0", "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
-      [wstethRelay.address, s.wethOracleAddr], //_oracles
-      BN("20"),
-      BN("10000")
-    )
-    await mineBlock()
-
-    showBodyCyan("stETh MetaStablePool BPT price: ", await toNumber(await (await stEThMetaStablePoolOracle.currentValue())))
-    //expect(await toNumber(await stEThMetaStablePoolOracle.currentValue())).to.be.closeTo(1716, 1, "Oracle price within 1% of simple price")
-
-  })
-
-  it("Try meta stable pool oracle again", async () => {
-
-    const rETH_WETH_BPT = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276"
-    const rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393"
-    const cappedRETH = "0x64eA012919FD9e53bDcCDc0Fc89201F484731f41"
-    const rETH_Oracle = "0x69F3d75Fa1eaA2a46005D566Ec784FE9059bb04B"
-
-    const testStableOracle = await new BPTstablePoolOracle__factory(s.Frank).deploy(
-      rETH_WETH_BPT, //pool_address
-      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
-      [rETH, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
-      [rETH_Oracle, s.wethOracleAddr], //_oracles, weth oracle
-      BN("150"),
-      BN("10000")
-    )
-    await mineBlock()
-
-    showBodyCyan("rETH MetaStablePool BPT price: ", await toNumber(await (await testStableOracle.currentValue())))
-    //expect(await toNumber(await testStableOracle.currentValue())).to.be.closeTo(1709, 1, "Oracle price within 1% of simple price")
-
-  })
-
-  it("Check weighted oracle", async () => {
-    const balWethBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56" //bal80 / weth20
-    const CappedBalancer = "0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85"
-    const balancerToken = "0xba100000625a3754423978a60c9317c58a424e3D"
-
-    weightedPoolOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
-      balWethBPT,
-      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
-      [balancerToken, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
-      [BAL_TOKEN_ORACLE, s.wethOracleAddr], //_oracles, weth oracle
-      BN("1"),
-      BN("100")
-    )
-    await weightedPoolOracle.deployed()
-    //showBodyCyan("BalWeth BPT value: ", await toNumber(await weightedPoolOracle.currentValue()))
-    //expect(await toNumber(await weightedPoolOracle.currentValue())).to.be.closeTo(17, 1, "Oracle price within 1% of simple price")
-
-  })
-
-  it("Deploy and check weighted pool oracle again", async () => {
-    const wethAuraBPT = "0xCfCA23cA9CA720B6E98E3Eb9B6aa0fFC4a5C08B9" //weth / aura 50/50
-    const auraToken = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF"
-    const auraPoolAddr3k = "0x4Be410e2fF6a5F1718ADA572AFA9E8D26537242b"
-
-    const uniAuraRelay = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
-      500,
-      auraPoolAddr3k,
-      true,
-      BN("1"),
-      BN("1")
-    )
-    await uniAuraRelay.deployed()
-
-    const testWeightedOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
-      wethAuraBPT, //pool_address
-      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
-      [auraToken, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
-      [uniAuraRelay.address, s.wethOracleAddr], //_oracles, weth oracle
-      BN("1"),
-      BN("100")
-    )
-    await mineBlock()
-
-    showBody("weth/aura weighted pool price: ", await toNumber(await testWeightedOracle.currentValue()))
-    //expect(await toNumber(await testWeightedOracle.currentValue())).to.be.closeTo(70, 5, "Oracle price within 1% of simple price")
-  })
-
-
-  // Uni v3 relay
-  // Balancer relay, new Balancer weighted pool relay??
-  // Current price ~$17
-  // aura token = 0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF
-  // auraBal = 0x616e8BfA43F920657B3497DBf40D6b1A02D4608d
-
-  it("auraBal oracle", async () => {
-    const uniPool = "0xFdeA35445489e608fb4F20B6E94CCFEa8353Eabd"//3k, meh liquidity
-
-    auraUniOracle = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
-      500,
-      uniPool,
-      false,
-      BN("1"),
-      BN("1")
-    )
-    await mineBlock()
-    await auraUniOracle.deployed()
-
-    //showBodyCyan("AuraBal uni relay price: ", await toNumber(await auraUniOracle.currentValue()))
-
-
-    primeBPToracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
-      primeBPT,
-      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
-      [s.BAL.address, s.wethAddress],
-      [BAL_TOKEN_ORACLE, s.wethOracleAddr],
-      BN("10"),
-      BN("100")
-    )
-
-    await primeBPToracle.deployed()
-    showBody("Prime BPT oracle price: ", await toNumber(await primeBPToracle.currentValue()))  
-})
-
-  //   * Set up oracle for stable pool 'prime' BPT / auraBal LP token 0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd
-  //   * This is the oracle used for the price of the reward token being listed
-  it("Aura LP token oracle", async () => {
-    auraStablePoolLPoracle = await new BPTstablePoolOracle__factory(s.Frank).deploy(
-      s.primeAuraBalLP.address,
-      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
-      [primeBPT, s.auraBal.address],//prime BPT / auraBal
-      [primeBPToracle.address, auraUniOracle.address],//prime BPT oracle / auraBal oracle
-      BN("230"),
-      BN("10000")
-    )
-    await auraStablePoolLPoracle.deployed()
-    showBodyCyan("Balancer auraBal StablePool price: ", await toNumber(await auraStablePoolLPoracle.currentValue()))
-
-    //showBody("Feed addr: ", s.primeAuraBalLP.address)
-    //showBody("Underlying price for prime BPT: ", await toNumber(await primeBPToracle.currentValue()))
-  })
-
-  it("Deploy and Register gaugeToken", async () => {
-    s.CappedStethGauge = await DeployContractWithProxy(
-      new CappedBptToken__factory(s.Frank),
-      s.Frank,
-      s.ProxyAdmin,
-      "CappedStethGauge",
-      "cstEthGauge",
-      s.stETH_Gauge.address,
-      s.VaultController.address,
-      s.VotingVaultController.address
-    )
-    await s.CappedStethGauge.deployed()
-    await s.CappedStethGauge.setCap(s.STETH_CAP)
-    await s.CappedStethGauge.connect(s.Frank).transferOwnership(s.owner._address)
-
-    await impersonateAccount(s.owner._address)
-    //register on voting vault controller
-    await s.VotingVaultController.connect(s.owner).registerUnderlying(s.stETH_Gauge.address, s.CappedStethGauge.address)
-
-    //register oracle
-    await s.Oracle.connect(s.owner).setRelay(s.CappedStethGauge.address, stEThMetaStablePoolOracle.address)
-    //showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedStethGauge.address)))
-
-    //register on vault controller
-    await s.VaultController.connect(s.owner).registerErc20(
-      s.CappedStethGauge.address,
-      s.auraBalLTV,
-      s.CappedStethGauge.address,
-      s.LiquidationIncentive
-    )
-    await ceaseImpersonation(s.owner._address)
-  })
-
-
-  it("Deploy and Register CappedAuraBal", async () => {
-    s.CappedAuraBal = await DeployContractWithProxy(
-      new CappedBptToken__factory(s.Frank),
-      s.Frank,
-      s.ProxyAdmin,
-      "CappedAuraBal",
-      "cAuraBal",
-      s.auraBal.address,
-      s.VaultController.address,
-      s.VotingVaultController.address
-    )
-    await s.CappedAuraBal.deployed()
-    await s.CappedAuraBal.setCap(s.AuraBalCap)
-    await s.CappedAuraBal.connect(s.Frank).transferOwnership(s.owner._address)
-
-    await impersonateAccount(s.owner._address)
-    //register on voting vault controller
-    await s.VotingVaultController.connect(s.owner).registerUnderlying(s.auraBal.address, s.CappedAuraBal.address)
-
-    //register oracle
-    await s.Oracle.connect(s.owner).setRelay(s.CappedAuraBal.address, auraUniOracle.address)
-    //showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedAuraBal.address)))
-
-    //register on vault controller
-    await s.VaultController.connect(s.owner).registerErc20(
-      s.CappedAuraBal.address,
-      s.auraBalLTV,
-      s.CappedAuraBal.address,
-      s.LiquidationIncentive
-    )
-    await ceaseImpersonation(s.owner._address)
-  })
-
-  it("Deploy and register Capped Aura LP token", async () => {
-    s.CappedAuraLP = await DeployContractWithProxy(
-      new CappedBptToken__factory(s.Frank),
-      s.Frank,
-      s.ProxyAdmin,
-      "CappedAuraLP",
-      "caLP",
-      s.primeAuraBalLP.address,
-      s.VaultController.address,
-      s.VotingVaultController.address
-    )
-    await s.CappedAuraLP.deployed()
-    await s.CappedAuraLP.setCap(s.AuraLPamount)
-
-    await s.CappedAuraLP.connect(s.Frank).transferOwnership(s.owner._address)
-
-    await impersonateAccount(s.owner._address)
-
-    //register on voting vault controller
-    await s.VotingVaultController.connect(s.owner).registerUnderlying(s.primeAuraBalLP.address, s.CappedAuraLP.address)
-
-    //register oracle
-    await s.Oracle.connect(s.owner).setRelay(s.CappedAuraLP.address, auraStablePoolLPoracle.address)
-    //showBody("Live Price: ", await toNumber(await s.Oracle.getLivePrice(s.CappedAuraLP.address)))
-
-    //register on vault controller
-    await s.VaultController.connect(s.owner).registerErc20(
-      s.CappedAuraLP.address,
-      s.auraBalLTV,
-      s.CappedAuraLP.address,
-      s.LiquidationIncentive
-    )
-    await ceaseImpersonation(s.owner._address)
-  })
-
 })

@@ -18,6 +18,8 @@ export class TestScope extends MainnetAddresses {
     BalancerVault!: IBalancerVault;
     wethOracleAddr = "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"
     wethOracle!: IOracleRelay
+    wbtcOracleAddr = "0x8E7d39560b15B2D29E01b2502252C4B5f26f5326"
+    wbtcOracle!: IOracleRelay
     
 
     ENS!: IVOTE;
