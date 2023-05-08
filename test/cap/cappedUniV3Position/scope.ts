@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken, IGauge, INonfungiblePositionManager__factory } from "../../../typechain-types";
+import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken, IGauge, INonfungiblePositionManager__factory, Univ3CollateralToken, NftVaultController } from "../../../typechain-types";
 import { BPT_VaultController } from "../../../typechain-types/lending/BPT_VaultController";
 import { Addresser, MainnetAddresses } from "../../../util/addresser";
 import { BN } from "../../../util/number";
@@ -9,12 +9,12 @@ import { BN } from "../../../util/number";
 export class TestScope extends MainnetAddresses {
     USDI!: USDI;
     USDC!: IERC20;
-    COMP!: IVOTE;
     WETH!: IERC20;
     UNI!: IVOTE;
     WBTC!: IERC20;
 
-    MTA!: IERC20;
+    CappedPosition!: Univ3CollateralToken
+    NftVaultController!: NftVaultController
     BalancerVault!: IBalancerVault;
     wethOracleAddr = "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"
     wethOracle!: IOracleRelay
@@ -22,10 +22,7 @@ export class TestScope extends MainnetAddresses {
     wbtcOracle!: IOracleRelay
     
 
-    ENS!: IVOTE;
-    DYDX!: IVOTE;
-    AAVE!: IVOTE;
-    TRIBE!: IVOTE;
+   
     LiquidationIncentive = BN("5e16")
     wETH_LTV = BN("5e17")
     COMP_LTV = BN("4e17")
@@ -34,11 +31,6 @@ export class TestScope extends MainnetAddresses {
 
     ProxyAdmin!: ProxyAdmin;
     VaultController!: IVaultController;
-
-    CappedToken!: CappedToken;
-    CappedAMPL!: CappedRebaseToken;
-    CappedPAXG!: CappedFeeOnTransferToken;
-    CAP = BN("100000e18")//100k
 
     //owner!: String
     pauser!: String
@@ -93,31 +85,6 @@ export class TestScope extends MainnetAddresses {
 
     GovAddr = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
     GOV = ethers.provider.getSigner(this.GovAddr)
-
-
-
-    AMPL_ADDR = "0xD46bA6D942050d489DBd938a2C909A5d5039A161"
-    AMPL_AMOUNT = BN("1000e9")//AMPL is e9
-    AMPL_CAP = BN("10000e9")//Max AMPL, not wrapped tokens
-    AMPL!: IERC20
-
-    PAXG_ADDR = "0x45804880De22913dAFE09f4980848ECE6EcbAf78"
-    PAXG!: IERC20
-    PAXG_AMOUNT = BN("5e18")
-    PAXG_CAP = BN("5e18")
-    PAXG_WHALE = "0x2FAF487A4414Fe77e2327F0bf4AE2a264a776AD2"
-
-    MATIC_ADDR = "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0"
-    MATIC_WHALE = "0xf977814e90da44bfa03b6295a0616a897441acec"
-    MATIC_AMOUNT = BN("100000000e18")
-    MATIC!: IERC20
-
-    ST_ORACLE!: ILidoOracle
-    CappedSTETH!: CappedSTETH
-    STETH!: ILido
-    STETH_AMOUNT = BN("10e18")
-    STETH_ADDRESS = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84"
-    STETH_CAP = BN("1000e18")
 
 
     VotingVaultController!: VotingVaultController

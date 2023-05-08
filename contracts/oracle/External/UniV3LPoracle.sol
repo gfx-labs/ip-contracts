@@ -4,12 +4,35 @@ pragma solidity 0.8.9;
 import "../IOracleRelay.sol";
 import "../../_external/uniswap/IUniswapV3PoolDerivedState.sol";
 import "../../_external/uniswap/TickMath.sol";
+import {FullMath, FixedPoint96} from "../../_external/uniswap/FullMath.sol";
 
 import "hardhat/console.sol";
 
 /// based off of the MKR implementation https://github.com/makerdao/univ3-lp-oracle/blob/master/src/GUniLPOracle.sol
+
+/**
+GENERAL PLAN
+Calculate sqrtPriceX96 based on external oracle prices - DONE
+Calculate current tick based on sqrtRatio via TickMath - easy
+Get tick upper and tick lower based on tick spacing, which comes from the pool (is this safe??)
+Get sqrtTickUpper and sqrtTickLower from these based on TickMath
+Get liquidity from NFP Manager (this is locked into the position)
+Plug all of this into getAmountsForLiquidity to get tokenAmount0 and tokenAmount1
+Use the same external oracles to price these amounts into USD
+Profit??
+ */
+
+interface IUniswapV3PoolImmutables {
+  /// @notice The pool tick spacing
+  /// @dev Ticks can only be used at multiples of this value, minimum of 1 and always positive
+  /// e.g.: a tickSpacing of 3 means ticks can be initialized every 3rd tick, i.e., ..., -6, -3, 0, 3, 6, ...
+  /// This value is an int24 to avoid casting even though it is always positive.
+  /// @return The tick spacing
+  function tickSpacing() external view returns (int24);
+}
+
 contract UniV3LPoracle is IOracleRelay {
-  IUniswapV3PoolDerivedState public immutable _pool;
+  IUniswapV3PoolImmutables public immutable _pool;
   IOracleRelay public immutable token0Oracle;
   IOracleRelay public immutable token1Oracle;
 
@@ -23,7 +46,7 @@ contract UniV3LPoracle is IOracleRelay {
     uint256 token0Units,
     uint256 token1Units
   ) {
-    _pool = IUniswapV3PoolDerivedState(pool_address);
+    _pool = IUniswapV3PoolImmutables(pool_address);
     token0Oracle = _token0Oracle;
     token1Oracle = _token1Oracle;
 
@@ -32,7 +55,6 @@ contract UniV3LPoracle is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
-    console.log("CurrentValue: ");
 
     /**
     //todo refactor unit conversion
@@ -43,9 +65,136 @@ contract UniV3LPoracle is IOracleRelay {
 
     uint256 p0 = token0Oracle.currentValue() / 1e10;
     uint256 p1 = token1Oracle.currentValue();
-    uint256 sqrtPriceX96 = getSqrtPrice(p0, p1);
-    console.log("RESULT: ", sqrtPriceX96);
+    uint160 sqrtPriceX96 = getSqrtPrice(p0, p1);
+    int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
+    int24 tickSpacing = _pool.tickSpacing();
+
+    int24 tickLower = tick - (tickSpacing * 2);
+    int24 tickUpper = tick + (tickSpacing * 2);
+
+    uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(tickLower);
+    uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
+
+    //get liquidity
+    (uint256 amount0, uint256 amount1) = getAmountsForLiquidity(sqrtPriceX96, sqrtRatioAX96, sqrtRatioBX96, 454860556043159);
+    console.log("AMOUNT0: ", amount0);
+    console.log("AMOUNT1: ", amount1);
+
+    //derive value based on price
+    uint256 v0 = (p0 * amount0) / 1e18;
+    uint256 v1 = (p1 * amount1) / 1e18;
+
+    return v0 + v1;
   }
+
+  /// @notice Computes the token0 and token1 value for a given amount of liquidity, the current
+  /// pool prices and the prices at the tick boundaries
+  function getAmountsForLiquidity(
+    uint160 sqrtRatioX96,
+    uint160 sqrtRatioAX96,
+    uint160 sqrtRatioBX96,
+    uint128 liquidity
+  ) internal pure returns (uint256 amount0, uint256 amount1) {
+    if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+
+    if (sqrtRatioX96 <= sqrtRatioAX96) {
+      amount0 = getAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+    } else if (sqrtRatioX96 < sqrtRatioBX96) {
+      amount0 = getAmount0ForLiquidity(sqrtRatioX96, sqrtRatioBX96, liquidity);
+      amount1 = getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioX96, liquidity);
+    } else {
+      amount1 = getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+    }
+  }
+
+  /// @notice Computes the amount of token0 for a given amount of liquidity and a price range
+  /// @param sqrtRatioAX96 A sqrt price
+  /// @param sqrtRatioBX96 Another sqrt price
+  /// @param liquidity The liquidity being valued
+  /// @return amount0 The amount0
+  function getAmount0ForLiquidity(
+    uint160 sqrtRatioAX96,
+    uint160 sqrtRatioBX96,
+    uint128 liquidity
+  ) internal pure returns (uint256 amount0) {
+    if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+
+    return
+      FullMath.mulDiv(uint256(liquidity) << FixedPoint96.RESOLUTION, sqrtRatioBX96 - sqrtRatioAX96, sqrtRatioBX96) /
+      sqrtRatioAX96;
+  }
+
+  /// @notice Computes the amount of token1 for a given amount of liquidity and a price range
+  /// @param sqrtRatioAX96 A sqrt price
+  /// @param sqrtRatioBX96 Another sqrt price
+  /// @param liquidity The liquidity being valued
+  /// @return amount1 The amount1
+  function getAmount1ForLiquidity(
+    uint160 sqrtRatioAX96,
+    uint160 sqrtRatioBX96,
+    uint128 liquidity
+  ) internal pure returns (uint256 amount1) {
+    if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+
+    return FullMath.mulDiv(liquidity, sqrtRatioBX96 - sqrtRatioAX96, FixedPoint96.Q96);
+  }
+
+  /**
+  //https://library.dedaub.com/ethereum/address/0xb54613678c36dd51e75236060060a13d44597d82/source?line=1129
+    function getUnderlyingBalancesAtPrice(uint160 sqrtRatioX96)
+        external
+        view
+        returns (uint256 amount0Current, uint256 amount1Current)
+    {
+        (, int24 tick, , , , , ) = pool.slot0();
+        return _getUnderlyingBalances(sqrtRatioX96, tick);
+    }
+
+    function _getUnderlyingBalances(uint160 sqrtRatioX96, int24 tick)
+        internal
+        view
+        returns (uint256 amount0Current, uint256 amount1Current)
+    {
+        (
+            uint128 liquidity,
+            uint256 feeGrowthInside0Last,
+            uint256 feeGrowthInside1Last,
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
+        ) = pool.positions(_getPositionID());
+
+        // compute current holdings from liquidity
+        (amount0Current, amount1Current) = LiquidityAmounts
+            .getAmountsForLiquidity(
+            sqrtRatioX96,
+            lowerTick.getSqrtRatioAtTick(),
+            upperTick.getSqrtRatioAtTick(),
+            liquidity
+        );
+
+        // compute current fees earned
+        uint256 fee0 =
+            _computeFeesEarned(true, feeGrowthInside0Last, tick, liquidity) +
+                uint256(tokensOwed0);
+        uint256 fee1 =
+            _computeFeesEarned(false, feeGrowthInside1Last, tick, liquidity) +
+                uint256(tokensOwed1);
+
+        (fee0, fee1) = _subtractAdminFees(fee0, fee1);
+
+        // add any leftover in contract to current holdings
+        amount0Current +=
+            fee0 +
+            token0.balanceOf(address(this)) -
+            managerBalance0 -
+            gelatoBalance0;
+        amount1Current +=
+            fee1 +
+            token1.balanceOf(address(this)) -
+            managerBalance1 -
+            gelatoBalance1;
+    }
+   */
 
   //tested accuracy: 0.15363% decrease from sqrtPriceX96 reported by slot0
   function getSqrtPrice(uint256 p0, uint256 p1) internal view returns (uint160 sqrtPrice) {

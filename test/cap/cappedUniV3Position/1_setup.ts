@@ -1,5 +1,5 @@
 import { expect, assert } from "chai";
-import { ethers, network, tenderly } from "hardhat";
+import { ethers, network } from "hardhat";
 import { stealMoney } from "../../../util/money";
 import { showBody } from "../../../util/format";
 import { BN } from "../../../util/number";
@@ -16,14 +16,6 @@ import { PromiseOrValue } from "../../../typechain-types/common";
 
 require("chai").should();
 
-
-
-if (process.env.TENDERLY_KEY) {
-    if (process.env.TENDERLY_ENABLE == "true") {
-        let provider = new ethers.providers.Web3Provider(tenderly.network())
-        ethers.provider = provider
-    }
-}
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {

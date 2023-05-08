@@ -7,12 +7,15 @@ import "../controller/NftVaultController.sol";
 
 import "../IVaultController.sol";
 import "../IVault.sol";
+import "../../oracle/IOracleMaster.sol";
 
 //import "../../_external/IERC721Metadata.sol";
 import "../../_external/uniswap/INonfungiblePositionManager.sol";
 import "../../_external/openzeppelin/ERC721Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
+
+import "hardhat/console.sol";
 
 //not sure this is a thing
 //import "../../_external/openzeppelin/SafeERC721Upgradeable.sol";
@@ -22,8 +25,9 @@ import "../../_external/openzeppelin/Initializable.sol";
 /// @dev extends ierc20 upgradable
 contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC721Upgradeable {
   //using SafeERC721Upgradeable for ERC721Upgradeable;
+  IOracleMaster public oracle;
 
-  ERC721Upgradeable public _underlying;
+  INonfungiblePositionManager public _underlying;
   IVaultController public _vaultController;
   NftVaultController public _nftVaultController;
 
@@ -42,7 +46,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC721Upgrad
   /// @notice initializer for contract
   /// @param name_ name of capped token
   /// @param symbol_ symbol of capped token
-  /// @param underlying_ the address of underlying
+  /// @param underlying_ the address of underlying - NonFungiblePositionManager
   /// @param vaultController_ the address of vault controller
   /// @param nftVaultController_ the address of voting vault controller
   function initialize(
@@ -50,37 +54,37 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC721Upgrad
     string memory symbol_,
     address underlying_,
     address vaultController_,
-    address nftVaultController_,
-    address univ3NftPositions_
+    address nftVaultController_
   ) public initializer {
     __Ownable_init();
     __ERC721_init(name_, symbol_);
-    _underlying = ERC721Upgradeable(underlying_);
+
+    _underlying = INonfungiblePositionManager(underlying_);
 
     _vaultController = IVaultController(vaultController_);
     _nftVaultController = NftVaultController(nftVaultController_);
-    _univ3NftPositions = INonfungiblePositionManager(univ3NftPositions_);
-
+    updateOracle();
     locked = false;
   }
 
+  function updateOracle() public {
+    oracle = IOracleMaster(_vaultController.getOracleMaster());
+  }
+
   /// @notice 18 decimal erc20 spec should have been written into the fucking standard
-  function decimals() public pure /**override */ returns (uint8) {
+  function decimals() public pure returns (/**override */ uint8) {
     return 18;
   }
 
   /// @notice deposit _underlying to mint CappedToken
-  /// @notice gaugeToken is fungible 1:1 with underlying BPT
   /// @param tokenId //amount of underlying to deposit
   /// @param vaultId recipient vault of tokens
-  /// @param stake deposit + stake in 1 TX, for auraBal or aura LPs
-  function deposit(uint256 tokenId, uint96 vaultId, bool stake) public nonReentrant {
+  function deposit(uint256 tokenId, uint96 vaultId) public nonReentrant {
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vaultId);
     require(address(univ3_vault_address) != address(0x0), "invalid voting vault");
 
     // transfer position
-    // todo
-    //_underlying.safeTransferFrom(_msgSender(), address(univ3_vault_address), amount);
+    _underlying.safeTransferFrom(_msgSender(), address(univ3_vault_address), tokenId);
   }
 
   // transfer withdraws every single NFT from the vault.
@@ -88,7 +92,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC721Upgrad
   // but it would mean changing our liquidation logic even more. Let's think about this.
   // basically we can code the token id into the amount, but we would need to make sure that
   // liquidations always move an amount that is not a tokenId to ensure no exploit is possible.
-  function transfer(address recipient, uint256 amount) public /**override */ returns (bool) {
+  function transfer(address recipient, uint256 amount /**override */) public returns (bool) {
     uint96 vault_id = _nftVaultController.vaultId(_msgSender());
     // only vaults will ever send this. only vaults will ever need to call this function
     require(vault_id > 0, "only vaults");

@@ -3,7 +3,7 @@ import { d } from "../DeploymentInfo";
 import { upgrades, ethers } from "hardhat";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear, hardhat_mine } from "../../../util/block";
+import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear, hardhat_mine, hardhat_mine_timed } from "../../../util/block";
 import { utils, BigNumber, BigNumberish } from "ethers";
 import { currentBlock, reset } from "../../../util/block"
 import MerkleTree from "merkletreejs";
@@ -26,7 +26,9 @@ import {
   BPTstablePoolOracle__factory,
   INFPmanager__factory,
   INonfungiblePositionManager__factory,
-  UniV3LPoracle__factory
+  UniV3LPoracle__factory,
+  Univ3CollateralToken__factory,
+  NftVaultController__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
@@ -118,6 +120,7 @@ type MintParams = {
   recipient: PromiseOrValue<string>,
   deadline: PromiseOrValue<BigNumberish>
 }
+let targetAmount: BigNumber
 
 describe("Mint position", () => {
   //const token0 = s.WBTC
@@ -141,7 +144,7 @@ describe("Mint position", () => {
         poolContract.tickSpacing(),
         poolContract.slot0(),
       ])
-    showBody(slot0)
+    //showBody(slot0)
 
     /**
        const pool = new Pool(
@@ -182,7 +185,24 @@ describe("Mint position", () => {
 
     //mint position
     const result = await nfpManager.connect(s.Bob).mint(params)
+    await hardhat_mine_timed(500, 15)
     const args = await getArgs(result)
+
+    expect(await nfpManager.balanceOf(s.Bob.address)).to.eq(BN("1"), "Bob has 1 NFT")
+
+
+
+
+
+
+    //derive value based on price
+    let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
+    let p1: BigNumber = await s.wethOracle.currentValue()
+
+    let v0: BigNumber = (p0.mul(BN(args.amount0))).div(BN("1e18"))
+    let v1: BigNumber = (p1.mul(BN(args.amount1))).div(BN("1e18"))
+    targetAmount = v1.add(v0)
+    showBodyCyan("Target: ", await toNumber(targetAmount))
     const tokenId = args.tokenId
     await mineBlock()
 
@@ -201,15 +221,10 @@ describe("Mint position", () => {
       tokensOwed0,
       tokensOwed1
     ] = await nfpManager.positions(tokenId)
-    /**
-     const [nonce, operator, , , , , , , feeGrowthInside0LastX128, feeGrowthInside1LastX128, tokensOwed0, tokensOwed1] = await manager.positions(tokenId)
 
-    showBody("TokensOwed0: ", tokensOwed0)
-    showBody("TokensOwed1: ", tokensOwed1)
-     */
-    showBody("TokensOwed0: ", tokensOwed0)
-    showBody("TokensOwed1: ", tokensOwed1)
-    showBody("liquidity: ", await toNumber(liquidity))
+    //showBody("TokensOwed0: ", tokensOwed0)
+    //showBody("TokensOwed1: ", tokensOwed1)
+    //showBody("liquidity: ", await toNumber(liquidity))
 
   })
 })
@@ -227,6 +242,31 @@ describe("deploy oracles and cap tokens", () => {
     )
     await UniV3LPoracle.deployed()
 
-    showBody(await UniV3LPoracle.currentValue())
+    showBody(await toNumber(await UniV3LPoracle.currentValue()))
+  })
+
+  it("Deploy nft vault controller", async () => {
+    s.NftVaultController = await DeployContractWithProxy(
+      new NftVaultController__factory(s.Frank),
+      s.Frank,
+      s.ProxyAdmin,
+      s.VaultController.address
+    )
+    await s.NftVaultController.deployed()
+  })
+
+  it("Deploy cap token", async () => {
+    
+     s.CappedPosition = await DeployContractWithProxy(
+      new Univ3CollateralToken__factory(s.Frank), 
+      s.Frank,
+      s.ProxyAdmin,
+      "Capped V3 Position",
+      "cV3Pos",
+      nfpManagerAddr,
+      s.VaultController.address,
+      s.NftVaultController.address,
+      )
+     
   })
 })
