@@ -125,9 +125,9 @@ describe("Setup, Queue, and Execute proposal", () => {
     await impersonateAccount(proposer)
 
     //only queue as of this block
-    await gov.connect(prop).queue(proposal);
+    //await gov.connect(prop).queue(proposal);
 
-    await fastForward(timelock.toNumber());
+    //await fastForward(timelock.toNumber());
 
     await gov.connect(prop).execute(proposal);
 
