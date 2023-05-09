@@ -35,7 +35,8 @@ import {
   mineBlock,
   OneWeek,
   OneYear,
-  currentBlock
+  currentBlock,
+  hardhat_mine
 } from "../../../../util/block";
 import { toNumber } from "../../../../util/math";
 import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
@@ -245,13 +246,13 @@ describe("Setup, Queue, and Execute proposal", () => {
     await mineBlock()
     proposal = Number(await gov.proposalCount())
     showBodyCyan("Advancing a lot of blocks...")
-    await advanceBlockHeight(votingDelay.toNumber());
+    await hardhat_mine(votingDelay.toNumber());
 
     await gov.connect(prop).castVote(proposal, 1)
     await mineBlock()
 
     showBodyCyan("Advancing a lot of blocks again...")
-    await advanceBlockHeight(votingPeriod.toNumber());
+    await hardhat_mine(votingPeriod.toNumber());
     await mineBlock()
 
     await gov.connect(prop).queue(proposal);

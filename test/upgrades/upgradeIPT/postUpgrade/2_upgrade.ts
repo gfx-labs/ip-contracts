@@ -35,7 +35,6 @@ import { toNumber } from "../../../../util/math";
 import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
 import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
 
-const proposalText = fs.readFileSync('test/upgrades/upgrade6/queueAndExecute/proposal.md', 'utf8');
 
 
 require("chai").should();
