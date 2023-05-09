@@ -1,34 +1,10 @@
-import { getContractFactory } from "@nomiclabs/hardhat-ethers/types";
-import { BN } from "../util/number";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Deployment, DeploymentInfo } from "./deployment/deployment";
-import {
-    CurveMaster__factory,
-    OracleMaster__factory,
-    ThreeLines0_100__factory,
-    UniswapV3OracleRelay__factory,
-    VaultController__factory,
-    CappedGovToken__factory,
-    IOracleRelay__factory
-} from "../typechain-types";
-import { utils, BigNumber } from "ethers";
 
-import MerkleTree from "merkletreejs";
-import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
-import { showBody } from "../util/format";
-import { reset, currentBlock } from "../util/block"
-import { stealMoney } from "../util/money"
-import exp from "constants";
-import { expect } from "chai";
-import { stdin, stdout } from 'process';
-import { mergeLists } from "../util/math"
-import { min } from "bn.js";
+import { utils } from "ethers";
+import { mergeLists } from "../../util/math"
 import { writeFileSync } from "fs";
 
-const { ethers, network, upgrades } = require("hardhat");
-
-const LPS = require('../rewardtree/lenders_17149390-17199373')
-const BORROWERS = require('../rewardtree/borrowers_17149390-17199373')
+const LPS = require('../../rewardtree/lenders_17149390-17199373')
+const BORROWERS = require('../../rewardtree/borrowers_17149390-17199373')
 
 
 //for format minter:amount  ===>> {minter: minter, amount: amount}

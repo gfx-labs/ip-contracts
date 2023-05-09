@@ -9,6 +9,7 @@ import { stealMoney } from "../../../../util/money"
 import { IVault__factory } from "../../../../typechain-types";
 
 let firstBorrowIF: BigNumber
+
 describe("Check starting values", () => {
     it("Check starting balance", async () => {
         const startCappedCHAI = await s.CappedCHAI.balanceOf(s.BobVault.address)

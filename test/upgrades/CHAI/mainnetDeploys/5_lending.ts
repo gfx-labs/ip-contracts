@@ -9,6 +9,7 @@ import { stealMoney } from "../../../../util/money"
 import { IVault__factory } from "../../../../typechain-types";
 
 let firstBorrowIF: BigNumber
+
 describe("Check starting values", () => {
     it("Check starting balance", async () => {
         const startCappedCHAI = await s.CappedCHAI.balanceOf(s.BobVault.address)
@@ -171,6 +172,7 @@ describe("Liquidations", () => {
 
         let startCHAI = await s.CHAI.balanceOf(s.Dave.address)
 
+        showBodyCyan(await toNumber(T2L))
         const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedCHAI.address, BN("1e50"))
 
         let supply = await s.CappedCHAI.totalSupply()
