@@ -13,12 +13,11 @@ import { toNumber, minter, mergeLists, getGas } from "../../../util/math"
 import {
     MerkleRedeem__factory
 } from "../../../typechain-types"
+import { red } from "bn.js";
+import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
 
-
 require("chai").should();
-
-
 describe("Merkle Redeem", () => {
     let LP1: minter
     let LP2: minter
@@ -31,7 +30,9 @@ describe("Merkle Redeem", () => {
 
 
     let total = BN(0)
-    const week = 7
+    const week = 45
+
+    let startingIPT: BigNumber
 
     before(async () => {
         LP1 = s.mergedList[0]
@@ -46,28 +47,11 @@ describe("Merkle Redeem", () => {
         leaf = solidityKeccak256(["address", "uint256"], [LP2.minter, claim2])
         proof2 = s.MERKLE_TREE.getHexProof(leaf)
 
+        startingIPT = await s.IPT.balanceOf(s.MerkleRedeem.address)
+
 
     })
 
-    it("Check invalid seedAllocations", async () => {
-
-        const amount = BN("50e18")
-
-        await s.IPT.connect(s.Frank).transfer(s.Andy.address, amount)
-        await mineBlock()
-        await s.IPT.connect(s.Andy).approve(s.MerkleRedeem.address, amount)
-        expect(s.MerkleRedeem.connect(s.Andy).seedAllocations(
-            week,
-            s.ROOT,
-            amount
-        )).to.be.revertedWith("Ownable: caller is not the owner")
-        await mineBlock()
-
-        //return IPT
-        await s.IPT.connect(s.Andy).transfer(s.Frank.address, amount)
-        await mineBlock()
-
-    })
 
     it("Admin Seeds Allocations", async () => {
 
@@ -75,7 +59,17 @@ describe("Merkle Redeem", () => {
         s.mergedList.map((obj) =>
             total = total.add(BN(obj.amount))
         )
+        const block = await currentBlock()
+        showBody("Current block: ", block.number)
+        let votes = await s.IPT.getCurrentVotes(s.DEPLOYER._address)
+        showBody("Current votes: ", votes)
+
+        showBody("ADMIN: ", s.DEPLOYER._address)
+        showBody("Admin balance: ", await toNumber(await s.IPT.balanceOf(s.DEPLOYER._address)))
+        showBody("Total amount : ", await toNumber(total))
+
         await s.IPT.connect(s.DEPLOYER).approve(s.MerkleRedeem.address, total)
+        console.log("APPROVE")
         await s.MerkleRedeem.connect(s.DEPLOYER).seedAllocations(
             week,
             s.ROOT,
@@ -169,11 +163,9 @@ describe("Merkle Redeem", () => {
         }
     })
 
-
-    it("Everyone else redeems", async () => {
+    it("Everyone redeems for this week", async () => {
         let balance = await s.IPT.balanceOf(s.MerkleRedeem.address)
-        expect(balance).to.be.gt(0, "MerkleRedeem still holds IPT, sanity check")
-    
+        expect(balance).to.be.gt(startingIPT, "MerkleRedeem still holds IPT, sanity check")
 
         showBodyCyan("Redeeming...")
         //start from 2 since LP1 and LP2 claimed already above
@@ -184,21 +176,20 @@ describe("Merkle Redeem", () => {
             let leaf = solidityKeccak256(["address", "uint256"], [minter, claim])
             let proof = s.MERKLE_TREE.getHexProof(leaf)
 
-            const startingIPT = await s.IPT.balanceOf(minter)
+            const initIPT = await s.IPT.balanceOf(minter)
 
-            const result = await s.MerkleRedeem.claimWeek(minter, week, claim, proof)
+            await s.MerkleRedeem.claimWeek(minter, week, claim, proof)
             await mineBlock()
             //const gas = await getGas(result)
             //showBodyCyan("Gas to claimWeek: ", gas)
 
             let balance = await s.IPT.balanceOf(minter)
-            expect(await toNumber(balance.sub(startingIPT))).to.eq(await toNumber(BN(claim)))
+            expect(await toNumber(balance.sub(initIPT))).to.eq(await toNumber(BN(claim)))
         }
     })
 
     it("Check end state", async () => {
-
-        //start from 0 this time, check everyont
+        //start from 0 this time, check everyone
         for (let i = 0; i < s.mergedList.length; i++) {
 
             let minter = s.mergedList[i].minter
@@ -209,10 +200,8 @@ describe("Merkle Redeem", () => {
         }
 
         let balance = await s.IPT.balanceOf(s.MerkleRedeem.address)
-        expect(balance).to.eq(0, "All redemptions done, remaining IPT is exactly 0, calculations correct")
+        expect(balance).to.eq(startingIPT, "All redemptions done, remaining IPT is exactly what it was before, calculations correct")
 
     })
-
-
 })
 

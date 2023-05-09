@@ -17,7 +17,7 @@ import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
 
-import { uniMintersWeek2, borrowMintersWeek2 } from "../data"
+import { uniMintersWeek2, borrowMintersWeek2 } from "./data"
 import { fail } from "assert";
 import { start } from "repl";
 

@@ -1,16 +1,16 @@
 import { expect, assert } from "chai";
 import { ethers, network, tenderly } from "hardhat";
-import { stealMoney } from "../../../util/money";
-import { showBody, showBodyCyan } from "../../../util/format";
-import { BN } from "../../../util/number";
-import { mergeLists } from "../../../util/math"
-import { s } from "../scope";
-import { d } from "../DeploymentInfo";
+import { stealMoney } from "../../../../util/money";
+import { showBody, showBodyCyan } from "../../../../util/format";
+import { BN } from "../../../../util/number";
+import { toNumber, mergeLists, getGas } from "../../../../util/math"
+import { s, minter } from "../scope";
+import { d } from "../../DeploymentInfo";
 
-import { advanceBlockHeight, reset, mineBlock } from "../../../util/block";
-import { InterestProtocolTokenDelegate__factory, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, MerkleRedeem__factory } from "../../../typechain-types";
+import { advanceBlockHeight, reset, mineBlock } from "../../../../util/block";
+import { InterestProtocolTokenDelegate__factory, IERC20__factory, IVOTE__factory, VaultController__factory, USDI__factory, OracleMaster__factory, CurveMaster__factory, ProxyAdmin__factory, MerkleRedeem__factory } from "../../../../typechain-types";
 //import { assert } from "console";
-import { mainnetData } from "../mainnetData"
+import { mainnetData } from "../../MerkleRedeem/mainnetData"
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import MerkleTree from "merkletreejs";
 
@@ -45,7 +45,7 @@ if (process.env.TENDERLY_KEY) {
  */
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(16801168)).to.not.throw;//14940917
+        expect(await reset(17069845)).to.not.throw;//14940917
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [false])).to.not
@@ -55,9 +55,24 @@ describe("hardhat settings", () => {
 
 describe("Token Setup", () => {
     before(async () => {
-        const LPS = require('../../../rewardtree/mergedAndFormatWeek37.json')
+        //const LPS = require('../../../../rewardtree/mergedAndFormatWeek31.json')
 
-        s.mergedList = LPS
+        s.delegateList = [
+            {
+                minter: "0x070341aA5Ed571f0FB2c4a5641409B1A46b4961b",//Penn
+                amount: BN("12374800000000000000000")
+            },
+            {
+                minter: "0xe967F2232a6030BCc1D05E2CC5Dfa8fBB3ce9B53",//Adonis
+                amount: BN("9805600000000000000000")
+            },
+            {
+                minter: "0x5fee8d7d02B0cfC08f0205ffd6d6B41877c86558",//IPTman
+                amount: BN("12022300000000000000000")
+            }
+
+
+        ]
     })
     it("connect to signers", async () => {
         let accounts = await ethers.getSigners();
@@ -83,14 +98,15 @@ describe("Token Setup", () => {
         const IPTaddress = "0xd909C5862Cdb164aDB949D92622082f0092eFC3d"
         s.IPT = InterestProtocolTokenDelegate__factory.connect(IPTaddress, s.Frank);
 
+
     })
 
     it("Connect to mainnet deploy for MerkleRedeem contract, and initialize root", async () => {
 
         s.MerkleRedeem = MerkleRedeem__factory.connect("0x91a1Fb8eEaeB0E05629719938b03EE3C32348CF7", s.Frank)
 
-        let leafNodes = s.mergedList.map((obj) =>
-            solidityKeccak256(["address", "uint256"], [obj.minter, BN(obj.amount)])
+        let leafNodes = s.delegateList.map((obj) =>
+            solidityKeccak256(["address", "uint256"], [obj.minter, obj.amount])
         )
 
         s.MERKLE_TREE = new MerkleTree(leafNodes, keccak256, { sortPairs: true })
@@ -106,7 +122,9 @@ describe("Token Setup", () => {
         await stealMoney(usdc_minter, s.Bob.address, s.usdcAddress, s.Bob_USDC)
         await mineBlock()
 
-        
+        //steal 10 MM IPT for Admin
+        //await stealMoney(s.DEPLOYER._address, s.Frank.address, s.IPT.address, BN("10000000e18"))
+        //await mineBlock()
 
 
     });

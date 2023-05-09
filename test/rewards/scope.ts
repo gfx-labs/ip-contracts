@@ -5,7 +5,7 @@ import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRela
 import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 import { minter } from "../../util/math"
-import { uniMinters, borrowerMinters } from "./data"
+import { uniMinters, borrowerMinters } from "./MerkleRedeem/data"
 import MerkleTree from "merkletreejs";
 
 export class TestScope extends MainnetAddresses {
