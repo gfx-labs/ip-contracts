@@ -52,15 +52,15 @@ let anchorViewLINK: IOracleRelay
 let anchorViewYFI: IOracleRelay
 
 const deployCapTokens = async (deployer: SignerWithAddress) => {
-    const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
+    const proxyAdmin = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
     //const CappedGovFactory = await ethers.getContractFactory("CappedGovToken")
 
     //deploy capped LINK
-    const ucLINK = await new CappedGovToken__factory(deployer).deploy()
+    const implementation = await new CappedGovToken__factory(deployer).deploy()
 
     const cLINK = await new TransparentUpgradeableProxy__factory(deployer).deploy(
-        ucLINK.address,
-        proxy.address,
+        implementation.address,
+        proxyAdmin.address,
         "0x"
     )
     await cLINK.deployed()
@@ -83,7 +83,7 @@ const deployCapTokens = async (deployer: SignerWithAddress) => {
 
     const cYFI = await new TransparentUpgradeableProxy__factory(deployer).deploy(
         ucYFI.address,
-        proxy.address,
+        proxyAdmin.address,
         "0x"
     )
     await cYFI.deployed()

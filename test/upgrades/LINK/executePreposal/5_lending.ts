@@ -10,6 +10,7 @@ import { IVault__factory } from "../../../../typechain-types";
 require("chai").should();
 
 let firstBorrowIF: BigNumber
+
 describe("Check starting values", () => {
     it("Check starting balance", async () => {
         const startCappedLINK = await s.CappedLINK.balanceOf(s.BobVault.address)
