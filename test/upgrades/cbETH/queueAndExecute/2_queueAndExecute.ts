@@ -1,9 +1,8 @@
 import { s } from "../scope";
-import { upgrades, ethers } from "hardhat";
-import { expect, assert } from "chai";
+import { ethers } from "hardhat";
+import { expect } from "chai";
 import { showBody, showBodyCyan } from "../../../../util/format";
 import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
-import * as fs from 'fs';
 
 import { BN } from "../../../../util/number";
 import {
@@ -20,18 +19,12 @@ import {
   VotingVaultController__factory,
   ChainlinkOracleRelay,
   ChainlinkOracleRelay__factory,
-  ChainlinkTokenOracleRelay__factory,
-  GeneralizedBalancerOracle,
-  GeneralizedBalancerOracle__factory,
   OracleRETH,
   BalancerPeggedAssetRelay
 } from "../../../../typechain-types";
 import {
-  advanceBlockHeight,
   fastForward,
   mineBlock,
-  OneWeek,
-  OneYear,
   currentBlock,
   hardhat_mine
 } from "../../../../util/block";
@@ -40,9 +33,9 @@ import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
 import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
 import { OracleRETH__factory } from "../../../../typechain-types/factories/oracle/External/OracleRETH.sol/OracleRETH__factory";
 import { BalancerPeggedAssetRelay__factory } from "../../../../typechain-types/factories/oracle/External/BalancerPeggedAssetRelay.sol";
+
 let rEthSelfRelay: OracleRETH
 let rEthUniRelay: UniswapV3TokenOracleRelay
-let rEthBalancerRelay: GeneralizedBalancerOracle
 let rEthPeggedBalancerRelay: BalancerPeggedAssetRelay
 let anchorViewRETH: AnchoredViewRelay
 

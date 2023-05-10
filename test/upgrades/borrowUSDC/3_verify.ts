@@ -1,24 +1,14 @@
 import { s } from "./scope";
-import { upgrades, ethers } from "hardhat";
-import { BigNumber, utils } from "ethers";
+import { utils } from "ethers";
 import { expect, assert } from "chai";
 import { showBody, showBodyCyan } from "../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
 
 import { BN } from "../../../util/number";
 import {
-    ProxyAdmin,
-    ProxyAdmin__factory,
-    USDI__factory,
-    IVault__factory,
     VaultController__factory
 } from "../../../typechain-types";
 import {
-    advanceBlockHeight,
-    fastForward,
     mineBlock,
-    OneWeek,
-    OneYear,
 } from "../../../util/block";
 import { toNumber, getGas } from "../../../util/math";
 
@@ -72,7 +62,7 @@ describe("Verify Upgraded Contracts", () => {
 
         expect(await toNumber(await s.USDI.balanceOf(s.Bob.address))).to.be.closeTo(0, 0.0001, "Bob is able to withdraw using the new withdrawAll function")
 
-    
+
     })
 
     it("Check depositTo", async () => {
@@ -87,13 +77,11 @@ describe("Verify Upgraded Contracts", () => {
 
     it("Confirm VaultController now has borrowUSDCto", async () => {
         const startUSDC = await s.USDC.balanceOf(s.Bob.address)
-
         const ge = (
             await VaultController__factory.connect(
                 s.VaultController.address,
                 s.Bob
             ).estimateGas.borrowUSDCto(s.BobVaultID, USDC_BORROW, s.Bob.address))
-
 
         //bob borrows USDC
         const result = await s.VaultController.connect(s.Bob).borrowUSDCto(s.BobVaultID, USDC_BORROW, s.Bob.address)
@@ -174,6 +162,6 @@ describe("Testing for failure on new USDI functions", () => {
 
         expect(await s.USDC.balanceOf(s.Eric.address)).to.eq(startUSDC, "Eric did not receive any USDC")
 
-    })   
+    })
 })
 

@@ -1,19 +1,7 @@
 import { ethers } from "hardhat";
-import { Signer } from "ethers";
 import {
-  CurveMaster__factory,
   GovernorCharlieDelegate__factory,
-  GovernorCharlieDelegator__factory,
-  InterestProtocolTokenDelegate__factory,
-  InterestProtocolToken__factory,
-  IGovernorCharlieDelegator__factory,
-  GovernorCharlieDelegate,
-  ProxyAdmin__factory,
-  ThreeLines0_100__factory,
-  USDI__factory,
-  VaultController__factory,
-  TransparentUpgradeableProxy__factory,
-  OracleMaster__factory,
+  GovernorCharlieDelegator__factory, GovernorCharlieDelegate, VaultController__factory, OracleMaster__factory
 } from "../../../../typechain-types";
 import { BN } from "../../../../util/number";
 import { ProposalContext } from "../../suite/proposal";
@@ -24,14 +12,9 @@ import {
   reset,
 } from "../../../../util/block";
 import {
-  impersonateAccount,
-  ceaseImpersonation,
-  stopImpersonate,
-  Impersonate,
+  Impersonate
 } from "../../../../util/impersonator";
-import { executionAsyncResource } from "async_hooks";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { expect } from "chai";
 
 const description = `
 # Test Description

@@ -1,39 +1,18 @@
-import { getContractFactory } from "@nomiclabs/hardhat-ethers/types";
 import { BN } from "../../../util/number";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
-    CappedGovToken,
     GovernorCharlieDelegate,
-    GovernorCharlieDelegate__factory,
-    CappedGovToken__factory,
-    UniswapV3TokenOracleRelay__factory,
-    UniswapV3TokenOracleRelay,
-    AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    OracleMaster__factory,
+    GovernorCharlieDelegate__factory, OracleMaster__factory,
     VaultController__factory,
-    VotingVaultController__factory,
-    ChainlinkOracleRelay,
-    ChainlinkOracleRelay__factory,
-    ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory
+    VotingVaultController__factory, ProxyAdmin__factory
 } from "../../../typechain-types";
-import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
 import { ProposalContext } from "../suite/proposal";
-import { toNumber } from "../../../util/math";
-import { d } from "../DeploymentInfo"
-import { showBody } from "../../../util/format";
+import { d } from "../DeploymentInfo";
 import { reset } from "../../../util/block";
 import * as fs from 'fs';
 
 const { ethers, network, upgrades } = require("hardhat");
 
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
-
-let anchor: UniswapV3TokenOracleRelay
-let mainRelay: ChainlinkOracleRelay
-let anchorView: AnchoredViewRelay
-let CappedZRX: CappedGovToken
 
 const ZRX_LTV = BN("5e17")
 const NEW_UNI_LTV = BN("700000000000000000") //0.70

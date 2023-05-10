@@ -5,26 +5,12 @@ import { showBody } from "../../../../util/format";
 import { BN } from "../../../../util/number";
 import { s } from "../scope";
 import { d } from "../DeploymentInfo";
-import { advanceBlockHeight, reset, mineBlock } from "../../../../util/block";
+import { reset, mineBlock } from "../../../../util/block";
 import {
-    AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    ChainlinkOracleRelay,
-    ChainlinkOracleRelay__factory,
-    CurveMaster,
     CurveMaster__factory,
-    IERC20,
     IERC20__factory,
-    IOracleRelay,
-    OracleMaster,
     OracleMaster__factory,
-    ProxyAdmin,
     ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory,
-    ThreeLines0_100,
-    ThreeLines0_100__factory,
-    UniswapV3OracleRelay__factory,
-    USDI,
     USDI__factory,
     Vault,
     VotingVaultController__factory,
@@ -38,8 +24,6 @@ require("chai").should();
 
 // configurable variables
 let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
-let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
-let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
 let ens_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 

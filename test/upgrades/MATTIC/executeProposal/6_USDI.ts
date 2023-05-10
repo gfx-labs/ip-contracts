@@ -2,11 +2,11 @@ import { s } from "../scope";
 import { ethers } from "hardhat";
 import { BigNumber, utils } from "ethers";
 import { expect, assert } from "chai";
-import { getGas, getArgs, changeInBalance, payInterestMath, calculateBalance, toNumber} from "../../../../util/math"
+import { getGas, getArgs } from "../../../../util/math";
 import { stealMoney } from "../../../../util/money";
-import { showBody, showBodyCyan } from "../../../../util/format";
+import { showBodyCyan } from "../../../../util/format";
 import { BN } from "../../../../util/number";
-import { advanceBlockHeight, mineBlock, fastForward, OneWeek} from "../../../../util/block";
+import { advanceBlockHeight, mineBlock } from "../../../../util/block";
 
 const usdcAmount = BN("5000e6")
 

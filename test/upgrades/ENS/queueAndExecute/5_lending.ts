@@ -2,13 +2,11 @@ import { s } from "../scope";
 import { expect, assert } from "chai";
 import { showBody, showBodyCyan } from "../../../../util/format";
 import { BN } from "../../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneDay } from "../../../../util/block";
-import { utils, BigNumber } from "ethers";
-import { getGas, getArgs, truncate, getEvent, toNumber } from "../../../../util/math";
+import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneDay } from "../../../../util/block";
+import {  BigNumber } from "ethers";
+import {  toNumber } from "../../../../util/math";
 import { stealMoney } from "../../../../util/money"
-import { IVault__factory } from "../../../../typechain-types";
 
-let firstBorrowIF: BigNumber
 describe("Check starting values", () => {
     const amount = s.ENS_AMOUNT
     it("Check starting balance", async () => {

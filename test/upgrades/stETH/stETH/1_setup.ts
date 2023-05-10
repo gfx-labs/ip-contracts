@@ -1,37 +1,13 @@
-import { expect, assert } from "chai";
-import { ethers, network, tenderly } from "hardhat";
+import { expect } from "chai";
+import { ethers, network, } from "hardhat";
 import { stealMoney } from "../../../../util/money";
-import { showBody } from "../../../../util/format";
-import { BN } from "../../../../util/number";
 import { s } from "./scope";
 import { d } from "./DeploymentInfo";
-import { advanceBlockHeight, reset, mineBlock } from "../../../../util/block";
+import { reset, mineBlock } from "../../../../util/block";
 import {
-    AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    ChainlinkOracleRelay,
-    ChainlinkOracleRelay__factory,
-    CurveMaster,
-    CurveMaster__factory,
-    IERC20,
-    IERC20__factory,
-    IOracleRelay,
-    OracleMaster,
-    OracleMaster__factory,
-    ProxyAdmin,
-    ProxyAdmin__factory,
+    CurveMaster__factory, IERC20__factory, OracleMaster__factory, ProxyAdmin__factory,
     ILido__factory,
-    ILidoOracle__factory,
-    ThreeLines0_100__factory,
-    UniswapV3OracleRelay__factory,
-    USDI,
-    USDI__factory,
-    Vault,
-    VaultController,
-    VaultController__factory,
-    IVaultController__factory,
-    IVOTE,
-    IVOTE__factory,
+    ILidoOracle__factory, USDI__factory, VaultController__factory, IVOTE__factory
 } from "../../../../typechain-types";
 
 require("chai").should();
@@ -44,13 +20,6 @@ let weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 
 const steth_minter = "0x2FAF487A4414Fe77e2327F0bf4AE2a264a776AD2"
 
-
-if (process.env.TENDERLY_KEY) {
-    if (process.env.TENDERLY_ENABLE == "true") {
-        let provider = new ethers.providers.Web3Provider(tenderly.network())
-        ethers.provider = provider
-    }
-}
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {

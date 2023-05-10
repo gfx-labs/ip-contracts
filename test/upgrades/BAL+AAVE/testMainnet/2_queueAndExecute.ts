@@ -11,7 +11,6 @@ import {
   GovernorCharlieDelegate,
   GovernorCharlieDelegate__factory,
   CappedGovToken__factory,
-  UniswapV3TokenOracleRelay__factory,
   UniswapV3TokenOracleRelay,
   AnchoredViewRelay,
   AnchoredViewRelay__factory,
@@ -19,22 +18,15 @@ import {
   VaultController__factory,
   VotingVaultController__factory,
   ChainlinkOracleRelay,
-  ChainlinkOracleRelay__factory
 } from "../../../../typechain-types";
 import {
-  advanceBlockHeight,
   fastForward,
   mineBlock,
-  OneWeek,
-  OneYear,
   currentBlock,
   hardhat_mine
 } from "../../../../util/block";
 import { toNumber } from "../../../../util/math";
 import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
-import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
-
-
 
 require("chai").should();
 describe("Verify Contracts", () => {

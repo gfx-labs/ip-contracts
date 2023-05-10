@@ -1,32 +1,15 @@
 import { s } from "./scope";
-import { upgrades, ethers } from "hardhat";
-import { BigNumber, utils } from "ethers";
-import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
+import { ethers } from "hardhat";
+import { expect } from "chai";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator";
 
 import { BN } from "../../../../util/number";
 import {
-    ProxyAdmin,
-    ProxyAdmin__factory,
-    USDI__factory,
-    IVault__factory
-} from "../../../../typechain-types";
-import {
-    advanceBlockHeight,
     fastForward,
     mineBlock,
-    OneWeek,
-    OneYear,
+    OneWeek
 } from "../../../../util/block";
-import { toNumber, getGas } from "../../../../util/math";
-
-const usdcAmount = BN("50e6")
-const usdiAmount = BN("50e18")
-
-const USDC_BORROW = BN("1000e6")//1k USDC
-const USDI_BORROW = BN("100e18")//500 USDI
-
+import { toNumber } from "../../../../util/math";
 
 const rebase = async () => {
     const callerAddr = "0x404335bce530400a5814375e7ec1fb55faff3ea2";

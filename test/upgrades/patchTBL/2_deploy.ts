@@ -1,24 +1,16 @@
 import { s } from "./scope";
-import { upgrades, ethers } from "hardhat";
-import { expect, assert } from "chai";
+import { ethers } from "hardhat";
+import { expect } from "chai";
 import { showBody, showBodyCyan } from "../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
+import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator";
 
-import { BN } from "../../../util/number";
 import {
-  ProxyAdmin,
-  ProxyAdmin__factory,
-  USDI__factory,
-  IVault__factory,
   GovernorCharlieDelegate__factory
 } from "../../../typechain-types";
 import {
-  advanceBlockHeight,
   fastForward,
-  mineBlock,
-  OneWeek,
-  currentBlock,
-  hardhat_mine,
+  mineBlock, currentBlock,
+  hardhat_mine
 } from "../../../util/block";
 import { toNumber } from "../../../util/math";
 

@@ -1,12 +1,11 @@
 import { s } from "./scope";
 import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../util/format";
+import { showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
 import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../../util/block";
 import { utils, BigNumber } from "ethers";
-import { getGas, getArgs, truncate, getEvent, toNumber } from "../../../util/math";
+import { getGas, getArgs, toNumber } from "../../../util/math";
 
-let firstBorrowIF: BigNumber
 const borrowAmount = BN("5000e18")
 
 describe("BORROW USDi", async () => {
@@ -14,7 +13,6 @@ describe("BORROW USDi", async () => {
     //bob tries to borrow USDi against 10 eth as if eth is $100k
     // remember bob has 10 wETH
     let actualBorrowAmount: any
-    let expectedInterestFactor: BigNumber
     
     it(`bob should not be able to borrow 1e6 * 1e18 * ${s.Bob_WETH} USDi`, async () => {
         await expect(s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID,

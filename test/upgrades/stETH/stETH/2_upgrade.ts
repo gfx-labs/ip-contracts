@@ -1,32 +1,13 @@
 import { s } from "./scope";
-import { upgrades, ethers } from "hardhat";
-import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
+import { ethers } from "hardhat";
+import { expect } from "chai";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator";
 
 import { BN } from "../../../../util/number";
 import {
-  AnchoredViewRelay,
-  USDI__factory,
-  IVault__factory,
-  UniswapV3OracleRelay__factory,
-  ChainlinkOracleRelay__factory,
-  StEthOracleRelay__factory,
-  GovernorCharlieDelegate__factory,
-  GovernorCharlieDelegate
-} from "../../../../typechain-types";
-import {
-  advanceBlockHeight,
-  fastForward,
-  mineBlock,
-  OneWeek,
-  OneYear,
+  mineBlock
 } from "../../../../util/block";
 import { toNumber } from "../../../../util/math";
-
-
-
-
 
 require("chai").should();
 describe("Verify Contracts", () => {

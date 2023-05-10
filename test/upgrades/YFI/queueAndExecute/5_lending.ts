@@ -1,15 +1,11 @@
 import { s } from "../scope";
-import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../../util/format";
+import { expect } from "chai";
 import { BN } from "../../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneDay } from "../../../../util/block";
-import { utils, BigNumber } from "ethers";
-import { getGas, getArgs, truncate, getEvent, toNumber } from "../../../../util/math";
-import { stealMoney } from "../../../../util/money"
-import { IVault__factory } from "../../../../typechain-types";
+import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneDay } from "../../../../util/block";
+import { BigNumber } from "ethers";
+import { toNumber } from "../../../../util/math";
 require("chai").should();
 
-let firstBorrowIF: BigNumber
 describe("Check starting values", () => {
     it("Check starting balance", async () => {
         const startCappedYFI = await s.CappedYFI.balanceOf(s.BobVault.address)
@@ -29,10 +25,6 @@ describe("Check starting values", () => {
         let price = await s.Oracle.getLivePrice(s.CappedYFI.address)
         const YFIval = (balance.mul(price)).div(BN("1e18"))
         const YFIBorrowPower = YFIval.mul(s.YFI_LTV).div(BN("1e18"))
-
-
-
-
 
         const expectedBorrowPower = (YFIBorrowPower)
         //const totalValue = YFIval.add(UNI_VAL)//dydxVal.add(YFIval).add(crvVal)

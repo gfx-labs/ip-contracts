@@ -1,9 +1,8 @@
 import { s } from "../scope";
-import { upgrades, ethers } from "hardhat";
-import { expect, assert } from "chai";
+import { ethers } from "hardhat";
+import { expect } from "chai";
 import { showBody, showBodyCyan } from "../../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
-import * as fs from 'fs';
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator";
 
 import { BN } from "../../../../util/number";
 import {
@@ -11,42 +10,21 @@ import {
   GovernorCharlieDelegate,
   GovernorCharlieDelegate__factory,
   CappedGovToken__factory,
-  UniswapV3TokenOracleRelay__factory,
-  UniswapV3TokenOracleRelay,
-  AnchoredViewRelay,
-  AnchoredViewRelay__factory,
+  UniswapV3TokenOracleRelay__factory, AnchoredViewRelay__factory,
   OracleMaster__factory,
   VaultController__factory,
-  VotingVaultController__factory,
-  GeneralizedBalancerOracle,
-  GeneralizedBalancerOracle__factory,
-  OracleRETH,
-  BalancerPeggedAssetRelay,
-  UniswapV2OracleRelay__factory,
-  VaultController,
-  ProxyAdmin__factory,
-  CHI_Oracle__factory,
-  IOracleRelay,
-  ChainYFIOracleRelay__factory,
-  UniswapV3OracleRelay__factory,
-  ChainlinkOracleRelay__factory
+  VotingVaultController__factory, IOracleRelay, ChainlinkOracleRelay__factory
 } from "../../../../typechain-types";
 import {
-  advanceBlockHeight,
   hardhat_mine,
   fastForward,
-  mineBlock,
-  OneWeek,
-  OneYear,
-  currentBlock
+  mineBlock, currentBlock
 } from "../../../../util/block";
 import { toNumber } from "../../../../util/math";
 import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
-import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
+import { DeployContractWithProxy } from "../../../../util/deploy";
 
 let anchorViewYFI: IOracleRelay
-
-
 
 require("chai").should();
 describe("Verify Contracts", () => {

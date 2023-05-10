@@ -1,35 +1,18 @@
-import { getContractFactory } from "@nomiclabs/hardhat-ethers/types";
 import { BN } from "../../../util/number";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
-    CappedGovToken,
-    GovernorCharlieDelegate,
-    GovernorCharlieDelegate__factory,
-    CappedGovToken__factory,
+    CappedGovToken, CappedGovToken__factory,
     UniswapV3TokenOracleRelay__factory,
     UniswapV3TokenOracleRelay,
     AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    OracleMaster__factory,
-    VaultController__factory,
-    VotingVaultController__factory,
-    ChainlinkOracleRelay,
+    AnchoredViewRelay__factory, VaultController__factory, ChainlinkOracleRelay,
     ChainlinkOracleRelay__factory,
     ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory,
-    ChainlinkTokenOracleRelay,
-    ChainlinkTokenOracleRelay__factory,
-    BalancerPeggedAssetRelay,
-    BalancerPeggedAssetRelay__factory,
-    UniswapV3OracleRelay__factory
+    TransparentUpgradeableProxy__factory, ChainlinkTokenOracleRelay__factory, BalancerPeggedAssetRelay__factory
 } from "../../../typechain-types";
-import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
-import { ProposalContext } from "../suite/proposal";
-import { getGas, toNumber } from "../../../util/math";
-import { d } from "../DeploymentInfo"
-import { showBody, showBodyCyan } from "../../../util/format";
-import { reset } from "../../../util/block";
-import { BigNumber } from "ethers";
+import { toNumber } from "../../../util/math";
+import { d } from "../DeploymentInfo";
+import { showBodyCyan } from "../../../util/format";
 
 const { ethers, network, upgrades } = require("hardhat");
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"

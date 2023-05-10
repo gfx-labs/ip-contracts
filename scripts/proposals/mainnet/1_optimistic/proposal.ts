@@ -6,7 +6,7 @@ import {
   USDI__factory,
   VaultController__factory,
 } from "../../../../typechain-types";
-import { countdownSeconds, ProposalContext, sleep } from "../../suite/proposal";
+import { countdownSeconds, ProposalContext } from "../../suite/proposal";
 
 const description = `
 # IP July Update

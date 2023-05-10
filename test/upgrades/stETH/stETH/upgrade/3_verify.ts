@@ -1,36 +1,18 @@
 import { s } from "../scope";
-import { d } from "../DeploymentInfo"
-import { ethers, network, tenderly } from "hardhat";
-import { BigNumber, utils } from "ethers";
-import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../../../util/impersonator"
+import { d } from "../DeploymentInfo";
+import { expect } from "chai";
 
 import { BN } from "../../../../../util/number";
 import {
-    ProxyAdmin,
-    IGovernorCharlieDelegate__factory,
     InterestProtocolTokenDelegate__factory,
     IVault__factory,
     GovernorCharlieDelegate__factory
 } from "../../../../../typechain-types";
 import {
-    advanceBlockHeight,
-    fastForward,
-    mineBlock,
-    OneWeek,
-    OneYear,
+    mineBlock
 } from "../../../../../util/block";
-import { toNumber, getGas, getArgs } from "../../../../../util/math";
+import { toNumber } from "../../../../../util/math";
 import { GovernorCharlieDelegator__factory } from "../../../../../typechain-types";
-
-const usdcAmount = BN("50e6")
-const usdiAmount = BN("50e18")
-
-const USDC_BORROW = BN("1000e6")//1k USDC
-const USDI_BORROW = BN("100e18")//500 USDI
-
-
 
 require("chai").should();
 

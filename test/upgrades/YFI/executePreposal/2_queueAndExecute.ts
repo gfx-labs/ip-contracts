@@ -1,45 +1,18 @@
 import { s } from "../scope";
-import { upgrades, ethers } from "hardhat";
-import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
-import * as fs from 'fs';
+import { ethers } from "hardhat";
+import { expect } from "chai";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator";
 
-import { BN } from "../../../../util/number";
 import {
   IVault__factory,
   GovernorCharlieDelegate,
   GovernorCharlieDelegate__factory,
-  CappedGovToken__factory,
-  UniswapV3TokenOracleRelay__factory,
-  UniswapV3TokenOracleRelay,
-  AnchoredViewRelay,
-  AnchoredViewRelay__factory,
-  OracleMaster__factory,
-  VaultController__factory,
-  VotingVaultController__factory,
-  OracleRETH,
-  BalancerPeggedAssetRelay,
-  UniswapV2OracleRelay__factory,
-  VaultController,
-  ProxyAdmin__factory,
-  CHI_Oracle__factory,
-  IOracleRelay,
-  UniswapV3OracleRelay__factory,
-  ChainlinkOracleRelay__factory
+  CappedGovToken__factory, IOracleRelay
 } from "../../../../typechain-types";
 import {
-  advanceBlockHeight,
-  hardhat_mine,
-  fastForward,
-  mineBlock,
-  OneWeek,
-  OneYear,
-  currentBlock
+  mineBlock
 } from "../../../../util/block";
 import { toNumber } from "../../../../util/math";
-import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
-import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
 
 let anchorViewYFI: IOracleRelay
 

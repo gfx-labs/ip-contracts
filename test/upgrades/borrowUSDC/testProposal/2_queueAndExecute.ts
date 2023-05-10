@@ -1,6 +1,6 @@
 import { s } from "../scope";
-import { upgrades, ethers } from "hardhat";
-import { expect, assert } from "chai";
+import { ethers } from "hardhat";
+import { expect } from "chai";
 import { showBody, showBodyCyan } from "../../../../util/format";
 import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
 
@@ -11,12 +11,9 @@ import {
   GovernorCharlieDelegate__factory
 } from "../../../../typechain-types";
 import {
-  advanceBlockHeight,
   fastForward,
   hardhat_mine,
   mineBlock,
-  OneWeek,
-  OneYear,
 } from "../../../../util/block";
 import { toNumber } from "../../../../util/math";
 

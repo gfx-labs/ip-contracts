@@ -2,7 +2,7 @@ import { s } from "./scope";
 import { ethers } from "hardhat";
 import { BigNumber, utils } from "ethers";
 import { expect, assert } from "chai";
-import { getGas, getArgs, changeInBalance, payInterestMath, calculateBalance, toNumber} from "../../../util/math"
+import { getGas, getArgs, toNumber} from "../../../util/math"
 import { stealMoney } from "../../../util/money";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";

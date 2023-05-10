@@ -1,38 +1,18 @@
 import { s } from "./scope";
-import { upgrades, ethers } from "hardhat";
-import { BigNumber, utils } from "ethers";
-import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
+import { ethers } from "hardhat";
+import { expect } from "chai";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator";
 
 import { BN } from "../../../../util/number";
 import {
-    AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    IVault__factory,
-    UniswapV3OracleRelay__factory,
-    ChainlinkOracleRelay__factory,
-    StEthOracleRelay__factory,
-    GovernorCharlieDelegate__factory,
-    GovernorCharlieDelegate
+  AnchoredViewRelay,
+  AnchoredViewRelay__factory, ChainlinkOracleRelay__factory,
+  StEthOracleRelay__factory
 } from "../../../../typechain-types";
 import {
-    advanceBlockHeight,
-    fastForward,
-    mineBlock,
-    OneWeek,
-    OneYear,
+  mineBlock
 } from "../../../../util/block";
-import { toNumber, getGas } from "../../../../util/math";
-import { DeployContract, DeployContractWithProxy } from "../../../../util/deploy";
-
-
-const usdcAmount = BN("50e6")
-const usdiAmount = BN("50e18")
-
-const USDC_BORROW = BN("1000e6")//1k USDC
-const USDI_BORROW = BN("100e18")//500 USDI
-
+import { DeployContract } from "../../../../util/deploy";
 
 
 require("chai").should();

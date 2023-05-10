@@ -1,14 +1,13 @@
 import { s } from "../scope";
-import { expect, assert } from "chai";
+import { expect } from "chai";
 import { showBody, showBodyCyan } from "../../../../util/format";
 import { BN } from "../../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneDay } from "../../../../util/block";
-import { utils, BigNumber } from "ethers";
-import { getGas, getArgs, truncate, getEvent, toNumber } from "../../../../util/math";
+import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneDay } from "../../../../util/block";
+import { BigNumber } from "ethers";
+import { toNumber } from "../../../../util/math";
 import { stealMoney } from "../../../../util/money"
-import { IVault__factory } from "../../../../typechain-types";
 
-let firstBorrowIF: BigNumber
+
 describe("Check starting values", () => {
     it("Check starting balance", async () => {
         const startCappedLDO = await s.CappedLDO.balanceOf(s.BobVault.address)
@@ -52,9 +51,9 @@ describe("Check starting values", () => {
 
 describe("Lending", () => {
     const borrowAmount = BN("500e18")
-    
-  
-      it("Borrow a small amount against capped tokens", async () => {
+
+
+    it("Borrow a small amount against capped tokens", async () => {
 
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)
         expect(startUSDI).to.eq(0, "Bob holds 0 USDi")
@@ -77,7 +76,7 @@ describe("Lending", () => {
 
     })
 
-      
+
     it("Check governance vote delegation", async () => {
         const startPower = await s.DYDX.getPowerCurrent(s.Bob.address, 0)
 
@@ -116,13 +115,13 @@ describe("Lending", () => {
         const liability = await s.VaultController.vaultLiability(s.BobVaultID)
         expect(liability).to.eq(0, "Loan repaid")
     })
-      
-     
+
+
 })
 
 
 
- 
+
 describe("Liquidations", () => {
 
     let borrowPower: BigNumber
@@ -132,7 +131,7 @@ describe("Liquidations", () => {
         borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
     })
 
-     it("Borrow max", async () => {
+    it("Borrow max", async () => {
 
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)
 
@@ -148,8 +147,8 @@ describe("Liquidations", () => {
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(borrowPower.add(startUSDI)), 0.1, "Balance is correct")
 
     })
-     
- 
+
+
     it("Elapse time to put vault underwater", async () => {
         let solvency = await s.VaultController.checkVault(s.BobVaultID)
         expect(solvency).to.eq(true, "Bob's vault is not yet underwater")
@@ -191,7 +190,7 @@ describe("Liquidations", () => {
         expect(price).to.be.gt(0, "Valid price")
 
         const liquidationValue = (price.mul(tokensToLiquidate)).div(BN("1e18"))
-        
+
         const startSupply = await s.CappedLDO.totalSupply()
         //expect(startSupply).to.eq(borrowAmount.mul(2).add(69), "Starting supply unchanged")
 
@@ -229,7 +228,7 @@ describe("Liquidations", () => {
         expect(await toNumber(profit)).to.be.closeTo(await toNumber(expected), 5, "Expected profit achieved")
 
     })
- 
+
     it("repay all", async () => {
 
         let liab = await s.VaultController.vaultLiability(s.BobVaultID)
@@ -281,7 +280,7 @@ describe("Liquidations", () => {
         const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedLDO.address)
         expect(_CappedToken_underlying.toUpperCase()).to.eq(s.LDO.address.toUpperCase(), "Capped => Underlying correct")
     })
-      
+
 
 })
 

@@ -1,37 +1,13 @@
-import { expect, assert } from "chai";
-import { ethers, network, tenderly } from "hardhat";
+import { expect } from "chai";
+import { ethers, network } from "hardhat";
 import { stealMoney } from "../../../../util/money";
-import { showBody } from "../../../../util/format";
-import { BN } from "../../../../util/number";
 import { s } from "../scope";
 import { d } from "../DeploymentInfo";
-import { advanceBlockHeight, reset, mineBlock } from "../../../../util/block";
+import { reset, mineBlock } from "../../../../util/block";
 import {
-    AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    ChainlinkOracleRelay,
-    ChainlinkOracleRelay__factory,
-    CurveMaster,
-    CurveMaster__factory,
-    IERC20,
-    IERC20__factory,
-    IOracleRelay,
-    OracleMaster,
-    OracleMaster__factory,
-    ProxyAdmin,
-    ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory,
-    ThreeLines0_100,
-    ThreeLines0_100__factory,
-    UniswapV3OracleRelay__factory,
-    USDI,
-    USDI__factory,
-    Vault,
-    VotingVaultController__factory,
+    CurveMaster__factory, IERC20__factory, OracleMaster__factory, ProxyAdmin__factory, USDI__factory, VotingVaultController__factory,
     VaultController__factory,
-    CappedGovToken__factory,
-    IVOTE,
-    IVOTE__factory,
+    CappedGovToken__factory, IVOTE__factory
 } from "../../../../typechain-types";
 
 require("chai").should();
@@ -40,19 +16,8 @@ require("chai").should();
 let usdc_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 let wbtc_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
 let uni_minter = "0xf977814e90da44bfa03b6295a0616a897441acec"
-let dydx_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let ens_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let aave_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
-let tribe_minter = "0xf977814e90da44bfa03b6295a0616a897441acec";
 let weth_minter = "0xe78388b4ce79068e89bf8aa7f218ef6b9ab0e9d0";
 
-
-if (process.env.TENDERLY_KEY) {
-    if (process.env.TENDERLY_ENABLE == "true") {
-        let provider = new ethers.providers.Web3Provider(tenderly.network())
-        ethers.provider = provider
-    }
-}
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {

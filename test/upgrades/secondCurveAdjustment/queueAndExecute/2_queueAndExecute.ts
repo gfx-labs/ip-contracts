@@ -1,56 +1,26 @@
 import { s } from "../scope";
-import { upgrades, ethers } from "hardhat";
-import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
-import * as fs from 'fs';
+import { ethers } from "hardhat";
+import { expect } from "chai";
+import { showBodyCyan } from "../../../../util/format";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator";
 
 import { BN } from "../../../../util/number";
 import {
   IVault__factory,
   GovernorCharlieDelegate,
-  GovernorCharlieDelegate__factory,
-  CappedGovToken__factory,
-  UniswapV3TokenOracleRelay__factory,
-  UniswapV3TokenOracleRelay,
-  AnchoredViewRelay,
-  AnchoredViewRelay__factory,
-  OracleMaster__factory,
-  VaultController__factory,
-  VotingVaultController__factory,
-  ChainlinkOracleRelay,
-  ChainlinkOracleRelay__factory,
-  ChainlinkTokenOracleRelay__factory,
-  ThreeLines0_100__factory,
+  GovernorCharlieDelegate__factory, UniswapV3TokenOracleRelay,
+  AnchoredViewRelay, ChainlinkOracleRelay, ThreeLines0_100__factory,
   CurveMaster__factory,
   ICurveMaster__factory,
   ThreeLines0_100
 } from "../../../../typechain-types";
 import {
-  advanceBlockHeight,
   fastForward,
-  mineBlock,
-  OneWeek,
-  OneYear,
-  currentBlock,
+  mineBlock, currentBlock,
   hardhat_mine
 } from "../../../../util/block";
 import { toNumber } from "../../../../util/math";
 import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
-import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
-import { deployContract } from "ethereum-waffle";
-
-let anchorLDO: UniswapV3TokenOracleRelay
-let mainLDO: ChainlinkOracleRelay
-let anchorViewLDO: AnchoredViewRelay
-
-let anchorDYDX: UniswapV3TokenOracleRelay
-let mainDYDX: ChainlinkOracleRelay
-let anchorViewDYDX: AnchoredViewRelay
-
-let anchorCRV: UniswapV3TokenOracleRelay
-let mainCRV: ChainlinkOracleRelay
-let anchorViewCRV: AnchoredViewRelay
 
 const ZER0 = "0x0000000000000000000000000000000000000000"
 

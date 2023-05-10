@@ -1,31 +1,18 @@
-import { getContractFactory } from "@nomiclabs/hardhat-ethers/types";
 import { BN } from "../../../util/number";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
-    CappedGovToken,
-    GovernorCharlieDelegate,
-    GovernorCharlieDelegate__factory,
-    CappedGovToken__factory,
+    CappedGovToken, CappedGovToken__factory,
     UniswapV3TokenOracleRelay__factory,
     UniswapV3TokenOracleRelay,
     AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    OracleMaster__factory,
-    VaultController__factory,
-    VotingVaultController__factory,
-    ChainlinkOracleRelay,
+    AnchoredViewRelay__factory, ChainlinkOracleRelay,
     ChainlinkOracleRelay__factory,
     ProxyAdmin__factory,
     TransparentUpgradeableProxy__factory,
     ChainlinkTokenOracleRelay,
     ChainlinkTokenOracleRelay__factory
 } from "../../../typechain-types";
-import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
-import { ProposalContext } from "../suite/proposal";
-import { toNumber } from "../../../util/math";
-import { d } from "../DeploymentInfo"
-import { showBody, showBodyCyan } from "../../../util/format";
-import { reset } from "../../../util/block";
+import { d } from "../DeploymentInfo";
 
 const { ethers, network, upgrades } = require("hardhat");
 
