@@ -11,7 +11,7 @@
         "clean": "npx hardhat clean",
         "compile": "npx hardhat compile",
         "pretest": "npx hardhat compile",
-        "test": "npx hardhat test test/mainnet/index.ts; npx hardhat test test/isolated/index.ts; npx hardhat test test/upgrades/index.ts",
+        "test": "npx hardhat test test/index.ts;",
         "testMainnet": "npx hardhat test test/mainnetLive/index.ts;",
         "testgov": "npx hardhat test test/governance/index.ts",
         "testsale": "npx hardhat test test/IPTsale/index.ts",
