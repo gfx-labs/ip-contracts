@@ -1,4 +1,4 @@
-import { s } from "../scope";
+import { s } from "./scope";
 import { d } from "../DeploymentInfo";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
@@ -19,7 +19,8 @@ import {
     VotingVault,
     IVault,
     CappedGovToken__factory,
-    CappedGovToken
+    CappedGovToken,
+    VaultNft__factory
 } from "../../../typechain-types"
 import { JsxEmit } from "typescript";
 import { stealMoney } from "../../../util/money";
@@ -29,6 +30,21 @@ require("chai").should();
 
 
 describe("Verify setup", () => {
+    it("Mint NFT vault for Bob", async () => {
+
+        let _vaultId_votingVaultAddress = await s.NftVaultController._vaultId_nftVaultAddress(s.BobVaultID)
+        expect(_vaultId_votingVaultAddress).to.eq("0x0000000000000000000000000000000000000000", "Voting vault not yet minted")
+
+        const result = await s.NftVaultController.connect(s.Bob).mintVault(s.BobVaultID)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to mint NFT vault: ", gas)
+  
+        let vaultAddr = await s.NftVaultController._vaultId_nftVaultAddress(s.BobVaultID)
+        s.BobNftVault = VaultNft__factory.connect(vaultAddr, s.Bob)
+
+        expect(s.BobNftVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Bob's nft vault setup complete")
+
+      })
     it("Bob's Voting Vault setup correctly", async () => {
         /**
               const vaultInfo = await s.BobBptVault._vaultInfo()
@@ -53,7 +69,13 @@ describe("Verify setup", () => {
 describe("Capped Position Functionality", () => {
 
     it("Deposit position", async () => {
+        //this works
+        //await s.nfpManager.connect(s.Bob).transferFrom(s.Bob.address, s.CappedPosition.address, s.BobPositionId)
 
+        await s.nfpManager.connect(s.Bob).approve(s.CappedPosition.address, s.BobPositionId)
+        const result = await s.CappedPosition.connect(s.Bob).deposit(s.BobPositionId, s.BobVaultID)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to deposit a position: ", gas)
     })
 
     it("Check NftVaultController", async () => {

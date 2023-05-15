@@ -1,10 +1,10 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken, IGauge, INonfungiblePositionManager__factory, Univ3CollateralToken, NftVaultController } from "../../../typechain-types";
-import { BPT_VaultController } from "../../../typechain-types/lending/BPT_VaultController";
+import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken, IGauge, INonfungiblePositionManager__factory, Univ3CollateralToken, NftVaultController, VaultNft, INonfungiblePositionManager } from "../../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../../util/addresser";
 import { BN } from "../../../util/number";
+import { NonfungiblePositionManager } from "@uniswap/v3-sdk";
 
 export class TestScope extends MainnetAddresses {
     USDI!: USDI;
@@ -15,6 +15,7 @@ export class TestScope extends MainnetAddresses {
 
     CappedPosition!: Univ3CollateralToken
     NftVaultController!: NftVaultController
+    nfpManager!: INonfungiblePositionManager
     BalancerVault!: IBalancerVault;
     wethOracleAddr = "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"
     wethOracle!: IOracleRelay
@@ -24,10 +25,7 @@ export class TestScope extends MainnetAddresses {
 
    
     LiquidationIncentive = BN("5e16")
-    wETH_LTV = BN("5e17")
-    COMP_LTV = BN("4e17")
-    UNI_LTV = BN("4e17")
-    wBTC_LTV = BN("80e16")
+    LTV = BN("6e17")
 
     ProxyAdmin!: ProxyAdmin;
     VaultController!: IVaultController;
@@ -69,6 +67,8 @@ export class TestScope extends MainnetAddresses {
     BobVaultID!: BigNumber
     BobVotingVault!: VotingVault
     BobBptVault!: VaultBPT
+    BobNftVault!: VaultNft
+    BobPositionId!: BigNumber
     CarolVotingVault!: VotingVault
     CarolBptVault!: VaultBPT
     DeployerVotingVault!: VotingVault
@@ -88,7 +88,6 @@ export class TestScope extends MainnetAddresses {
 
 
     VotingVaultController!: VotingVaultController
-    BPT_VaultController!: BPT_VaultController
 
     auraBal!: IERC20
     CappedAuraBal!: CappedBptToken

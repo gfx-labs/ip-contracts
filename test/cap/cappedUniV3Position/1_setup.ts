@@ -8,7 +8,7 @@ import { d } from "../DeploymentInfo";
 import { getArgs, toNumber } from "../../../util/math"
 import { advanceBlockHeight, reset, mineBlock, currentBlock } from "../../../util/block";
 import { BigNumber, BigNumberish, BytesLike } from "ethers";
-import { IERC20__factory, INFPmanager__factory, INonfungiblePositionManager__factory, IOracleRelay__factory, OracleMaster__factory, ProxyAdmin__factory, USDI__factory, VaultController__factory, VotingVaultController__factory } from "../../../typechain-types";
+import { IERC20__factory, INFPmanager__factory, INonfungiblePositionManager__factory, IOracleRelay__factory, InterestProtocolTokenDelegate__factory, OracleMaster__factory, ProxyAdmin__factory, USDI__factory, VaultController__factory, VotingVaultController__factory } from "../../../typechain-types";
 //import { assert } from "console";
 
 
@@ -53,6 +53,8 @@ describe("Token Setup", () => {
         s.Oracle = OracleMaster__factory.connect(d.Oracle, s.Frank)
 
         s.ProxyAdmin = ProxyAdmin__factory.connect(d.ProxyAdmin, s.Frank)
+        
+        s.IPT = InterestProtocolTokenDelegate__factory.connect(d.IPTDelegator, s.Frank)
 
         const vvc = "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2"
         s.VotingVaultController = VotingVaultController__factory.connect(vvc, s.Frank)
