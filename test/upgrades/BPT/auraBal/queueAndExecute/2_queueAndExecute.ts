@@ -15,7 +15,9 @@ import {
   ProxyAdmin__factory,
   IOracleRelay,
   CappedBptToken__factory,
-  VotingVaultController
+  VotingVaultController,
+  BPT_WEIGHTED_ORACLE__factory,
+  AnchoredViewRelay__factory
 } from "../../../../../typechain-types";
 import {
   hardhat_mine,
@@ -70,9 +72,6 @@ describe("Verify Contracts", () => {
   });
 });
 
-
-
-
 let implementation: VotingVaultController
 let impAddr: any
 
@@ -85,12 +84,11 @@ describe("Upgrade Voting Vault Controller for BPT collateral", () => {
   })
 })
 
-let auraBalOracle: IOracleRelay
+let auraBalAnchorView: IOracleRelay
+let uniAnchor: IOracleRelay
+let primeBPToracle: IOracleRelay
 
 describe("Deploy Cap Tokens and Oracles", () => {
-
-  const wethOracleAddr = "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"
-  const balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
   it("Deploy Capped AuraBal", async () => {
     s.CappedAuraBal = await DeployContractWithProxy(
       new CappedBptToken__factory(s.Frank),
@@ -108,7 +106,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
   it("AuraBal oracle system", async () => {
     const uniPool = "0xFdeA35445489e608fb4F20B6E94CCFEa8353Eabd"//3k, meh liquidity
 
-    auraBalOracle = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
+    uniAnchor = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
       500,
       uniPool,
       false,
@@ -116,10 +114,38 @@ describe("Deploy Cap Tokens and Oracles", () => {
       BN("1")
     )
 
-    await auraBalOracle.deployed()
-    showBodyCyan("AuraBal uni relay price: ", await toNumber(await auraBalOracle.currentValue()))
+    await uniAnchor.deployed()
+    //showBodyCyan("AuraBal uni relay price: ", await toNumber(await uniAnchor.currentValue()))
   })
 
+  it("prime bpt oracle", async () => {
+    const primeBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
+    const wethOracleAddr = "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"
+    const BAL_TOKEN_ORACLE = "0xf5E0e2827F60580304522E2C38177DFeC7a428a4"
+    const balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
+
+    primeBPToracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
+      primeBPT,
+      balancerVault, //balancer vault
+      [s.BAL.address, s.wethAddress],
+      [BAL_TOKEN_ORACLE, wethOracleAddr],
+      BN("10"),
+      BN("100")
+    )
+    await primeBPToracle.deployed()
+    //showBody("Prime BPT oracle price: ", await toNumber(await primeBPToracle.currentValue()))  
+  })
+
+  it("Aura Bal anchor view", async () => {
+    auraBalAnchorView = await new AnchoredViewRelay__factory(s.Frank).deploy(
+      primeBPToracle.address,
+      uniAnchor.address,
+      BN("10"),
+      BN("100")
+    )
+    await auraBalAnchorView.deployed()
+    showBodyCyan("Aura Bal anchor view price: ", await toNumber(await auraBalAnchorView.currentValue()))
+  })
 })
 
 
@@ -167,7 +193,7 @@ describe("Setup, Queue, and Execute proposal", () => {
 
     const addOracle = await new OracleMaster__factory(prop).
       attach(s.Oracle.address).
-      populateTransaction.setRelay(s.CappedAuraBal.address, auraBalOracle.address)
+      populateTransaction.setRelay(s.CappedAuraBal.address, uniAnchor.address)
 
     const list = await new VaultController__factory(prop).
       attach(s.VaultController.address).
@@ -177,12 +203,9 @@ describe("Setup, Queue, and Execute proposal", () => {
       attach(s.VotingVaultController.address).
       populateTransaction.registerUnderlying(s.AuraBal.address, s.CappedAuraBal.address)
 
-
     //test
     const calcInterest = await new VaultController__factory(prop).attach(s.VaultController.address).
       populateTransaction.calculateInterest()
-
-
 
     //upgrade and setup new features
     proposal.addStep(upgradeVVC, "upgrade(address,address)")
@@ -212,7 +235,7 @@ describe("Setup, Queue, and Execute proposal", () => {
      * Rewards should still pay on mainnet when the normal timelock delay passes organicly 
      */
     //const magicNumber = BN("169718")
-    const magicNumber = BN("140000")
+    const magicNumber = BN("14000")//BN("140000")
     await impersonateAccount(s.owner._address)
     await gov.connect(s.owner)._setDelay(magicNumber)
     await ceaseImpersonation(s.owner._address)
@@ -315,7 +338,7 @@ describe("Setup, Queue, and Execute proposal", () => {
     await s.VotingVaultController.connect(s.owner).registerAuraLpData(s.AuraBal.address, s.rewardToken.address, s.PID)
 
     //register oracle
-    await s.Oracle.connect(s.owner).setRelay(s.CappedAuraBal.address, auraBalOracle.address)
+    await s.Oracle.connect(s.owner).setRelay(s.CappedAuraBal.address, uniAnchor.address)
 
     //register VVC
     await s.VotingVaultController.connect(s.owner).registerUnderlying(s.AuraBal.address, s.CappedAuraBal.address)

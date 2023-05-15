@@ -141,12 +141,12 @@ describe("Deposit and verify functions", () => {
         showBodyCyan("Gas to claim rewards: ", gas)
 
         let balRewards = await s.BAL.balanceOf(s.Bob.address)
-        showBody("Bal rewards: ", balRewards)
-        //expect(balRewards).to.be.gt(0, "Received BAL rewards")
+        //showBody("Bal rewards: ", await toNumber(balRewards))
+        expect(balRewards).to.be.gt(0, "Received BAL rewards")
 
         let newExtraRewardsBalance = await extraRewardToken.balanceOf(s.Bob.address)
-        showBody("Extra rewards: ", newExtraRewardsBalance)
-        //expect(newExtraRewardsBalance).to.be.gt(0, "Received more extra rewards")
+        //showBody("Extra rewards: ", newExtraRewardsBalance)
+        expect(newExtraRewardsBalance).to.be.gt(0, "Received more extra rewards")
 
     })
 

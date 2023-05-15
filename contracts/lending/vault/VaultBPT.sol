@@ -46,6 +46,8 @@ interface IRewardsPool {
 interface IVirtualRewardPool {
   function getReward() external;
 
+  function earned(address account) external view returns (uint256);
+
   function balanceOf(address target) external view returns (uint256);
 
   function rewardToken() external view returns (address);
@@ -150,7 +152,6 @@ contract VaultBPT is Context {
 
     //stake auraBal directly on rewards pool
     if (address(lp) == _votingController._auraBal()) {
-      console.log("staking auraBal, ", address(lp));
       IRewardsPool rp = IRewardsPool(rewardsToken);
       lp.approve(rewardsToken, lp.balanceOf(address(this)));
 
@@ -176,18 +177,6 @@ contract VaultBPT is Context {
     (address rewardsToken, uint256 PID) = _votingController.getAuraLpData(address(lp));
     IRewardsPool rp = IRewardsPool(rewardsToken);
 
-    ///compare starting params
-    console.log("checking starting params");
-    console.log("Rewards token: ", rewardsToken);
-    console.log("PID: ", PID);
-    console.log("block: ", block.number);
-    console.log("token: ", address(lp));
-    console.log("tokenBal: ", lp.balanceOf(address(this)));
-    console.log("rewrdBal: ", IERC20(rewardsToken).balanceOf(address(this)));
-    console.log("claimExtra: ", claimExtra);
-    console.log("staked: ", isStaked[address(lp)]);
-    console.log("earned: ", rp.earned(address(this)));
-
     //rewards (including extra) will be sent to this contract
     rp.getReward(address(this), claimExtra);
 
@@ -200,7 +189,7 @@ contract VaultBPT is Context {
     if (claimExtra) {
       for (uint256 i = 0; i < rp.extraRewardsLength(); i++) {
         IVirtualRewardPool extraRewardPool = IVirtualRewardPool(rp.extraRewards(i));
-
+      
         IERC20 extraRewardToken = IERC20(extraRewardPool.rewardToken());
 
         extraRewardPool.getReward();

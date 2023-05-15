@@ -130,6 +130,7 @@ describe("Deposit and verify functions", () => {
         let balRewards = await s.BAL.balanceOf(s.Bob.address)
         expect(balRewards).to.be.gt(0, "Received BAL rewards")
         balance = await extraRewardToken.balanceOf(s.Bob.address)
+        showBody("extra rewards: ", await toNumber(balance))
         expect(balance).to.be.gt(0, "Received extra rewards")
 
         /**

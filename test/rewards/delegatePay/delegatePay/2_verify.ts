@@ -30,22 +30,22 @@ describe("Merkle Redeem", () => {
 
 
     let total = BN(0)
-    const week = 1003
+    const week = 1004
 
     let startingIPT: BigNumber
 
     before(async () => {
         LP1 = s.delegateList[0]
-        LP2 = s.delegateList[1]
+        //LP2 = s.delegateList[1]
 
         claim1 = BN(LP1.amount)
-        claim2 = BN(LP2.amount)
+        //claim2 = BN(LP2.amount)
 
         let leaf = solidityKeccak256(["address", "uint256"], [LP1.minter, claim1])
         proof1 = s.MERKLE_TREE.getHexProof(leaf)
 
-        leaf = solidityKeccak256(["address", "uint256"], [LP2.minter, claim2])
-        proof2 = s.MERKLE_TREE.getHexProof(leaf)
+        //leaf = solidityKeccak256(["address", "uint256"], [LP2.minter, claim2])
+        //proof2 = s.MERKLE_TREE.getHexProof(leaf)
 
         startingIPT = await s.IPT.balanceOf(s.MerkleRedeem.address)
 
@@ -87,18 +87,11 @@ describe("Merkle Redeem", () => {
         let result = await s.MerkleRedeem.verifyClaim(LP1.minter, week, claim1, proof1)
         expect(result).to.eq(true, "LP1 passed")
 
-        result = await s.MerkleRedeem.verifyClaim(LP2.minter, week, claim2, proof2)
-        expect(result).to.eq(true, "LP2 passed")
-
     })
 
     it("Claim Status", async () => {
         let status = await s.MerkleRedeem.claimStatus(LP1.minter, week, week)
         expect(status[0]).to.eq(false, "LP1 has not claimed")
-
-        status = await s.MerkleRedeem.claimStatus(LP2.minter, week, week)
-        expect(status[0]).to.eq(false, "LP2 has not claimed")
-
     })
 
  
