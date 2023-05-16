@@ -86,8 +86,8 @@ const deployOracles = async (deployer: SignerWithAddress) => {
         balancerVault,
         [wstETH, d.wethAddress], //_tokens
         [wstethRelay.address, wethOracleAddr], //_oracles
-        BN("25"), //0.25% buffer range for outGivenIn
-        BN("10000")
+        BN("5"), //0.5% buffer range for outGivenIn
+        BN("1000")
       )
       await stEThMetaStablePoolOracle.deployed()
       console.log("MetaStablePool BPT oracle deployed to: ", stEThMetaStablePoolOracle.address)
