@@ -11,6 +11,9 @@ import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
+//testing
+import "hardhat/console.sol";
+
 /// @title CappedGovToken
 /// @notice handles all minting/burning of underlying
 /// @dev extends ierc20 upgradable
@@ -34,16 +37,18 @@ contract NftVaultController is Initializable, OwnableUpgradeable {
     __Ownable_init();
     _vaultController = IVaultController(vaultController_);
   }
+
   /// @notice register an underlying nft token pair
   /// note that registring a token as a nft token allows it to transfer the balance of the corresponding token at will
   /// @param underlying_address address of underlying
   /// @param capped_token address of nft wrapper token
-  function registerUnderlying(address underlying_address, address capped_token) external onlyOwner {
+  function registerUnderlying(address capped_token, address underlying_address) external onlyOwner {
     _underlying_CollateralToken[underlying_address] = capped_token;
     _CollateralToken_underlying[capped_token] = underlying_address;
   }
 
   /// @notice retrieve underlying asset for the cap token
+  /// @notice this must verify the token being retrieved is a registered cap token
   /// @param tokenId of underlying asset to retrieve
   /// @param nft_vault holding the underlying
   /// @param target to receive the underlying
@@ -63,9 +68,7 @@ contract NftVaultController is Initializable, OwnableUpgradeable {
       address vault_address = _vaultController.vaultAddress(id);
       if (vault_address != address(0)) {
         // mint the vault itself, deploying the contract
-        address nft_vault_address = address(
-          new VaultNft(id, vault_address, address(_vaultController), address(this))
-        );
+        address nft_vault_address = address(new VaultNft(id, vault_address, address(_vaultController), address(this)));
         // add the vault to our system
         _vaultId_nftVaultAddress[id] = nft_vault_address;
         _vaultAddress_vaultId[vault_address] = id;

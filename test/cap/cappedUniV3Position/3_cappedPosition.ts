@@ -71,20 +71,40 @@ describe("Capped Position Functionality", () => {
     it("Deposit position", async () => {
         //this works
         //await s.nfpManager.connect(s.Bob).transferFrom(s.Bob.address, s.CappedPosition.address, s.BobPositionId)
-
         await s.nfpManager.connect(s.Bob).approve(s.CappedPosition.address, s.BobPositionId)
         const result = await s.CappedPosition.connect(s.Bob).deposit(s.BobPositionId, s.BobVaultID)
         const gas = await getGas(result)
         showBodyCyan("Gas to deposit a position: ", gas)
+
+        //check destinations
+        // nft to vault NFT
+        let balance = await s.nfpManager.balanceOf(s.BobNftVault.address)
+        expect(balance).to.eq(1, "1 uni v3 position minted")
+
+        // Calling balanceOf on standard vault returns position value
+        balance = await s.CappedPosition.balanceOf(s.BobVault.address)
+        expect(await toNumber(balance)).to.be.closeTo(2000, 300, "BalanceOf on og vault returns value")
     })
 
-    it("Check NftVaultController", async () => {
+    it("Withdraw position", async () => {
+        
+        showBody("Bob vault addr: ", s.BobVault.address)
+        showBody("Bob addr: ", s.Bob.address)
+        showBody("Capped Position: ", s.CappedPosition.address)
+        showBody("Bob Position Id: ", s.BobPositionId)
+        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, 1)
 
+        //check destinations
+        // nft from vault NFT
+        let balance = await s.nfpManager.balanceOf(s.Bob.address)
+        expect(balance).to.eq(1, "1 uni v3 position returned to Bob")
+
+        // Calling balanceOf on standard vault returns position value
+        balance = await s.CappedPosition.balanceOf(s.BobVault.address)
+        expect(balance).to.eq(0, "BalanceOf is now 0")
+    
     })
-
-    it("Check VaultNft", async () => {
-
-    })
+    
 
     it("Check collection of income", async () => {
         //do a swap

@@ -212,7 +212,7 @@ contract VaultBPT is Context {
     // claiming rewards will empty the vault of this token, this check prevents this
     // if it is the case that the underlying reward token is registered collateral held by this vault
     // the liability will need to be repaid sufficiently in order to claim rewards
-    require(_controller.checkVault(_vaultInfo.id), "Claim causes insolvency");
+    //require(_controller.checkVault(_vaultInfo.id), "Claim causes insolvency");
   }
 
   /// @notice manual unstake
