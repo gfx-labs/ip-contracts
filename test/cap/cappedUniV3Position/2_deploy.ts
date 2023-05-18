@@ -32,7 +32,9 @@ import {
   GovernorCharlieDelegate__factory,
   GovernorCharlieDelegate,
   OracleMaster__factory,
-  VaultController__factory
+  VaultController__factory,
+  V3PositionValuator,
+  V3PositionValuator__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
@@ -133,7 +135,7 @@ describe("Mint position", () => {
   })
 
   it("Create instance of pool", async () => {
-     s.nfpManager = INonfungiblePositionManager__factory.connect(nfpManagerAddr, s.Frank)
+    s.nfpManager = INonfungiblePositionManager__factory.connect(nfpManagerAddr, s.Frank)
 
     const poolContract = new ethers.Contract(
       wETHwBTC_pool_addr,
@@ -230,6 +232,7 @@ describe("Mint position", () => {
 let UniV3LPoracle: IOracleRelay
 
 describe("deploy oracles and cap tokens", () => {
+  let positionValuator: V3PositionValuator
 
   it("deploly oracles", async () => {
     UniV3LPoracle = await new UniV3LPoracle__factory(s.Frank).deploy(
@@ -241,7 +244,7 @@ describe("deploy oracles and cap tokens", () => {
     )
     await UniV3LPoracle.deployed()
 
-    showBody(await toNumber(await UniV3LPoracle.currentValue()))
+    //showBody(await toNumber(await UniV3LPoracle.currentValue()))
   })
 
   it("Deploy nft vault controller", async () => {
@@ -255,6 +258,17 @@ describe("deploy oracles and cap tokens", () => {
     await s.NftVaultController.transferOwnership(s.GOV._address)
   })
 
+  it("Deploy position valuator", async () => {
+    positionValuator = await new V3PositionValuator__factory(s.Frank).deploy(
+      wETHwBTC_pool_addr,
+      s.wbtcOracle.address,
+      s.wethOracle.address,
+      await s.WBTC.decimals(),
+      await s.WETH.decimals()
+    )
+    await positionValuator.deployed()
+  })
+
   it("Deploy cap token", async () => {
 
     s.CappedPosition = await DeployContractWithProxy(
@@ -266,6 +280,7 @@ describe("deploy oracles and cap tokens", () => {
       nfpManagerAddr,
       s.VaultController.address,
       s.NftVaultController.address,
+      positionValuator.address
     )
     await s.CappedPosition.deployed()
 
@@ -315,7 +330,7 @@ describe("Setup, Queue and Execute proposal", () => {
 
     proposal.addStep(addOracle, "setRelay(address,address)")
     proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")
-    
+
     //todo this is not working for some reason
     //proposal.addStep(registerNftController, "registerNftController(address,address)")
 
@@ -323,8 +338,8 @@ describe("Setup, Queue and Execute proposal", () => {
 
   })
 
-  
-   it("test execution", async () => {
+
+  it("test execution", async () => {
     //fund governor to make TXs
     const tx = {
       to: gov.address,
@@ -343,14 +358,17 @@ describe("Setup, Queue and Execute proposal", () => {
     )
      */
 
-    await s.NftVaultController.connect(s.GOV).registerUnderlying(s.CappedPosition.address, nfpManagerAddr)
+    await s.NftVaultController.connect(s.GOV).registerUnderlying(
+      s.CappedPosition.address,
+      nfpManagerAddr
+    )
 
     await ceaseImpersonation(s.GOV._address)
   })
-   
 
-  
-   it("queue and execute", async () => {
+
+
+  it("queue and execute", async () => {
     const votingPeriod = await gov.votingPeriod()
     const votingDelay = await gov.votingDelay()
     const timelock = await gov.proposalTimelockDelay()
@@ -395,5 +413,5 @@ describe("Setup, Queue and Execute proposal", () => {
 
     await ceaseImpersonation(proposer)
   })
-   
+
 })

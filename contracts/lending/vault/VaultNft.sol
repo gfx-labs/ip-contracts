@@ -13,6 +13,7 @@ import "../../_external/Context.sol";
 
 //not sure this is a thing
 //import "../../_external/openzeppelin/SafeERC721Upgradeable.sol";
+import "../../_external/openzeppelin/ERC721Upgradeable.sol";
 
 import "../../_external/balancer/IGauge.sol";
 
@@ -87,11 +88,7 @@ contract VaultNft is Context {
   /// @param _token token to transfer
   /// @param _to person to send the nft to
   /// @param _tokenId tokenId of nft to move
-  function controllerTransfer(
-    address _token,
-    address _to,
-    uint256 _tokenId
-  ) external onlyVaultController {
+  function controllerTransfer(address _token, address _to, uint256 _tokenId) external onlyVaultController {
     //todo
     //SafeERC721Upgradeable.safeTransfer(IERC721Upgradeable(_token, _to, _tokenId);
   }
@@ -101,12 +98,9 @@ contract VaultNft is Context {
   /// @param _token token to transfer
   /// @param _to person to send the nft to
   /// @param _tokenId tokenId of nft to move
-  function nftVaultControllerTransfer(
-    address _token,
-    address _to,
-    uint256 _tokenId
-  ) external onlyNftVaultController {
+  function nftVaultControllerTransfer(address _token, address _to, uint256 _tokenId) external onlyNftVaultController {
     //todo
     //SafeERC721Upgradeable.safeTransfer(IERC721Upgradeable(_token, _to, _tokenId);
+    IERC721(_token).transferFrom(address(this), _to, _tokenId);
   }
 }
