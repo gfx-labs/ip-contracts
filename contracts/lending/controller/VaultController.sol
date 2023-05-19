@@ -412,6 +412,11 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) external override paysInterest whenNotPaused returns (uint256) {
+    /////////////////////////////////////////////////////////////////////////////
+    console.log("LIQUIDATION START");
+    INonfungiblePositionManager nfp = INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
+    console.log("Vault underlying 1: ", nfp.balanceOf(0x422F3eC7A1D44138A0b1594986a7Efb9b1C1E8Bb));
+    /////////////////////////////////////////////////////////////////////////////
     //cannot liquidate 0
     require(tokens_to_liquidate > 0, "must liquidate>0");
     //check for registered asset - audit L3
@@ -439,14 +444,17 @@ contract VaultController is
     _usdi.vaultControllerBurn(_msgSender(), usdi_to_repurchase);
 
     // finally, deliver tokens to liquidator
+    console.log("VC TRANSFER");
     vault.controllerTransfer(asset_address, _msgSender(), tokens_to_liquidate);
 
     /////////////////////////////////////////////////////////////////////////////
-    INonfungiblePositionManager nfp = INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
+    /**
+    console.log("Vault underlying 2: ", nfp.balanceOf(0x422F3eC7A1D44138A0b1594986a7Efb9b1C1E8Bb));
     console.log("Dave underlying?: ", nfp.balanceOf(_msgSender()));
     console.log("Dave?: ", _msgSender());
     console.log("vault borrow power: ", get_vault_borrowing_power(vault));
     console.log("Vault liability us: ", _vaultLiability(id));
+     */
     /////////////////////////////////////////////////////////////////////////////
 
     // this mainly prevents reentrancy

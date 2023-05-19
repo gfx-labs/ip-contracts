@@ -179,6 +179,13 @@ describe("Liquidations - uniPosition", () => {
          */
 
         showBody("Dave: ", s.Dave.address)
+        showBody("Bob: ", s.Bob.address)
+        showBody("nft cont: ", s.NftVaultController.address)
+        showBody("Nfp mngr: ", s.nfpManager.address)
+        showBody("NftVault: ", s.BobNftVault.address)
+        showBody("Stdnrdvlt: ", s.BobVault.address)
+        showBody("cPosition: ", s.CappedPosition.address)
+        showBody("Minter: ", s.Bob.address)
         const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedPosition.address, BN("1e50"))
         const gas = await getGas(result)
         showBodyCyan("Gas to liquidate uniPosition: ", gas)

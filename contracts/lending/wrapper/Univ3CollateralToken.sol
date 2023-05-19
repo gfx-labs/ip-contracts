@@ -101,7 +101,6 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     add_to_list(vault.minter(), tokenId);
 
-
     /**
     //mint position //todo use _safeMint?
     //ERC721Upgradeable._mint(address(vault), 1);
@@ -118,32 +117,29 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   // but it would mean changing our liquidation logic even more. Let's think about this.
   // basically we can code the token id into the amount, but we would need to make sure that
   // liquidations always move an amount that is not a tokenId to ensure no exploit is possible.
-
   /**
     underlying owner is associated with the vault (v1) addr so we need to derive that from the vaultMinter
    */
   ///@param recipient should already be the vault minter from the standard vault (v1)
+  ///@notice msgSender should be the parent standard vault
   function transfer(address recipient, uint256 amount /**override */) public override returns (bool) {
-    /**
-    uint96 vaultId = _nftVaultController.vaultId(_msgSender());
-    // only vaults will ever send this. only vaults will ever need to call this function
-    require(vaultId > 0, "only vaults");
-    // get the corresponding voting vault
-    address univ3_vault_address = _nftVaultController.NftVaultAddress(vaultId);
-    require(univ3_vault_address != address(0x0), "no univ3 vault");
-    
-    
-   */
+    IVault vault = IVault(_msgSender());
+
     //msgSender should be the vault
     //verify the vault minter matches recipient
     //or verify that the vault at that address is a vault (id > 0)
     //or both?
     uint96 vaultId = _nftVaultController.vaultId(_msgSender());
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
+    recipient = vault.minter();
     require(vault.id() > 0, "Only Vaults");
 
+    //console.log("BalanceOf: ", balanceOf(address(vault)));
+    //console.log("Recipient: ", recipient);
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vaultId);
     require(univ3_vault_address != address(0x0), "no univ3 vault");
+
+    //console.log("length: ", _underlyingOwners[recipient].length);
 
     // move every nft from the nft vault to the target
     for (uint256 i; i < _underlyingOwners[recipient].length; i++) {
