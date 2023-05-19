@@ -11,32 +11,26 @@ interface IBalancerPool {
   function totalSupply() external view returns (uint256);
 
   function getLastInvariant() external view returns (uint256, uint256);
+
+  function getRate() external view returns (uint256);
 }
 
 /*****************************************
  *
  * This relay gets a USD price for BPT LP token from a balancer MetaStablePool or StablePool
- * Comparing the results of outGivenIn to known safe oracles for the underlying assets,
- * we can safely determine if manipulation has transpired.
- * After confirming that the naive price is safe, we return the naive price.
+ * Utilizing the minSafePrice method, this logic should slightly undervalue the BPT
+ * This method should be used as a secondary oracle in a multiple oracle system
  */
 
 contract BPTminSafePriceRelay is IOracleRelay {
-  bytes32 public immutable _poolId;
-
-  uint256 public immutable _widthNumerator;
-  uint256 public immutable _widthDenominator;
-
   IBalancerPool public immutable _priceFeed;
+  address public immutable tokenA;
+  address public immutable tokenB;
 
   mapping(address => IOracleRelay) public assetOracles;
 
-  //Balancer Vault
-  IBalancerVault public immutable VAULT;
-
   /**
    * @param pool_address - Balancer StablePool or MetaStablePool address
-   * @param balancerVault is the address for the Balancer Vault contract
    * @param _tokens should be length 2 and contain both underlying assets for the pool
    * @param _oracles shoulb be length 2 and contain a safe external on-chain oracle for each @param _tokens in the same order
    * @notice the quotient of @param widthNumerator and @param widthDenominator should be the percent difference the exchange rate
@@ -44,47 +38,30 @@ contract BPTminSafePriceRelay is IOracleRelay {
    */
   constructor(
     address pool_address,
-    IBalancerVault balancerVault,
     address[] memory _tokens,
-    address[] memory _oracles,
-    uint256 widthNumerator,
-    uint256 widthDenominator
+    address[] memory _oracles
   ) {
     _priceFeed = IBalancerPool(pool_address);
 
-    _poolId = _priceFeed.getPoolId();
-
-    VAULT = balancerVault;
+    tokenA = _tokens[0];
+    tokenB = _tokens[1];
 
     //register oracles
     for (uint256 i = 0; i < _tokens.length; i++) {
       assetOracles[_tokens[i]] = IOracleRelay(_oracles[i]);
     }
-
-    _widthNumerator = widthNumerator;
-    _widthDenominator = widthDenominator;
   }
 
   function currentValue() external view override returns (uint256 minSafePrice) {
-    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
-
     //get pMin
-    
+    uint256 p0 = assetOracles[tokenA].currentValue();
+    uint256 p1 = assetOracles[tokenB].currentValue();
 
-  }
+    uint256 max = p0 > p1 ? p0 : p1;
+    uint256 min = p1 != max ? p1 : p0;
 
-  ///@notice get the percent deviation from a => b as a decimal e18
-  function percentChange(uint256 a, uint256 b) internal pure returns (uint256 delta) {
-    uint256 max = a > b ? a : b;
-    uint256 min = b != max ? b : a;
-    delta = divide((max - min), min, 18);
-  }
+    uint256 rate = _priceFeed.getRate();
 
-  ///@notice floating point division at @param factor scale
-  function divide(uint256 numerator, uint256 denominator, uint256 factor) internal pure returns (uint256 result) {
-    uint256 q = (numerator / denominator) * 10 ** factor;
-    uint256 r = ((numerator * 10 ** factor) / denominator) % 10 ** factor;
-
-    return q + r;
+    minSafePrice = (rate * min) / 1e18;
   }
 }
