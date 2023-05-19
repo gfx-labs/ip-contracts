@@ -329,7 +329,7 @@ describe("Setup, Queue and Execute proposal", () => {
       populateTransaction.registerUnderlying(s.CappedPosition.address, nfpManagerAddr)
 
     proposal.addStep(addOracle, "setRelay(address,address)")
-    proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")
+    //proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")
 
     //todo this is not working for some reason
     //proposal.addStep(registerNftController, "registerNftController(address,address)")
@@ -337,37 +337,6 @@ describe("Setup, Queue and Execute proposal", () => {
     out = proposal.populateProposal()
 
   })
-
-
-  it("test execution", async () => {
-    //fund governor to make TXs
-    const tx = {
-      to: gov.address,
-      value: BN("1e18")
-    }
-    await s.Frank.sendTransaction(tx)
-
-    await impersonateAccount(s.GOV._address)
-    /**
-     await s.Oracle.connect(s.GOV).setRelay(s.CappedPosition.address, UniV3LPoracle.address)
-    await s.VaultController.connect(s.GOV).registerErc20(
-      s.CappedPosition.address,
-      s.LTV,
-      s.CappedPosition.address,
-      s.LiquidationIncentive
-    )
-     */
-
-    await s.NftVaultController.connect(s.GOV).registerUnderlying(
-      s.CappedPosition.address,
-      nfpManagerAddr
-    )
-
-    await ceaseImpersonation(s.GOV._address)
-  })
-
-
-
   it("queue and execute", async () => {
     const votingPeriod = await gov.votingPeriod()
     const votingDelay = await gov.votingDelay()
@@ -412,6 +381,44 @@ describe("Setup, Queue and Execute proposal", () => {
     showBody("done")
 
     await ceaseImpersonation(proposer)
+  })
+
+  it("test execution", async () => {
+    //fund governor to make TXs
+    const tx = {
+      to: gov.address,
+      value: BN("1e18")
+    }
+    await s.Frank.sendTransaction(tx)
+
+    await impersonateAccount(s.GOV._address)
+    /**
+     await s.Oracle.connect(s.GOV).setRelay(s.CappedPosition.address, UniV3LPoracle.address)
+    await s.VaultController.connect(s.GOV).registerErc20(
+      s.CappedPosition.address,
+      s.LTV,
+      s.CappedPosition.address,
+      s.LiquidationIncentive
+    )
+     */
+
+    await s.VaultController.connect(s.GOV).registerErc20(
+      s.CappedPosition.address,
+      s.LTV,
+      s.CappedPosition.address,
+      s.LiquidationIncentive
+    )
+    await s.NftVaultController.connect(s.GOV).registerUnderlying(
+      s.CappedPosition.address,
+      nfpManagerAddr
+    )
+
+    //upgrade to vc for testing
+    const implementation = await new VaultController__factory(s.GOV).deploy()
+
+    await s.ProxyAdmin.connect(s.GOV).upgrade(s.VaultController.address, implementation.address)
+
+    await ceaseImpersonation(s.GOV._address)
   })
 
 })

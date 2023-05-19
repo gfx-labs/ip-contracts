@@ -98,6 +98,7 @@ const B_stETH_STABLE = "0x32296969Ef14EB0c6d29669C550D4a0449130230"
 let vvcImplementationAddr: String
 let stEThMetaStablePoolOracle: IOracleRelay
 let wstethRelay: IOracleRelay
+
 describe("Upgrade Voting Vault Controller for BPT collateral", () => {
   it("Deploy new implementation", async () => {
     const implementation = await new VotingVaultController__factory(s.Frank).deploy()

@@ -24,7 +24,7 @@ export class TestScope extends MainnetAddresses {
     
 
    
-    LiquidationIncentive = BN("5e16")
+    LiquidationIncentive = BN("1e16")
     LTV = BN("6e17")
 
     ProxyAdmin!: ProxyAdmin;

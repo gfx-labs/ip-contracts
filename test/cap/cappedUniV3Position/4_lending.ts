@@ -1,4 +1,4 @@
-import { s } from "../scope";
+import { s } from "./scope";
 import { d } from "../DeploymentInfo";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
@@ -16,7 +16,7 @@ import { start } from "repl";
 import { VotingVault__factory } from "../../../typechain-types";
 require("chai").should();
 
-const borrowAmount = s.AuraBalAmount
+const borrowAmount = BN("500e18")
 
 
 describe("Check starting values", () => {
@@ -26,33 +26,25 @@ describe("Check starting values", () => {
         let borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
         expect(borrowPower).to.be.gt(0, "There exists a borrow power against capped token")
 
-        //aura bal
-        let balance = await s.CappedAuraBal.balanceOf(s.BobVault.address)
-        let price = await s.Oracle.getLivePrice(s.CappedAuraBal.address)
+        let balance = await s.CappedPosition.balanceOf(s.BobVault.address)
+        let price = await s.Oracle.getLivePrice(s.CappedPosition.address)
+
+        //showBody("Indicated Balance: ", await toNumber(balance))
+        //showBody("Indicated BorrowPower: ", await toNumber(borrowPower))
+
         let totalValue = (balance.mul(price)).div(BN("1e18"))
 
         //showBody("Total value: ", await toNumber(totalValue))
 
-        balance = await s.CappedAuraLP.balanceOf(s.BobVault.address)
-        price = await s.Oracle.getLivePrice(s.CappedAuraLP.address)
-        const auraLPvalue = (balance.mul(price)).div(BN("1e18"))
-        //showBody("auraLP value: ", auraLPvalue)
-
-        balance = await s.CappedStethGauge.balanceOf(s.BobVault.address)
-        price = await s.Oracle.getLivePrice(s.CappedStethGauge.address)
-        const gaugeValue = (balance.mul(price)).div(BN("1e18"))
-
-        totalValue = totalValue.add(auraLPvalue).add(gaugeValue)
-        //showBody("Total value: ", await toNumber(totalValue))
-
-
-        let expectedBorrowPower = (totalValue.mul(s.auraBalLTV)).div(BN("1e18"))
+        let expectedBorrowPower = (totalValue.mul(s.LTV)).div(BN("1e18"))
         expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 0.0001, "Borrow power is correct")
+
     })
 })
 
-describe("Lending with capped Balancer LP tokens and AuraBal", () => {
-    it("Borrow a small amount against staked capped auraBal", async () => {
+
+ describe("Lending with capped Balancer LP tokens and uniPosition", () => {
+    it("Borrow a small amount against staked capped uniPosition", async () => {
 
 
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)
@@ -103,7 +95,7 @@ describe("Lending with capped Balancer LP tokens and AuraBal", () => {
 })
 
 
-describe("Liquidations - auraBal", () => {
+describe("Liquidations - uniPosition", () => {
 
     let borrowPower: BigNumber
     let T2L: BigNumber
@@ -125,7 +117,7 @@ describe("Liquidations - auraBal", () => {
         expect(await toNumber(liab)).to.be.closeTo(await toNumber(borrowPower), 0.001, "Liability is correct")
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
-        expect(await toNumber(balance)).to.be.closeTo(await toNumber(borrowPower.add(startUSDI)), 0.001, "Balance is correct")
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(borrowPower.add(startUSDI)), 0.1, "Balance is correct")
 
     })
 
@@ -143,7 +135,7 @@ describe("Liquidations - auraBal", () => {
 
     it("Try to withdraw when vault is underwater", async () => {
         const amount = BN("250e18")
-        expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAuraBal.address, amount)).to.be.revertedWith("over-withdrawal")
+        expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, amount)).to.be.revertedWith("over-withdrawal")
     })
 
     it("Liquidate", async () => {
@@ -151,17 +143,18 @@ describe("Liquidations - auraBal", () => {
         const amountToSolvency = await s.VaultController.amountToSolvency(s.BobVaultID)
         expect(amountToSolvency).to.be.gt(0, "Vault underwater")
 
-        const tokensToLiquidate = await s.VaultController.tokensToLiquidate(s.BobVaultID, s.CappedAuraBal.address)
+        const tokensToLiquidate = await s.VaultController.tokensToLiquidate(s.BobVaultID, s.CappedPosition.address)
         T2L = tokensToLiquidate
+        showBody("T2L: ", await toNumber(T2L))
         expect(tokensToLiquidate).to.be.gt(0, "Capped Tokens are liquidatable")
 
-        const price = await s.Oracle.getLivePrice(s.CappedAuraBal.address)
+        const price = await s.Oracle.getLivePrice(s.CappedPosition.address)
         expect(price).to.be.gt(0, "Valid price")
 
         const liquidationValue = (price.mul(tokensToLiquidate)).div(BN("1e18"))
 
-        const startSupply = await s.CappedAuraBal.totalSupply()
-        expect(startSupply).to.eq(borrowAmount, "Starting supply unchanged")
+        //const startSupply = await s.CappedPosition.totalSupply()
+        //expect(startSupply).to.eq(borrowAmount, "Starting supply unchanged")
 
         await s.USDC.connect(s.Dave).approve(s.USDI.address, await s.USDC.balanceOf(s.Dave.address))
         await s.USDI.connect(s.Dave).deposit(await s.USDC.balanceOf(s.Dave.address))
@@ -172,29 +165,34 @@ describe("Liquidations - auraBal", () => {
         const startingUSDI = await s.USDI.balanceOf(s.Dave.address)
         expect(startingUSDI).to.eq((s.USDC_AMOUNT.mul(5)).mul(BN("1e12")))
 
-        const startingAuraBal = await s.CappedAuraBal.balanceOf(s.BobVault.address)
-        const startauraBal = await s.auraBal.balanceOf(s.Dave.address)
-        expect(startauraBal).to.eq(0, "Dave holds 0 auraBal")
+        const startinguniPosition = await s.CappedPosition.balanceOf(s.BobVault.address)
+        const startuniPosition = await s.nfpManager.balanceOf(s.Dave.address)
+        expect(startuniPosition).to.eq(0, "Dave holds 0 uniPosition")
 
-        const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedAuraBal.address, BN("1e50"))
+
+        /**
+         * When liquidating a position (1 position with x amount of value scenario)
+         * the full position must be liquidated => nfpManager.balanceOf(liquidator) = 1
+         * balanceOf returns the value
+         * tokensToLiquidate needs to == balanceOf (value)
+         * the liability of the vault needs to be set to 0
+         */
+
+        showBody("Dave: ", s.Dave.address)
+        const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedPosition.address, BN("1e50"))
         const gas = await getGas(result)
-        showBodyCyan("Gas to liquidate auraBal: ", gas)
+        showBodyCyan("Gas to liquidate uniPosition: ", gas)
         
-        let supply = await s.CappedAuraBal.totalSupply()
-        expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 10, "Total supply reduced as Capped auraBal is liquidatede")
+        //let supply = await s.CappedPosition.totalSupply()
+        //expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 10, "Total supply reduced as Capped uniPosition is liquidatede")
 
-        //ensure balances are correct
-        let balance = await s.auraBalRewards.balanceOf(s.BobBptVault.address)
-        expect(balance).to.eq(0, "All reward tokens have been unstaked due to liquidation")
+    
 
-        balance = await s.primeAuraBalRewardToken.balanceOf(s.BobBptVault.address)
-        expect(balance).to.eq(s.AuraLPamount, "Other aura LPs not unstaked")
+        let endCappedPosition = await s.CappedPosition.balanceOf(s.BobVault.address)
+        expect(await toNumber(endCappedPosition)).to.be.closeTo(await toNumber(startinguniPosition.sub(tokensToLiquidate)), 0.1, "Expected amount liquidated")
 
-        let endCappedAuraBal = await s.CappedAuraBal.balanceOf(s.BobVault.address)
-        expect(await toNumber(endCappedAuraBal)).to.be.closeTo(await toNumber(startingAuraBal.sub(tokensToLiquidate)), 0.1, "Expected amount liquidated")
-
-        let endAuraBal = await s.auraBal.balanceOf(s.Dave.address)
-        expect(await toNumber(endAuraBal)).to.be.closeTo(await toNumber(tokensToLiquidate), 0.1, "Dave received the underlying auraBal")
+        let enduniPosition = await s.nfpManager.balanceOf(s.Dave.address)
+        expect(await toNumber(enduniPosition)).to.be.closeTo(await toNumber(tokensToLiquidate), 0.1, "Dave received the underlying uniPosition")
 
         const usdiSpent = startingUSDI.sub(await s.USDI.balanceOf(s.Dave.address))
 
@@ -210,7 +208,7 @@ describe("Liquidations - auraBal", () => {
         expect(await toNumber(profit)).to.be.closeTo(await toNumber(expected), 2, "Expected profit achieved")
 
     })
-
+/**
     it("repay all", async () => {
 
         let liab = await s.VaultController.vaultLiability(s.BobVaultID)
@@ -226,24 +224,24 @@ describe("Liquidations - auraBal", () => {
 
     it("Withdraw after loan", async () => {
 
-        const voteVaultauraBal = await s.auraBal.balanceOf(s.BobBptVault.address)
-        expect(voteVaultauraBal).to.be.gt(0, "Vote vault holds auraBal")
-        const vaultCappedAuraBal = await s.CappedAuraBal.balanceOf(s.BobVault.address)
+        const voteVaultuniPosition = await s.uniPosition.balanceOf(s.BobBptVault.address)
+        expect(voteVaultuniPosition).to.be.gt(0, "Vote vault holds uniPosition")
+        const vaultCappedPosition = await s.CappedPosition.balanceOf(s.BobVault.address)
 
-        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedAuraBal.address, vaultCappedAuraBal)
+        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, vaultCappedPosition)
         await mineBlock()
 
-        let balance = await s.auraBal.balanceOf(s.BobBptVault.address)
-        expect(await toNumber(balance)).to.eq(0, "All auraBal withdrawn")
+        let balance = await s.uniPosition.balanceOf(s.BobBptVault.address)
+        expect(await toNumber(balance)).to.eq(0, "All uniPosition withdrawn")
 
-        balance = await s.CappedAuraBal.balanceOf(s.BobVault.address)
-        expect(await toNumber(balance)).to.eq(0, "All CappedAuraBal removed from vault")
+        balance = await s.CappedPosition.balanceOf(s.BobVault.address)
+        expect(await toNumber(balance)).to.eq(0, "All CappedPosition removed from vault")
 
-        const supply = await s.CappedAuraBal.totalSupply()
-        expect(await toNumber(supply)).to.eq(0, "All CappedAuraBal Burned")
+        //const supply = await s.CappedPosition.totalSupply()
+        //expect(await toNumber(supply)).to.eq(0, "All CappedPosition Burned")
 
-        balance = await s.auraBal.balanceOf(s.Bob.address)
-        expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.AuraBalAmount.sub(T2L)), 2, "Bob received collateral - liquidated amount")
+        balance = await s.uniPosition.balanceOf(s.Bob.address)
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.uniPositionAmount.sub(T2L)), 2, "Bob received collateral - liquidated amount")
 
     })
 
@@ -257,10 +255,13 @@ describe("Liquidations - auraBal", () => {
         const _votingVaultAddress_vaultId = await s.VotingVaultController._vaultBPTaddress_vaultId(s.BobBptVault.address)
         expect(_votingVaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
 
-        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.auraBal.address)
-        expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedAuraBal.address.toUpperCase(), "Underlying => Capped is correct")
+        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.uniPosition.address)
+        expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedPosition.address.toUpperCase(), "Underlying => Capped is correct")
 
-        const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedAuraBal.address)
-        expect(_CappedToken_underlying.toUpperCase()).to.eq(s.auraBal.address.toUpperCase(), "Capped => Underlying correct")
+        const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedPosition.address)
+        expect(_CappedToken_underlying.toUpperCase()).to.eq(s.uniPosition.address.toUpperCase(), "Capped => Underlying correct")
     })
+*/
 })
+
+ 

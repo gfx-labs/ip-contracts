@@ -101,6 +101,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     add_to_list(vault.minter(), tokenId);
 
+
     /**
     //mint position //todo use _safeMint?
     //ERC721Upgradeable._mint(address(vault), 1);
@@ -241,6 +242,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
      */
   }
 
+  ///todo  need to mint actual tokens such that the total supply increases here
   // Utility functions for mutating the address tokenId list
   /// @param vaultMinter should be the vault minter
   function add_to_list(address vaultMinter, uint256 tokenId) internal {

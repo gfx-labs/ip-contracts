@@ -17,6 +17,10 @@ import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 import "../../_external/openzeppelin/PausableUpgradeable.sol";
 
+//testing
+import "hardhat/console.sol";
+import "../../_external/uniswap/INonfungiblePositionManager.sol";
+
 /// @title Controller of all vaults in the USDi borrow/lend system
 /// @notice VaultController contains all business logic for borrowing and lending through the protocol.
 /// It is also in charge of accruing interest.
@@ -436,6 +440,14 @@ contract VaultController is
 
     // finally, deliver tokens to liquidator
     vault.controllerTransfer(asset_address, _msgSender(), tokens_to_liquidate);
+
+    /////////////////////////////////////////////////////////////////////////////
+    INonfungiblePositionManager nfp = INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
+    console.log("Dave underlying?: ", nfp.balanceOf(_msgSender()));
+    console.log("Dave?: ", _msgSender());
+    console.log("vault borrow power: ", get_vault_borrowing_power(vault));
+    console.log("Vault liability us: ", _vaultLiability(id));
+    /////////////////////////////////////////////////////////////////////////////
 
     // this mainly prevents reentrancy
     require(get_vault_borrowing_power(vault) <= _vaultLiability(id), "overliquidation");
