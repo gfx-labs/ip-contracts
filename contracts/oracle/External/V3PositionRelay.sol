@@ -31,7 +31,7 @@ interface IUniswapV3PoolImmutables {
   function tickSpacing() external view returns (int24);
 }
 
-contract UniV3LPoracle is IOracleRelay {
+contract V3PositionRelay is IOracleRelay {
   IUniswapV3PoolImmutables public immutable _pool;
   IOracleRelay public immutable token0Oracle;
   IOracleRelay public immutable token1Oracle;
@@ -55,9 +55,7 @@ contract UniV3LPoracle is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
-    console.log("CURRENT VALUE: ");
-    (bytes4 selector, uint productAmount, bytes3 color) = decode(msg.data);
-    console.log("Selector: ", fromCode(selector));
+
     /**
     //todo refactor unit conversion
     console.log("1e18: ", 1e18);
@@ -65,7 +63,6 @@ contract UniV3LPoracle is IOracleRelay {
     console.log("unt0: ", UNIT_0);
    */
 
-    /**
     uint256 p0 = token0Oracle.currentValue() / 1e10;
     uint256 p1 = token1Oracle.currentValue();
     uint160 sqrtPriceX96 = getSqrtPrice(p0, p1);
@@ -79,52 +76,16 @@ contract UniV3LPoracle is IOracleRelay {
     uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
 
     //get liquidity
-    (uint256 amount0, uint256 amount1) = getAmountsForLiquidity(
-      sqrtPriceX96,
-      sqrtRatioAX96,
-      sqrtRatioBX96,
-      454860556043159
-    );
+    (uint256 amount0, uint256 amount1) = getAmountsForLiquidity(sqrtPriceX96, sqrtRatioAX96, sqrtRatioBX96, 454860556043159);
     //console.log("AMOUNT0: ", amount0);
     //console.log("AMOUNT1: ", amount1);
 
     //derive value based on price
     uint256 v0 = (p0 * amount0) / 1e18;
     uint256 v1 = (p1 * amount1) / 1e18;
-     */
 
     //return v0 + v1;
     return 1e18;
-  }
-
-  //decode msg.data?
-  function decode(bytes memory data) private pure returns (bytes4 selector, uint productAmount, bytes3 color) {
-    assembly {
-      // load 32 bytes into `selector` from `data` skipping the first 32 bytes
-      selector := mload(add(data, 32))
-      productAmount := mload(add(data, 64))
-      color := mload(add(data, 96))
-    }
-  }
-
-  function toHexDigit(uint8 d) internal pure returns (bytes1) {
-    if (0 <= d && d <= 9) {
-      return bytes1(uint8(bytes1("0")) + d);
-    } else if (10 <= uint8(d) && uint8(d) <= 15) {
-      return bytes1(uint8(bytes1("a")) + d - 10);
-    }
-    revert();
-  }
-
-  function fromCode(bytes4 code) public view returns (string memory) {
-    bytes memory result = new bytes(10);
-    result[0] = bytes1("0");
-    result[1] = bytes1("x");
-    for (uint i = 0; i < 4; ++i) {
-      result[2 * i + 2] = toHexDigit(uint8(code[i]) / 16);
-      result[2 * i + 3] = toHexDigit(uint8(code[i]) % 16);
-    }
-    return string(result);
   }
 
   /// @notice Computes the token0 and token1 value for a given amount of liquidity, the current

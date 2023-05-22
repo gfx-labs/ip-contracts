@@ -124,33 +124,24 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   ///@notice msgSender should be the parent standard vault
   function transfer(address recipient, uint256 amount /**override */) public override returns (bool) {
     IVault vault = IVault(_msgSender());
-
-    //msgSender should be the vault
-    //verify the vault minter matches recipient
-    //or verify that the vault at that address is a vault (id > 0)
-    //or both?
-    uint96 vaultId = _nftVaultController.vaultId(_msgSender());
-    IVault vault = IVault(_vaultController.vaultAddress(vaultId));
-    recipient = vault.minter();
     require(vault.id() > 0, "Only Vaults");
+    address minter = vault.minter();
 
-    //console.log("BalanceOf: ", balanceOf(address(vault)));
-    //console.log("Recipient: ", recipient);
-    address univ3_vault_address = _nftVaultController.NftVaultAddress(vaultId);
+    address univ3_vault_address = _nftVaultController.NftVaultAddress(vault.id());
     require(univ3_vault_address != address(0x0), "no univ3 vault");
 
-    //console.log("length: ", _underlyingOwners[recipient].length);
 
     // move every nft from the nft vault to the target
-    for (uint256 i; i < _underlyingOwners[recipient].length; i++) {
-      uint256 tokenId = _underlyingOwners[recipient][i];
+    for (uint256 i = 0; i < _underlyingOwners[minter].length; i++) {
+      uint256 tokenId = _underlyingOwners[minter][i];
 
-      //burn
 
-      // no need to do the check here when removing from list
-      remove_from_list(recipient, tokenId);
-
-      _nftVaultController.retrieveUnderlying(tokenId, univ3_vault_address, recipient);
+      //todo figure out why there is a 0 id in the list
+      if (tokenId != 0) {
+        // no need to do the check here when removing from list
+        remove_from_list(minter, tokenId);
+        _nftVaultController.retrieveUnderlying(tokenId, univ3_vault_address, recipient);
+      }
     }
     return true;
   }
@@ -211,7 +202,6 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
       uint128 tokensOwed1
     ) = _underlying.positions(tokenId);
     uint256 value = _positionValuator.currentValue(liquidity);
-    //console.log("Value: ", value);
     return value;
     /**
     try _univ3NftPositions.positions(tokenId) returns (

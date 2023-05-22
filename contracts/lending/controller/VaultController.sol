@@ -66,6 +66,8 @@ contract VaultController is
   }
   Interest public _interest;
 
+  address public _cappedPosition;
+
   /// @notice any function with this modifier will call the pay_interest() function before
   modifier paysInterest() {
     pay_interest();
@@ -264,6 +266,10 @@ contract VaultController is
     _tokenAddress_liquidationIncentive[token_address] = liquidationIncentive;
 
     emit UpdateRegisteredErc20(token_address, LTV, oracle_address, liquidationIncentive);
+  }
+
+  function setCappedPositionAddress(address cappedPosition_) external onlyOwner {
+    _cappedPosition = cappedPosition_;
   }
 
   /// @notice check an vault for over-collateralization. returns false if amount borrowed is greater than borrowing power.
@@ -492,6 +498,8 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) internal view returns (uint256, uint256) {
+    console.log("LIQUIDATION MATH: ", asset_address);
+
     //require that the vault is not solvent
     require(!checkVault(id), "Vault is solvent");
 
@@ -499,10 +507,13 @@ contract VaultController is
 
     //get price of asset scaled to decimal 18
     uint256 price = _oracleMaster.getLivePrice(asset_address);
+    console.log("Price: ", price);
 
     // get price discounted by liquidation penalty
     // price * (100% - liquidationIncentive)
     uint256 badFillPrice = truncate(price * (1e18 - _tokenAddress_liquidationIncentive[asset_address]));
+    console.log("Liquidation incentive: ", _tokenAddress_liquidationIncentive[asset_address]);
+    console.log("badFillPrice: ", badFillPrice);
 
     // the ltv discount is the amount of collateral value that one token provides
     uint256 ltvDiscount = truncate(price * _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]]);
@@ -513,11 +524,14 @@ contract VaultController is
     // the maximum amount of tokens to liquidate is the amount that will bring the vault to solvency
     // divided by the denominator
     uint256 max_tokens_to_liquidate = (_amountToSolvency(id) * 1e18) / denominator;
+    console.log("max_tokens_to_liquidate: ", max_tokens_to_liquidate);
 
     //Cannot liquidate more than is necessary to make vault over-collateralized
     if (tokens_to_liquidate > max_tokens_to_liquidate) {
       tokens_to_liquidate = max_tokens_to_liquidate;
     }
+
+    console.log("tokenBalance: ", vault.tokenBalance(asset_address));
 
     //Cannot liquidate more collateral than there is in the vault
     if (tokens_to_liquidate > vault.tokenBalance(asset_address)) {
