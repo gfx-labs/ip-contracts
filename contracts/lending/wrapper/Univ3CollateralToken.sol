@@ -80,7 +80,6 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   }
 
   ///todo
-
   function updateOracle() public {
     oracle = IOracleMaster(_vaultController.getOracleMaster());
   }
@@ -100,15 +99,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     require(address(univ3_vault_address) != address(0x0), "invalid voting vault");
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     add_to_list(vault.minter(), tokenId);
-
-    /**
-    //mint position //todo use _safeMint?
-    //ERC721Upgradeable._mint(address(vault), 1);
-    ERC20Upgradeable._mint(address(vault), get_token_value(tokenId));
     
-
-    */
-    // transfer position
     _underlying.transferFrom(_msgSender(), univ3_vault_address, tokenId);
   }
 
@@ -130,11 +121,9 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vault.id());
     require(univ3_vault_address != address(0x0), "no univ3 vault");
 
-
     // move every nft from the nft vault to the target
     for (uint256 i = 0; i < _underlyingOwners[minter].length; i++) {
       uint256 tokenId = _underlyingOwners[minter][i];
-
 
       //todo figure out why there is a 0 id in the list
       if (tokenId != 0) {
@@ -179,53 +168,25 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   }
 
   /**
-    NOTE
-    The problem here is that after we withdraw the token, the contract 
-    can no longer determine the collateral value for the post withdraw solvency check
-   */
-  function get_token_value(uint256 tokenId) internal view returns (uint256) {
+   uint96 nonce,
+      address operator,
+      address token0,
+      address token1,
+      uint24 fee,
+      int24 tickLower,
+      int24 tickUpper,
+      uint128 liquidity,
+      uint256 feeGrowthInside0LastX128,
+      uint256 feeGrowthInside1LastX128,
+      uint128 tokensOwed0,
+      uint128 tokensOwed1
+    */
+  function get_token_value(uint256 tokenId) internal view returns (uint256 value) {
     if (tokenId == 0) {
       return 0;
     }
-    (
-      uint96 nonce,
-      address operator,
-      address token0,
-      address token1,
-      uint24 fee,
-      int24 tickLower,
-      int24 tickUpper,
-      uint128 liquidity,
-      uint256 feeGrowthInside0LastX128,
-      uint256 feeGrowthInside1LastX128,
-      uint128 tokensOwed0,
-      uint128 tokensOwed1
-    ) = _underlying.positions(tokenId);
-    uint256 value = _positionValuator.getValue(liquidity);
-    return value;
-    /**
-    try _univ3NftPositions.positions(tokenId) returns (
-      uint96 nonce,
-      address operator,
-      address token0,
-      address token1,
-      uint24 fee,
-      int24 tickLower,
-      int24 tickUpper,
-      uint128 liquidity,
-      uint256 feeGrowthInside0LastX128,
-      uint256 feeGrowthInside1LastX128,
-      uint128 tokensOwed0,
-      uint128 tokensOwed1
-    ) {
-      // TODO: use token0 and token1 with the oraclemaster, along with their tokensOwed to calculate their collateral value
-      uint256 value = _positionValuator.currentValue(liquidity);
-      return value;
-    } catch (bytes memory lowLevelData) {
-      // return 0 if the position has somehow become invalid
-      return 0;
-    }
-     */
+    (, , , , , , , uint128 liquidity, , , , ) = _underlying.positions(tokenId);
+    value = _positionValuator.getValue(liquidity);
   }
 
   ///todo  need to mint actual tokens such that the total supply increases here
@@ -233,17 +194,6 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   /// @param vaultMinter should be the vault minter
   function add_to_list(address vaultMinter, uint256 tokenId) internal {
     _underlyingOwners[vaultMinter].push(tokenId);
-
-    /**
-    for (uint256 i; i < _underlyingOwners[vaultMinter].length; i++) {
-      // replace 0 first
-      if (_underlyingOwners[vaultMinter][i] == 0) {
-        _underlyingOwners[vaultMinter][i] = tokenId;
-        return;
-      }
-      _underlyingOwners[vaultMinter][i] = (tokenId);
-    }
-     */
   }
 
   /// @param vaultMinter should be the vault minter
