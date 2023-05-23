@@ -3,9 +3,8 @@ pragma solidity 0.8.9;
 
 import "../../oracle/IOracleRelay.sol";
 
-import "./IUniswapV3PoolDerivedState.sol";
-import "./TickMath.sol";
-import {FullMath, FixedPoint96} from "./FullMath.sol";
+import "../../_external/uniswap/TickMath.sol";
+import {FullMath, FixedPoint96} from "../../_external/uniswap/FullMath.sol";
 
 import "hardhat/console.sol";
 
@@ -32,7 +31,7 @@ interface IUniswapV3PoolImmutables {
   function tickSpacing() external view returns (int24);
 }
 
-contract V3PositionValuator {
+contract V3PositionValuator is IOracleRelay {
   IUniswapV3PoolImmutables public immutable _pool;
   IOracleRelay public immutable token0Oracle;
   IOracleRelay public immutable token1Oracle;
@@ -55,7 +54,13 @@ contract V3PositionValuator {
     UNIT_1 = 10 ** token1Units;
   }
 
-  function currentValue(uint128 liquidity) external view returns (uint256) {
+  ///@notice we return 1 here, as the true value is achieved through balanceOf
+  ///@notice we can't return the value here as we need to be passed the liquidity 
+  function currentValue() external view override returns (uint256){
+    return 1e18;
+  }
+
+  function getValue(uint128 liquidity) external view returns (uint256) {
     /**
     //todo refactor unit conversion
     console.log("1e18: ", 1e18);

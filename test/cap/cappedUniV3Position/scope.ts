@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken, IGauge, INonfungiblePositionManager__factory, Univ3CollateralToken, NftVaultController, VaultNft, INonfungiblePositionManager } from "../../../typechain-types";
+import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken, IGauge, INonfungiblePositionManager__factory, Univ3CollateralToken, NftVaultController, VaultNft, INonfungiblePositionManager, V3PositionValuator } from "../../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../../util/addresser";
 import { BN } from "../../../util/number";
 import { NonfungiblePositionManager } from "@uniswap/v3-sdk";
@@ -16,6 +16,8 @@ export class TestScope extends MainnetAddresses {
     CappedPosition!: Univ3CollateralToken
     NftVaultController!: NftVaultController
     nfpManager!: INonfungiblePositionManager
+    PositionValuator!: V3PositionValuator
+
     BalancerVault!: IBalancerVault;
     wethOracleAddr = "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"
     wethOracle!: IOracleRelay

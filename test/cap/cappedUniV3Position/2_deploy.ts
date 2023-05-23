@@ -26,7 +26,6 @@ import {
   BPTstablePoolOracle__factory,
   INFPmanager__factory,
   INonfungiblePositionManager__factory,
-  UniV3LPoracle__factory,
   Univ3CollateralToken__factory,
   NftVaultController__factory,
   GovernorCharlieDelegate__factory,
@@ -229,22 +228,21 @@ describe("Mint position", () => {
 
   })
 })
-let UniV3LPoracle: IOracleRelay
 
 describe("deploy oracles and cap tokens", () => {
   let positionValuator: V3PositionValuator
 
   it("deploly oracles", async () => {
-    UniV3LPoracle = await new UniV3LPoracle__factory(s.Frank).deploy(
+    s.PositionValuator = await new V3PositionValuator__factory(s.Frank).deploy(
       wETHwBTC_pool_addr,
       s.wbtcOracle.address,
       s.wethOracle.address,
       await s.WBTC.decimals(),
       await s.WETH.decimals()
     )
-    await UniV3LPoracle.deployed()
+    await s.PositionValuator.deployed()
 
-    //showBody(await toNumber(await UniV3LPoracle.currentValue()))
+    //showBody(await toNumber(await s.PositionValuator.currentValue()))
   })
 
   it("Deploy nft vault controller", async () => {
@@ -312,7 +310,7 @@ describe("Setup, Queue and Execute proposal", () => {
       attach(s.Oracle.address).
       populateTransaction.setRelay(
         s.CappedPosition.address,
-        UniV3LPoracle.address
+        s.PositionValuator.address
       )
 
     const list = await new VaultController__factory(prop).
@@ -393,7 +391,7 @@ describe("Setup, Queue and Execute proposal", () => {
 
     await impersonateAccount(s.GOV._address)
     /**
-     await s.Oracle.connect(s.GOV).setRelay(s.CappedPosition.address, UniV3LPoracle.address)
+     await s.Oracle.connect(s.GOV).setRelay(s.CappedPosition.address, s.PositionValuator.address)
     await s.VaultController.connect(s.GOV).registerErc20(
       s.CappedPosition.address,
       s.LTV,

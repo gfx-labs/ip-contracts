@@ -29,12 +29,7 @@ describe("Check starting values", () => {
         let balance = await s.CappedPosition.balanceOf(s.BobVault.address)
         let price = await s.Oracle.getLivePrice(s.CappedPosition.address)
 
-        //showBody("Indicated Balance: ", await toNumber(balance))
-        //showBody("Indicated BorrowPower: ", await toNumber(borrowPower))
-
         let totalValue = (balance.mul(price)).div(BN("1e18"))
-
-        //showBody("Total value: ", await toNumber(totalValue))
 
         let expectedBorrowPower = (totalValue.mul(s.LTV)).div(BN("1e18"))
         expect(await toNumber(borrowPower)).to.be.closeTo(await toNumber(expectedBorrowPower), 0.0001, "Borrow power is correct")
@@ -64,15 +59,9 @@ describe("Lending with capped Balancer LP tokens and uniPosition", () => {
 
     it("Check loan details", async () => {
 
-
         const liability = await s.VaultController.vaultLiability(s.BobVaultID)
         expect(await toNumber(liability)).to.be.closeTo(await toNumber(borrowAmount.mul(2)), 0.001, "Liability is correct")
-
-
     })
-
-
-
 
     //todo liquidations affected by partial repay?
     it("Repay loan", async () => {
@@ -139,18 +128,6 @@ describe("Liquidations - uniPosition", () => {
         expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, amount)).to.be.revertedWith("over-withdrawal")
     })
 
-    /**
-     * IDEA
-     * Make intermediary oracle contract
-     * Put logic here for capped position to call in balanceOf
-     * If the VC calls currentValue we return balanceOf
-     * else return 1 ?
-     */
-
-    /**
-     * Another idea
-     * new oracle master that can register the positions
-     */
     it("Liquidate", async () => {
 
         const amountToSolvency = await s.VaultController.amountToSolvency(s.BobVaultID)
@@ -158,18 +135,12 @@ describe("Liquidations - uniPosition", () => {
 
         const tokensToLiquidate = await s.VaultController.tokensToLiquidate(s.BobVaultID, s.CappedPosition.address)
         T2L = tokensToLiquidate
-        showBody("T2L: ", await toNumber(T2L))
-        showBody("Bal: ", await toNumber(await s.CappedPosition.balanceOf(s.BobVault.address)))
-        showBody("Capped position: ", s.CappedPosition.address)
         expect(tokensToLiquidate).to.be.gt(0, "Capped Tokens are liquidatable")
 
         const price = await s.Oracle.getLivePrice(s.CappedPosition.address)
-        expect(price).to.be.gt(0, "Valid price")
+        expect(await toNumber(price)).to.eq(1, "Expected price mofifier returned")
 
         const liquidationValue = (price.mul(tokensToLiquidate)).div(BN("1e18"))
-
-        //const startSupply = await s.CappedPosition.totalSupply()
-        //expect(startSupply).to.eq(borrowAmount, "Starting supply unchanged")
 
         await s.USDC.connect(s.Dave).approve(s.USDI.address, await s.USDC.balanceOf(s.Dave.address))
         await s.USDI.connect(s.Dave).deposit(await s.USDC.balanceOf(s.Dave.address))
@@ -185,25 +156,7 @@ describe("Liquidations - uniPosition", () => {
         expect(startuniPosition).to.eq(0, "Dave holds 0 uniPosition")
 
 
-        /**
-         * When liquidating a position (1 position with x amount of value scenario)
-         * the full position must be liquidated => nfpManager.balanceOf(liquidator) = 1
-         * balanceOf returns the value
-         * tokensToLiquidate needs to == balanceOf (value)
-         * the liability of the vault needs to be set to 0
-         * 
-        showBody("Dave: ", s.Dave.address)
-        showBody("Bob: ", s.Bob.address)
-        showBody("nft cont: ", s.NftVaultController.address)
-        showBody("Nfp mngr: ", s.nfpManager.address)
-        showBody("NftVault: ", s.BobNftVault.address)
-        showBody("Stdnrdvlt: ", s.BobVault.address)
-        showBody("cPosition: ", s.CappedPosition.address)
-        showBody("Minter: ", s.Bob.address)
-         */
 
-        showBody("Dave: ", s.Dave.address)
-        showBody("Bob: ", s.Bob.address)
         const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedPosition.address, BN("1e50"))
         const gas = await getGas(result)
         showBodyCyan("Gas to liquidate uniPosition: ", gas)
@@ -266,7 +219,7 @@ describe("Liquidations - uniPosition", () => {
         expect(await toNumber(balance)).to.eq(0, "All CappedPosition removed from vault")
  
     })
-    
+
  /**
     it("mappings", async () => {
         const _vaultAddress_vaultId = await s.VotingVaultController._vaultAddress_vaultId(s.BobVault.address)

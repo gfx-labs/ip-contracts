@@ -8,10 +8,10 @@ import "../controller/NftVaultController.sol";
 import "../IVaultController.sol";
 import "../IVault.sol";
 import "../../oracle/IOracleMaster.sol";
+import "../../oracle/External/V3PositionValuator.sol";
 
 //import "../../_external/IERC721Metadata.sol";
 import "../../_external/uniswap/INonfungiblePositionManager.sol";
-import "../../_external/uniswap/V3PositionValuator.sol";
 
 import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/ERC721Upgradeable.sol";
@@ -201,7 +201,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
       uint128 tokensOwed0,
       uint128 tokensOwed1
     ) = _underlying.positions(tokenId);
-    uint256 value = _positionValuator.currentValue(liquidity);
+    uint256 value = _positionValuator.getValue(liquidity);
     return value;
     /**
     try _univ3NftPositions.positions(tokenId) returns (
