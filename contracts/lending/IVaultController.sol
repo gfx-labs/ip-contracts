@@ -113,4 +113,6 @@ interface IVaultController is VaultControllerEvents {
     address oracle_address,
     uint256 liquidationIncentive
   ) external;
+
+  function setCappedPositionAddress(address cappedPosition_) external;
 }

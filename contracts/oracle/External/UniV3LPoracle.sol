@@ -55,9 +55,7 @@ contract UniV3LPoracle is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
-    console.log("CURRENT VALUE: ");
     (bytes4 selector, uint productAmount, bytes3 color) = decode(msg.data);
-    console.log("Selector: ", fromCode(selector));
     /**
     //todo refactor unit conversion
     console.log("1e18: ", 1e18);

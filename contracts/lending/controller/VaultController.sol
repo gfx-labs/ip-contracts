@@ -419,9 +419,7 @@ contract VaultController is
     uint256 tokens_to_liquidate
   ) external override paysInterest whenNotPaused returns (uint256) {
     /////////////////////////////////////////////////////////////////////////////
-    console.log("LIQUIDATION START");
     INonfungiblePositionManager nfp = INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
-    console.log("Vault underlying 1: ", nfp.balanceOf(0x422F3eC7A1D44138A0b1594986a7Efb9b1C1E8Bb));
     /////////////////////////////////////////////////////////////////////////////
     //cannot liquidate 0
     require(tokens_to_liquidate > 0, "must liquidate>0");
@@ -440,8 +438,19 @@ contract VaultController is
     // get the vault that the liquidator wishes to liquidate
     IVault vault = getVault(id);
 
+    //check vault things
+    uint256 baseLiability = vault.baseLiability();
+    uint256 baseAmount = (usdi_to_repurchase * 1e18) / _interest.factor;
+
+    //Q2 2023 upgrade
     //decrease the vault's liability
-    vault.modifyLiability(false, (usdi_to_repurchase * 1e18) / _interest.factor);
+    if (asset_address == _cappedPosition) {
+      //liability to 0
+      //todo multiple separate positions? 
+      vault.modifyLiability(false, vault.baseLiability());
+    } else {
+      vault.modifyLiability(false, (usdi_to_repurchase * 1e18) / _interest.factor);
+    }
 
     // decrease the total base liability
     _totalBaseLiability = _totalBaseLiability - safeu192((usdi_to_repurchase * 1e18) / _interest.factor);
@@ -450,16 +459,10 @@ contract VaultController is
     _usdi.vaultControllerBurn(_msgSender(), usdi_to_repurchase);
 
     // finally, deliver tokens to liquidator
-    console.log("VC TRANSFER");
     vault.controllerTransfer(asset_address, _msgSender(), tokens_to_liquidate);
 
     /////////////////////////////////////////////////////////////////////////////
     /**
-    console.log("Vault underlying 2: ", nfp.balanceOf(0x422F3eC7A1D44138A0b1594986a7Efb9b1C1E8Bb));
-    console.log("Dave underlying?: ", nfp.balanceOf(_msgSender()));
-    console.log("Dave?: ", _msgSender());
-    console.log("vault borrow power: ", get_vault_borrowing_power(vault));
-    console.log("Vault liability us: ", _vaultLiability(id));
      */
     /////////////////////////////////////////////////////////////////////////////
 
@@ -498,45 +501,45 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) internal view returns (uint256, uint256) {
-    console.log("LIQUIDATION MATH: ", asset_address);
 
     //require that the vault is not solvent
     require(!checkVault(id), "Vault is solvent");
-
     IVault vault = getVault(id);
+
+    //Q2 2023 upgrade, if capped position, liquidate entire positions
+    if (asset_address == _cappedPosition) {
+      return (
+        1e18, //the badFillPrice is the actual usdi_to_repurchase
+        truncate(vault.tokenBalance(asset_address) * (1e18 - _tokenAddress_liquidationIncentive[asset_address]))
+      );
+    }
 
     //get price of asset scaled to decimal 18
     uint256 price = _oracleMaster.getLivePrice(asset_address);
-    console.log("Price: ", price);
 
     // get price discounted by liquidation penalty
     // price * (100% - liquidationIncentive)
     uint256 badFillPrice = truncate(price * (1e18 - _tokenAddress_liquidationIncentive[asset_address]));
-    console.log("Liquidation incentive: ", _tokenAddress_liquidationIncentive[asset_address]);
-    console.log("badFillPrice: ", badFillPrice);
 
     // the ltv discount is the amount of collateral value that one token provides
     uint256 ltvDiscount = truncate(price * _tokenId_tokenLTV[_tokenAddress_tokenId[asset_address]]);
     // this number is the denominator when calculating the max_tokens_to_liquidate
     // it is simply the badFillPrice - ltvDiscount
     uint256 denominator = badFillPrice - ltvDiscount;
-
     // the maximum amount of tokens to liquidate is the amount that will bring the vault to solvency
     // divided by the denominator
     uint256 max_tokens_to_liquidate = (_amountToSolvency(id) * 1e18) / denominator;
-    console.log("max_tokens_to_liquidate: ", max_tokens_to_liquidate);
 
     //Cannot liquidate more than is necessary to make vault over-collateralized
     if (tokens_to_liquidate > max_tokens_to_liquidate) {
       tokens_to_liquidate = max_tokens_to_liquidate;
     }
 
-    console.log("tokenBalance: ", vault.tokenBalance(asset_address));
-
     //Cannot liquidate more collateral than there is in the vault
     if (tokens_to_liquidate > vault.tokenBalance(asset_address)) {
       tokens_to_liquidate = vault.tokenBalance(asset_address);
     }
+
 
     return (tokens_to_liquidate, badFillPrice);
   }

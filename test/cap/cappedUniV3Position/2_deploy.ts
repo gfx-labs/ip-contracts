@@ -413,10 +413,12 @@ describe("Setup, Queue and Execute proposal", () => {
       nfpManagerAddr
     )
 
+
     //upgrade to vc for testing
     const implementation = await new VaultController__factory(s.GOV).deploy()
-
     await s.ProxyAdmin.connect(s.GOV).upgrade(s.VaultController.address, implementation.address)
+    
+    await s.VaultController.connect(s.GOV).setCappedPositionAddress(s.CappedPosition.address)
 
     await ceaseImpersonation(s.GOV._address)
   })

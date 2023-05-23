@@ -74,6 +74,7 @@ describe("Lending with capped Balancer LP tokens and uniPosition", () => {
 
 
 
+    //todo liquidations affected by partial repay?
     it("Repay loan", async () => {
 
         expect(await s.USDC.balanceOf(s.Bob.address)).to.eq(s.Bob_USDC.mul(10), "Bob still holds starting USDC")
@@ -123,7 +124,7 @@ describe("Liquidations - uniPosition", () => {
 
     it("Elapse time to put vault underwater", async () => {
 
-        await fastForward(OneDay)
+        await fastForward(OneDay * 30)
         await mineBlock()
         await s.VaultController.calculateInterest()
         await mineBlock()
@@ -159,6 +160,7 @@ describe("Liquidations - uniPosition", () => {
         T2L = tokensToLiquidate
         showBody("T2L: ", await toNumber(T2L))
         showBody("Bal: ", await toNumber(await s.CappedPosition.balanceOf(s.BobVault.address)))
+        showBody("Capped position: ", s.CappedPosition.address)
         expect(tokensToLiquidate).to.be.gt(0, "Capped Tokens are liquidatable")
 
         const price = await s.Oracle.getLivePrice(s.CappedPosition.address)
@@ -209,8 +211,6 @@ describe("Liquidations - uniPosition", () => {
         //let supply = await s.CappedPosition.totalSupply()
         //expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 10, "Total supply reduced as Capped uniPosition is liquidatede")
 
-
-
         let endCappedPosition = await s.CappedPosition.balanceOf(s.BobVault.address)
         expect(await toNumber(endCappedPosition)).to.eq(0, "Total position liquidated")
 
@@ -218,72 +218,72 @@ describe("Liquidations - uniPosition", () => {
         expect(enduniPosition).to.eq(1, "Dave recieved the position")
 
         const usdiSpent = startingUSDI.sub(await s.USDI.balanceOf(s.Dave.address))
-        showBodyCyan("USDI spent: ", await toNumber(usdiSpent))
         const expectedSpend = await toNumber(startinguniPosition) - (await toNumber(startinguniPosition) * (await toNumber(s.LiquidationIncentive)))
-        showBodyCyan("expected  : ", expectedSpend)
-       
 
-       
+        expect(await toNumber(usdiSpent)).to.be.closeTo(expectedSpend, 0.1, "Correct amount of USDI spent")
 
-        //const profit = liquidationValue.sub(usdiSpent)
-        //const expected = (liquidationValue.mul(s.LiquidationIncentive)).div(BN("1e18"))
 
-        //expect(await toNumber(profit)).to.be.closeTo(await toNumber(expected), 2, "Expected profit achieved")
+        const endLiability = await s.VaultController.vaultLiability(s.BobVaultID)
+        expect(endLiability).to.eq(0, "Liability is now 0")
+
+        let endBalance = await s.nfpManager.balanceOf(s.Dave.address)
+        expect(endBalance).to.eq(1, "Dave received the position")
 
     })
-    /**
-        it("repay all", async () => {
+
+    it("Dave deposits and borrows", async () => {
+        await s.nfpManager.connect(s.Dave).approve(s.CappedPosition.address, s.BobPositionId)
+        const result = await s.CappedPosition.connect(s.Dave).deposit(s.BobPositionId, s.BobVaultID)
+
+    })
+
+    it("Borrow to add some liability", async () => {
+        await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, BN("50e18"))
+    })
+
+    it("repay all", async () => {
+
+        let liab = await s.VaultController.vaultLiability(s.BobVaultID)
+        expect(liab).to.be.gt(0, "Liability exists")
+
+        await s.VaultController.connect(s.Bob).repayAllUSDi(s.BobVaultID)
+        await mineBlock()
+
+        liab = await s.VaultController.vaultLiability(s.BobVaultID)
+        expect(liab).to.eq(0, "Loan completely repaid")
+    })
+
     
-            let liab = await s.VaultController.vaultLiability(s.BobVaultID)
-            expect(liab).to.be.gt(0, "Liability exists")
+    it("Withdraw after loan", async () => {
+ 
     
-            await s.VaultController.connect(s.Bob).repayAllUSDi(s.BobVaultID)
-            await mineBlock()
+        const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, 1)
+ 
+        let balance = await s.nfpManager.balanceOf(s.BobNftVault.address)
+        expect(await toNumber(balance)).to.eq(0, "All uniPosition withdrawn")
+ 
+        balance = await s.CappedPosition.balanceOf(s.BobVault.address)
+        expect(await toNumber(balance)).to.eq(0, "All CappedPosition removed from vault")
+ 
+    })
     
-            liab = await s.VaultController.vaultLiability(s.BobVaultID)
-            expect(liab).to.eq(0, "Loan completely repaid")
-        })
-    
-    
-        it("Withdraw after loan", async () => {
-    
-            const voteVaultuniPosition = await s.uniPosition.balanceOf(s.BobBptVault.address)
-            expect(voteVaultuniPosition).to.be.gt(0, "Vote vault holds uniPosition")
-            const vaultCappedPosition = await s.CappedPosition.balanceOf(s.BobVault.address)
-    
-            await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, vaultCappedPosition)
-            await mineBlock()
-    
-            let balance = await s.uniPosition.balanceOf(s.BobBptVault.address)
-            expect(await toNumber(balance)).to.eq(0, "All uniPosition withdrawn")
-    
-            balance = await s.CappedPosition.balanceOf(s.BobVault.address)
-            expect(await toNumber(balance)).to.eq(0, "All CappedPosition removed from vault")
-    
-            //const supply = await s.CappedPosition.totalSupply()
-            //expect(await toNumber(supply)).to.eq(0, "All CappedPosition Burned")
-    
-            balance = await s.uniPosition.balanceOf(s.Bob.address)
-            expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.uniPositionAmount.sub(T2L)), 2, "Bob received collateral - liquidated amount")
-    
-        })
-    
-        it("mappings", async () => {
-            const _vaultAddress_vaultId = await s.VotingVaultController._vaultAddress_vaultId(s.BobVault.address)
-            expect(_vaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
-    
-            const _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_vaultBPTaddress(BN(s.BobVaultID))
-            expect(_vaultId_votingVaultAddress.toUpperCase()).to.equal(s.BobBptVault.address.toUpperCase(), "Correct voting vault ID")
-    
-            const _votingVaultAddress_vaultId = await s.VotingVaultController._vaultBPTaddress_vaultId(s.BobBptVault.address)
-            expect(_votingVaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
-    
-            const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.uniPosition.address)
-            expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedPosition.address.toUpperCase(), "Underlying => Capped is correct")
-    
-            const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedPosition.address)
-            expect(_CappedToken_underlying.toUpperCase()).to.eq(s.uniPosition.address.toUpperCase(), "Capped => Underlying correct")
-        })
-    */
+ /**
+    it("mappings", async () => {
+        const _vaultAddress_vaultId = await s.VotingVaultController._vaultAddress_vaultId(s.BobVault.address)
+        expect(_vaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
+ 
+        const _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_vaultBPTaddress(BN(s.BobVaultID))
+        expect(_vaultId_votingVaultAddress.toUpperCase()).to.equal(s.BobBptVault.address.toUpperCase(), "Correct voting vault ID")
+ 
+        const _votingVaultAddress_vaultId = await s.VotingVaultController._vaultBPTaddress_vaultId(s.BobBptVault.address)
+        expect(_votingVaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
+ 
+        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.uniPosition.address)
+        expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedPosition.address.toUpperCase(), "Underlying => Capped is correct")
+ 
+        const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedPosition.address)
+        expect(_CappedToken_underlying.toUpperCase()).to.eq(s.uniPosition.address.toUpperCase(), "Capped => Underlying correct")
+    })
+*/
 })
 
