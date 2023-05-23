@@ -97,9 +97,11 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   function deposit(uint256 tokenId, uint96 vaultId) public nonReentrant {
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vaultId);
     require(address(univ3_vault_address) != address(0x0), "invalid voting vault");
+    console.log("Depositing");
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     add_to_list(vault.minter(), tokenId);
-    //todo total supply? 
+    console.log("Added");
+    //todo total supply?
     //todo emit mint event?
 
     _underlying.transferFrom(_msgSender(), univ3_vault_address, tokenId);
@@ -158,37 +160,24 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
 
     //get minter
     address account = V.minter();
-
+    console.log("Balance Of: ", _underlyingOwners[account].length);
     // iterate across each user balance
     uint256 totalValue = 0;
     for (uint256 i; i < _underlyingOwners[account].length; i++) {
       //TODO: investigate possible gas improvement through passing multiple tokenIds  instead of doing them one by one
       // this would allow us to cache values from historical calculations, but im not sure if that would even save anything
+      console.log("Getting value: ", _underlyingOwners[account][i]);
       totalValue = totalValue + get_token_value(_underlyingOwners[account][i]);
+      console.log("Total Value: ", totalValue);
     }
     return totalValue;
   }
 
-  /**
-   uint96 nonce,
-      address operator,
-      address token0,
-      address token1,
-      uint24 fee,
-      int24 tickLower,
-      int24 tickUpper,
-      uint128 liquidity,
-      uint256 feeGrowthInside0LastX128,
-      uint256 feeGrowthInside1LastX128,
-      uint128 tokensOwed0,
-      uint128 tokensOwed1
-    */
   function get_token_value(uint256 tokenId) internal view returns (uint256 value) {
     if (tokenId == 0) {
       return 0;
     }
-    (, , , , , , , uint128 liquidity, , , , ) = _underlying.positions(tokenId);
-    value = _positionValuator.getValue(liquidity);
+    value = _positionValuator.getValue(tokenId);
   }
 
   ///todo  need to mint actual tokens such that the total supply increases here

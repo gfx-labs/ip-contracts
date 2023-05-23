@@ -2,9 +2,13 @@
 pragma solidity 0.8.9;
 
 import "../../oracle/IOracleRelay.sol";
+import "../../oracle/OracleMaster.sol";
 
 import "../../_external/uniswap/TickMath.sol";
 import {FullMath, FixedPoint96} from "../../_external/uniswap/FullMath.sol";
+import "../../_external/uniswap/INonfungiblePositionManager.sol";
+import "../../_external/uniswap/PoolAddress.sol";
+import "../../_external/IERC20.sol";
 
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
@@ -34,13 +38,46 @@ interface IUniswapV3PoolImmutables {
   function tickSpacing() external view returns (int24);
 }
 
+interface IUniswapV3Factory {
+  /// @notice Returns the pool address for a given pair of tokens and a fee, or address 0 if it does not exist
+  /// @dev tokenA and tokenB may be passed in either token0/token1 or token1/token0 order
+  /// @param tokenA The contract address of either token0 or token1
+  /// @param tokenB The contract address of the other token
+  /// @param fee The fee collected upon every swap in the pool, denominated in hundredths of a bip
+  /// @return pool The pool address
+  function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address pool);
+}
+
+interface UniswapV3Pool {
+  function token0() external view returns (address);
+
+  function token1() external view returns (address);
+
+  function fee() external view returns (uint24);
+}
+
 contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
+  IUniswapV3Factory public constant FACTORY_V3 = IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
+  INonfungiblePositionManager public constant nfpManager =
+    INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
+  //OracleMaster public constant oracleMaster = OracleMaster(0xf4818813045E954f5Dc55a40c9B60Def0ba3D477);
+
   IUniswapV3PoolImmutables public _pool;
   IOracleRelay public token0Oracle;
   IOracleRelay public token1Oracle;
 
   uint256 public UNIT_0;
   uint256 public UNIT_1;
+
+  mapping(address => bool) public registeredPools;
+  mapping(address => PoolData) public poolDatas;
+
+  struct PoolData {
+    IOracleRelay token0Oracle;
+    IOracleRelay token1Oracle;
+    uint256 UNIT_0;
+    uint256 UNIT_1;
+  }
 
   function initialize(
     address pool_address,
@@ -65,17 +102,26 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     return 1e18;
   }
 
-  function getValue(uint128 liquidity) external view returns (uint256) {
+  function getValue(uint256 tokenId) external view returns (uint256) {
+    console.log("Get value");
     /**
     //todo refactor unit conversion
     console.log("1e18: ", 1e18);
     console.log("1e8 : ", 1e8);
     console.log("unt0: ", UNIT_0);
    */
+    (, , address token0, address token1, uint24 fee, , , uint128 liquidity, , , , ) = nfpManager.positions(tokenId);
 
-    uint256 p0 = token0Oracle.currentValue() / 1e10;
-    uint256 p1 = token1Oracle.currentValue();
-    uint160 sqrtPriceX96 = getSqrtPrice(p0, p1);
+    ///@notice if pool is not registered, the value is 0
+    (bool registered, address pool) = verifyPool(token0, token1, fee);
+    if (!registered) {
+      return 0;
+    }
+
+    PoolData memory data = poolDatas[pool];
+
+    uint160 sqrtPriceX96 = getSqrtPrice(data);
+    console.log("sqrtPriceX96: ", sqrtPriceX96);
     int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
     int24 tickSpacing = _pool.tickSpacing();
 
@@ -93,13 +139,30 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     //console.log("AMOUNT1: ", amount1);
 
     //derive value based on price
-    uint256 v0 = (p0 * amount0) / 1e18;
-    uint256 v1 = (p1 * amount1) / 1e18;
-
-    return v0 + v1;
+    return
+      (((data.token0Oracle.currentValue() / 1e10) * amount0) / 1e18) +
+      (((data.token1Oracle.currentValue()) * amount1) / 1e18);
   }
 
-  function registerPools() external onlyOwner {}
+  function verifyPool(address token0, address token1, uint24 fee) internal view returns (bool, address) {
+    address pool = PoolAddress.computeAddress(
+      address(FACTORY_V3),
+      PoolAddress.PoolKey({token0: token0, token1: token1, fee: uint24(fee)})
+    );
+    return (registeredPools[pool], pool);
+  }
+
+  ///@notice toggle @param pool registered or not
+  //todo register oracles and token units to each pool in a struct
+  function registerPool(UniswapV3Pool pool, IOracleRelay _token0Oracle, IOracleRelay _token1Oracle) external onlyOwner {
+    registeredPools[address(pool)] = !registeredPools[address(pool)];
+    poolDatas[address(pool)] = PoolData({
+      token0Oracle: _token0Oracle,
+      token1Oracle: _token1Oracle,
+      UNIT_0: 10 ** IERC20(pool.token0()).decimals(),
+      UNIT_1: 10 ** IERC20(pool.token1()).decimals()
+    });
+  }
 
   /// @notice Computes the token0 and token1 value for a given amount of liquidity, the current
   /// pool prices and the prices at the tick boundaries
@@ -211,9 +274,10 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
    */
 
   //tested accuracy: 0.15363% decrease from sqrtPriceX96 reported by slot0
-  function getSqrtPrice(uint256 p0, uint256 p1) internal view returns (uint160 sqrtPrice) {
-    uint256 numerator = _mul(_mul(p0, UNIT_1), (1 << 96));
-    uint256 denominator = _mul(p1, UNIT_0);
+  function getSqrtPrice(PoolData memory data) internal view returns (uint160 sqrtPrice) {
+
+    uint256 numerator = _mul(_mul((data.token0Oracle.currentValue() / 10), data.UNIT_1), (1 << 96));
+    uint256 denominator = _mul(data.token1Oracle.currentValue(), data.UNIT_0);
     uint256 Q = numerator / denominator;
     uint256 sqrtQ = sqrt(Q);
     sqrtPrice = toUint160(sqrtQ << 48);

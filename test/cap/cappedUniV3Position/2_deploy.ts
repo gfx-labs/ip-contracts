@@ -246,6 +246,8 @@ describe("deploy oracles and cap tokens", () => {
     )
     await s.PositionValuator.deployed()
 
+    await s.PositionValuator.registerPool(wETHwBTC_pool_addr, s.wbtcOracle.address, s.wethOracle.address)
+
     //showBody(await toNumber(await s.PositionValuator.currentValue()))
   })
 
@@ -362,16 +364,13 @@ describe("Setup, Queue and Execute proposal", () => {
 
     await gov.connect(prop).queue(proposal);
     await mineBlock()
-    showBody("Queued")
 
     await fastForward(timelock.toNumber());
     await mineBlock()
-    showBody("bouda execute")
 
     await gov.connect(prop).execute(proposal);
     await mineBlock();
 
-    showBody("done")
 
     await ceaseImpersonation(proposer)
   })
