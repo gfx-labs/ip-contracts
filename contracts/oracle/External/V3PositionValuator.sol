@@ -6,6 +6,9 @@ import "../../oracle/IOracleRelay.sol";
 import "../../_external/uniswap/TickMath.sol";
 import {FullMath, FixedPoint96} from "../../_external/uniswap/FullMath.sol";
 
+import "../../_external/openzeppelin/OwnableUpgradeable.sol";
+import "../../_external/openzeppelin/Initializable.sol";
+
 import "hardhat/console.sol";
 
 /// based off of the MKR implementation https://github.com/makerdao/univ3-lp-oracle/blob/master/src/GUniLPOracle.sol
@@ -31,21 +34,23 @@ interface IUniswapV3PoolImmutables {
   function tickSpacing() external view returns (int24);
 }
 
-contract V3PositionValuator is IOracleRelay {
-  IUniswapV3PoolImmutables public immutable _pool;
-  IOracleRelay public immutable token0Oracle;
-  IOracleRelay public immutable token1Oracle;
+contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
+  IUniswapV3PoolImmutables public _pool;
+  IOracleRelay public token0Oracle;
+  IOracleRelay public token1Oracle;
 
-  uint256 public immutable UNIT_0;
-  uint256 public immutable UNIT_1;
+  uint256 public UNIT_0;
+  uint256 public UNIT_1;
 
-  constructor(
+  function initialize(
     address pool_address,
     IOracleRelay _token0Oracle,
     IOracleRelay _token1Oracle,
     uint256 token0Units,
     uint256 token1Units
-  ) {
+  ) public initializer {
+    __Ownable_init();
+
     _pool = IUniswapV3PoolImmutables(pool_address);
     token0Oracle = _token0Oracle;
     token1Oracle = _token1Oracle;
@@ -55,8 +60,8 @@ contract V3PositionValuator is IOracleRelay {
   }
 
   ///@notice we return 1 here, as the true value is achieved through balanceOf
-  ///@notice we can't return the value here as we need to be passed the liquidity 
-  function currentValue() external view override returns (uint256){
+  ///@notice we can't return the value here as we need to be passed the liquidity
+  function currentValue() external view override returns (uint256) {
     return 1e18;
   }
 
@@ -94,6 +99,7 @@ contract V3PositionValuator is IOracleRelay {
     return v0 + v1;
   }
 
+  function registerPools() external onlyOwner {}
 
   /// @notice Computes the token0 and token1 value for a given amount of liquidity, the current
   /// pool prices and the prices at the tick boundaries

@@ -233,7 +233,11 @@ describe("deploy oracles and cap tokens", () => {
   let positionValuator: V3PositionValuator
 
   it("deploly oracles", async () => {
-    s.PositionValuator = await new V3PositionValuator__factory(s.Frank).deploy(
+
+    s.PositionValuator = await DeployContractWithProxy(
+      new V3PositionValuator__factory(s.Frank),
+      s.Frank,
+      s.ProxyAdmin,
       wETHwBTC_pool_addr,
       s.wbtcOracle.address,
       s.wethOracle.address,
@@ -256,16 +260,7 @@ describe("deploy oracles and cap tokens", () => {
     await s.NftVaultController.transferOwnership(s.GOV._address)
   })
 
-  it("Deploy position valuator", async () => {
-    positionValuator = await new V3PositionValuator__factory(s.Frank).deploy(
-      wETHwBTC_pool_addr,
-      s.wbtcOracle.address,
-      s.wethOracle.address,
-      await s.WBTC.decimals(),
-      await s.WETH.decimals()
-    )
-    await positionValuator.deployed()
-  })
+  
 
   it("Deploy cap token", async () => {
 
@@ -278,7 +273,7 @@ describe("deploy oracles and cap tokens", () => {
       nfpManagerAddr,
       s.VaultController.address,
       s.NftVaultController.address,
-      positionValuator.address
+      s.PositionValuator.address
     )
     await s.CappedPosition.deployed()
 
@@ -415,7 +410,7 @@ describe("Setup, Queue and Execute proposal", () => {
     //upgrade to vc for testing
     const implementation = await new VaultController__factory(s.GOV).deploy()
     await s.ProxyAdmin.connect(s.GOV).upgrade(s.VaultController.address, implementation.address)
-    
+
     await s.VaultController.connect(s.GOV).setCappedPositionAddress(s.CappedPosition.address)
 
     await ceaseImpersonation(s.GOV._address)

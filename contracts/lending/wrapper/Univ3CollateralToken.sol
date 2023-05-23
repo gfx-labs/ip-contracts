@@ -99,7 +99,9 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     require(address(univ3_vault_address) != address(0x0), "invalid voting vault");
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     add_to_list(vault.minter(), tokenId);
-    
+    //todo total supply? 
+    //todo emit mint event?
+
     _underlying.transferFrom(_msgSender(), univ3_vault_address, tokenId);
   }
 
