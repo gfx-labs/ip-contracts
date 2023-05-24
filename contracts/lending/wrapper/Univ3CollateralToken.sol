@@ -97,10 +97,8 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   function deposit(uint256 tokenId, uint96 vaultId) public nonReentrant {
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vaultId);
     require(address(univ3_vault_address) != address(0x0), "invalid voting vault");
-    console.log("Depositing");
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     add_to_list(vault.minter(), tokenId);
-    console.log("Added");
     //todo total supply?
     //todo emit mint event?
 
@@ -160,15 +158,12 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
 
     //get minter
     address account = V.minter();
-    console.log("Balance Of: ", _underlyingOwners[account].length);
     // iterate across each user balance
     uint256 totalValue = 0;
     for (uint256 i; i < _underlyingOwners[account].length; i++) {
       //TODO: investigate possible gas improvement through passing multiple tokenIds  instead of doing them one by one
       // this would allow us to cache values from historical calculations, but im not sure if that would even save anything
-      console.log("Getting value: ", _underlyingOwners[account][i]);
       totalValue = totalValue + get_token_value(_underlyingOwners[account][i]);
-      console.log("Total Value: ", totalValue);
     }
     return totalValue;
   }
