@@ -103,7 +103,6 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   }
 
   function getValue(uint256 tokenId) external view returns (uint256) {
-    console.log("Get value");
     /**
     //todo refactor unit conversion
     console.log("1e18: ", 1e18);
@@ -118,10 +117,9 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
       return 0;
     }
 
-    PoolData memory data = poolDatas[pool];
-
-    uint160 sqrtPriceX96 = getSqrtPrice(data);
-    console.log("sqrtPriceX96: ", sqrtPriceX96);
+    uint256 p0 = token0Oracle.currentValue() / 1e10;
+    uint256 p1 = token1Oracle.currentValue();
+    uint160 sqrtPriceX96 = getSqrtPrice(p0, p1, pool);
     int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
     int24 tickSpacing = _pool.tickSpacing();
 
@@ -139,9 +137,7 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     //console.log("AMOUNT1: ", amount1);
 
     //derive value based on price
-    return
-      (((data.token0Oracle.currentValue() / 1e10) * amount0) / 1e18) +
-      (((data.token1Oracle.currentValue()) * amount1) / 1e18);
+    return ((p0 * amount0) / 1e18) + ((p1 * amount1) / 1e18);
   }
 
   function verifyPool(address token0, address token1, uint24 fee) internal view returns (bool, address) {
@@ -274,10 +270,11 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
    */
 
   //tested accuracy: 0.15363% decrease from sqrtPriceX96 reported by slot0
-  function getSqrtPrice(PoolData memory data) internal view returns (uint160 sqrtPrice) {
+  function getSqrtPrice(uint256 p0, uint256 p1, address pool) internal view returns (uint160 sqrtPrice) {
+    PoolData memory data = poolDatas[pool];
 
-    uint256 numerator = _mul(_mul((data.token0Oracle.currentValue() / 10), data.UNIT_1), (1 << 96));
-    uint256 denominator = _mul(data.token1Oracle.currentValue(), data.UNIT_0);
+    uint256 numerator = _mul(_mul(p0, data.UNIT_1), (1 << 96));
+    uint256 denominator = _mul(p1, data.UNIT_0);
     uint256 Q = numerator / denominator;
     uint256 sqrtQ = sqrt(Q);
     sqrtPrice = toUint160(sqrtQ << 48);
