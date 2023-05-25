@@ -44,6 +44,8 @@ describe("Token Setup", () => {
         s.WBTC = IERC20__factory.connect(s.wbtcAddress, s.Frank)
         s.wethOracle = IOracleRelay__factory.connect(s.wethOracleAddr, s.Frank)
         s.wbtcOracle = IOracleRelay__factory.connect(s.wbtcOracleAddr, s.Frank)
+        s.nfpManager = INonfungiblePositionManager__factory.connect("0xC36442b4a4522E871399CD717aBDD847Ab11FE88", s.Frank)
+
 
     });
 
@@ -67,12 +69,15 @@ describe("Token Setup", () => {
         let weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
 
         await stealMoney(usdc_minter, s.Frank.address, s.USDC.address, s.USDC_AMOUNT)
-        await stealMoney(usdc_minter, s.Bob.address, s.USDC.address, s.USDC_AMOUNT.mul(10))
-        await stealMoney(usdc_minter, s.Carol.address, s.USDC.address, s.USDC_AMOUNT)
         await stealMoney(usdc_minter, s.Dave.address, s.USDC.address, s.USDC_AMOUNT.mul(5))
 
         await stealMoney(weth_minter, s.Bob.address, s.WETH.address, s.WETH_AMOUNT)
         await stealMoney(wbtc_minter, s.Bob.address, s.wbtcAddress, s.wBTC_Amount)
+        await stealMoney(usdc_minter, s.Bob.address, s.USDC.address, s.USDC_AMOUNT.mul(10))
+
+        await stealMoney(weth_minter, s.Carol.address, s.WETH.address, s.WETH_AMOUNT.mul(2))
+        await stealMoney(wbtc_minter, s.Carol.address, s.wbtcAddress, s.wBTC_Amount)
+        await stealMoney(usdc_minter, s.Carol.address, s.USDC.address, s.USDC_AMOUNT)
 
     })
 

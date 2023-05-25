@@ -45,6 +45,22 @@ describe("Verify setup", () => {
         expect(s.BobNftVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Bob's nft vault setup complete")
 
     })
+    it("Mint NFT vault for Carol", async () => {
+
+        let _vaultId_votingVaultAddress = await s.NftVaultController._vaultId_nftVaultAddress(s.CaroLVaultID)
+        expect(_vaultId_votingVaultAddress).to.eq("0x0000000000000000000000000000000000000000", "Voting vault not yet minted")
+
+        const result = await s.NftVaultController.connect(s.Carol).mintVault(s.CaroLVaultID)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to mint NFT vault: ", gas)
+
+        let vaultAddr = await s.NftVaultController._vaultId_nftVaultAddress(s.CaroLVaultID)
+        s.CarolNftVault = VaultNft__factory.connect(vaultAddr, s.Carol)
+
+        expect(s.CarolNftVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Carol's nft vault setup complete")
+
+    })
+
     it("Bob's Voting Vault setup correctly", async () => {
         /**
               const vaultInfo = await s.BobBptVault._vaultInfo()
@@ -68,9 +84,7 @@ describe("Verify setup", () => {
 
 describe("Capped Position Functionality", () => {
 
-    it("Deposit position", async () => {
-        //this works
-        //await s.nfpManager.connect(s.Bob).transferFrom(s.Bob.address, s.CappedPosition.address, s.BobPositionId)
+    it("Bob deposits position", async () => {
         await s.nfpManager.connect(s.Bob).approve(s.CappedPosition.address, s.BobPositionId)
         const result = await s.CappedPosition.connect(s.Bob).deposit(s.BobPositionId, s.BobVaultID)
         const gas = await getGas(result)
@@ -117,7 +131,46 @@ describe("Capped Position Functionality", () => {
         // Calling balanceOf on standard vault returns position value
         balance = await s.CappedPosition.balanceOf(s.BobVault.address)
         expect(await toNumber(balance)).to.be.closeTo(2000, 300, "BalanceOf on og vault returns value")
-        showBody("Capped Position supply: ", await toNumber(await s.CappedPosition.totalSupply()))
+    })
+
+    it("Carol deposits the registered position", async () => {
+        await s.nfpManager.connect(s.Carol).approve(s.CappedPosition.address, s.CarolPositionId)
+        const result = await s.CappedPosition.connect(s.Carol).deposit(s.CarolPositionId, s.CaroLVaultID)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to deposit a position: ", gas)
+
+        //check destinations
+        // nft to vault NFT
+        let balance = await s.nfpManager.balanceOf(s.CarolNftVault.address)
+        expect(balance).to.eq(1, "1 uni v3 position minted")
+
+        // Calling balanceOf on standard vault returns position value
+        balance = await s.CappedPosition.balanceOf(s.CarolVault.address)
+        expect(await toNumber(balance)).to.be.closeTo(2000, 300, "BalanceOf on og vault returns value")
+    })
+
+    it("Carol deposit's the unregistered position", async () => {
+
+        const startBorrowPower = await s.VaultController.vaultBorrowingPower(s.CaroLVaultID)
+        showBody("Start borrow power: ", await toNumber(startBorrowPower))
+
+        const startBalance = await s.CappedPosition.balanceOf(s.CarolVault.address)
+        showBody("Start Balance amnt: ", await toNumber(startBalance))
+
+        //deposit the illegal position
+        await s.nfpManager.connect(s.Carol).approve(s.CappedPosition.address, s.CarolIllegalPositionId)
+        const result = await s.CappedPosition.connect(s.Carol).deposit(s.CarolIllegalPositionId, s.CaroLVaultID)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to deposit unregistered position: ", gas)
+
+        let balance = await s.nfpManager.balanceOf(s.CarolNftVault.address)
+        expect(balance).to.eq(2, "2nd uni v3 position minted")
+
+        let endBorrowPower = await s.VaultController.vaultBorrowingPower(s.CaroLVaultID)
+        let endBalance = await s.CappedPosition.balanceOf(s.CarolVault.address)
+        expect(endBorrowPower).to.eq(startBorrowPower, "Borrow power has not increased")
+        expect(endBalance).to.eq(startBalance, "Balance has not increased")
+
     })
 
 

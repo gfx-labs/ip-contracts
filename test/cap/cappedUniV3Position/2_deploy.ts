@@ -123,6 +123,7 @@ type MintParams = {
   recipient: PromiseOrValue<string>,
   deadline: PromiseOrValue<BigNumberish>
 }
+
 let targetAmount: BigNumber
 
 describe("Mint position", () => {
@@ -131,10 +132,16 @@ describe("Mint position", () => {
   it("Approve", async () => {
     await s.WBTC.connect(s.Bob).approve(nfpManagerAddr, s.wBTC_Amount)
     await s.WETH.connect(s.Bob).approve(nfpManagerAddr, s.WETH_AMOUNT)
+
+    await s.WBTC.connect(s.Carol).approve(nfpManagerAddr, s.wBTC_Amount)
+    await s.WETH.connect(s.Carol).approve(nfpManagerAddr, s.WETH_AMOUNT)
   })
 
   it("Create instance of pool", async () => {
-    s.nfpManager = INonfungiblePositionManager__factory.connect(nfpManagerAddr, s.Frank)
+
+  })
+
+  it("Mint position for Bob", async () => {
 
     const poolContract = new ethers.Contract(
       wETHwBTC_pool_addr,
@@ -147,28 +154,10 @@ describe("Mint position", () => {
         poolContract.tickSpacing(),
         poolContract.slot0(),
       ])
-    //showBody(slot0)
-
-    /**
-       const pool = new Pool(
-          token0,
-          token1,
-          fee,
-          slot0[0],
-          liquidity,
-          slot0[1]
-      )
-     */
-
-
 
     const nut = nearestUsableTick(slot0[1], tickSpacing)
     const tickLower = nut - (tickSpacing * 2)
     const tickUpper = nut + (tickSpacing * 2)
-
-
-    //const intermediary = await new TestContract__factory(s.Frank).deploy()
-    //await intermediary.deployed()
 
     const block = await currentBlock()
 
@@ -201,12 +190,13 @@ describe("Mint position", () => {
     let v0: BigNumber = (p0.mul(BN(args.amount0))).div(BN("1e18"))
     let v1: BigNumber = (p1.mul(BN(args.amount1))).div(BN("1e18"))
     targetAmount = v1.add(v0)
-    showBodyCyan("Target: ", await toNumber(targetAmount))
+    //showBodyCyan("Target: ", await toNumber(targetAmount))//todo improve accuracy?
     const tokenId = args.tokenId
     s.BobPositionId = tokenId
     await mineBlock()
 
-    const manager = INFPmanager__factory.connect(nfpManagerAddr, s.Frank)
+    /**
+     const manager = INFPmanager__factory.connect(nfpManagerAddr, s.Frank)
     const [
       nonce,
       operator,
@@ -221,17 +211,124 @@ describe("Mint position", () => {
       tokensOwed0,
       tokensOwed1
     ] = await s.nfpManager.positions(tokenId)
+     */
 
     //showBody("TokensOwed0: ", tokensOwed0)
     //showBody("TokensOwed1: ", tokensOwed1)
     //showBody("liquidity: ", await toNumber(liquidity))
 
   })
+
+  it("Mint position for Carol", async () => {
+
+    const poolContract = new ethers.Contract(
+      wETHwBTC_pool_addr,
+      POOL_ABI,
+      ethers.provider
+    )
+    const [fee, tickSpacing, slot0] =
+      await Promise.all([
+        poolContract.fee(),
+        poolContract.tickSpacing(),
+        poolContract.slot0(),
+      ])
+
+    const nut = nearestUsableTick(slot0[1], tickSpacing)
+    const tickLower = nut - (tickSpacing * 2)
+    const tickUpper = nut + (tickSpacing * 2)
+
+    const block = await currentBlock()
+
+    const params: MintParams = {
+      token0: s.WBTC.address,
+      token1: s.WETH.address,
+      fee: fee,
+      tickLower: tickLower,
+      tickUpper: tickUpper,
+      amount0Desired: s.wBTC_Amount,
+      amount1Desired: s.WETH_AMOUNT,
+      amount0Min: BN("0"),
+      amount1Min: BN("0"),
+      recipient: s.Carol.address,
+      deadline: block.timestamp + 500
+    }
+
+    //mint position
+    const result = await s.nfpManager.connect(s.Carol).mint(params)
+    await hardhat_mine_timed(500, 15)
+    const args = await getArgs(result)
+    const tokenId = args.tokenId
+    s.CarolPositionId = tokenId
+    expect(await s.nfpManager.balanceOf(s.Carol.address)).to.eq(BN("1"), "Carol has 1 NFT")
+  })
+
+  it("Reset approvals", async () => {
+    //reset previous weth approval
+    await s.WETH.connect(s.Carol).approve(nfpManagerAddr, BN("0"))
+
+    await hardhat_mine_timed(500, 15)
+    let usdcApproval = await s.USDC.allowance(s.Carol.address, s.nfpManager.address)
+    let wethApproval = await s.WETH.allowance(s.Carol.address, s.nfpManager.address)
+
+    expect(usdcApproval).to.eq(0, "USDC approval is 0")
+    expect(wethApproval).to.eq(0, "WETH approval is 0")
+
+    await s.USDC.connect(s.Carol).approve(nfpManagerAddr, s.USDC_AMOUNT)
+    await s.WETH.connect(s.Carol).approve(nfpManagerAddr, s.WETH_AMOUNT)
+
+    usdcApproval = await s.USDC.allowance(s.Carol.address, s.nfpManager.address)
+    wethApproval = await s.WETH.allowance(s.Carol.address, s.nfpManager.address)
+
+    expect(usdcApproval).to.eq(s.USDC_AMOUNT, "USDC approval is correct")
+    expect(wethApproval).to.eq(s.WETH_AMOUNT, "WETH approval is correct")
+    await hardhat_mine_timed(500, 15)
+
+  })
+
+  it("Mint another position for Carol for a pool that is not registered", async () => {
+    const illegalPool = "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8" //USDC/wETH/3000
+    const poolContract = new ethers.Contract(
+      illegalPool,
+      POOL_ABI,
+      ethers.provider
+    )
+
+    const [fee, tickSpacing, slot0] =
+      await Promise.all([
+        poolContract.fee(),
+        poolContract.tickSpacing(),
+        poolContract.slot0(),
+      ])
+    const nut = nearestUsableTick(slot0[1], tickSpacing)
+    const tickLower = nut - (tickSpacing * 2)
+    const tickUpper = nut + (tickSpacing * 2)
+
+    const block = await currentBlock()
+
+    const params: MintParams = {
+      token0: s.USDC.address,
+      token1: s.WETH.address,
+      fee: fee,
+      tickLower: tickLower,
+      tickUpper: tickUpper,
+      amount0Desired: s.USDC_AMOUNT,
+      amount1Desired: s.WETH_AMOUNT,
+      amount0Min: BN("0"),
+      amount1Min: BN("0"),
+      recipient: s.Carol.address,
+      deadline: block.timestamp + 500
+    }
+    //mint position
+    const result = await s.nfpManager.connect(s.Carol).mint(params)
+    await hardhat_mine_timed(500, 15)
+    const args = await getArgs(result)
+    const tokenId = args.tokenId
+    s.CarolIllegalPositionId = tokenId
+    expect(await s.nfpManager.balanceOf(s.Carol.address)).to.eq(BN("2"), "Carol has a second NFT")
+  })
 })
 
 describe("deploy oracles and cap tokens", () => {
-  let positionValuator: V3PositionValuator
-
   it("deploly oracles", async () => {
 
     s.PositionValuator = await DeployContractWithProxy(
@@ -262,7 +359,7 @@ describe("deploy oracles and cap tokens", () => {
     await s.NftVaultController.transferOwnership(s.GOV._address)
   })
 
-  
+
 
   it("Deploy cap token", async () => {
 

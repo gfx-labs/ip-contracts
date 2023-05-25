@@ -114,8 +114,10 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     underlying owner is associated with the vault (v1) addr so we need to derive that from the vaultMinter
    */
   ///@param recipient should already be the vault minter from the standard vault (v1)
+  ///@param amount can be the index of which to token to withdraw if less than the total number of positions
   ///@notice msgSender should be the parent standard vault
   function transfer(address recipient, uint256 amount /**override */) public override returns (bool) {
+    console.log("Amount: ", amount);
     IVault vault = IVault(_msgSender());
     require(vault.id() > 0, "Only Vaults");
     address minter = vault.minter();
@@ -123,10 +125,19 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vault.id());
     require(univ3_vault_address != address(0x0), "no univ3 vault");
 
+    console.log("Transfer length: ", _underlyingOwners[minter].length);
+
+    //withdraw specific token
+    if (amount < _underlyingOwners[minter].length) {
+      remove_from_list(minter, _underlyingOwners[minter][amount]);
+      //solvency check?
+      return true;
+    }
+
     // move every nft from the nft vault to the target
     for (uint256 i = 0; i < _underlyingOwners[minter].length; i++) {
       uint256 tokenId = _underlyingOwners[minter][i];
-
+      console.log("Transfer tokenId: ", tokenId);
       //todo figure out why there is a 0 id in the list
       if (tokenId != 0) {
         // no need to do the check here when removing from list

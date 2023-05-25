@@ -206,37 +206,68 @@ describe("Liquidations - uniPosition", () => {
         expect(liab).to.eq(0, "Loan completely repaid")
     })
 
-    
+
     it("Withdraw after loan", async () => {
- 
-    
-        const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, 1)
- 
+
+
+        const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, 99999)
+
         let balance = await s.nfpManager.balanceOf(s.BobNftVault.address)
         expect(await toNumber(balance)).to.eq(0, "All uniPosition withdrawn")
- 
+
         balance = await s.CappedPosition.balanceOf(s.BobVault.address)
         expect(await toNumber(balance)).to.eq(0, "All CappedPosition removed from vault")
- 
+
     })
 
- /**
-    it("mappings", async () => {
-        const _vaultAddress_vaultId = await s.VotingVaultController._vaultAddress_vaultId(s.BobVault.address)
-        expect(_vaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
- 
-        const _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_vaultBPTaddress(BN(s.BobVaultID))
-        expect(_vaultId_votingVaultAddress.toUpperCase()).to.equal(s.BobBptVault.address.toUpperCase(), "Correct voting vault ID")
- 
-        const _votingVaultAddress_vaultId = await s.VotingVaultController._vaultBPTaddress_vaultId(s.BobBptVault.address)
-        expect(_votingVaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
- 
-        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.uniPosition.address)
-        expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedPosition.address.toUpperCase(), "Underlying => Capped is correct")
- 
-        const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedPosition.address)
-        expect(_CappedToken_underlying.toUpperCase()).to.eq(s.uniPosition.address.toUpperCase(), "Capped => Underlying correct")
+    /**
+       it("mappings", async () => {
+           const _vaultAddress_vaultId = await s.VotingVaultController._vaultAddress_vaultId(s.BobVault.address)
+           expect(_vaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
+    
+           const _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_vaultBPTaddress(BN(s.BobVaultID))
+           expect(_vaultId_votingVaultAddress.toUpperCase()).to.equal(s.BobBptVault.address.toUpperCase(), "Correct voting vault ID")
+    
+           const _votingVaultAddress_vaultId = await s.VotingVaultController._vaultBPTaddress_vaultId(s.BobBptVault.address)
+           expect(_votingVaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
+    
+           const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.uniPosition.address)
+           expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedPosition.address.toUpperCase(), "Underlying => Capped is correct")
+    
+           const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedPosition.address)
+           expect(_CappedToken_underlying.toUpperCase()).to.eq(s.uniPosition.address.toUpperCase(), "Capped => Underlying correct")
+       })
+   */
+})
+
+describe("Unregistered Positions", () => {
+
+    it("Carol borrows with both positions in the vault", async () => {
+
+        const startUSDI = await s.USDI.balanceOf(s.Carol.address)
+        expect(startUSDI).to.eq(0, "Carol holds 0 USDi")
+
+        await s.VaultController.connect(s.Carol).borrowUsdi(s.CaroLVaultID, borrowAmount)
+        await mineBlock()
+
+        await s.VaultController.connect(s.Carol).borrowUsdi(s.CaroLVaultID, borrowAmount)
+        await mineBlock()
+
+        let balance = await s.USDI.balanceOf(s.Carol.address)
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(startUSDI.add(borrowAmount.mul(2))), 0.001, "Bob received USDi loan")
+
     })
-*/
+
+    it("Check loan details", async () => {
+
+        const liability = await s.VaultController.vaultLiability(s.CaroLVaultID)
+        expect(await toNumber(liability)).to.be.closeTo(await toNumber(borrowAmount.mul(2)), 0.001, "Liability is correct")
+    })
+
+    it("Withdraw unused position with liability", async () => {
+        await s.CarolVault.connect(s.Carol).withdrawErc20(s.CappedPosition.address, 0)
+        //expect(s.CarolVault.connect(s.Carol).withdrawErc20(s.CappedPosition.address, 1)).to.revertedWith("over-withdrawal")
+    })
+
 })
 
