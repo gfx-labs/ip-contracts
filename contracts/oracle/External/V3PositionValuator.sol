@@ -60,14 +60,6 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   IUniswapV3Factory public constant FACTORY_V3 = IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
   INonfungiblePositionManager public constant nfpManager =
     INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
-  //OracleMaster public constant oracleMaster = OracleMaster(0xf4818813045E954f5Dc55a40c9B60Def0ba3D477);
-
-  IUniswapV3PoolImmutables public _pool;
-  IOracleRelay public token0Oracle;
-  IOracleRelay public token1Oracle;
-
-  uint256 public UNIT_0;
-  uint256 public UNIT_1;
 
   mapping(address => bool) public registeredPools;
   mapping(address => PoolData) public poolDatas;
@@ -88,12 +80,12 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   ) public initializer {
     __Ownable_init();
 
-    _pool = IUniswapV3PoolImmutables(pool_address);
-    token0Oracle = _token0Oracle;
-    token1Oracle = _token1Oracle;
+    //_pool = IUniswapV3PoolImmutables(pool_address);
+    //token0Oracle = _token0Oracle;
+    //token1Oracle = _token1Oracle;
 
-    UNIT_0 = 10 ** token0Units;
-    UNIT_1 = 10 ** token1Units;
+    //UNIT_0 = 10 ** token0Units;
+    //UNIT_1 = 10 ** token1Units;
   }
 
   ///@notice we return 1 here, as the true value is achieved through balanceOf
@@ -103,18 +95,14 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   }
 
   function getValue(uint256 tokenId) external view returns (uint256) {
-    /**
-    //todo refactor unit conversion
-    console.log("1e18: ", 1e18);
-    console.log("1e8 : ", 1e8);
-    console.log("unt0: ", UNIT_0);
-   */
+    (bool registered, IUniswapV3PoolImmutables pool, uint128 liquidity) = verifyPool(tokenId);
 
-    (, /*bool registered*/ IUniswapV3PoolImmutables pool, uint128 liquidity) = verifyPool(tokenId);
+    if (!registered) {
+      return 0;
+    }
 
-    uint256 p0 = token0Oracle.currentValue() / 1e10;
-    uint256 p1 = token1Oracle.currentValue();
-    uint160 sqrtPriceX96 = getSqrtPrice(p0, p1, address(pool));
+    (uint160 sqrtPriceX96, uint256 p0, uint256 p1) = getSqrtPrice(address(pool));
+
     int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
     int24 tickSpacing = pool.tickSpacing();
 
@@ -128,10 +116,8 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
       TickMath.getSqrtRatioAtTick(tickUpper), //sqrtRatioBX96
       liquidity
     );
-    //console.log("AMOUNT0: ", amount0);
-    //console.log("AMOUNT1: ", amount1);
 
-    //derive value based on price
+    //derive value based on price * amount
     return ((p0 * amount0) / 1e18) + ((p1 * amount1) / 1e18);
   }
 
@@ -267,8 +253,12 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
    */
 
   //tested accuracy: 0.15363% decrease from sqrtPriceX96 reported by slot0
-  function getSqrtPrice(uint256 p0, uint256 p1, address pool) internal view returns (uint160 sqrtPrice) {
+  function getSqrtPrice(address pool) internal view returns (uint160 sqrtPrice, uint256 p0, uint256 p1) {
     PoolData memory data = poolDatas[pool];
+
+    //modify price by units
+    p0 = data.token0Oracle.currentValue() / (1e18 / data.UNIT_0);
+    p1 = data.token1Oracle.currentValue() / (1e18 / data.UNIT_1);
 
     uint256 numerator = _mul(_mul(p0, data.UNIT_1), (1 << 96));
     uint256 denominator = _mul(p1, data.UNIT_0);

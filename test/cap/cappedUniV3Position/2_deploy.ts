@@ -124,7 +124,6 @@ type MintParams = {
   deadline: PromiseOrValue<BigNumberish>
 }
 
-let targetAmount: BigNumber
 
 describe("Mint position", () => {
   //const token0 = s.WBTC
@@ -179,21 +178,13 @@ describe("Mint position", () => {
     const result = await s.nfpManager.connect(s.Bob).mint(params)
     await hardhat_mine_timed(500, 15)
     const args = await getArgs(result)
+    showBody("wbtcAmount: ", s.wBTC_Amount)
+    showBody("wethAmount: ", s.WETH_AMOUNT)
 
-    expect(await s.nfpManager.balanceOf(s.Bob.address)).to.eq(BN("1"), "Bob has 1 NFT")
-
-
-    //derive value based on price
-    let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
-    let p1: BigNumber = await s.wethOracle.currentValue()
-
-    let v0: BigNumber = (p0.mul(BN(args.amount0))).div(BN("1e18"))
-    let v1: BigNumber = (p1.mul(BN(args.amount1))).div(BN("1e18"))
-    targetAmount = v1.add(v0)
-    //showBodyCyan("Target: ", await toNumber(targetAmount))//todo improve accuracy?
+    showBodyCyan("Args: ", args)
     const tokenId = args.tokenId
     s.BobPositionId = tokenId
-    await mineBlock()
+    expect(await s.nfpManager.balanceOf(s.Bob.address)).to.eq(BN("1"), "Bob has 1 NFT")    
 
     /**
      const manager = INFPmanager__factory.connect(nfpManagerAddr, s.Frank)
@@ -359,8 +350,6 @@ describe("deploy oracles and cap tokens", () => {
     await s.NftVaultController.transferOwnership(s.GOV._address)
   })
 
-
-
   it("Deploy cap token", async () => {
 
     s.CappedPosition = await DeployContractWithProxy(
@@ -512,4 +501,20 @@ describe("Setup, Queue and Execute proposal", () => {
     await ceaseImpersonation(s.GOV._address)
   })
 
+})
+
+describe("Check valuations", async () => {
+  it("Check weth/wbtc pool valuation", async () => {
+    //derive value based on price
+    let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
+    let p1: BigNumber = await s.wethOracle.currentValue()
+
+    const data = await s.nfpManager.positions(s.BobPositionId)
+    showBody("data: ", data)
+
+    //let v0: BigNumber = (p0.mul(BN(args.amount0))).div(BN("1e18"))
+    //let v1: BigNumber = (p1.mul(BN(args.amount1))).div(BN("1e18"))
+    //const targetAmount = v1.add(v0)
+    //showBodyCyan("Target: ", await toNumber(targetAmount))//todo improve accuracy?
+  })
 })
