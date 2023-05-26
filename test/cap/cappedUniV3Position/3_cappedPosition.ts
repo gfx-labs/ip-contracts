@@ -149,27 +149,10 @@ describe("Capped Position Functionality", () => {
         expect(await toNumber(balance)).to.be.closeTo(2000, 300, "BalanceOf on og vault returns value")
     })
 
-    it("Carol deposit's the unregistered position", async () => {
+    it("Try to deposit unregistered position", async () => {
 
-        const startBorrowPower = await s.VaultController.vaultBorrowingPower(s.CaroLVaultID)
-        showBody("Start borrow power: ", await toNumber(startBorrowPower))
-
-        const startBalance = await s.CappedPosition.balanceOf(s.CarolVault.address)
-        showBody("Start Balance amnt: ", await toNumber(startBalance))
-
-        //deposit the illegal position
         await s.nfpManager.connect(s.Carol).approve(s.CappedPosition.address, s.CarolIllegalPositionId)
-        const result = await s.CappedPosition.connect(s.Carol).deposit(s.CarolIllegalPositionId, s.CaroLVaultID)
-        const gas = await getGas(result)
-        showBodyCyan("Gas to deposit unregistered position: ", gas)
-
-        let balance = await s.nfpManager.balanceOf(s.CarolNftVault.address)
-        expect(balance).to.eq(2, "2nd uni v3 position minted")
-
-        let endBorrowPower = await s.VaultController.vaultBorrowingPower(s.CaroLVaultID)
-        let endBalance = await s.CappedPosition.balanceOf(s.CarolVault.address)
-        expect(endBorrowPower).to.eq(startBorrowPower, "Borrow power has not increased")
-        expect(endBalance).to.eq(startBalance, "Balance has not increased")
+        expect(s.CappedPosition.connect(s.Carol).deposit(s.CarolIllegalPositionId, s.CaroLVaultID)).to.be.revertedWith("Pool not registered")
 
     })
 

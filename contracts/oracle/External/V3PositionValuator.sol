@@ -98,7 +98,7 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
 
   ///@notice we return 1 here, as the true value is achieved through balanceOf
   ///@notice we can't return the value here as we need to be passed the liquidity
-  function currentValue() external view override returns (uint256) {
+  function currentValue() external pure override returns (uint256) {
     return 1e18;
   }
 
@@ -109,19 +109,14 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     console.log("1e8 : ", 1e8);
     console.log("unt0: ", UNIT_0);
    */
-    (, , address token0, address token1, uint24 fee, , , uint128 liquidity, , , , ) = nfpManager.positions(tokenId);
 
-    ///@notice if pool is not registered, the value is 0
-    (bool registered, address pool) = verifyPool(token0, token1, fee);
-    if (!registered) {
-      return 0;
-    }
+    (, /*bool registered*/ IUniswapV3PoolImmutables pool, uint128 liquidity) = verifyPool(tokenId);
 
     uint256 p0 = token0Oracle.currentValue() / 1e10;
     uint256 p1 = token1Oracle.currentValue();
-    uint160 sqrtPriceX96 = getSqrtPrice(p0, p1, pool);
+    uint160 sqrtPriceX96 = getSqrtPrice(p0, p1, address(pool));
     int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
-    int24 tickSpacing = _pool.tickSpacing();
+    int24 tickSpacing = pool.tickSpacing();
 
     int24 tickLower = tick - (tickSpacing * 2);
     int24 tickUpper = tick + (tickSpacing * 2);
@@ -140,12 +135,14 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     return ((p0 * amount0) / 1e18) + ((p1 * amount1) / 1e18);
   }
 
-  function verifyPool(address token0, address token1, uint24 fee) internal view returns (bool, address) {
+  function verifyPool(uint256 tokenId) public view returns (bool, IUniswapV3PoolImmutables, uint128) {
+    (, , address token0, address token1, uint24 fee, , , uint128 liquidity, , , , ) = nfpManager.positions(tokenId);
+
     address pool = PoolAddress.computeAddress(
       address(FACTORY_V3),
       PoolAddress.PoolKey({token0: token0, token1: token1, fee: uint24(fee)})
     );
-    return (registeredPools[pool], pool);
+    return (registeredPools[pool], IUniswapV3PoolImmutables(pool), liquidity);
   }
 
   ///@notice toggle @param pool registered or not

@@ -97,6 +97,11 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   function deposit(uint256 tokenId, uint96 vaultId) public nonReentrant {
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vaultId);
     require(address(univ3_vault_address) != address(0x0), "invalid voting vault");
+
+    ///@notice only allow deposits from registered pools
+    (bool registered, , ) = _positionValuator.verifyPool(tokenId);
+    require(registered, "Pool not registered");
+
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     add_to_list(vault.minter(), tokenId);
     //todo total supply?
@@ -114,10 +119,8 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     underlying owner is associated with the vault (v1) addr so we need to derive that from the vaultMinter
    */
   ///@param recipient should already be the vault minter from the standard vault (v1)
-  ///@param amount can be the index of which to token to withdraw if less than the total number of positions
   ///@notice msgSender should be the parent standard vault
-  function transfer(address recipient, uint256 amount /**override */) public override returns (bool) {
-    console.log("Amount: ", amount);
+  function transfer(address recipient, uint256 /**amount */) public override returns (bool) {
     IVault vault = IVault(_msgSender());
     require(vault.id() > 0, "Only Vaults");
     address minter = vault.minter();
@@ -126,13 +129,6 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     require(univ3_vault_address != address(0x0), "no univ3 vault");
 
     console.log("Transfer length: ", _underlyingOwners[minter].length);
-
-    //withdraw specific token
-    if (amount < _underlyingOwners[minter].length) {
-      remove_from_list(minter, _underlyingOwners[minter][amount]);
-      //solvency check?
-      return true;
-    }
 
     // move every nft from the nft vault to the target
     for (uint256 i = 0; i < _underlyingOwners[minter].length; i++) {
