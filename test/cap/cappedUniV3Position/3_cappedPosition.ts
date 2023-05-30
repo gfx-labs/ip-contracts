@@ -3,7 +3,7 @@ import { d } from "../DeploymentInfo";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
 import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../../util/block";
-import { utils, BigNumber } from "ethers";
+import { utils, BigNumber, BigNumberish } from "ethers";
 import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculatetokensToLiquidate, calculateUSDI2repurchase, changeInBalance } from "../../../util/math";
 import { currentBlock, reset, hardhat_mine } from "../../../util/block"
 import MerkleTree from "merkletreejs";
@@ -26,6 +26,7 @@ import { JsxEmit } from "typescript";
 import { stealMoney } from "../../../util/money";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
 import { IERC20__factory } from "@certusone/wormhole-sdk/lib/cjs/ethers-contracts";
+import { PromiseOrValue } from "../../../typechain-types/common";
 require("chai").should();
 
 
@@ -170,3 +171,112 @@ describe("Capped Position Functionality", () => {
 
 })
 
+describe("Check valuations", async () => {
+    it("Check weth/wbtc pool valuation", async () => {
+        //derive value based on price
+        let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
+        let p1: BigNumber = await s.wethOracle.currentValue()
+   
+        let v0: BigNumber = (p0.mul(BN(s.BobAmount0))).div(BN("1e18"))
+        let v1: BigNumber = (p1.mul(BN(s.BobAmount1))).div(BN("1e18"))
+        const targetAmount = v1.add(v0)
+        const actual = await s.CappedPosition.balanceOf(s.BobVault.address)
+        showBodyCyan("Target: ", await toNumber(targetAmount))//todo improve accuracy?
+        showBodyCyan("Balanc: ", await toNumber(actual))
+        showBodyCyan("Delta: ", ((await toNumber(actual) - await toNumber(targetAmount)) / await toNumber(targetAmount)) * 100, "%")
+    })
+
+    it("Check weth/wbtc pool valuation - Carol", async () => {
+        //derive value based on price
+        let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
+        let p1: BigNumber = await s.wethOracle.currentValue()
+   
+        let v0: BigNumber = (p0.mul(BN(s.CarolAmount0))).div(BN("1e18"))
+        let v1: BigNumber = (p1.mul(BN(s.CarolAmount1))).div(BN("1e18"))
+        const targetAmount = v1.add(v0)
+        const actual = await s.CappedPosition.balanceOf(s.CarolVault.address)
+        showBodyCyan("Target: ", await toNumber(targetAmount))//todo improve accuracy?
+        showBodyCyan("Balanc: ", await toNumber(actual))
+        showBodyCyan("Delta: ", ((await toNumber(actual) - await toNumber(targetAmount)) / await toNumber(targetAmount)) * 100, "%")
+    })
+})
+
+
+/**
+type DecreaseLiquidityParams = {
+        tokenId: PromiseOrValue<BigNumberish>,
+        liquidity: PromiseOrValue<BigNumberish>,
+        amount0Min: PromiseOrValue<BigNumberish>,
+        amount1Min: PromiseOrValue<BigNumberish>,
+        deadline: PromiseOrValue<BigNumberish>,
+    }
+
+    type CollectParams = {
+        tokenId: PromiseOrValue<BigNumberish>,
+        recipient: PromiseOrValue<string>,
+        amount0Max: PromiseOrValue<BigNumberish>,
+        amount1Max: PromiseOrValue<BigNumberish>
+    }
+
+    it("return Carol's illegal position", async () => {
+
+        const startWeth = await s.WETH.balanceOf(s.Carol.address)
+        const startUSDC = await s.USDC.balanceOf(s.Carol.address)
+
+        showBody("Start weth: ", await toNumber(startWeth))
+        showBody("Start usdc: ", startUSDC)
+
+        let [, , , , , , , liquidity, , , ,] = await s.nfpManager.positions(s.CarolIllegalPositionId)
+        showBody("Liq: ", liquidity)
+        const block = await currentBlock()
+
+        //decrease liquidity 
+        const decreaseParams: DecreaseLiquidityParams = {
+            tokenId: s.CarolIllegalPositionId,
+            liquidity: liquidity,
+            amount0Min: BN("0"),
+            amount1Min: BN("0"),
+            deadline: block.timestamp + 120
+        }
+
+        await s.nfpManager.connect(s.Carol).decreaseLiquidity(decreaseParams)
+
+        const endWeth = await s.WETH.balanceOf(s.Carol.address)
+        const endUSDC = await s.USDC.balanceOf(s.Carol.address)
+        const [
+            nonce,
+            operator,
+            token0,
+            token1,
+            _fee,
+            tLow,
+            tUp,
+            endLiquidity,
+            feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128,
+            tokensOwed0,
+            tokensOwed1
+        ] = await s.nfpManager.positions(s.CarolIllegalPositionId)
+        showBody("tokensOwed0: ", tokensOwed0)
+        showBody("tokensOwed1: ", tokensOwed1)
+
+        const collectParams: CollectParams = {
+            tokenId: s.CarolIllegalPositionId,
+            recipient: s.Carol.address,
+            amount0Max: tokensOwed0,
+            amount1Max: tokensOwed1
+        }
+        await s.nfpManager.connect(s.Carol).collect(collectParams)
+
+        showBody("End weth: ", await toNumber(endWeth))
+        showBody("End usdc: ", endUSDC)
+
+
+
+        showBody("End Liquidity: ", endLiquidity)
+        showBody("Delta weth: ", endWeth.sub(startWeth))
+        showBody("Delta usdc: ", endUSDC.sub(startUSDC))
+
+
+    })
+ */

@@ -71,13 +71,7 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     uint256 UNIT_1;
   }
 
-  function initialize(
-    address pool_address,
-    IOracleRelay _token0Oracle,
-    IOracleRelay _token1Oracle,
-    uint256 token0Units,
-    uint256 token1Units
-  ) public initializer {
+  function initialize() public initializer {
     __Ownable_init();
 
     //_pool = IUniswapV3PoolImmutables(pool_address);
@@ -97,6 +91,7 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   function getValue(uint256 tokenId) external view returns (uint256) {
     (bool registered, IUniswapV3PoolImmutables pool, uint128 liquidity) = verifyPool(tokenId);
 
+    //unregistered pools will not have external oracle prices registered, and so won't work
     if (!registered) {
       return 0;
     }

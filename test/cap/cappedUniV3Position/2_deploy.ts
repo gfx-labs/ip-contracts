@@ -24,7 +24,6 @@ import {
   RateProofOfConcept__factory,
   IOracleRelay__factory,
   BPTstablePoolOracle__factory,
-  INFPmanager__factory,
   INonfungiblePositionManager__factory,
   Univ3CollateralToken__factory,
   NftVaultController__factory,
@@ -32,7 +31,6 @@ import {
   GovernorCharlieDelegate,
   OracleMaster__factory,
   VaultController__factory,
-  V3PositionValuator,
   V3PositionValuator__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
@@ -141,6 +139,8 @@ describe("Mint position", () => {
   })
 
   it("Mint position for Bob", async () => {
+    const startWeth = await s.WETH.balanceOf(s.Bob.address)
+    const startWbtc = await s.WBTC.balanceOf(s.Bob.address)
 
     const poolContract = new ethers.Contract(
       wETHwBTC_pool_addr,
@@ -178,13 +178,22 @@ describe("Mint position", () => {
     const result = await s.nfpManager.connect(s.Bob).mint(params)
     await hardhat_mine_timed(500, 15)
     const args = await getArgs(result)
-    showBody("wbtcAmount: ", s.wBTC_Amount)
-    showBody("wethAmount: ", s.WETH_AMOUNT)
+    //showBody("wbtcAmount: ", s.wBTC_Amount)
+    //showBody("wethAmount: ", s.WETH_AMOUNT)
 
-    showBodyCyan("Args: ", args)
+    //showBodyCyan("Args: ", args)
     const tokenId = args.tokenId
     s.BobPositionId = tokenId
-    expect(await s.nfpManager.balanceOf(s.Bob.address)).to.eq(BN("1"), "Bob has 1 NFT")    
+    expect(await s.nfpManager.balanceOf(s.Bob.address)).to.eq(BN("1"), "Bob has 1 NFT")
+
+    const endWeth = await s.WETH.balanceOf(s.Bob.address)
+    const endWbtc = await s.WBTC.balanceOf(s.Bob.address)
+
+    expect(startWbtc.sub(endWbtc)).to.eq(args.amount0, "Expected amount of wBTC taken")
+    expect(startWeth.sub(endWeth)).to.eq(args.amount1, "Expected amount of wETH taken")
+
+    s.BobAmount0 = args.amount0
+    s.BobAmount1 = args.amount1
 
     /**
      const manager = INFPmanager__factory.connect(nfpManagerAddr, s.Frank)
@@ -211,6 +220,11 @@ describe("Mint position", () => {
   })
 
   it("Mint position for Carol", async () => {
+
+
+    const startWeth = await s.WETH.balanceOf(s.Carol.address)
+    const startWbtc = await s.WBTC.balanceOf(s.Carol.address)
+
 
     const poolContract = new ethers.Contract(
       wETHwBTC_pool_addr,
@@ -251,6 +265,20 @@ describe("Mint position", () => {
     const tokenId = args.tokenId
     s.CarolPositionId = tokenId
     expect(await s.nfpManager.balanceOf(s.Carol.address)).to.eq(BN("1"), "Carol has 1 NFT")
+
+
+    const endWeth = await s.WETH.balanceOf(s.Carol.address)
+    const endWbtc = await s.WBTC.balanceOf(s.Carol.address)
+
+    expect(startWbtc.sub(endWbtc)).to.eq(args.amount0, "Expected amount of wBTC taken")
+    expect(startWeth.sub(endWeth)).to.eq(args.amount1, "Expected amount of wETH taken")
+
+    s.CarolAmount0 = args.amount0
+    s.CarolAmount1 = args.amount1
+
+
+
+
   })
 
   it("Reset approvals", async () => {
@@ -325,12 +353,14 @@ describe("deploy oracles and cap tokens", () => {
     s.PositionValuator = await DeployContractWithProxy(
       new V3PositionValuator__factory(s.Frank),
       s.Frank,
-      s.ProxyAdmin,
+      s.ProxyAdmin
+      /**
       wETHwBTC_pool_addr,
       s.wbtcOracle.address,
       s.wethOracle.address,
       await s.WBTC.decimals(),
       await s.WETH.decimals()
+       */
     )
     await s.PositionValuator.deployed()
 
@@ -503,18 +533,3 @@ describe("Setup, Queue and Execute proposal", () => {
 
 })
 
-describe("Check valuations", async () => {
-  it("Check weth/wbtc pool valuation", async () => {
-    //derive value based on price
-    let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
-    let p1: BigNumber = await s.wethOracle.currentValue()
-
-    const data = await s.nfpManager.positions(s.BobPositionId)
-    showBody("data: ", data)
-
-    //let v0: BigNumber = (p0.mul(BN(args.amount0))).div(BN("1e18"))
-    //let v1: BigNumber = (p1.mul(BN(args.amount1))).div(BN("1e18"))
-    //const targetAmount = v1.add(v0)
-    //showBodyCyan("Target: ", await toNumber(targetAmount))//todo improve accuracy?
-  })
-})
