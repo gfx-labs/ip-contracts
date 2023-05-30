@@ -66,6 +66,9 @@ contract BPTstablePoolOracle is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
+    //check for reentrancy, further protects against manipulation
+    ensureNotInVaultContext();
+
     (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
 
     uint256 tokenAmountIn = 1000e18;
@@ -217,6 +220,53 @@ contract BPTstablePoolOracle is IOracleRelay {
     }
     revert("STABLE_GET_BALANCE_DIDNT_CONVERGE");
   }
+
+  //https://github.com/balancer/balancer-v2-monorepo/pull/2418/files#diff-36f155e03e561d19a594fba949eb1929677863e769bd08861397f4c7396b0c71R37
+  function ensureNotInVaultContext() internal view {
+        // Perform the following operation to trigger the Vault's reentrancy guard:
+        //
+        // IVault.UserBalanceOp[] memory noop = new IVault.UserBalanceOp[](0);
+        // _vault.manageUserBalance(noop);
+        //
+        // However, use a static call so that it can be a view function (even though the function is non-view).
+        // This allows the library to be used more widely, as some functions that need to be protected might be
+        // view.
+        //
+        // This staticcall always reverts, but we need to make sure it doesn't fail due to a re-entrancy attack.
+        // Staticcalls consume all gas forwarded to them on a revert. By default, almost the entire available gas
+        // is forwarded to the staticcall, causing the entire call to revert with an 'out of gas' error.
+        //
+        // We set the gas limit to 100k, but the exact number doesn't matter because view calls are free, and non-view
+        // calls won't waste the entire gas limit on a revert. `manageUserBalance` is a non-reentrant function in the
+        // Vault, so calling it invokes `_enterNonReentrant` in the `ReentrancyGuard` contract, reproduced here:
+        //
+        //    function _enterNonReentrant() private {
+        //        // If the Vault is actually being reentered, it will revert in the first line, at the `_require` that
+        //        // checks the reentrancy flag, with "BAL#400" (corresponding to Errors.REENTRANCY) in the revertData.
+        //        // The full revertData will be: `abi.encodeWithSignature("Error(string)", "BAL#400")`.
+        //        _require(_status != _ENTERED, Errors.REENTRANCY);
+        //
+        //        // If the Vault is not being reentered, the check above will pass: but it will *still* revert,
+        //        // because the next line attempts to modify storage during a staticcall. However, this type of
+        //        // failure results in empty revertData.
+        //        _status = _ENTERED;
+        //    }
+        //
+        // So based on this analysis, there are only two possible revertData values: empty, or abi.encoded BAL#400.
+        //
+        // It is of course much more bytecode and gas efficient to check for zero-length revertData than to compare it
+        // to the encoded REENTRANCY revertData.
+        //
+        // While it should be impossible for the call to fail in any other way (especially since it reverts before
+        // `manageUserBalance` even gets called), any other error would generate non-zero revertData, so checking for
+        // empty data guards against this case too.
+
+        (, bytes memory revertData) = address(VAULT).staticcall{ gas: 100_000 }(
+            abi.encodeWithSelector(VAULT.manageUserBalance.selector, 0)
+        );
+
+        require(revertData.length == 0, "Errors.REENTRANCY");
+    }
 
   /*******************************PURE MATH FUNCTIONS********************************/
   ///@notice get exchange rates
