@@ -6,7 +6,6 @@ import "../../oracle/OracleMaster.sol";
 
 import "../../_external/uniswap/TickMath.sol";
 import {FullMath, FixedPoint96} from "../../_external/uniswap/FullMath.sol";
-import "../../_external/uniswap/LiquidityAmounts.sol";
 import "../../_external/uniswap/INonfungiblePositionManager.sol";
 import "../../_external/uniswap/PoolAddress.sol";
 import "../../_external/IERC20.sol";
@@ -55,22 +54,9 @@ interface UniswapV3Pool {
   function token1() external view returns (address);
 
   function fee() external view returns (uint24);
-
-  function slot0()
-    external
-    view
-    returns (
-      uint160 sqrtPriceX96,
-      int24 tick,
-      uint16 observationIndex,
-      uint16 observationCardinality,
-      uint16 observationCardinalityNext,
-      uint8 feeProtocol,
-      bool unlocked
-    );
 }
 
-contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
+contract V3PositionValuator_old is Initializable, OwnableUpgradeable, IOracleRelay {
   IUniswapV3Factory public constant FACTORY_V3 = IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
   INonfungiblePositionManager public constant nfpManager =
     INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
@@ -103,7 +89,6 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   }
 
   function getValue(uint256 tokenId) external view returns (uint256) {
-    console.log("Get Value");
     (bool registered, IUniswapV3PoolImmutables pool, uint128 liquidity) = verifyPool(tokenId);
 
     //unregistered pools will not have external oracle prices registered, and so won't work
@@ -111,23 +96,17 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
       return 0;
     }
 
-    //independantly calculate sqrtPrice
     (uint160 sqrtPriceX96, uint256 p0, uint256 p1) = getSqrtPrice(address(pool));
 
-    UniswapV3Pool _pool_ = UniswapV3Pool(address(pool));
-    (uint160 actualPrice, , , , , , ) = _pool_.slot0();
-    console.log("Calced sqrt: ", sqrtPriceX96);
-    console.log("Actual sqrt: ", actualPrice);
-
-    int24 tick = TickMath.getTickAtSqrtRatio(actualPrice);
+    int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
     int24 tickSpacing = pool.tickSpacing();
 
     int24 tickLower = tick - (tickSpacing * 2);
     int24 tickUpper = tick + (tickSpacing * 2);
 
     //get liquidity
-    (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
-      actualPrice,
+    (uint256 amount0, uint256 amount1) = getAmountsForLiquidity(
+      sqrtPriceX96,
       TickMath.getSqrtRatioAtTick(tickLower), //sqrtRatioAX96
       TickMath.getSqrtRatioAtTick(tickUpper), //sqrtRatioBX96
       liquidity
@@ -157,6 +136,58 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
       UNIT_0: 10 ** IERC20(pool.token0()).decimals(),
       UNIT_1: 10 ** IERC20(pool.token1()).decimals()
     });
+  }
+
+  /// @notice Computes the token0 and token1 value for a given amount of liquidity, the current
+  /// pool prices and the prices at the tick boundaries
+  function getAmountsForLiquidity(
+    uint160 sqrtRatioX96,
+    uint160 sqrtRatioAX96,
+    uint160 sqrtRatioBX96,
+    uint128 liquidity
+  ) internal pure returns (uint256 amount0, uint256 amount1) {
+    if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+
+    if (sqrtRatioX96 <= sqrtRatioAX96) {
+      amount0 = getAmount0ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+    } else if (sqrtRatioX96 < sqrtRatioBX96) {
+      amount0 = getAmount0ForLiquidity(sqrtRatioX96, sqrtRatioBX96, liquidity);
+      amount1 = getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioX96, liquidity);
+    } else {
+      amount1 = getAmount1ForLiquidity(sqrtRatioAX96, sqrtRatioBX96, liquidity);
+    }
+  }
+
+  /// @notice Computes the amount of token0 for a given amount of liquidity and a price range
+  /// @param sqrtRatioAX96 A sqrt price
+  /// @param sqrtRatioBX96 Another sqrt price
+  /// @param liquidity The liquidity being valued
+  /// @return amount0 The amount0
+  function getAmount0ForLiquidity(
+    uint160 sqrtRatioAX96,
+    uint160 sqrtRatioBX96,
+    uint128 liquidity
+  ) internal pure returns (uint256 amount0) {
+    if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+
+    return
+      FullMath.mulDiv(uint256(liquidity) << FixedPoint96.RESOLUTION, sqrtRatioBX96 - sqrtRatioAX96, sqrtRatioBX96) /
+      sqrtRatioAX96;
+  }
+
+  /// @notice Computes the amount of token1 for a given amount of liquidity and a price range
+  /// @param sqrtRatioAX96 A sqrt price
+  /// @param sqrtRatioBX96 Another sqrt price
+  /// @param liquidity The liquidity being valued
+  /// @return amount1 The amount1
+  function getAmount1ForLiquidity(
+    uint160 sqrtRatioAX96,
+    uint160 sqrtRatioBX96,
+    uint128 liquidity
+  ) internal pure returns (uint256 amount1) {
+    if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
+
+    return FullMath.mulDiv(liquidity, sqrtRatioBX96 - sqrtRatioAX96, FixedPoint96.Q96);
   }
 
   /**
@@ -216,9 +247,7 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     }
    */
 
-  /***********************MKR DAO method for getSqrtPrice - 7.16% difference from token values****************************/
   //tested accuracy: 0.15363% decrease from sqrtPriceX96 reported by slot0
-  //https://github.com/makerdao/univ3-lp-oracle/blob/master/src/GUniLPOracle.sol#L248
   function getSqrtPrice(address pool) internal view returns (uint160 sqrtPrice, uint256 p0, uint256 p1) {
     PoolData memory data = poolDatas[pool];
 
@@ -235,6 +264,14 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
 
   function toUint160(uint256 x) internal pure returns (uint160 z) {
     require((z = uint160(x)) == x, "GUniLPOracle/uint160-overflow");
+  }
+
+  ///@notice floating point division at @param factor scale
+  function divide(uint256 numerator, uint256 denominator, uint256 factor) internal pure returns (uint256 result) {
+    uint256 q = (numerator / denominator) * 10 ** factor;
+    uint256 r = ((numerator * 10 ** factor) / denominator) % 10 ** factor;
+
+    return q + r;
   }
 
   function _mul(uint256 _x, uint256 _y) internal pure returns (uint256 z) {
