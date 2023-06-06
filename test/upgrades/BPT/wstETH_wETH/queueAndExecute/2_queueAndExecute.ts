@@ -224,11 +224,11 @@ describe("Setup, Queue, and Execute proposal", () => {
     //reward token is what is recived for staking the gauge token
     //call PID on reward token to get PID
     const PID = BN("29")
-    const gaugeToken = s.wstETH_wETH.address
+    const BPT = s.wstETH_wETH.address
     const rewardToken = "0xe4683Fe8F53da14cA5DAc4251EaDFb3aa614d528"
 
     const populateAuraLpData = await new VotingVaultController__factory(prop).attach(s.VotingVaultController.address).
-      populateTransaction.registerAuraLpData(gaugeToken, rewardToken, PID)
+      populateTransaction.registerAuraLpData(BPT, rewardToken, PID)
 
 
     proposal.addStep(upgradeVVC, "upgrade(address,address)")

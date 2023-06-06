@@ -173,6 +173,8 @@ contract VaultBPT is Context {
   /// @param lp - the aura LP token address, or auraBal address
   /// @param claimExtra - claim extra token rewards, uses more gas
   function claimAuraLpRewards(IERC20 lp, bool claimExtra) external {
+    bool solvencyCheckNeeded = false;
+
     //get rewards pool
     (address rewardsToken, uint256 PID) = _votingController.getAuraLpData(address(lp));
     IRewardsPool rp = IRewardsPool(rewardsToken);
@@ -184,24 +186,39 @@ contract VaultBPT is Context {
 
     //send rewards to minter
     IERC20 rewardToken = IERC20(rp.rewardToken());
+
+    //check if rewardToken is registered as a collateral, if not, the _rewardToken should be 0x0
+    (address _rewardToken, ) = _votingController.getAuraLpData(address(rewardToken));
+    if (_rewardToken != address(0x0)) {
+      solvencyCheckNeeded = true;
+    }
+
     rewardToken.transfer(minter, rewardToken.balanceOf(address(this)));
 
     if (claimExtra) {
       for (uint256 i = 0; i < rp.extraRewardsLength(); i++) {
         IVirtualRewardPool extraRewardPool = IVirtualRewardPool(rp.extraRewards(i));
-      
+
         IERC20 extraRewardToken = IERC20(extraRewardPool.rewardToken());
 
+        //check if extraRewardToken is registered as a collateral, if not, the _rewardToken should be 0x0
+        (address _rewardToken, ) = _votingController.getAuraLpData(address(extraRewardToken));
+        if (_rewardToken != address(0x0)) {
+          solvencyCheckNeeded = true;
+        }
         extraRewardPool.getReward();
 
         extraRewardToken.transfer(minter, extraRewardToken.balanceOf(address(this)));
       }
     }
+    
     // if an underlying reward or extra reward token is used as collateral,
     // claiming rewards will empty the vault of this token, this check prevents this
     // if it is the case that the underlying reward token is registered collateral held by this vault
     // the liability will need to be repaid sufficiently in order to claim rewards
-    require(_controller.checkVault(_vaultInfo.id), "Claim causes insolvency");
+    if (solvencyCheckNeeded) {
+      require(_controller.checkVault(_vaultInfo.id), "Claim causes insolvency");
+    }
   }
 
   /// @notice manual unstake
