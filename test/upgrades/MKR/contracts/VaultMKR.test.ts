@@ -4,7 +4,6 @@ import { ethers, network } from "hardhat";
 import { stealMoney } from "../../../../util/money";
 import { expect } from "chai";
 import { mineBlock, reset } from "../../../../util/block";
-import { BN } from "../../../../util/number";
 import {
     IERC20,
     IERC20__factory,
@@ -15,8 +14,6 @@ import {
     MKRVotingVaultController__factory,
     MKRVotingVault,
     MKRVotingVault__factory,
-    CappedMkrToken,
-    CappedMkrToken__factory,
     VaultController__factory
 } from "../../../../typechain-types";
 
@@ -90,5 +87,41 @@ describe("MKRVotingVault Test", async() => {
         const delegate: VoteDelegate = VoteDelegate__factory.connect(delegatee, s.Frank);
         const stake = await delegate.stake(addr);
         expect(stake).to.be.equal(amountDelegated);
+    });
+
+    it("should delegate to multiple", async () => {
+        const delegateeTwo = "0xe2bfDa5e1f59325E4b8dF5feaA30e4aB6516bf28";
+        const amountDelegated = ethers.utils.parseEther("5");
+        const addr = await mkrVotingVaultController.votingVaultAddress(s.CaroLVaultID);
+
+        await vault.delegateMKRLikeTo(delegateeTwo, MKR, amountDelegated);
+        await mineBlock();
+
+        const balanceAfter = await MKRToken.balanceOf(addr);
+        expect(0).to.be.equal(balanceAfter);
+
+        const delegate: VoteDelegate = VoteDelegate__factory.connect(delegatee, s.Frank);
+        const stake = await delegate.stake(addr);
+        expect(stake).to.be.equal(amountDelegated);
+
+        const delegateTwo: VoteDelegate = VoteDelegate__factory.connect(delegateeTwo, s.Frank);
+        const stakeTwo = await delegateTwo.stake(addr);
+        expect(stakeTwo).to.be.equal(amountDelegated);
+    });
+
+    it("should undelegate stake", async () => {
+        const amountDelegated = ethers.utils.parseEther("5");
+        const addr = await mkrVotingVaultController.votingVaultAddress(s.CaroLVaultID);
+        const balanceBefore = await MKRToken.balanceOf(addr);
+
+        await vault.undelegateMKRLike(delegatee, amountDelegated);
+        await mineBlock();
+
+        const balanceAfter = await MKRToken.balanceOf(addr);
+        expect(balanceBefore.add(amountDelegated)).to.be.equal(balanceAfter);
+
+        const delegate: VoteDelegate = VoteDelegate__factory.connect(delegatee, s.Frank);
+        const stake = await delegate.stake(addr);
+        expect(stake).to.be.equal(0);
     });
 });
