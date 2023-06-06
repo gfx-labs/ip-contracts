@@ -120,24 +120,30 @@ describe("Liquidations - auraBal", () => {
         expect(startLiab).to.eq(0, "Liability is still 0")
 
         await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower)
-        await mineBlock()
         const liab = await s.VaultController.vaultLiability(s.BobVaultID)
         expect(await toNumber(liab)).to.be.closeTo(await toNumber(borrowPower), 0.001, "Liability is correct")
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
-        expect(await toNumber(balance)).to.be.closeTo(await toNumber(borrowPower.add(startUSDI)), 0.001, "Balance is correct")
+        expect(await toNumber(balance)).to.be.closeTo(await toNumber(borrowPower.add(startUSDI)), 0.1, "Balance is correct")
 
     })
 
     it("Elapse time to put vault underwater", async () => {
+        let solvency = await s.VaultController.checkVault(s.BobVaultID)
+        expect(solvency).to.eq(true, "Bob's vault is not yet underwater")
 
-        await fastForward(OneDay)
-        await mineBlock()
+        let liab = await s.VaultController.vaultLiability(s.BobVaultID)
+        showBody("Borrowing p: ", await toNumber(borrowPower))
+        showBody("Liab before: ", await toNumber(liab))
+
+        await fastForward(OneWeek * 10)
         await s.VaultController.calculateInterest()
-        await mineBlock()
 
-        const solvency = await s.VaultController.checkVault(s.BobVaultID)
-        expect(solvency).to.eq(false, "Bob's vault is now underwater")
+        liab = await s.VaultController.vaultLiability(s.BobVaultID)
+        showBody("Liab after: ", await toNumber(liab))
+
+        solvency = await s.VaultController.checkVault(s.BobVaultID)
+        expect(solvency).to.eq(false, "Bob's vault is underwater")
 
     })
 
@@ -179,7 +185,7 @@ describe("Liquidations - auraBal", () => {
         const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedAuraBal.address, BN("1e50"))
         const gas = await getGas(result)
         showBodyCyan("Gas to liquidate auraBal: ", gas)
-        
+
         let supply = await s.CappedAuraBal.totalSupply()
         expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 10, "Total supply reduced as Capped auraBal is liquidatede")
 

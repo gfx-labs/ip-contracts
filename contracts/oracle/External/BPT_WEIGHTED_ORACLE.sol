@@ -26,8 +26,8 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
   address[] public _tokens;
 
   /**
-   * @param priceFeed - Balancer pool address
-   * @param tokens must be in the same order that is returned by the Balancer Vault getPoolTokens
+   * @param priceFeed - Balancer weighted pool address
+   * @param tokens order must match the corrisponding weights of getNormalizedWeights()
    * @param oracles must be in the same order as @param tokens
    */
   constructor(IBalancerPool priceFeed, address[] memory tokens, address[] memory oracles) {
