@@ -1,5 +1,5 @@
 import { expect, assert } from "chai";
-import { ethers, network, tenderly } from "hardhat";
+import { ethers, network } from "hardhat";
 import { stealMoney } from "../../../util/money";
 import { showBody } from "../../../util/format";
 import { BN } from "../../../util/number";

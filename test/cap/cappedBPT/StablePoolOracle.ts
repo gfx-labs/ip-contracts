@@ -1,234 +1,187 @@
 import { s } from "../scope";
 import { d } from "../DeploymentInfo";
-import { upgrades, ethers } from "hardhat";
-import { showBody, showBodyCyan } from "../../../util/format";
+import { ethers, network } from "hardhat";
 import { BN } from "../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear, hardhat_mine } from "../../../util/block";
-import { utils, BigNumber } from "ethers";
-import { currentBlock, reset } from "../../../util/block"
-import MerkleTree from "merkletreejs";
-import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
-import { expect, assert } from "chai";
-import { toNumber, getGas } from "../../../util/math"
-import { stealMoney } from "../../../util/money";
+import { currentBlock, mineBlock, resetCurrent } from "../../../util/block";
+import { expect } from "chai";
 
-import {
-    AnchoredViewRelay__factory,
-    BPT_WEIGHTED_ORACLE__factory,
-    CappedBptToken__factory,
-    IOracleRelay,
-    IVault__factory,
-    UniswapV3TokenOracleRelay__factory,
-    VaultBPT__factory,
-    WstETHRelay__factory,
-    RateProofOfConcept__factory,
-    IOracleRelay__factory,
-    BPTstablePoolOracle__factory,
-    StablePoolShowcase__factory,
-    ChainlinkOracleRelay__factory,
-    UniswapV3OracleRelay__factory
-} from "../../../typechain-types"
-import { red } from "bn.js";
-import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
-import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
+import { IERC20__factory, VaultController__factory, USDI__factory, OracleMaster__factory, ProxyAdmin__factory, IBalancerVault__factory, VotingVaultController__factory, IGauge__factory, IOracleRelay__factory, WstETHRelay__factory, BPTstablePoolOracle__factory, StablePoolShowcase__factory, IOracleRelay, StablePoolShowcase, UniswapV3TokenOracleRelay__factory, BPT_WEIGHTED_ORACLE__factory, ChainlinkOracleRelay__factory, UniswapV3OracleRelay__factory } from "../../../typechain-types";
+import { showBody, showBodyCyan } from "../../../util/format";
+import { toNumber } from "../../../util/math";
 
-const balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
+/******************************************
+ * These standalone tests are meant to be a simple test for the 
+ * outGivenIn oracle given current market conditions
+ * 
+ * These tests reset to the current block on eth mainnet
+ *
+ */
 
-//underlying asset oracles
-let wstethRelay: IOracleRelay
-let stEThMetaStablePoolOracle: IOracleRelay
-let weightedPoolOracle: IOracleRelay
-
-let auraUniOracle: IOracleRelay
-let auraBalUniOracle: IOracleRelay
-let auraStablePoolLPoracle: IOracleRelay
-let primeBPToracle: IOracleRelay
-let DOLAUniv3Oracle: IOracleRelay
-
-let USDC_Oracle:String
-let DOLA_v3Oracle:String
-
-//Production oracles, already deployed
-const BAL_TOKEN_ORACLE = "0xf5E0e2827F60580304522E2C38177DFeC7a428a4"
-const wethOracle = s.wethOracleAddr
-const rETH_Oracle = "0x69F3d75Fa1eaA2a46005D566Ec784FE9059bb04B"
-const cbETH_Oracle = "0xae7Be6FE233bd33F9F9149050932cBa728793fdd"
+//CONFIGURE THIS
+//deltaBips is in BIPs
+//1 BIP is 0.01% or 0.0001
+//2% deltaBips == 200
+const deltaBips = 200
 
 
-//underlying asset addrs
-const wstETH = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"
-const weth = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-const rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393"
-const Aura = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF"
-const BAL = "0xba100000625a3754423978a60c9317c58a424e3D"
-const cbETH = "0xBe9895146f7AF43049ca1c1AE358B0541Ea49704"
-const USDC = s.usdcAddress
-const DOLA = "0xc20Bc6F3BBCb9E278f097c05351C205EeC7DB01e"
+describe("Setup", () => {
+    it("Set hardhat network to a block after deployment", async () => {
+        await resetCurrent()
+        const block = await currentBlock()
+        showBody("Testing as of block: ", block.number)
+    })
+    it("set automine", async () => {
+        expect(await network.provider.send("evm_setAutomine", [true])).to.not
+            .throw;
+    })
+    it("connect to signers", async () => {
+        let accounts = await ethers.getSigners();
+        s.Frank = accounts[0]
+    })
+})
 
-describe("Deploy oracles for underlying assets", () => {
+describe("Deploy and test oracles for underlying assets", () => {
 
-    it("Check wstETH exchange rate relay", async () => {
-        wstethRelay = await new WstETHRelay__factory(s.Frank).deploy()
-        await mineBlock()
-        //showBody("wstETH direct conversion price: ", await toNumber(await wstethRelay.currentValue()))
+    const wethOracleAddr = "0x65dA327b1740D00fF7B366a4fd8F33830a2f03A2"
+    const balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
+
+    before(async () => {
+        //if accuracy goes over this, it will revert
+        showBodyCyan("Buffer: ", await toNumber(BN(deltaBips).mul(BN("1e16"))), "%")
     })
 
-    it("Deploy Uni V3 oracles", async () => {
-        const auraPoolAddr3k = "0x4Be410e2fF6a5F1718ADA572AFA9E8D26537242b"
-        auraUniOracle = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
-            500,
-            auraPoolAddr3k,
-            true,
-            BN("1"),
-            BN("1")
-        )
-        await auraUniOracle.deployed()
-        showBodyCyan("aura uniV3 price: ", await toNumber(await auraUniOracle.currentValue()))
+    it("Deploy and check B_stETH_STABLE MetaStablePool oracle", async () => {
 
+        //deploy wstethRelay
+        const wstethRelay = await new WstETHRelay__factory(s.Frank).deploy()
+
+
+        const wstETH = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"
+        const B_stETH_STABLE = "0x32296969Ef14EB0c6d29669C550D4a0449130230"
+
+        //wstETH/weth MetaStable pool
+        const stEThMetaStablePoolOracle = await new StablePoolShowcase__factory(s.Frank).deploy(
+            B_stETH_STABLE, //pool_address
+            balancerVault,
+            [wstETH, s.wethAddress], //_tokens
+            [wstethRelay.address, wethOracleAddr], //_oracles
+            BN(deltaBips),
+            BN("10000")
+        )
+        await stEThMetaStablePoolOracle.deployed()
+        let [naivePrice, expectedRate, calcedRate] = await stEThMetaStablePoolOracle.currentValue()
+        const delta = await stEThMetaStablePoolOracle.percentChange(expectedRate, calcedRate)
+        showBody("stETh MetaStablePool BPT price: ", await toNumber(naivePrice))
+        showBody("Accuracy: ", await toNumber(delta) * 100, "%")
+
+    })
+
+    it("Deploy and check B_rETH_STABLE MetaStablePool oracle", async () => {
+        const rETH_WETH_BPT = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276"
+        const rETH = "0xae78736Cd615f374D3085123A210448E74Fc6393"
+        const rETH_Oracle = "0x69F3d75Fa1eaA2a46005D566Ec784FE9059bb04B"
+
+        const rEthMetaStablePoolOracle = await new StablePoolShowcase__factory(s.Frank).deploy(
+            rETH_WETH_BPT, //pool_address
+            balancerVault, //balancer vault
+            [rETH, s.wethAddress], //_tokens
+            [rETH_Oracle, wethOracleAddr], //_oracles
+            BN(deltaBips),
+            BN("10000")
+        )
+        let [naivePrice, expectedRate, calcedRate] = await rEthMetaStablePoolOracle.currentValue()
+        const delta = await rEthMetaStablePoolOracle.percentChange(expectedRate, calcedRate)
+
+        showBody("rETH MetaStablePool BPT price: ", await toNumber(naivePrice))
+        showBody("Accuracy: ", await toNumber(delta) * 100, "%")
+    })
+
+    it("Deploy and check B_rETH_STABLE StablePool oracle", async () => {
+        const primeBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
+        const primeAuraLP = "0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd"
         const uniPool = "0xFdeA35445489e608fb4F20B6E94CCFEa8353Eabd"//3k, meh liquidity
-        auraBalUniOracle = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
+        const BAL_TOKEN_ORACLE = "0xf5E0e2827F60580304522E2C38177DFeC7a428a4"
+        const BAL = "0xba100000625a3754423978a60c9317c58a424e3D"
+        const auraBal = "0x616e8BfA43F920657B3497DBf40D6b1A02D4608d"
+        const auraUniOracle = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
             500,
             uniPool,
             false,
             BN("1"),
             BN("1")
         )
-        await mineBlock()
-        await auraBalUniOracle.deployed()
-        showBodyCyan("AuraBal uniV3 price: ", await toNumber(await auraBalUniOracle.currentValue()))
+        await auraUniOracle.deployed()
+
+        //showBodyCyan("AuraBal uni relay price: ", await toNumber(await auraUniOracle.currentValue()))
 
 
-        //DOLA uni v3 oracle
-        const DOLApoolAddr = "0x7c082BF85e01f9bB343dbb460A14e51F67C58cFB"//3k, bad liquidity
-        const DOLA_oracle = await new UniswapV3OracleRelay__factory(s.Frank).deploy(
-            14400,
-            DOLApoolAddr,
+        const primeBPToracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
+            primeBPT,
+            balancerVault, //balancer vault
+            [BAL, s.wethAddress],
+            [BAL_TOKEN_ORACLE, s.wethOracleAddr],
+            BN("10"),
+            BN("100")
+        )
+        await primeBPToracle.deployed()
+
+        const auraStablePoolLPoracle = await new StablePoolShowcase__factory(s.Frank).deploy(
+            primeAuraLP,
+            balancerVault, //balancer vault
+            [primeBPT, auraBal],//prime BPT / auraBal
+            [primeBPToracle.address, auraUniOracle.address],//prime BPT oracle / auraBal oracle
+            BN(deltaBips),
+            BN("10000")
+        )
+
+        let [naivePrice, expectedRate, calcedRate] = await auraStablePoolLPoracle.currentValue()
+        const delta = await auraStablePoolLPoracle.percentChange(expectedRate, calcedRate)
+
+        showBody("auraBalLP StablePool BPT price: ", await toNumber(naivePrice))
+        showBody("Accuracy: ", await toNumber(delta) * 100, "%")
+    })
+
+    /**
+    it("Deploy and check DOLA StablePool", async () => {
+
+        const LP = "0xFf4ce5AAAb5a627bf82f4A571AB1cE94Aa365eA6"
+        const DOLA = "0x865377367054516e17014CcdED1e7d814EDC9ce4"
+
+        const clDataFeedUSDC = "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6"
+        const uniPool = "0x7c082BF85e01f9bB343dbb460A14e51F67C58cFB"
+
+        const usdcOracle = await new ChainlinkOracleRelay__factory(s.Frank).deploy(
+            clDataFeedUSDC,
+            BN("1e10"),
+            BN("1")
+        )
+        showBody("USDC: ", await toNumber(await usdcOracle.currentValue()))
+
+        const dolOracle = await new UniswapV3OracleRelay__factory(s.Frank).deploy(
+            500,
+            uniPool,
             false,
             BN("1e12"),
             BN("1")
         )
-        await DOLA_oracle.deployed()
-        DOLA_v3Oracle = DOLA_oracle.address.toString()
-        showBody("DOLA_v3Oracle: ", DOLA_v3Oracle)
-        //showBody("DOLA uni v3 price: ", await toNumber(await DOLA_oracle.currentValue()))
+        showBody("DOL : ", await toNumber(await dolOracle.currentValue()))
 
-
-    })
-
-    it("Deploy chainlink oracles", async () => {
-        const dataFeed = "0x8fffffd4afb6115b954bd326cbe7b4ba576818f6"
-        const usdcOracle = await new ChainlinkOracleRelay__factory(s.Frank).deploy(
-            dataFeed,
-            BN("1e10"),
-            BN("1")
-        )
-        await usdcOracle.deployed()
-        USDC_Oracle = usdcOracle.address.toString()
-        showBody("USDC_Oracle: ", USDC_Oracle)
-
-        //showBody("USDC price: ", await toNumber(await usdcOracle.currentValue()))
-    })
-})
-
-
-describe("Deploy and test StablePoolShowcase", () => {
-    //StablePool BPT addresses
-    const auraBalPrimeBPTSP = "0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd"
-    const USDC_DOLA_SP = "0xFf4ce5AAAb5a627bf82f4A571AB1cE94Aa365eA6"
-
-    //MetaStablePool BPT addresses
-    const wstethWethMSP = "0x32296969Ef14EB0c6d29669C550D4a0449130230"
-    const cbETHwstETHMSP = "0x9c6d47Ff73e0F5E51BE5FD53236e3F595C5793F2"
-
-    //WeightedPool BPT addresses
-    const primeBPT = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56"
-    const rETH_WETH_BPT = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276"
-    const wethAuraBPT = "0xCfCA23cA9CA720B6E98E3Eb9B6aa0fFC4a5C08B9" //weth / aura 50/50
-
-
-
-    it("wstEth/wETH MetaStablePool", async () => {
-        const showcaseOracle = await new StablePoolShowcase__factory(s.Frank).deploy(
-            wstethWethMSP,
+        const dolaStablePoolOracle = await new StablePoolShowcase__factory(s.Frank).deploy(
+            LP,
             balancerVault,
-            [wstETH, weth],
-            [wstethRelay.address, wethOracle],
-            BN("20"),
-            BN("10000")
+            [DOLA, s.usdcAddress],
+            [dolOracle.address, usdcOracle.address],
+            BN(deltaBips),
+            BN("200")
         )
-        await showcaseOracle.deployed()
-        showBodyCyan("stETh MetaStablePool BPT price: ", await toNumber(await (await showcaseOracle.currentValue())))
-    })
 
-    it("rETH/wETH MetaStablePool", async () => {
-        const showcaseOracle = await new StablePoolShowcase__factory(s.Frank).deploy(
-            rETH_WETH_BPT, //pool_address
-            balancerVault, //balancer vault
-            [rETH, weth], //_tokens
-            [rETH_Oracle, wethOracle], //_oracles, weth oracle
-            BN("150"),
-            BN("10000")
-        )
-        await showcaseOracle.deployed()
-        showBodyCyan("stETh MetaStablePool BPT price: ", await toNumber(await (await showcaseOracle.currentValue())))
-    })
+        let [naivePrice, expectedRate, calcedRate] = await dolaStablePoolOracle.currentValue()
+        const delta = await dolaStablePoolOracle.percentChange(expectedRate, calcedRate)
 
-    it("cbETH/wstETH MetaStablePool", async () => {
-        const showcaseOracle = await new StablePoolShowcase__factory(s.Frank).deploy(
-            cbETHwstETHMSP,
-            balancerVault, //balancer vault
-            [cbETH, wstETH],
-            [cbETH_Oracle, wstethRelay.address],
-            BN("230"),
-            BN("10000")
-        )
-        await showcaseOracle.deployed()
-        showBodyCyan("cbETH wstETH MetaStablePool price: ", await toNumber(await showcaseOracle.currentValue()))
+        showBody("dola StablePool BPT price: ", await toNumber(naivePrice))
+        showBody("Accuracy: ", await toNumber(delta) * 100, "%")
 
     })
-
-    it("bath-80 StablePool", async () => {
-
-        //need to set up a weighted pool oracle to price the underlying BPT
-        primeBPToracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
-            primeBPT,
-            balancerVault, //balancer vault
-            [s.BAL.address, s.wethAddress],
-            [BAL_TOKEN_ORACLE, wethOracle],
-            BN("1"),
-            BN("100")
-        )
-        await primeBPToracle.deployed()
-        //showBody("Prime BPT oracle price: ", await toNumber(await primeBPToracle.currentValue()))
-
-        const showcaseOracle = await new StablePoolShowcase__factory(s.Frank).deploy(
-            auraBalPrimeBPTSP,
-            balancerVault, //balancer vault
-            [primeBPT, s.auraBal.address],//prime BPT / auraBal
-            [primeBPToracle.address, auraBalUniOracle.address],//prime BPT oracle / auraBal oracle
-            BN("230"),
-            BN("10000")
-        )
-        await showcaseOracle.deployed()
-        showBodyCyan("Balancer auraBal StablePool price: ", await toNumber(await showcaseOracle.currentValue()))
-
-    })
-
-    it("DOLA/USDC StablePool", async () => {
-        
-         const showcaseOracle = await new StablePoolShowcase__factory(s.Frank).deploy(
-            USDC_DOLA_SP,
-            balancerVault, 
-            [DOLA, USDC],
-            [DOLA_v3Oracle, USDC_Oracle],
-            BN("230"),
-            BN("10000")
-        )
-        await showcaseOracle.deployed()
-        showBody("Deployed")
-        showBodyCyan("USDC DOLA StablePool price: ", await toNumber(await showcaseOracle.currentValue()))
-
-        
-    })
-
+     */
 })
+

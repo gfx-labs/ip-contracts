@@ -213,12 +213,8 @@ contract VaultBPT is Context {
         extraRewardToken.transfer(minter, extraRewardToken.balanceOf(address(this)));
       }
     }
-<<<<<<< HEAD
     
     // if an underlying reward or extra reward token is used as collateral,
-=======
-    // if a reward or extra reward token is used as collateral,
->>>>>>> 894a341532ad7742fd9b381fc89a6c705e00b161
     // claiming rewards will empty the vault of this token, this check prevents this
     // if it is the case that the underlying reward token is registered collateral held by this vault
     // the liability will need to be repaid sufficiently in order to claim rewards

@@ -23,7 +23,7 @@ interface IBalancerPool {
  * After confirming that the naive price is safe, we return the naive price.
  */
 
-contract StablePoolShowcase is IOracleRelay {
+contract StablePoolShowcase {
   bytes32 public immutable _poolId;
 
   uint256 public immutable _widthNumerator;
@@ -67,14 +67,17 @@ contract StablePoolShowcase is IOracleRelay {
     _widthDenominator = widthDenominator;
   }
 
-  function currentValue() external view override returns (uint256 naivePrice) {
-    console.log("Current value");
-    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
-    console.log("Got token info");
+  function currentValue() external view returns (uint256, uint256, uint256) {
+    //check for reentrancy, further protects against manipulation
+    ensureNotInVaultContext();
 
-    uint256 tokenAmountIn = 1000e18;
+    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
+
+    uint256 tokenAmountIn = 10e18;
 
     uint256 outGivenIn = getOutGivenIn(balances, tokenAmountIn);
+    console.log("Out given in: ", outGivenIn);
+
     (uint256 calcedRate, uint256 expectedRate) = getExchangeRates(
       outGivenIn,
       tokenAmountIn,
@@ -84,7 +87,9 @@ contract StablePoolShowcase is IOracleRelay {
 
     verifyExchangeRate(expectedRate, calcedRate);
 
-    naivePrice = getNaivePrice(tokens, balances);
+    uint256 naivePrice = getNaivePrice(tokens, balances);
+
+    return (naivePrice, expectedRate, calcedRate);
   }
 
   /*******************************GET & CHECK NAIVE PRICE********************************/
@@ -103,6 +108,9 @@ contract StablePoolShowcase is IOracleRelay {
   function verifyExchangeRate(uint256 expectedRate, uint256 outGivenInRate) internal view {
     uint256 delta = percentChange(expectedRate, outGivenInRate);
     uint256 buffer = divide(_widthNumerator, _widthDenominator, 18);
+
+    console.log("ExpectedRate: ", expectedRate);
+    console.log("CalculatRate: ", outGivenInRate);
 
     require(delta < buffer, "Price out of bounds");
   }
@@ -219,6 +227,53 @@ contract StablePoolShowcase is IOracleRelay {
     revert("STABLE_GET_BALANCE_DIDNT_CONVERGE");
   }
 
+  //https://github.com/balancer/balancer-v2-monorepo/pull/2418/files#diff-36f155e03e561d19a594fba949eb1929677863e769bd08861397f4c7396b0c71R37
+  function ensureNotInVaultContext() internal view {
+    // Perform the following operation to trigger the Vault's reentrancy guard:
+    //
+    // IVault.UserBalanceOp[] memory noop = new IVault.UserBalanceOp[](0);
+    // _vault.manageUserBalance(noop);
+    //
+    // However, use a static call so that it can be a view function (even though the function is non-view).
+    // This allows the library to be used more widely, as some functions that need to be protected might be
+    // view.
+    //
+    // This staticcall always reverts, but we need to make sure it doesn't fail due to a re-entrancy attack.
+    // Staticcalls consume all gas forwarded to them on a revert. By default, almost the entire available gas
+    // is forwarded to the staticcall, causing the entire call to revert with an 'out of gas' error.
+    //
+    // We set the gas limit to 100k, but the exact number doesn't matter because view calls are free, and non-view
+    // calls won't waste the entire gas limit on a revert. `manageUserBalance` is a non-reentrant function in the
+    // Vault, so calling it invokes `_enterNonReentrant` in the `ReentrancyGuard` contract, reproduced here:
+    //
+    //    function _enterNonReentrant() private {
+    //        // If the Vault is actually being reentered, it will revert in the first line, at the `_require` that
+    //        // checks the reentrancy flag, with "BAL#400" (corresponding to Errors.REENTRANCY) in the revertData.
+    //        // The full revertData will be: `abi.encodeWithSignature("Error(string)", "BAL#400")`.
+    //        _require(_status != _ENTERED, Errors.REENTRANCY);
+    //
+    //        // If the Vault is not being reentered, the check above will pass: but it will *still* revert,
+    //        // because the next line attempts to modify storage during a staticcall. However, this type of
+    //        // failure results in empty revertData.
+    //        _status = _ENTERED;
+    //    }
+    //
+    // So based on this analysis, there are only two possible revertData values: empty, or abi.encoded BAL#400.
+    //
+    // It is of course much more bytecode and gas efficient to check for zero-length revertData than to compare it
+    // to the encoded REENTRANCY revertData.
+    //
+    // While it should be impossible for the call to fail in any other way (especially since it reverts before
+    // `manageUserBalance` even gets called), any other error would generate non-zero revertData, so checking for
+    // empty data guards against this case too.
+
+    (, bytes memory revertData) = address(VAULT).staticcall{gas: 100_000}(
+      abi.encodeWithSelector(VAULT.manageUserBalance.selector, 0)
+    );
+
+    require(revertData.length == 0, "Errors.REENTRANCY");
+  }
+
   /*******************************PURE MATH FUNCTIONS********************************/
   ///@notice get exchange rates
   function getExchangeRates(
@@ -237,7 +292,7 @@ contract StablePoolShowcase is IOracleRelay {
   }
 
   ///@notice get the percent deviation from a => b as a decimal e18
-  function percentChange(uint256 a, uint256 b) internal pure returns (uint256 delta) {
+  function percentChange(uint256 a, uint256 b) public pure returns (uint256 delta) {
     uint256 max = a > b ? a : b;
     uint256 min = b != max ? b : a;
     delta = divide((max - min), min, 18);
