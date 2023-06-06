@@ -39,12 +39,7 @@ describe("Initial Setup", () => {
     it("connect to signers", async () => {
         s.accounts = await ethers.getSigners();
         s.Frank = s.accounts[0];
-        s.Eric = s.accounts[5];
-        s.Andy = s.accounts[6];
-        s.Bob = s.accounts[7];
         s.Carol = s.accounts[8];
-        s.Dave = s.accounts[9];
-        s.Gus = s.accounts[10];
     });
 
     it("Connect to mainnet deployments for interest protocol", async () => {
