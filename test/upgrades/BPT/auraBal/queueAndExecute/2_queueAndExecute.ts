@@ -126,11 +126,8 @@ describe("Deploy Cap Tokens and Oracles", () => {
 
     primeBPToracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       primeBPT,
-      balancerVault, //balancer vault
       [s.BAL.address, s.wethAddress],
-      [BAL_TOKEN_ORACLE, wethOracleAddr],
-      BN("10"),
-      BN("100")
+      [BAL_TOKEN_ORACLE, wethOracleAddr]
     )
     await primeBPToracle.deployed()
     //showBody("Prime BPT oracle price: ", await toNumber(await primeBPToracle.currentValue()))  

@@ -205,11 +205,9 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     weightedPoolOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       balWethBPT,
-      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [balancerToken, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
-      [BAL_TOKEN_ORACLE, s.wethOracleAddr], //_oracles, weth oracle
-      BN("1"),
-      BN("100")
+      [BAL_TOKEN_ORACLE, s.wethOracleAddr] //_oracles, weth oracle
+
     )
     await weightedPoolOracle.deployed()
     //showBodyCyan("BalWeth BPT value: ", await toNumber(await weightedPoolOracle.currentValue()))
@@ -233,11 +231,8 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     const testWeightedOracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       wethAuraBPT, //pool_address
-      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [auraToken, "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"], //_tokens
-      [uniAuraRelay.address, s.wethOracleAddr], //_oracles, weth oracle
-      BN("1"),
-      BN("100")
+      [uniAuraRelay.address, s.wethOracleAddr] //_oracles, weth oracle
     )
     await mineBlock()
 
@@ -270,16 +265,13 @@ describe("Setup oracles, deploy and register cap tokens", () => {
 
     primeBPToracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
       primeBPT,
-      "0xBA12222222228d8Ba445958a75a0704d566BF2C8", //balancer vault
       [s.BAL.address, s.wethAddress],
-      [BAL_TOKEN_ORACLE, s.wethOracleAddr],
-      BN("10"),
-      BN("100")
+      [BAL_TOKEN_ORACLE, s.wethOracleAddr]
     )
 
     await primeBPToracle.deployed()
-    showBody("Prime BPT oracle price: ", await toNumber(await primeBPToracle.currentValue()))  
-})
+    showBody("Prime BPT oracle price: ", await toNumber(await primeBPToracle.currentValue()))
+  })
 
   //   * Set up oracle for stable pool 'prime' BPT / auraBal LP token 0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd
   //   * This is the oracle used for the price of the reward token being listed
