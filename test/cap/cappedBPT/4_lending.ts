@@ -119,9 +119,12 @@ describe("Liquidations - auraBal", () => {
         let startLiab = await s.VaultController.vaultLiability(s.BobVaultID)
         expect(startLiab).to.eq(0, "Liability is still 0")
 
+        //showBody("Borrowing: ", await toNumber(borrowPower))
         await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower)
         const liab = await s.VaultController.vaultLiability(s.BobVaultID)
         expect(await toNumber(liab)).to.be.closeTo(await toNumber(borrowPower), 0.001, "Liability is correct")
+        //todo why is borrow power increasing after borrow?
+        //showBody("Borrow Power: ", await toNumber(await s.VaultController.vaultBorrowingPower(s.BobVaultID)))
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(borrowPower.add(startUSDI)), 0.1, "Balance is correct")
@@ -132,15 +135,8 @@ describe("Liquidations - auraBal", () => {
         let solvency = await s.VaultController.checkVault(s.BobVaultID)
         expect(solvency).to.eq(true, "Bob's vault is not yet underwater")
 
-        let liab = await s.VaultController.vaultLiability(s.BobVaultID)
-        showBody("Borrowing p: ", await toNumber(borrowPower))
-        showBody("Liab before: ", await toNumber(liab))
-
-        await fastForward(OneWeek * 10)
+        await fastForward(OneWeek)
         await s.VaultController.calculateInterest()
-
-        liab = await s.VaultController.vaultLiability(s.BobVaultID)
-        showBody("Liab after: ", await toNumber(liab))
 
         solvency = await s.VaultController.checkVault(s.BobVaultID)
         expect(solvency).to.eq(false, "Bob's vault is underwater")
@@ -172,8 +168,6 @@ describe("Liquidations - auraBal", () => {
         await s.USDC.connect(s.Dave).approve(s.USDI.address, await s.USDC.balanceOf(s.Dave.address))
         await s.USDI.connect(s.Dave).deposit(await s.USDC.balanceOf(s.Dave.address))
         await mineBlock()
-
-
 
         const startingUSDI = await s.USDI.balanceOf(s.Dave.address)
         expect(startingUSDI).to.eq((s.USDC_AMOUNT.mul(5)).mul(BN("1e12")))

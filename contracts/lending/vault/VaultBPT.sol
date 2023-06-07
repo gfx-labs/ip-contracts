@@ -89,15 +89,17 @@ contract VaultBPT is Context {
   /// all assets stake all or nothing
   mapping(address => bool) public isStaked;
 
-  mapping(address => stakeType) public typeOfStake;
+  //mapping(address => stakeType) public typeOfStake;
 
-  mapping(address => address) public lp_rewardtoken;
+  //mapping(address => address) public lp_rewardtoken;
 
+/**
   enum stakeType {
     AURABAL,
     AURA_LP,
     BAL_LP
   }
+ */
 
   /// @notice checks if _msgSender is the controller of the voting vault
   modifier onlyVotingVaultController() {

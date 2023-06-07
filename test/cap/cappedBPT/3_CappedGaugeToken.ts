@@ -60,19 +60,6 @@ describe("Deposit and verify functions", () => {
 
         await ceaseImpersonation(s.owner._address)
     })
-   /**
-     it("Deposit naked gauge token", async () => {
-        await s.stETH_Gauge.connect(s.Bob).approve(s.CappedStethGauge.address, s.stETH_Gauge_Amount)
-        await s.CappedStethGauge.connect(s.Bob).deposit(s.stETH_Gauge_Amount, s.BobVaultID, false)
-
-    })
-
-    it("Claim gauge token rewards", async () => {
-
-        await expect(s.BobBptVault.claimRewards(s.stETH_Gauge.address)).to.not.reverted
-
-    })
-    */
 
     it("deposit and stake auraBal in a single TX", async () => {
         await s.auraBal.connect(s.Bob).approve(s.CappedAuraBal.address, s.AuraBalAmount)
@@ -94,7 +81,7 @@ describe("Deposit and verify functions", () => {
 
     })
 
-    /**
+    
      it("deposit and stake aura lp token in a single TX", async () => {
         await s.primeAuraBalLP.connect(s.Bob).approve(s.CappedAuraLP.address, s.AuraLPamount)
         const result = await s.CappedAuraLP.connect(s.Bob).deposit(s.AuraLPamount, s.BobVaultID, true)
@@ -109,8 +96,7 @@ describe("Deposit and verify functions", () => {
         balance = await s.primeAuraBalLP.balanceOf(s.BobBptVault.address)
         expect(balance).to.eq(0, "0 LPs remaining unstaked")
     })
-     */
-
+     
 
 
     it("Claim auraBal and aura LP rewards", async () => {
@@ -130,7 +116,7 @@ describe("Deposit and verify functions", () => {
         let balRewards = await s.BAL.balanceOf(s.Bob.address)
         expect(balRewards).to.be.gt(0, "Received BAL rewards")
         balance = await extraRewardToken.balanceOf(s.Bob.address)
-        showBody("extra rewards: ", await toNumber(balance))
+        //showBody("extra rewards: ", await toNumber(balance))
         expect(balance).to.be.gt(0, "Received extra rewards")
 
         /**
@@ -155,7 +141,10 @@ describe("Deposit and verify functions", () => {
 
     })
 
-    /**
+
+ 
+
+    
      it("Withdraw staked aura LP tokens / auraBal", async () => {
         let balance = await s.auraBal.balanceOf(s.Bob.address)
         expect(balance).to.eq(0, "Bob holds 0 auraBals as they are all on the protocol before withdraw")
@@ -222,7 +211,7 @@ describe("Deposit and verify functions", () => {
         expect(balance).to.eq(s.stETH_Gauge_Amount, "Underlying sent to BPT vault")
 
     })
-     */
-
+     
+ 
 
 })
