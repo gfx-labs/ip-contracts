@@ -61,6 +61,18 @@ export const resetCurrent = async () => {
         ],
     });
 }
+export const resetCurrentOP = async () => {
+    await network.provider.request({
+        method: "hardhat_reset",
+        params: [
+            {
+                forking: {
+                    jsonRpcUrl: process.env.OP_URL!
+                },
+            },
+        ],
+    });
+}
 
 export const reset = async (block: number) => {
     dotenv.config();

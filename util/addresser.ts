@@ -9,6 +9,7 @@ export interface Addresser {
 
     chainlinkEthFeed: string;
     compVotingAddress: string;
+
 }
 
 export class MainnetAddresses {
@@ -33,6 +34,15 @@ export class MainnetAddresses {
     readonly richAVAXWallet: string = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
     readonly richBinance14: string = "0x28C6c06298d514Db089934071355E5743bf21d60";
     constructor() { }
+}
+
+export class OptimisimAddresses {
+    readonly wethAddress: string = "0x4200000000000000000000000000000000000006";
+    readonly opAddress: string = "0x4200000000000000000000000000000000000042";
+    readonly usdcAddress: string = "0x7F5c764cBc14f9669B88837ca1490cCa17c31607";
+    readonly wbtcAddress: string = "0x68f180fcCe6836688e9084f035309E29Bf0A2095";
+    readonly aaveAddress: string = "0x76FB31fb4af56892A25e32cFC43De717950c9278";
+    readonly uniAddress: string = "0x6fd9d7AD17242c41f7131d257212c54A0e816691";
 }
 
 export const Mainnet: Addresser = new MainnetAddresses();
