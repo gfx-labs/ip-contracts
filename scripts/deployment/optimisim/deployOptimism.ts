@@ -4,6 +4,7 @@ import { currentBlock, resetCurrentOP } from "../../../util/block";
 import { s } from "./scope";
 import { Deployment, DeploymentInfo } from "./optimisimDeployment";
 import { BN } from "../../../util/number";
+import { showBody, showBodyCyan } from "../../../util/format";
 const { ethers } = require("hardhat");
 
 async function main() {
@@ -27,18 +28,24 @@ async function main() {
 
         //token parameters
         WethLTV: BN("85e16"),
-        WethLiqInc: BN("5e18"),
+        WethLiqInc: BN("5e16"),
+        WethCap: BN("2700e18"), //$5mm
 
-        wBtcLTV: BN("85e16"),
-        wBtcLiqInc: BN("5e18"),
+        wBtcLTV: BN("8e17"),
+        wBtcLiqInc: BN("7e16"),
+        wBtcCap: BN("190e8"), //$5mm
 
-        OpLTV: BN("85e16"),
-        OpLiqInc: BN("5e18"),
-        OpCap: BN("725000e18"), //1mm cap
+        OpLTV: BN("7e17"),
+        OpLiqInc: BN("7e16"),
+        OpCap: BN("1500000e18"), //$2mm
 
-        wstEthLTV: BN("85e16"),
-        wstEthLiqInc: BN("5e18"),
-        wstEthCap: BN("500e18"),//1mm cap
+        wstEthLTV: BN("8e17"),
+        wstEthLiqInc: BN("7e16"),
+        wstEthCap: BN("1000e18"),//$2mm 
+
+        rEthLTV: BN("75e16"),
+        rEthLiqInc: BN("7e16"),
+        rEthCap: BN("500e18"),//$1mm 
 
 
         //external contracts
@@ -74,13 +81,11 @@ async function main() {
         AAVE_UNI_POOL: s.AAVE_UNI_POOL,
     }
 
-
-
     const d = new Deployment(deployer, info)
     await d
         .ensure()
         .then(() => {
-            console.log("Contracts Deployed")
+            showBodyCyan("CONTRACTS ALL DEPLOYED")
         })
         .catch((e) => {
             console.log(e)
@@ -88,8 +93,6 @@ async function main() {
 
 }
 
-
-//hh node --fork https://opt-mainnet.g.alchemy.com/v2/QSB8Y8bsGwYbdKg_EAABl0VTRBa1ymHp  --fork-block-number 105288452
 main()
     .then(() => process.exit(0))
     .catch((error) => {

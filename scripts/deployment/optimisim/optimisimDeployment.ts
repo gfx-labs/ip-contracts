@@ -1,23 +1,26 @@
-import { AnchoredViewRelay__factory, ChainlinkOracleRelay__factory, CurveMaster, CurveMaster__factory, IERC20, IERC20__factory, IOracleRelay, IOracleRelay__factory, IVOTE, IVOTE__factory, OracleMaster, OracleMaster__factory, ThreeLines0_100, ThreeLines0_100__factory, TransparentUpgradeableProxy__factory, USDI, USDI__factory, UniswapV3OracleRelay__factory, VaultController, VaultController__factory, VotingVaultController, VotingVaultController__factory } from "../../../typechain-types";
+import { AnchoredViewRelay__factory, ChainlinkOracleRelay__factory, CurveMaster, CurveMaster__factory, IERC20, IERC20__factory, IOracleRelay, IOracleRelay__factory, IVOTE, IVOTE__factory, OracleMaster, OracleMaster__factory, REthOracleOP__factory, ThreeLines0_100, ThreeLines0_100__factory, TransparentUpgradeableProxy__factory, USDI, USDI__factory, UniswapV3OracleRelay__factory, VaultController, VaultController__factory, VotingVaultController, VotingVaultController__factory } from "../../../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ProxyAdmin, ProxyAdmin__factory } from "@certusone/wormhole-sdk/lib/cjs/ethers-contracts";
 import { BN } from "../../../util/number";
 import { OptimisimAddresses } from "../../../util/addresser";
-import { showBodyCyan } from "../../../util/format";
+import { showBody, showBodyCyan } from "../../../util/format";
 import { toNumber } from "../../../util/math";
 import { UniswapV3OPTokenOracleRelay__factory } from "../../../typechain-types/factories/oracle/External/UniswapV3OPTokenOracleRelay__factory";
 import { CappedGovToken } from "../../../typechain-types/lending/wrapper/CappedGovToken";
 import { CappedGovToken__factory } from "../../../typechain-types/factories/lending/wrapper/CappedGovToken__factory";
 import { BigNumber } from "ethers";
+import { PromiseOrValue } from "../../../typechain-types/common";
 
 const { ethers } = require("hardhat");
 export interface DeploymentInfo extends OptimisimAddresses {
 
     WethLTV?: BigNumber;
     WethLiqInc?: BigNumber;
+    WethCap?: BigNumber;
 
     wBtcLTV?: BigNumber;
     wBtcLiqInc?: BigNumber;
+    wBtcCap?: BigNumber;
 
     OpLTV?: BigNumber;
     OpLiqInc?: BigNumber;
@@ -26,6 +29,11 @@ export interface DeploymentInfo extends OptimisimAddresses {
     wstEthLTV?: BigNumber;
     wstEthLiqInc?: BigNumber;
     wstEthCap?: BigNumber;
+
+    rEthLTV?: BigNumber;
+    rEthLiqInc?: BigNumber;
+    rEthCap?: BigNumber;
+
 
 
     USDI?: string;
@@ -40,25 +48,39 @@ export interface DeploymentInfo extends OptimisimAddresses {
     OpOracle?: string;
     wBtcOracle?: string;
     wstEthOracle?: string;
+    rEthOracle?: string;
     AaveOracle?: string;
     UniOracle?: string;
 
     CappedImplementation?: string;
 
+    CappedWeth?: string;
+    CappedWbtc?: string;
     CappedOp?: string;
     CappedWstEth?: string;
+    CappedRETH?: string;
+
+    CappedUni?: string;
+    CappedAave?: string;
 }
 export class Deployment {
 
-    WETH!: IERC20;
-    WSTETH!: IERC20;
-    CappedWstEth!: CappedGovToken
     USDC!: IERC20;
+
+    WETH!: IERC20;
+    CappedWeth!: CappedGovToken;
+    WSTETH!: IERC20;
+    CappedWstEth!: CappedGovToken;
     WBTC!: IERC20;
+    CappedWbtc!: CappedGovToken;
     OP!: IERC20;
-    CappedOp!: CappedGovToken
+    CappedOp!: CappedGovToken;
     AAVE!: IERC20;
+    CappedAave!: CappedGovToken;
     UNI!: IVOTE;
+    CappedUni!: CappedGovToken;
+    RETH!: IERC20;
+    CappedRETH!: CappedGovToken;
 
     CappedImplementation!: String
 
@@ -89,9 +111,8 @@ export class Deployment {
     }
 
     async ensure() {
-        console.log("ENSURE")
-
-
+        console.log("Verifying Vanilla Protocol Deployment")
+        
         //deploy base protocol
         await this.ensureExternal()
         await this.ensureProxyAdmin()
@@ -102,13 +123,12 @@ export class Deployment {
 
         console.log("Vanilla protocol ensured")
 
-        //deploy oracles for initial assets
+        //oracles for initiail capped assets
         await this.ensureEthOracle()
         await this.ensurewBtcOracle()
-
-        //oracles for initiail capped assets
         await this.ensureOpOracle()
         await this.ensureWstEthOracle()
+        await this.ensurerEthOracle()
 
     }
     async ensureExternal() {
@@ -120,6 +140,7 @@ export class Deployment {
         this.WBTC = IERC20__factory.connect(this.Info.wbtcAddress, this.deployer)
         this.AAVE = IERC20__factory.connect(this.Info.aaveAddress, this.deployer)
         this.UNI = IVOTE__factory.connect(this.Info.uniAddress, this.deployer)
+        this.RETH = IERC20__factory.connect(this.Info.rethAddress, this.deployer)
     }
 
     //Base Protocol Deploys
@@ -326,16 +347,16 @@ export class Deployment {
         }
     }
 
-    //Initial Asset Oracles and registrations
+    //Initial Capped Asset Oracles and registrations
     async ensureEthOracle() {
         if (this.Info.EthOracle != undefined) {
             this.EthOracle = IOracleRelay__factory.connect(
                 this.Info.EthOracle,
                 this.deployer
             );
-            console.log(`found EthOracle at ${this.Info.EthOracle}`);
+            console.log(`found wethOracle at ${this.Info.EthOracle}`);
         } else {
-            console.log("Deploying new eth oracle")
+            console.log("Deploying new weth oracle")
             let clRelay = await new ChainlinkOracleRelay__factory(this.deployer).deploy(
                 this.Info.wETH_CL_FEED,
                 BN("1e10"),
@@ -358,39 +379,90 @@ export class Deployment {
                 BN("10"),
                 BN("100")
             )
-            showBodyCyan("ETH ORACLE PRICE: ", await toNumber(await this.EthOracle.currentValue()))
-            if (
-                (await this.Oracle._relays(this.WETH.address)) != this.EthOracle.address
-            ) {
-                console.log("setting eth oracle to be eth relay: ", this.EthOracle.address);
-                let r2 = await this.Oracle.setRelay(
-                    this.WETH.address,
-                    this.EthOracle.address
-                );
-                await r2.wait();
-            }
-            if (
-                (await this.VaultController._tokenAddress_tokenId(this.WETH.address)).eq(
-                    0
-                )
-            ) {
-                //console.log("registering eth into vault controller: ", this.Info.WethLTV!);
-                //console.log("registering eth into vault controller: ", BN("85e16"));
+            await this.EthOracle.deployed()
 
-                //console.log("registering eth into vault controller: ", this.Info.WethLiqInc!);
-                //console.log("registering eth into vault controller: ", BN("5e18"));
-                let t = await this.VaultController.registerErc20(
-                    this.WETH.address,
-                    BN("85e16"),
-                    this.WETH.address,
-                    BN("5e16")
-                );
-                await t.wait();
+            showBodyCyan("weth ORACLE PRICE: ", await toNumber(await this.EthOracle.currentValue()))
+            if ((await this.Oracle._relays(this.WETH.address)) != this.EthOracle.address) {
+                await this.deployAndRegisterCappedWeth()
             }
-
         }
     }
+    async deployAndRegisterCappedWeth() {
+        //deploy cap token
+        if (this.Info.CappedWeth! != undefined) {
+            this.CappedWeth = new CappedGovToken__factory(this.deployer).attach(
+                this.Info.CappedWeth
+            )
+        } else {
+            console.log("Deploying Capped weth")
 
+            //deploy CappedGovToken implementation
+            if (this.CappedImplementation == undefined) {
+                const imp = await new CappedGovToken__factory(this.deployer).deploy()
+                this.CappedImplementation = imp.address
+                console.log("Deployed CappedGovToken Implementation: ", this.CappedImplementation)
+            }
+
+            const cTOKEN = await new TransparentUpgradeableProxy__factory(this.deployer).deploy(
+                (this.CappedImplementation as PromiseOrValue<string>),
+                this.ProxyAdmin.address,
+                "0x"
+            )
+
+            this.CappedWeth = new CappedGovToken__factory(this.deployer).attach(cTOKEN.address)
+            console.log("Capped wETH deployed: ", this.CappedWeth.address)
+
+            const init = await this.CappedWeth.initialize(
+                "Capped wETH",
+                "cwETH",
+                this.WETH.address,
+                this.VaultController.address,
+                this.VotingVaultController.address
+            )
+            await init.wait()
+            console.log("Capped wETH initialized: ", this.CappedWeth.address)
+        }
+
+        //set oracle relay (already checked)
+        console.log("setting weth oracle to be weth relay");
+        let setRelay = await this.Oracle.setRelay(
+            this.CappedWeth.address,
+            this.EthOracle.address
+        );
+        await setRelay.wait();
+
+        const tokenid = await this.VaultController._tokenAddress_tokenId(
+            this.CappedWeth.address
+        )
+        if (tokenid.eq(0)) {
+            console.log("Registering Capped weth on VaultController")
+            let t = await this.VaultController.registerErc20(
+                this.CappedWeth.address,
+                this.Info.WethLTV!,
+                this.CappedWeth.address,
+                this.Info.WethLiqInc!
+            );
+            await t.wait();
+        }
+
+        //check and registerUnderlying on vvc
+        const cTokenAddress = await this.VotingVaultController._underlying_CappedToken(this.WETH.address)
+        if (cTokenAddress == "0x0000000000000000000000000000000000000000") {
+            console.log("Registering Capped weth on VotingVaultController")
+            const register = await this.VotingVaultController.registerUnderlying(
+                this.WETH.address,
+                this.CappedWeth.address
+            )
+            await register.wait()
+        }
+
+        //check if cap is set
+        const cap = await this.CappedWeth._cap()
+        if (cap._hex == BN("0")._hex && this.Info.WethCap != undefined) {
+            console.log("Setting cap for weth")
+            await this.CappedWeth.setCap(this.Info.WethCap)
+        }
+    }
     async ensurewBtcOracle() {
         if (this.Info.wBtcOracle != undefined) {
             this.wBtcOracle = IOracleRelay__factory.connect(
@@ -426,35 +498,88 @@ export class Deployment {
                 BN("100")
             )
             await this.wBtcOracle.deployed()
-            showBodyCyan("wBTC ORACLE PRICE: ", await toNumber(await this.wBtcOracle.currentValue()))
-            if (
-                (await this.Oracle._relays(this.WBTC.address)) != this.wBtcOracle.address
-            ) {
-                console.log("setting wBTC oracle to be wBTC relay: ", this.wBtcOracle.address);
-                let r2 = await this.Oracle.setRelay(
-                    this.WBTC.address,
-                    this.wBtcOracle.address
-                );
-                await r2.wait();
-            }
-            if (
-                (await this.VaultController._tokenAddress_tokenId(this.WBTC.address)).eq(
-                    0
-                )
-            ) {
-                console.log("registering wBTC into vault controller");
-                let t = await this.VaultController.registerErc20(
-                    this.WBTC.address,
-                    BN("85e16"),
-                    this.WBTC.address,
-                    BN("5e16")
-                );
-                await t.wait();
+            showBodyCyan("wBtc ORACLE PRICE: ", await toNumber(await this.wBtcOracle.currentValue()))
+
+            if ((await this.Oracle._relays(this.WBTC.address)) != this.wBtcOracle.address) {
+                await this.deployAndRegisterCappedWbtc()
             }
         }
     }
+    async deployAndRegisterCappedWbtc() {
+        if (this.Info.CappedWbtc! != undefined) {
+            this.CappedWbtc = new CappedGovToken__factory(this.deployer).attach(
+                this.Info.CappedWbtc
+            )
+        } else {
+            console.log("Deploying Capped wBtc")
 
-    //Initial Capped Asset Oracles 
+            //deploy CappedGovToken implementation
+            if (this.CappedImplementation == undefined) {
+                const imp = await new CappedGovToken__factory(this.deployer).deploy()
+                this.CappedImplementation = imp.address
+                console.log("Deployed CappedGovToken Implementation: ", this.CappedImplementation)
+            }
+
+            const cTOKEN = await new TransparentUpgradeableProxy__factory(this.deployer).deploy(
+                (this.CappedImplementation as PromiseOrValue<string>),
+                this.ProxyAdmin.address,
+                "0x"
+            )
+
+            this.CappedWbtc = new CappedGovToken__factory(this.deployer).attach(cTOKEN.address)
+            console.log("Capped wBtctimisim deployed: ", this.CappedWbtc.address)
+
+            const init = await this.CappedWbtc.initialize(
+                "Capped wBTC",
+                "cwBTC",
+                this.WBTC.address,
+                this.VaultController.address,
+                this.VotingVaultController.address
+            )
+            await init.wait()
+            console.log("Capped wBtc initialized: ", this.CappedWbtc.address)
+        }
+
+        //set oracle relay (already checked)
+        console.log("setting wBtc oracle to be wBtc relay");
+        let setRelay = await this.Oracle.setRelay(
+            this.CappedWbtc.address,
+            this.wBtcOracle.address
+        );
+        await setRelay.wait();
+
+        const tokenid = await this.VaultController._tokenAddress_tokenId(
+            this.CappedWbtc.address
+        )
+        if (tokenid.eq(0)) {
+            console.log("Registering Capped wBtc on VaultController")
+            let t = await this.VaultController.registerErc20(
+                this.CappedWbtc.address,
+                this.Info.wBtcLTV!,
+                this.CappedWbtc.address,
+                this.Info.wBtcLiqInc!
+            );
+            await t.wait();
+        }
+
+        //check and registerUnderlying on vvc
+        const cTokenAddress = await this.VotingVaultController._underlying_CappedToken(this.WBTC.address)
+        if (cTokenAddress == "0x0000000000000000000000000000000000000000") {
+            console.log("Registering Capped wBtc on VotingVaultController")
+            const register = await this.VotingVaultController.registerUnderlying(
+                this.WBTC.address,
+                this.CappedWbtc.address
+            )
+            await register.wait()
+        }
+
+        //check if cap is set
+        const cap = await this.CappedWbtc._cap()
+        if (cap._hex == BN("0")._hex && this.Info.wBtcCap != undefined) {
+            console.log("Setting cap for wBtc")
+            await this.CappedWbtc.setCap(this.Info.wBtcCap)
+        }
+    }
     async ensureOpOracle() {
         if (this.Info.OpOracle != undefined) {
             this.OpOracle = IOracleRelay__factory.connect(
@@ -495,7 +620,6 @@ export class Deployment {
             }
         }
     }
-
     async deployAndRegisterCappedOP() {
         //deploy cap token
         if (this.Info.CappedOp != undefined) {
@@ -513,7 +637,7 @@ export class Deployment {
             }
 
             const cTOKEN = await new TransparentUpgradeableProxy__factory(this.deployer).deploy(
-                this.CappedImplementation,
+                (this.CappedImplementation as PromiseOrValue<string>),
                 this.ProxyAdmin.address,
                 "0x"
             )
@@ -522,7 +646,7 @@ export class Deployment {
             console.log("Capped Optimisim deployed: ", this.CappedOp.address)
 
             const init = await this.CappedOp.initialize(
-                "Capped Optimism",
+                "Capped OP",
                 "cOP",
                 this.OP.address,
                 this.VaultController.address,
@@ -540,7 +664,6 @@ export class Deployment {
         );
         await setRelay.wait();
 
-        //check and registerErc20
         const tokenid = await this.VaultController._tokenAddress_tokenId(
             this.CappedOp.address
         )
@@ -548,9 +671,9 @@ export class Deployment {
             console.log("Registering Capped OP on VaultController")
             let t = await this.VaultController.registerErc20(
                 this.CappedOp.address,
-                BN("8e17"),
+                this.Info.OpLTV!,
                 this.CappedOp.address,
-                BN("5e16")
+                this.Info.OpLiqInc!
             );
             await t.wait();
         }
@@ -565,8 +688,14 @@ export class Deployment {
             )
             await register.wait()
         }
-    }
 
+        //check if cap is set
+        const cap = await this.CappedOp._cap()
+        if (cap._hex == BN("0")._hex && this.Info.OpCap != undefined) {
+            console.log("Setting cap for OP")
+            await this.CappedOp.setCap(this.Info.OpCap)
+        }
+    }
     async ensureWstEthOracle() {
         if (this.Info.wstEthOracle != undefined) {
             this.wstEthOracle = IOracleRelay__factory.connect(
@@ -607,7 +736,6 @@ export class Deployment {
             }
         }
     }
-
     async deployAndRegisterCappedWstEth() {
         //deploy cap token
         if (this.Info.CappedWstEth! != undefined) {
@@ -625,7 +753,7 @@ export class Deployment {
             }
 
             const cTOKEN = await new TransparentUpgradeableProxy__factory(this.deployer).deploy(
-                this.CappedImplementation,
+                (this.CappedImplementation as PromiseOrValue<string>),
                 this.ProxyAdmin.address,
                 "0x"
             )
@@ -634,14 +762,14 @@ export class Deployment {
             console.log("Capped wstEthtimisim deployed: ", this.CappedWstEth.address)
 
             const init = await this.CappedWstEth.initialize(
-                "Capped wstEthtimism",
+                "Capped wstETH",
                 "cwstEth",
                 this.WSTETH.address,
                 this.VaultController.address,
                 this.VotingVaultController.address
             )
             await init.wait()
-            console.log("Capped wstEthtimism initialized: ", this.CappedWstEth.address)
+            console.log("Capped wstETH initialized: ", this.CappedWstEth.address)
         }
 
         //set oracle relay (already checked)
@@ -652,7 +780,6 @@ export class Deployment {
         );
         await setRelay.wait();
 
-        //check and registerErc20
         const tokenid = await this.VaultController._tokenAddress_tokenId(
             this.CappedWstEth.address
         )
@@ -660,9 +787,9 @@ export class Deployment {
             console.log("Registering Capped wstEth on VaultController")
             let t = await this.VaultController.registerErc20(
                 this.CappedWstEth.address,
-                BN("8e17"),
+                this.Info.wstEthLTV!,
                 this.CappedWstEth.address,
-                BN("5e16")
+                this.Info.wstEthLiqInc!
             );
             await t.wait();
         }
@@ -677,5 +804,362 @@ export class Deployment {
             )
             await register.wait()
         }
+
+        //check if cap is set
+        const cap = await this.CappedWstEth._cap()
+        if (cap._hex == BN("0")._hex && this.Info.wstEthCap != undefined) {
+            console.log("Setting cap for wstEth")
+            await this.CappedWstEth.setCap(this.Info.wstEthCap)
+        }
+    }
+    async ensurerEthOracle() {
+        if (this.Info.rEthOracle != undefined) {
+            this.rEthOracle = IOracleRelay__factory.connect(
+                this.Info.rEthOracle,
+                this.deployer
+            );
+            console.log(`found rEthOracle at ${this.Info.rEthOracle}`);
+        } else {
+            console.log("Deploying new rEth oracle")
+            let rEthExchangeRate = await new REthOracleOP__factory(this.deployer).deploy(
+                this.Info.rETH_CL_FEED,
+                this.EthOracle.address
+            )
+            await rEthExchangeRate.deployed()
+
+            let uniRelay = await new UniswapV3OPTokenOracleRelay__factory(this.deployer).deploy(
+                14400,
+                this.EthOracle.address,
+                this.Info.rETH_UNI_POOL,
+                true,
+                BN("1"),
+                BN("1")
+            )
+            await uniRelay.deployed()
+
+            this.rEthOracle = await new AnchoredViewRelay__factory(this.deployer).deploy(
+                rEthExchangeRate.address,//anchor
+                uniRelay.address,//main
+                BN("10"),
+                BN("100")
+            )
+            await this.rEthOracle.deployed()
+            showBodyCyan("rEth ORACLE PRICE: ", await toNumber(await this.rEthOracle.currentValue()))
+
+            if ((await this.Oracle._relays(this.RETH.address)) != this.rEthOracle.address) {
+                await this.deployAndRegisterCappedRETH()
+            }
+        }
+    }
+    async deployAndRegisterCappedRETH() {
+        if (this.Info.CappedRETH! != undefined) {
+            this.CappedRETH = new CappedGovToken__factory(this.deployer).attach(
+                this.Info.CappedRETH
+            )
+        } else {
+            console.log("Deploying Capped rEth")
+
+            //deploy CappedGovToken implementation
+            if (this.CappedImplementation == undefined) {
+                const imp = await new CappedGovToken__factory(this.deployer).deploy()
+                this.CappedImplementation = imp.address
+                console.log("Deployed CappedGovToken Implementation: ", this.CappedImplementation)
+            }
+
+            const cTOKEN = await new TransparentUpgradeableProxy__factory(this.deployer).deploy(
+                (this.CappedImplementation as PromiseOrValue<string>),
+                this.ProxyAdmin.address,
+                "0x"
+            )
+
+            this.CappedRETH = new CappedGovToken__factory(this.deployer).attach(cTOKEN.address)
+            console.log("Capped rETH deployed: ", this.CappedRETH.address)
+
+            const init = await this.CappedRETH.initialize(
+                "Capped rETH",
+                "crETH",
+                this.RETH.address,
+                this.VaultController.address,
+                this.VotingVaultController.address
+            )
+            await init.wait()
+            console.log("Capped rETH initialized: ", this.CappedRETH.address)
+        }
+
+        //set oracle relay (already checked)
+        console.log("setting rEth oracle to be rEth relay");
+        let setRelay = await this.Oracle.setRelay(
+            this.CappedRETH.address,
+            this.rEthOracle.address
+        );
+        await setRelay.wait();
+
+        const tokenid = await this.VaultController._tokenAddress_tokenId(
+            this.CappedRETH.address
+        )
+        if (tokenid.eq(0)) {
+            console.log("Registering Capped rEth on VaultController")
+            let t = await this.VaultController.registerErc20(
+                this.CappedRETH.address,
+                this.Info.rEthLTV!,
+                this.CappedRETH.address,
+                this.Info.rEthLiqInc!
+            );
+            await t.wait();
+        }
+
+        //check and registerUnderlying on vvc
+        const cTokenAddress = await this.VotingVaultController._underlying_CappedToken(this.RETH.address)
+        if (cTokenAddress == "0x0000000000000000000000000000000000000000") {
+            console.log("Registering Capped rEth on VotingVaultController")
+            const register = await this.VotingVaultController.registerUnderlying(
+                this.RETH.address,
+                this.CappedRETH.address
+            )
+            await register.wait()
+        }
+
+        //check if cap is set
+        const cap = await this.CappedRETH._cap()
+        if (cap._hex == BN("0")._hex && this.Info.rEthCap != undefined) {
+            console.log("Setting cap for rEth")
+            await this.CappedRETH.setCap(this.Info.rEthCap)
+        }
     }
 }
+
+
+
+/**
+async ensureUniOracle() {
+        if (this.Info.UniOracle != undefined) {
+            this.UniOracle = IOracleRelay__factory.connect(
+                this.Info.UniOracle,
+                this.deployer
+            );
+            console.log(`found UniOracle at ${this.Info.UniOracle}`);
+        } else {
+            console.log("Deploying new Uni oracle")
+            let clRelay = await new ChainlinkOracleRelay__factory(this.deployer).deploy(
+                this.Info.UNI_CL_FEED,
+                BN("1e10"),
+                BN('1')
+            )
+            await clRelay.deployed()
+
+            let uniRelay = await new UniswapV3OPTokenOracleRelay__factory(this.deployer).deploy(
+                14400,
+                this.EthOracle.address,
+                this.Info.UNI_UNI_POOL,
+                true,
+                BN("1"),
+                BN("1")
+            )
+            await uniRelay.deployed()
+
+            this.UniOracle = await new AnchoredViewRelay__factory(this.deployer).deploy(
+                uniRelay.address,
+                clRelay.address,
+                BN("10"),
+                BN("100")
+            )
+            await this.UniOracle.deployed()
+
+            showBodyCyan("Uni ORACLE PRICE: ", await toNumber(await this.UniOracle.currentValue()))
+            if ((await this.Oracle._relays(this.UNI.address)) != this.UniOracle.address) {
+                await this.deployAndRegisterCappedUni()
+            }
+        }
+    }
+    async deployAndRegisterCappedUni() {
+        if (this.Info.CappedUni! != undefined) {
+            this.CappedUni = new CappedGovToken__factory(this.deployer).attach(
+                this.Info.CappedUni
+            )
+        } else {
+            console.log("Deploying Capped Uni")
+
+            //deploy CappedGovToken implementation
+            if (this.CappedImplementation == undefined) {
+                const imp = await new CappedGovToken__factory(this.deployer).deploy()
+                this.CappedImplementation = imp.address
+                console.log("Deployed CappedGovToken Implementation: ", this.CappedImplementation)
+            }
+
+            const cTOKEN = await new TransparentUpgradeableProxy__factory(this.deployer).deploy(
+                (this.CappedImplementation as PromiseOrValue<string>),
+                this.ProxyAdmin.address,
+                "0x"
+            )
+
+            this.CappedUni = new CappedGovToken__factory(this.deployer).attach(cTOKEN.address)
+            console.log("Capped Unitimisim deployed: ", this.CappedUni.address)
+
+            const init = await this.CappedUni.initialize(
+                "Capped Uniswap",
+                "cUni",
+                this.UNI.address,
+                this.VaultController.address,
+                this.VotingVaultController.address
+            )
+            await init.wait()
+            console.log("Capped Uniswap initialized: ", this.CappedUni.address)
+        }
+
+        //set oracle relay (already checked)
+        console.log("setting Uni oracle to be Uni relay");
+        let setRelay = await this.Oracle.setRelay(
+            this.CappedUni.address,
+            this.UniOracle.address
+        );
+        await setRelay.wait();
+
+        const tokenid = await this.VaultController._tokenAddress_tokenId(
+            this.CappedUni.address
+        )
+        if (tokenid.eq(0)) {
+            console.log("Registering Capped Uni on VaultController")
+            let t = await this.VaultController.registerErc20(
+                this.CappedUni.address,
+                this.Info.UniLTV!,
+                this.CappedUni.address,
+                this.Info.UniLiqInc!
+            );
+            await t.wait();
+        }
+
+        //check and registerUnderlying on vvc
+        const cTokenAddress = await this.VotingVaultController._underlying_CappedToken(this.UNI.address)
+        if (cTokenAddress == "0x0000000000000000000000000000000000000000") {
+            console.log("Registering Capped Uni on VotingVaultController")
+            const register = await this.VotingVaultController.registerUnderlying(
+                this.UNI.address,
+                this.CappedUni.address
+            )
+            await register.wait()
+        }
+
+        //check if cap is set
+        const cap = await this.CappedUni._cap()
+        if (cap._hex == BN("0")._hex && this.Info.UniCap != undefined) {
+            console.log("Setting cap for Uni")
+            await this.CappedUni.setCap(this.Info.UniCap)
+        }
+    }
+
+    async ensureAaveOracle() {
+        if (this.Info.AaveOracle != undefined) {
+            this.AaveOracle = IOracleRelay__factory.connect(
+                this.Info.AaveOracle,
+                this.deployer
+            );
+            console.log(`found AaveOracle at ${this.Info.AaveOracle}`);
+        } else {
+            console.log("Deploying new Aave oracle")
+            let clRelay = await new ChainlinkOracleRelay__factory(this.deployer).deploy(
+                this.Info.AAVE_CL_FEED,
+                BN("1e10"),
+                BN('1')
+            )
+            await clRelay.deployed()
+
+            let AaveRelay = await new UniswapV3OPTokenOracleRelay__factory(this.deployer).deploy(
+                7000,
+                this.EthOracle.address,
+                this.Info.AAVE_UNI_POOL,
+                true,
+                BN("1"),
+                BN("1")
+            )
+            await AaveRelay.deployed()
+
+            this.AaveOracle = await new AnchoredViewRelay__factory(this.deployer).deploy(
+                AaveRelay.address,
+                clRelay.address,
+                BN("10"),
+                BN("100")
+            )
+            await this.AaveOracle.deployed()
+
+            showBodyCyan("Aave ORACLE PRICE: ", await toNumber(await this.AaveOracle.currentValue()))
+            if ((await this.Oracle._relays(this.AAVE.address)) != this.AaveOracle.address) {
+                await this.deployAndRegisterCappedAave()
+            }
+        }
+    }
+    async deployAndRegisterCappedAave() {
+        if (this.Info.CappedAave! != undefined) {
+            this.CappedAave = new CappedGovToken__factory(this.deployer).attach(
+                this.Info.CappedAave
+            )
+        } else {
+            console.log("Deploying Capped Aave")
+
+            //deploy CappedGovToken implementation
+            if (this.CappedImplementation == undefined) {
+                const imp = await new CappedGovToken__factory(this.deployer).deploy()
+                this.CappedImplementation = imp.address
+                console.log("Deployed CappedGovToken Implementation: ", this.CappedImplementation)
+            }
+
+            const cTOKEN = await new TransparentUpgradeableProxy__factory(this.deployer).deploy(
+                (this.CappedImplementation as PromiseOrValue<string>),
+                this.ProxyAdmin.address,
+                "0x"
+            )
+
+            this.CappedAave = new CappedGovToken__factory(this.deployer).attach(cTOKEN.address)
+            console.log("Capped Aavetimisim deployed: ", this.CappedAave.address)
+
+            const init = await this.CappedAave.initialize(
+                "Capped Aave",
+                "cAave",
+                this.AAVE.address,
+                this.VaultController.address,
+                this.VotingVaultController.address
+            )
+            await init.wait()
+            console.log("Capped Aaveswap initialized: ", this.CappedAave.address)
+        }
+
+        //set oracle relay (already checked)
+        console.log("setting Aave oracle to be Aave relay");
+        let setRelay = await this.Oracle.setRelay(
+            this.CappedAave.address,
+            this.AaveOracle.address
+        );
+        await setRelay.wait();
+
+        const tokenid = await this.VaultController._tokenAddress_tokenId(
+            this.CappedAave.address
+        )
+        if (tokenid.eq(0)) {
+            console.log("Registering Capped Aave on VaultController")
+            let t = await this.VaultController.registerErc20(
+                this.CappedAave.address,
+                this.Info.AaveLTV!,
+                this.CappedAave.address,
+                this.Info.AaveLiqInc!
+            );
+            await t.wait();
+        }
+
+        //check and registerUnderlying on vvc
+        const cTokenAddress = await this.VotingVaultController._underlying_CappedToken(this.AAVE.address)
+        if (cTokenAddress == "0x0000000000000000000000000000000000000000") {
+            console.log("Registering Capped Aave on VotingVaultController")
+            const register = await this.VotingVaultController.registerUnderlying(
+                this.AAVE.address,
+                this.CappedAave.address
+            )
+            await register.wait()
+        }
+
+        //check if cap is set
+        const cap = await this.CappedAave._cap()
+        if (cap._hex == BN("0")._hex && this.Info.AaveCap != undefined) {
+            console.log("Setting cap for Aave")
+            await this.CappedAave.setCap(this.Info.AaveCap)
+        }
+    }
+ */
