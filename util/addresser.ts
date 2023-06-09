@@ -37,12 +37,39 @@ export class MainnetAddresses {
 }
 
 export class OptimisimAddresses {
-    readonly wethAddress: string = "0x4200000000000000000000000000000000000006";
-    readonly opAddress: string = "0x4200000000000000000000000000000000000042";
-    readonly usdcAddress: string = "0x7F5c764cBc14f9669B88837ca1490cCa17c31607";
-    readonly wbtcAddress: string = "0x68f180fcCe6836688e9084f035309E29Bf0A2095";
-    readonly aaveAddress: string = "0x76FB31fb4af56892A25e32cFC43De717950c9278";
-    readonly uniAddress: string = "0x6fd9d7AD17242c41f7131d257212c54A0e816691";
+    //Tokens
+    readonly wethAddress: string = "0x4200000000000000000000000000000000000006"
+    readonly opAddress: string = "0x4200000000000000000000000000000000000042"
+    readonly usdcAddress: string = "0x7F5c764cBc14f9669B88837ca1490cCa17c31607"
+    readonly wbtcAddress: string = "0x68f180fcCe6836688e9084f035309E29Bf0A2095"
+    readonly aaveAddress: string = "0x76FB31fb4af56892A25e32cFC43De717950c9278"
+    readonly uniAddress: string = "0x6fd9d7AD17242c41f7131d257212c54A0e816691"
+    readonly wstethAddress: string = "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb"
+    readonly rethAddress: string = "0x9Bcef72be871e61ED4fBbc7630889beE758eb81D"
+
+
+    //oracle contracts
+    readonly wETH_CL_FEED: string = "0x13e3ee699d1909e989722e753853ae30b17e08c5"
+    readonly wETH_UNI_POOL: string = "0x85149247691df622eaF1a8Bd0CaFd40BC45154a9" //wETH/USDC 500 pool CONTRACT NOT VERRIFIED
+
+    readonly wstETH_CL_FEED: string = "0x698b585cbc4407e2d54aa898b2600b53c68958f7"
+    readonly wstETH_UNI_POOL: string = "0x4a5a2A152e985078e1A4AA9C3362c412B7dd0a86" //wETH/wstETH 500 pool FALSE
+
+    readonly rETH_CL_FEED: string = "0x1a8F81c256aee9C640e14bB0453ce247ea0DFE6F"
+    readonly rETH_UNI_POOL: string = "0xAEfC1edaeDE6ADaDcdF3bB344577D45A80B19582" //wETH/rETH 500 pool TRUE
+
+    readonly OP_CL_FEED: string = "0x0d276fc14719f9292d5c1ea2198673d1f4269246"
+    readonly OP_UNI_POOL: string = "0x68F5C0A2DE713a54991E01858Fd27a3832401849" // wETH/OP 3k pool TRUE
+
+    readonly wBTC_CL_FEED: string = "0x718a5788b89454aae3a028ae9c111a29be6c2a6f"
+    readonly wBTC_UNI_POOL: string = "0x73B14a78a0D396C521f954532d43fd5fFe385216" //wETH/wBTC 3k pool CONTRACT NOT VERRIFIED
+
+    readonly UNI_CL_FEED: string = "0x11429ee838cc01071402f21c219870cbac0a59a0"
+    readonly UNI_UNI_POOL: string = "0xAD4c666fC170B468B19988959eb931a3676f0e9F" //wETH/UNI 3k pool CONTRACT NOT VERRIFIED + BAD LIQUIDITY ~9k USD WETH
+
+    readonly AAVE_CL_FEED: string = "0x338ed6787f463394d24813b297401b9f05a8c9d1"
+    readonly AAVE_UNI_POOL: string = "0x790fde1FD6d2568050061a88c375d5c2E06b140B" //wETH/AAVE 10k pool TRUE BAD LIQUIDITY ~2k USD WETH
+
 }
 
 export const Mainnet: Addresser = new MainnetAddresses();

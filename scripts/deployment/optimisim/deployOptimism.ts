@@ -1,11 +1,9 @@
 import { network } from "hardhat";
 import hre from 'hardhat';
-import { currentBlock, resetCurrent, resetCurrentOP } from "../../../util/block";
+import { currentBlock, resetCurrentOP } from "../../../util/block";
 import { s } from "./scope";
-import {Deployment, DeploymentInfo} from "./optimisimDeployment"
-import { ProxyAdmin } from "@certusone/wormhole-sdk/lib/cjs/ethers-contracts";
-import { ProxyAdmin__factory } from "../../../typechain-types";
-import { OptimisimAddresses } from "../../../util/addresser";
+import { Deployment, DeploymentInfo } from "./optimisimDeployment";
+import { BN } from "../../../util/number";
 const { ethers } = require("hardhat");
 
 async function main() {
@@ -25,15 +23,58 @@ async function main() {
     const deployer = accounts[0];
     console.log("Deployer: ", deployer.address)
 
-    let info:DeploymentInfo = {
+    let info: DeploymentInfo = {
+
+        //token parameters
+        WethLTV: BN("85e16"),
+        WethLiqInc: BN("5e18"),
+
+        wBtcLTV: BN("85e16"),
+        wBtcLiqInc: BN("5e18"),
+
+        OpLTV: BN("85e16"),
+        OpLiqInc: BN("5e18"),
+        OpCap: BN("725000e18"), //1mm cap
+
+        wstEthLTV: BN("85e16"),
+        wstEthLiqInc: BN("5e18"),
+        wstEthCap: BN("500e18"),//1mm cap
+
+
         //external contracts
-        WETH: s.wethAddress,
-        OP: s.opAddress,
-        USDC: s.usdcAddress,
-        WBTC: s.wbtcAddress,
-        AAVE: s.aaveAddress,
-        UNI: s.uniAddress
+        wethAddress: s.wethAddress,
+        opAddress: s.opAddress,
+        usdcAddress: s.usdcAddress,
+        wbtcAddress: s.wbtcAddress,
+        aaveAddress: s.aaveAddress,
+        uniAddress: s.uniAddress,
+        wstethAddress: s.wstethAddress,
+        rethAddress: s.rethAddress,
+
+        //oracle contracts
+        wETH_CL_FEED: s.wETH_CL_FEED,
+        wETH_UNI_POOL: s.wETH_UNI_POOL,
+
+        wstETH_CL_FEED: s.wstETH_CL_FEED,
+        wstETH_UNI_POOL: s.wstETH_UNI_POOL,
+
+        rETH_CL_FEED: s.rETH_CL_FEED,
+        rETH_UNI_POOL: s.rETH_UNI_POOL,
+
+        OP_CL_FEED: s.OP_CL_FEED,
+        OP_UNI_POOL: s.OP_UNI_POOL,
+
+        wBTC_CL_FEED: s.wBTC_CL_FEED,
+        wBTC_UNI_POOL: s.wBTC_UNI_POOL,
+
+        UNI_CL_FEED: s.UNI_CL_FEED,
+        UNI_UNI_POOL: s.UNI_UNI_POOL,
+
+        AAVE_CL_FEED: s.AAVE_CL_FEED,
+        AAVE_UNI_POOL: s.AAVE_UNI_POOL,
     }
+
+
 
     const d = new Deployment(deployer, info)
     await d
@@ -44,6 +85,7 @@ async function main() {
         .catch((e) => {
             console.log(e)
         })
+
 }
 
 
