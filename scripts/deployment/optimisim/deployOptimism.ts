@@ -5,8 +5,12 @@ import { s } from "./scope";
 import { Deployment, DeploymentInfo } from "./optimisimDeployment";
 import { BN } from "../../../util/number";
 import { showBody, showBodyCyan } from "../../../util/format";
+import { SignKeyObjectInput } from "crypto";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { impersonateAccount } from "@nomicfoundation/hardhat-network-helpers";
 const { ethers } = require("hardhat");
-
+const deployerAddr = "0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89"
+let deployer: SignerWithAddress
 async function main() {
 
     //check for test network
@@ -17,12 +21,16 @@ async function main() {
         await resetCurrentOP()
         const block = await currentBlock()
         console.log("Deploying on OPTIMISM as of block: ", block.number)
+        await impersonateAccount(deployerAddr)
+        deployer = ethers.provider.getSigner(deployerAddr)
+        console.log("Deployer: ", deployerAddr)
+
     } else {
         console.log("DEPLOYING TO: ", networkName)
+        let accounts = await ethers.getSigners();
+        deployer = accounts[0]
+        console.log("Deployer: ", deployer.address)
     }
-    const accounts = await ethers.getSigners();
-    const deployer = accounts[0];
-    console.log("Deployer: ", deployer.address)
 
     let info: DeploymentInfo = {
 
@@ -86,27 +94,35 @@ async function main() {
         USDI: "0xF352DC165783538A26e38A536e76DceF227d90F2",
         ProxyAdmin: "0x2dB08783F13c4225A1963b2437f0D459a5BCB4D8",
         VotingVaultController: "0x9C3b60A1ad08740fCD842351ff0960C1Ee3FeA52",
+        Curve: "0xC3A17DC6b70cD58f8aE49Fb969CCA5A57cf84A73",
+        ThreeLines: "0x7C53378987F6e82050b1244B4d836f785147544b",
         CappedImplementation: "0x54fE0D5dA2C787a93f2Dcb4d25E202C4e44e4458",
         CappedWeth: "0x696607447225f6690883e718fd0Db0Abaf36B6E2",
         EthOracle: "0xcB88cf29121E5380c818A7dd4E8C21d964369dF3",
         CappedWbtc: "0x5a83002E6d8dF75c79ADe9c209F21C31B0AB14B2",
+        wBtcOracle: "0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a",
         CappedOp: "0xb549c8cc8011CA0d023A73DAD54d725125b25F31",
+        OpOracle: "0x8C8AE22fea16C43743C846902eC7E34204894189",
         CappedWstEth: "0xE1442bA08e330967Dab4fd4Fc173835e9730bff6",
-        CappedRETH: "0x399bA3957D0e5F6e62836506e760787FDDFb01c3"
+        wstEthOracle: "0xB765006321C6Be998f0ef62802d2548E76870D3B",
+        CappedRETH: "0x399bA3957D0e5F6e62836506e760787FDDFb01c3",
+        rEthOracle: "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"
     }
 
     const d = new Deployment(deployer, info)
     await d
         .ensure()
         .then(() => {
-            showBodyCyan("CONTRACTS ALL DEPLOYED")
+            showBodyCyan("CONTRACTS ALL ENSURED")
         })
         .catch((e) => {
             console.log(e)
         })
 
 }
-
+/**
+hh verify --network op --constructor-args ./scripts/args.js 0x7C53378987F6e82050b1244B4d836f785147544b
+ */
 main()
     .then(() => process.exit(0))
     .catch((error) => {
@@ -126,6 +142,12 @@ VaultController initialized:  0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85
 oracleMaster deployed:  0xBdCF0bb40eb8642f907133bDB5Fcc681D81f0651
 Registering oracle master
 Registered oracle master
+deployed curve master at 0xC3A17DC6b70cD58f8aE49Fb969CCA5A57cf84A73
+setting Curve vault controller
+deploying three lines
+deployed three lines at 0x7C53378987F6e82050b1244B4d836f785147544b
+setting 0 curve to threelines
+setting curve master of vault controller
 USDI implementation address:  0x181C4bB6413534b09B7dA80a098D2DcEb2B55Fe8
 USDI proxy address:  0xF352DC165783538A26e38A536e76DceF227d90F2
 USDI initialized:  0xF352DC165783538A26e38A536e76DceF227d90F2
