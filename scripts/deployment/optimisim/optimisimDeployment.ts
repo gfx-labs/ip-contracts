@@ -118,6 +118,7 @@ export class Deployment {
         await this.ensureProxyAdmin()
         await this.ensureVaultController()
         await this.ensureOracle()
+        await this.ensureCurve()
         await this.ensureUSDI()
         await this.ensureVotingVaultController()
 

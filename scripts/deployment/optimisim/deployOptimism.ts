@@ -82,16 +82,17 @@ async function main() {
 
         //deployed contracts
         VaultController: "0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85",
+        Oracle: "0xBdCF0bb40eb8642f907133bDB5Fcc681D81f0651",
         USDI: "0xF352DC165783538A26e38A536e76DceF227d90F2",
         ProxyAdmin: "0x2dB08783F13c4225A1963b2437f0D459a5BCB4D8",
         VotingVaultController: "0x9C3b60A1ad08740fCD842351ff0960C1Ee3FeA52",
         CappedImplementation: "0x54fE0D5dA2C787a93f2Dcb4d25E202C4e44e4458",
-        CappedWeth: "0x696607447225f6690883e718fd0Db0Abaf36B6E2", 
+        CappedWeth: "0x696607447225f6690883e718fd0Db0Abaf36B6E2",
+        EthOracle: "0xcB88cf29121E5380c818A7dd4E8C21d964369dF3",
         CappedWbtc: "0x5a83002E6d8dF75c79ADe9c209F21C31B0AB14B2",
-        CappedOp: "0xb549c8cc8011CA0d023A73DAD54d725125b25F31", 
+        CappedOp: "0xb549c8cc8011CA0d023A73DAD54d725125b25F31",
         CappedWstEth: "0xE1442bA08e330967Dab4fd4Fc173835e9730bff6",
         CappedRETH: "0x399bA3957D0e5F6e62836506e760787FDDFb01c3"
-
     }
 
     const d = new Deployment(deployer, info)
