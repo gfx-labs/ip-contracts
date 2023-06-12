@@ -143,6 +143,7 @@ const config: HardhatUserConfig = {
       mainnet: process.env.API_KEY!,
       ropsten: process.env.API_KEY!,
       polygon: process.env.ETHERSCAN_POLYGON_KEY!,
+      optimisticEthereum: process.env.OP_KEY!
     },
   },
   typechain: {
