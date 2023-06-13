@@ -39,8 +39,6 @@ describe("Lending with capped WETH", () => {
 
     })
 
-
-
     it("Repay loan", async () => {
         expect(await s.USDC.balanceOf(s.Bob.address)).to.eq(s.Bob_USDC, "Bob still holds starting USDC")
 
@@ -208,4 +206,3 @@ describe("Liquidations - WETH", () => {
     })
 
 })
-
