@@ -12,7 +12,7 @@ const { ethers } = require("hardhat");
 const deployerAddr = "0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89"
 let deployer: SignerWithAddress
 async function main() {
-
+    console.log("START")
     //check for test network
     const networkName = hre.network.name
     if (networkName == "hardhat" || networkName == "localhost") {
@@ -28,6 +28,7 @@ async function main() {
     } else {
         console.log("DEPLOYING TO: ", networkName)
         let accounts = await ethers.getSigners();
+        console.log("Got accounts ", accounts.length)
         deployer = accounts[0]
         console.log("Deployer: ", deployer.address)
     }
@@ -91,7 +92,7 @@ async function main() {
         //deployed contracts
         VaultController: "0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85",
         Oracle: "0xBdCF0bb40eb8642f907133bDB5Fcc681D81f0651",
-        USDI: "0xF352DC165783538A26e38A536e76DceF227d90F2",
+        //USDI: "0xF352DC165783538A26e38A536e76DceF227d90F2",
         ProxyAdmin: "0x2dB08783F13c4225A1963b2437f0D459a5BCB4D8",
         VotingVaultController: "0x9C3b60A1ad08740fCD842351ff0960C1Ee3FeA52",
         Curve: "0xC3A17DC6b70cD58f8aE49Fb969CCA5A57cf84A73",
