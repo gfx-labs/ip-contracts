@@ -41,7 +41,7 @@ contract USDI is Initializable, PausableUpgradeable, UFragments, IUSDI, Exponent
   /// @param reserveAddr the address of USDC
   /// @dev consider adding decimals?
   function initialize(address reserveAddr) public override initializer {
-    __UFragments_init("opUSDI Token", "opUSDI");
+    __UFragments_init("USDI Token", "USDI");
     __Pausable_init();
     _reserve = IERC20(reserveAddr);
   }
