@@ -8,6 +8,7 @@ import { SignKeyObjectInput } from "crypto";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { impersonateAccount } from "@nomicfoundation/hardhat-network-helpers";
 import { OptimisimAddresses, OptimisimDeploys } from "../../../util/addresser";
+import { CrossChainAccount__factory, VaultController__factory } from "../../../typechain-types";
 
 const { ethers } = require("hardhat");
 const deployerAddr = "0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89"
@@ -91,24 +92,26 @@ async function main() {
         AAVE_UNI_POOL: addresses.AAVE_UNI_POOL,
 
         //deployed contracts
+
         VaultController: deploys.VaultController,
-        Oracle: deploys.Oracle, 
-        USDI: deploys.USDI, 
-        ProxyAdmin: deploys.ProxyAdmin, 
-        VotingVaultController: deploys.VotingVaultController, 
-        Curve: deploys.Curve, 
-        ThreeLines: deploys.ThreeLines, 
-        CappedImplementation: deploys.CappedImplementation, 
-        CappedWeth: deploys.CappedWeth, 
-        EthOracle: deploys.EthOracle, 
-        CappedWbtc: deploys.CappedWbtc, 
-        wBtcOracle: deploys.wBtcOracle, 
-        CappedOp: deploys.CappedOp, 
-        OpOracle: deploys.OpOracle, 
-        CappedWstEth: deploys.CappedWstEth, 
-        wstEthOracle: deploys.wstEthOracle, 
-        CappedRETH: deploys.CappedRETH, 
-        rEthOracle: deploys.rEthOracle, 
+        Oracle: deploys.Oracle,
+        USDI: deploys.USDI,
+        ProxyAdmin: deploys.ProxyAdmin,
+        VotingVaultController: deploys.VotingVaultController,
+        Curve: deploys.Curve,
+        ThreeLines: deploys.ThreeLines,
+        CappedImplementation: deploys.CappedImplementation,
+        CappedWeth: deploys.CappedWeth,
+        EthOracle: deploys.EthOracle,
+        CappedWbtc: deploys.CappedWbtc,
+        wBtcOracle: deploys.wBtcOracle,
+        CappedOp: deploys.CappedOp,
+        OpOracle: deploys.OpOracle,
+        CappedWstEth: deploys.CappedWstEth,
+        wstEthOracle: deploys.wstEthOracle,
+        CappedRETH: deploys.CappedRETH,
+        rEthOracle: deploys.rEthOracle,
+
     }
 
     const d = new Deployment(deployer, info)
@@ -120,6 +123,17 @@ async function main() {
         .catch((e) => {
             console.log(e)
         })
+
+    const messenger = await new CrossChainAccount__factory(deployer).deploy(
+        "0x4200000000000000000000000000000000000007",
+        "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
+    )
+    await messenger.deployed()
+    console.log("Messenger deployed to: ", messenger.address)
+
+    //const VC = VaultController__factory.connect(deploys.VaultController, deployer)
+    //await VC.connect(deployer).transferOwnership(messenger.address)
+
 
 }
 
