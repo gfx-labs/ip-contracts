@@ -12,7 +12,7 @@ import { BigNumber } from "ethers";
 import { PromiseOrValue } from "../../../typechain-types/common";
 
 const { ethers } = require("hardhat");
-const lookback = 10500
+const lookback = 8000
 export interface DeploymentInfo extends OptimisimAddresses {
 
     WethLTV?: BigNumber;
@@ -384,6 +384,7 @@ export class Deployment {
             await this.EthOracle.deployed()
 
             showBodyCyan("weth ORACLE PRICE: ", await toNumber(await this.EthOracle.currentValue()))
+            console.log("Weth Oracle Deployed: ", this.EthOracle.address)
             if ((await this.Oracle._relays(this.WETH.address)) != this.EthOracle.address) {
                 await this.deployAndRegisterCappedWeth()
             }
@@ -501,6 +502,7 @@ export class Deployment {
             )
             await this.wBtcOracle.deployed()
             showBodyCyan("wBtc ORACLE PRICE: ", await toNumber(await this.wBtcOracle.currentValue()))
+            console.log("wBtc Oracle Deployed: ", this.wBtcOracle.address)
 
             if ((await this.Oracle._relays(this.WBTC.address)) != this.wBtcOracle.address) {
                 await this.deployAndRegisterCappedWbtc()
@@ -615,8 +617,9 @@ export class Deployment {
                 BN("100")
             )
             await this.OpOracle.deployed()
-
             showBodyCyan("OP ORACLE PRICE: ", await toNumber(await this.OpOracle.currentValue()))
+            console.log("OP Oracle Deployed: ", this.OpOracle.address)
+
             if ((await this.Oracle._relays(this.OP.address)) != this.OpOracle.address) {
                 await this.deployAndRegisterCappedOP()
             }
@@ -731,8 +734,9 @@ export class Deployment {
                 BN("100")
             )
             await this.wstEthOracle.deployed()
-
             showBodyCyan("wstEth ORACLE PRICE: ", await toNumber(await this.wstEthOracle.currentValue()))
+            console.log("wstEth Oracle Deployed: ", this.wstEthOracle.address)
+
             if ((await this.Oracle._relays(this.WSTETH.address)) != this.wstEthOracle.address) {
                 await this.deployAndRegisterCappedWstEth()
             }
@@ -847,6 +851,7 @@ export class Deployment {
             )
             await this.rEthOracle.deployed()
             showBodyCyan("rEth ORACLE PRICE: ", await toNumber(await this.rEthOracle.currentValue()))
+            console.log("rEth Oracle Deployed: ", this.rEthOracle.address)
 
             if ((await this.Oracle._relays(this.RETH.address)) != this.rEthOracle.address) {
                 await this.deployAndRegisterCappedRETH()
