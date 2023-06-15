@@ -102,15 +102,15 @@ async function main() {
         ThreeLines: deploys.ThreeLines,
         CappedImplementation: deploys.CappedImplementation,
         CappedWeth: deploys.CappedWeth,
-        EthOracle: deploys.EthOracle,
+        //EthOracle: deploys.EthOracle,
         CappedWbtc: deploys.CappedWbtc,
-        wBtcOracle: deploys.wBtcOracle,
+        //wBtcOracle: deploys.wBtcOracle,
         CappedOp: deploys.CappedOp,
-        OpOracle: deploys.OpOracle,
+        //OpOracle: deploys.OpOracle,
         CappedWstEth: deploys.CappedWstEth,
-        wstEthOracle: deploys.wstEthOracle,
+        //wstEthOracle: deploys.wstEthOracle,
         CappedRETH: deploys.CappedRETH,
-        rEthOracle: deploys.rEthOracle,
+        //rEthOracle: deploys.rEthOracle,
 
     }
 

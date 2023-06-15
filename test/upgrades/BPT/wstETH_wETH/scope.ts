@@ -16,7 +16,7 @@ export class TestScope extends MainnetAddresses {
 
     gaugeToken!: IERC20
     rewardToken!: IERC20
-    BPT_AMOUNT = BN("25e18")
+    BPT_AMOUNT = BN("5e18")
     CappedWSTETH_wETH!: CappedBptToken
     BPT_CAP = this.BPT_AMOUNT
     BPT_LiqInc = BN("7500000000000000")

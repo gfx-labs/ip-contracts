@@ -25,7 +25,7 @@ const bank = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28"
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(17119430)).to.not.throw;
+        expect(await reset(17487484)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [true])).to.not
@@ -59,7 +59,7 @@ describe("Initial Setup - wstETH/wETH - B-stETH-STABLE-gauge", () => {
          */
         s.wstETH_wETH = IERC20__factory.connect("0x32296969Ef14EB0c6d29669C550D4a0449130230", s.Frank)
         s.gaugeToken = IERC20__factory.connect("0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE", s.Frank)
-        s.rewardToken = IERC20__factory.connect("0xe4683Fe8F53da14cA5DAc4251EaDFb3aa614d528", s.Frank)
+        s.rewardToken = IERC20__factory.connect("0x59D66C58E83A26d6a0E35114323f65c3945c89c1", s.Frank)
 
     });
 
@@ -86,7 +86,7 @@ describe("Initial Setup - wstETH/wETH - B-stETH-STABLE-gauge", () => {
         }
         await s.Frank.sendTransaction(tx)
 
-        const BPT_whale = "0x21ac89788d52070D23B8EaCEcBD3Dc544178DC60"
+        const BPT_whale = "0x64aE36eeaC5BF9c1F4b7Cc6F0Fa32bBa19aaF9Bc"
         //steal BPTs
         await stealMoney(BPT_whale, s.Bob.address, s.wstETH_wETH.address, s.BPT_AMOUNT)
         await stealMoney(BPT_whale, s.Carol.address, s.wstETH_wETH.address, s.BPT_AMOUNT)
