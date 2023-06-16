@@ -117,11 +117,8 @@ describe("Deploy and test oracles for underlying assets", () => {
 
         const primeBPToracle = await new BPT_WEIGHTED_ORACLE__factory(s.Frank).deploy(
             primeBPT,
-            balancerVault, //balancer vault
             [BAL, s.wethAddress],
-            [BAL_TOKEN_ORACLE, s.wethOracleAddr],
-            BN("10"),
-            BN("100")
+            [BAL_TOKEN_ORACLE, s.wethOracleAddr]
         )
         await primeBPToracle.deployed()
 
