@@ -1,6 +1,4 @@
-# Proposal Template to add a new Capped TOKEN 
-Proposal to add TOKEN as an capped collateral to Interest Protocol.
-In this example, LINK is the token being listed
+# Proposal to add Balancer BPTs as collateral on IP
 
 ## Overview
 This proposal is to begin adding Balancer LP tokens as supported collateral by Interest Protocol. Balancer LP tokens are yield-bearing tokens that accrue yield to the owners from fees and rewards. This proposal is for Balancer LP tokens generally, and [B-stETH-STABLE]("https://app.balancer.fi/#/ethereum/pool/0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080") specifically as a first Balancer LP collateral.
@@ -8,31 +6,31 @@ This proposal is to begin adding Balancer LP tokens as supported collateral by I
 ## Parameters
 
 Token Address: [0x32296969Ef14EB0c6d29669C550D4a0449130230](https://etherscan.io/address/0x32296969Ef14EB0c6d29669C550D4a0449130230)
-Capped Token address: [0x5F39aD3df3eD9Cf383EeEE45218c33dA86479165](https://etherscan.io/token/0x5F39aD3df3eD9Cf383EeEE45218c33dA86479165)
-LTV: 75%
-Liquidation incentive: 7.5%
-Cap: 375,000 (~$3,000,000)
-Primary Oracle Address: [Chainlink](https://etherscan.io/token/0x52F3140074cdF69C8f7151728B1ecc19af39Beea)
-Secondary Oracle Address: [Uniswap v3](https://etherscan.io/token/0xD79ef1A8632C78FAB8331f7aE74ff93E60E2cdC2)
-Price deviation: 10%
+Capped Token address: [0x7d3CD037aE7efA9eBed7432c11c9DFa73519303d](https://etherscan.io/token/0x7d3CD037aE7efA9eBed7432c11c9DFa73519303d)
+LTV: 60%
+Liquidation incentive: 8%
+Cap: 60 (~$100,000)
+Primary Oracle Address: [BPTstablePoolOracle](https://etherscan.io/token/0xD6B002316D4e13d2b7eAff3fa5Fc6c20D2CeF4be#code)
+Price deviation: 2%
 
 ## Liquidity
 
-Market Cap: $4,131,119,368
-Liquidity: $13,000,000 ([Uniswap V3 TOKEN-ETH](https://etherscan.io/token/0x514910771af9ca656af840dff83e8264ecf986ca?a=0xa6cc3c2531fdaa6ae1a3ca84c2855806728693e8))
-Volatility: 
-Coingecko 7-day avg 24hr volume: $361,000,000
-Notable exchanges: Coinbase, Binance, Kraken, Gemini, OKEx, Uniswap
+Market Cap: $100,000,000
+Liquidity: Redeemable at any time for underlying tokens of the ([pool](https://app.balancer.fi/#/ethereum/pool/0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080))
+24h volume: $410,000
+90d volume: $285,250,000
+Notable exchanges: Balancer Protocol
 
 ## Technical risks
 
-Type of contract: ERC20
-Underlying asset: N/A
-Time: Deployed September 16, 2017
-Value: Utility token for the ChainTOKEN Network
-Privileges: None
+Type of contract: LP token
+Underlying asset: wETH/wstETH
+Time: 653 Days (Created August 17, 2021)
+Value:
+Privileges: Balancer Governance
 Upgradability: None
-Supplemental Information: N/A
+Supplemental Information: See full forum post, which includes links to technical writeups and source code
 
 ## Relevant References
-[Maker Technical Risk Assessment from July 2020](https://forum.makerdao.com/t/LINK-erc20-token-smart-contract-technical-assessment/3467)
+[Full Forum Post](https://forums.interestprotocol.io/t/proposal-to-add-balancer-bpts-as-collateral/198)
+[Technical Writeup](https://docs.google.com/document/d/1u4dju8zORKWp3mEoCcEFgDvt90ro0tu17GOOLH2tHxY/edit)

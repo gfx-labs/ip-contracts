@@ -36,6 +36,17 @@ export class MainnetAddresses {
     constructor() { }
 }
 
+export class MainnetBPTaddresses {
+    readonly CappedBPT_Implementation: string = "0x0CDb61ab468a2f89D1636c95b32D88c0eA6ef826"
+    readonly NewVVC_Implementation: string = "0x17B7bD832666Ac28A6Ad35a93d4efF4eB9A07a17"
+
+    //first preposal
+    readonly CappedB_stETH_STABLE: string = "0x7d3CD037aE7efA9eBed7432c11c9DFa73519303d"
+    readonly wstEthRelay: string = "0x0E2a18163e6cB2eB11568Fad35E42dE4EE67EA9a"
+    readonly B_stETH_STABLEPOOL_ORACLE: string = "0xD6B002316D4e13d2b7eAff3fa5Fc6c20D2CeF4be"
+
+}
+
 export class OptimisimAddresses {
     //Tokens
     readonly wethAddress: string = "0x4200000000000000000000000000000000000006"
