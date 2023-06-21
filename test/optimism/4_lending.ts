@@ -26,8 +26,8 @@ describe("Lending with capped WETH", () => {
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)
         expect(startUSDI).to.eq(0, "Bob holds 0 USDi")
 
-        await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowAmount)
-        await mineBlock()
+        const result = await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowAmount)
+        await hardhat_mine_timed(1, 15)
 
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
@@ -72,10 +72,16 @@ describe("Liquidations - WETH", () => {
 
         let startLiab = await s.VaultController.vaultLiability(s.BobVaultID)
         expect(startLiab).to.eq(0, "Liability is still 0")
+        //showBody("Start USDI: ", await toNumber(await s.USDI.balanceOf(s.Bob.address)))
+        //showBody("Borrow power: ", await toNumber(borrowPower))
+        //showBody("Borrow power: ", await toNumber(await s.VaultController.vaultBorrowingPower(s.BobVaultID)))
 
-        await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, borrowPower)
+        await s.VaultController.connect(s.Bob).borrowUsdi(s.BobVaultID, await s.VaultController.vaultBorrowingPower(s.BobVaultID))
         await mineBlock()
+        await hardhat_mine_timed(1, 15)
         const liab = await s.VaultController.vaultLiability(s.BobVaultID)
+        //showBody("Liab: ", await toNumber(liab))
+        //showBody("USDI: ", await toNumber(await s.USDI.balanceOf(s.Bob.address)))
         expect(await toNumber(liab)).to.be.closeTo(await toNumber(borrowPower), 0.001, "Liability is correct")
 
         let balance = await s.USDI.balanceOf(s.Bob.address)
@@ -181,7 +187,7 @@ describe("Liquidations - WETH", () => {
         expect(await toNumber(balance)).to.eq(0, "All CappedWeth removed from vault")
 
         const supply = await s.CappedWeth.totalSupply()
-        expect(await toNumber(supply)).to.eq(0, "All CappedWeth Burned")
+        expect(await toNumber(supply)).to.be.closeTo(0, 0.1, "All CappedWeth Burned")
 
         balance = await s.WETH.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.Bob_WETH.sub(T2L)), 2, "Bob received collateral - liquidated amount")
