@@ -11,6 +11,8 @@ import "../../_external/CompLike.sol";
 import "../../_external/IERC721.sol";
 import "../../_external/Context.sol";
 
+import "../../_external/uniswap/INonfungiblePositionManager.sol";
+
 //not sure this is a thing
 //import "../../_external/openzeppelin/SafeERC721Upgradeable.sol";
 import "../../_external/openzeppelin/ERC721Upgradeable.sol";
@@ -86,6 +88,19 @@ contract VaultNft is Context {
   /// @return address of minter
   function id() external view returns (uint96) {
     return _vaultInfo.id;
+  }
+
+  function collect(uint256 tokenId, address recipient) external onlyMinter {
+    INonfungiblePositionManager positionManager = INonfungiblePositionManager(_nftController._nfpManager());
+
+    positionManager.collect(
+      INonfungiblePositionManager.CollectParams({
+        tokenId: tokenId,
+        recipient: recipient,
+        amount0Max: 2 ** 128 - 1,
+        amount1Max: 2 ** 128 - 1
+      })
+    );
   }
 
   /// callable by the VaultController only

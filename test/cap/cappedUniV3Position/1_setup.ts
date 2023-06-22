@@ -19,7 +19,9 @@ require("chai").should();
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(17167757)).to.not.throw;//16579684, 14940917
+        //expect(await reset(17167757)).to.not.throw;//16579684, 14940917
+        expect(await reset(17530785)).to.not.throw;//16579684, 14940917
+
     });
     it("set automine", async () => {
         expect(await network.provider.send("evm_setAutomine", [true])).to.not
@@ -55,7 +57,7 @@ describe("Token Setup", () => {
         s.Oracle = OracleMaster__factory.connect(d.Oracle, s.Frank)
 
         s.ProxyAdmin = ProxyAdmin__factory.connect(d.ProxyAdmin, s.Frank)
-        
+
         s.IPT = InterestProtocolTokenDelegate__factory.connect(d.IPTDelegator, s.Frank)
 
         const vvc = "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2"
@@ -80,9 +82,6 @@ describe("Token Setup", () => {
         await stealMoney(usdc_minter, s.Carol.address, s.USDC.address, s.USDC_AMOUNT)
 
     })
-
-
-
 
 });
 

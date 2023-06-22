@@ -117,8 +117,14 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
       liquidity
     );
 
+    PoolData memory data = poolDatas[address(pool)];
+    
+    uint256 value0 = (amount0 * p0) / data.UNIT_0;
+
+    uint256 value1 = (amount1 * p1) / data.UNIT_1;
+
     //derive value based on price * amount
-    return ((p0 * amount0) / 1e18) + ((p1 * amount1) / 1e18);
+    return value1 + value0;
   }
 
   function verifyPool(uint256 tokenId) public view returns (bool, IUniswapV3PoolImmutables, uint128) {

@@ -19,8 +19,10 @@ import "hardhat/console.sol";
 /// @dev extends ierc20 upgradable
 contract NftVaultController is Initializable, OwnableUpgradeable {
   //this is unused but needs to stay or the storage will be off by 8 bits for future upgrades
-  uint8 private _underlying_decimals;
+  //uint8 private _underlying_decimals;
   IVaultController public _vaultController;
+
+  address public _nfpManager;
 
   mapping(address => uint96) public _vaultAddress_vaultId; //standard vault addr
   mapping(uint96 => address) public _vaultId_nftVaultAddress;
@@ -45,6 +47,8 @@ contract NftVaultController is Initializable, OwnableUpgradeable {
   function registerUnderlying(address capped_token, address underlying_address) external onlyOwner {
     _underlying_CollateralToken[underlying_address] = capped_token;
     _CollateralToken_underlying[capped_token] = underlying_address;
+
+    _nfpManager = underlying_address;
   }
 
   /// @notice retrieve underlying asset for the cap token

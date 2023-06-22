@@ -47,9 +47,6 @@ import {
   abi as POOL_ABI,
 } from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
 import {
-  abi as ROUTERV3,
-} from "@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json"
-import {
   MintOptions,
   nearestUsableTick,
   NonfungiblePositionManager,
@@ -124,6 +121,8 @@ type MintParams = {
   deadline: PromiseOrValue<BigNumberish>
 }
 
+let bobAmount1: BigNumber
+let bobAmount0: BigNumber
 
 describe("Mint position", () => {
   //const token0 = s.WBTC
@@ -174,6 +173,9 @@ describe("Mint position", () => {
       deadline: block.timestamp + 500
     }
 
+    const startingWbtcBalance = await s.WBTC.balanceOf(s.Bob.address)
+    const startingWethBalance = await s.WETH.balanceOf(s.Bob.address)
+
     //mint position
     const result = await s.nfpManager.connect(s.Bob).mint(params)
     await hardhat_mine_timed(500, 15)
@@ -181,10 +183,19 @@ describe("Mint position", () => {
     showBody("wbtcAmount: ", s.wBTC_Amount)
     showBody("wethAmount: ", s.WETH_AMOUNT)
 
+    bobAmount1 = args.amount1
+    bobAmount0 = args.amount0
+
+    let balance = await s.WBTC.balanceOf(s.Bob.address)
+    expect(startingWbtcBalance.sub(balance)).to.eq(bobAmount0, "Correct amount of wbtc taken")
+
+    balance = await s.WETH.balanceOf(s.Bob.address)
+    expect(startingWethBalance.sub(balance)).to.eq(bobAmount1, "Correct amount of weth taken")
+
     showBodyCyan("Args: ", args)
     const tokenId = args.tokenId
     s.BobPositionId = tokenId
-    expect(await s.nfpManager.balanceOf(s.Bob.address)).to.eq(BN("1"), "Bob has 1 NFT")    
+    expect(await s.nfpManager.balanceOf(s.Bob.address)).to.eq(BN("1"), "Bob has 1 NFT")
 
     /**
      const manager = INFPmanager__factory.connect(nfpManagerAddr, s.Frank)
@@ -508,13 +519,18 @@ describe("Check valuations", async () => {
     //derive value based on price
     let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
     let p1: BigNumber = await s.wethOracle.currentValue()
+    //showBody("data: ", data)
+    const value = await s.PositionValuator.getValue(s.BobPositionId)
 
-    const data = await s.nfpManager.positions(s.BobPositionId)
-    showBody("data: ", data)
 
-    //let v0: BigNumber = (p0.mul(BN(args.amount0))).div(BN("1e18"))
-    //let v1: BigNumber = (p1.mul(BN(args.amount1))).div(BN("1e18"))
-    //const targetAmount = v1.add(v0)
-    //showBodyCyan("Target: ", await toNumber(targetAmount))//todo improve accuracy?
+    let v0: BigNumber = (p0.mul(BN(bobAmount0))).div(BN("1e8"))//reduced decimals for wbtc 
+    let v1: BigNumber = (p1.mul(BN(bobAmount1))).div(BN("1e18"))
+    const targetAmount = v1.add(v0)
+
+    expect(await toNumber(value)).to.be.closeTo(await toNumber(targetAmount), 0.5, "Accurate value derived for position")
   })
+
+
+
+
 })
