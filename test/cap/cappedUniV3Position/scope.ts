@@ -1,17 +1,18 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken, IGauge, INonfungiblePositionManager__factory, Univ3CollateralToken, NftVaultController, VaultNft, INonfungiblePositionManager, V3PositionValuator } from "../../../typechain-types";
+import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken, IGauge, INonfungiblePositionManager__factory, Univ3CollateralToken, NftVaultController, VaultNft, INonfungiblePositionManager, V3PositionValuator, UniswapV3Pool, IUniV3Pool, IUniswapV3PoolDerivedState } from "../../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../../util/addresser";
 import { BN } from "../../../util/number";
 import { NonfungiblePositionManager } from "@uniswap/v3-sdk";
-
 export class TestScope extends MainnetAddresses {
     USDI!: USDI;
     USDC!: IERC20;
     WETH!: IERC20;
     UNI!: IVOTE;
     WBTC!: IERC20;
+
+    POOL!: IUniV3Pool
 
     CappedPosition!: Univ3CollateralToken
     NftVaultController!: NftVaultController
@@ -25,6 +26,7 @@ export class TestScope extends MainnetAddresses {
     wbtcOracle!: IOracleRelay
     
 
+    POOL_ADDR = "0xCBCdF9626bC03E24f779434178A73a0B4bad62eD"
    
     LiquidationIncentive = BN("1e17")
     LTV = BN("6e17")

@@ -2,10 +2,12 @@ import { s } from "./scope";
 import { d } from "../DeploymentInfo";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear } from "../../../util/block";
+import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear, hardhat_mine_timed } from "../../../util/block";
 import { utils, BigNumber } from "ethers";
 import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculatetokensToLiquidate, calculateUSDI2repurchase, changeInBalance } from "../../../util/math";
 import { currentBlock, reset, hardhat_mine } from "../../../util/block"
+import { ethers } from "hardhat";
+
 import MerkleTree from "merkletreejs";
 import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import { expect, assert } from "chai";
@@ -20,7 +22,8 @@ import {
     IVault,
     CappedGovToken__factory,
     CappedGovToken,
-    VaultNft__factory
+    VaultNft__factory,
+    UniSwap__factory
 } from "../../../typechain-types"
 import { JsxEmit } from "typescript";
 import { stealMoney } from "../../../util/money";
@@ -159,15 +162,116 @@ describe("Capped Position Functionality", () => {
 
     //todo
     it("Check collection of income", async () => {
-        //do a swap
-
-        //elapse time?
-        await s.BobNftVault.connect(s.Bob).collect(s.BobPositionId, s.Bob.address)
 
         //check amounts owed
+        let data = await s.nfpManager.positions(s.BobPositionId)
+        expect(data.tokensOwed0).to.eq(0, "No tokens0 owed yet")
+        expect(data.tokensOwed1).to.eq(0, "No tokens1 owed yet")
+
+        //do a swap
+        //get start balance
+
+        const uniSwap = await new UniSwap__factory(s.Frank).deploy()
+
+        const amountIn = BN("1e7")
+
+        await s.WBTC.connect(s.Carol).approve(uniSwap.address, amountIn)
+        await hardhat_mine(1)
+        await uniSwap.connect(s.Carol).doSwap(s.POOL_ADDR, true, amountIn)
+       
+        
+
+        /**
+        for (let i = 0; i < 12; i++) {
+            await doSwap()
+            await hardhat_mine_timed(15, 15)
+            await doInverseSwap()
+            await hardhat_mine_timed(15, 15)
+        }
+         */
+
+
+        //const endBalWBTC = await s.WBTC.balanceOf(s.Carol.address)
+        //const endBalWETH = await s.WETH.balanceOf(s.Carol.address)
+
+        //expect((startBalWBTC)).to.be.gt((endBalWBTC), "wBTC balance decreased")
+        //expect(await toNumber(startBalWETH)).to.be.lt(await toNumber(endBalWETH), "wETH balance increased")
+
+        //check tokens owed
+        //data = await s.nfpManager.positions(s.BobPositionId)
+        //console.log(data)
+        //expect(await toNumber(data.tokensOwed0)).to.be.gt(0, "tokens0 owed increased")
+        //expect(await toNumber(data.tokensOwed1)).to.be.gt(0, "tokens1 owed increased")
+
+        const startBalWBTC = await s.WBTC.balanceOf(s.Carol.address)
+        const startBalWETH = await s.WETH.balanceOf(s.Carol.address)
+
+
+        await s.BobNftVault.connect(s.Bob).collect(s.BobPositionId, s.Bob.address)
+
+        const endBalWBTC = await s.WBTC.balanceOf(s.Carol.address)
+        const endBalWETH = await s.WETH.balanceOf(s.Carol.address)
+
+        showBody("WBTC: ", startBalWBTC, endBalWBTC)
+        showBody("WETH: ", await toNumber(startBalWETH), await toNumber(endBalWETH))
 
         //add these amounts to collateral value while not collected? 
     })
+
+    const doSwap = async () => {
+        const v3RouterAddress = "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+        const ROUTER_ABI = require("../../isolated/uniV3Pool/util/ISwapRouter.json")
+        const router = new ethers.Contract(v3RouterAddress, ROUTER_ABI, ethers.provider)
+        const swapInputAmount = BN("1e7")
+
+        //approve router for 100 USDi
+        await s.WBTC.connect(s.Carol).approve(router.address, swapInputAmount)
+        await mineBlock()
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+        const swapParams = [
+            s.WBTC.address.toString(), //tokenIn
+            s.WETH.address.toString(), //tokenOut
+            await s.POOL.fee(), //fee
+            s.Carol.address.toString(), //recipient
+            deadline.toString(),
+            swapInputAmount.toString(), //amountIn
+            "0", //amountOutMinimum
+            "0", //sqrtPriceLimitX96
+        ]
+        //do the swap router
+        await router.connect(s.Carol).exactInputSingle(swapParams)
+
+    }
+
+    const doInverseSwap = async () => {
+        const v3RouterAddress = "0xE592427A0AEce92De3Edee1F18E0157C05861564"
+        const ROUTER_ABI = require("../../isolated/uniV3Pool/util/ISwapRouter.json")
+        const router = new ethers.Contract(v3RouterAddress, ROUTER_ABI, ethers.provider)
+        const swapInputAmount = BN("1622415600000000000")
+
+        //approve router for 100 USDi
+        await s.WETH.connect(s.Carol).approve(router.address, swapInputAmount)
+        await mineBlock()
+
+        const block = await currentBlock()
+        const deadline = block.timestamp + 500
+
+        const swapParams = [
+            s.WETH.address.toString(), //tokenIn
+            s.WBTC.address.toString(), //tokenOut
+            await s.POOL.fee(), //fee
+            s.Carol.address.toString(), //recipient
+            deadline.toString(),
+            swapInputAmount.toString(), //amountIn
+            "0", //amountOutMinimum
+            "0", //sqrtPriceLimitX96
+        ]
+        //do the swap router
+        await router.connect(s.Carol).exactInputSingle(swapParams)
+    }
 
 })
 

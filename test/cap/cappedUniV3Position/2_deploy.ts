@@ -33,7 +33,8 @@ import {
   OracleMaster__factory,
   VaultController__factory,
   V3PositionValuator,
-  V3PositionValuator__factory
+  V3PositionValuator__factory,
+  IUniV3Pool__factory
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
@@ -141,16 +142,21 @@ describe("Mint position", () => {
 
   it("Mint position for Bob", async () => {
 
+    /**
     const poolContract = new ethers.Contract(
       wETHwBTC_pool_addr,
       POOL_ABI,
       ethers.provider
     )
+    */
+
+    s.POOL = IUniV3Pool__factory.connect(wETHwBTC_pool_addr, s.Frank)
+
     const [fee, tickSpacing, slot0] =
       await Promise.all([
-        poolContract.fee(),
-        poolContract.tickSpacing(),
-        poolContract.slot0(),
+        s.POOL.fee(),
+        s.POOL.tickSpacing(),
+        s.POOL.slot0(),
       ])
 
     const nut = nearestUsableTick(slot0[1], tickSpacing)
