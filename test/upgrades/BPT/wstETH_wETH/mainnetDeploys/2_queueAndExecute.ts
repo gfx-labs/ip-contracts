@@ -90,40 +90,12 @@ describe("Setup, Queue, and Execute proposal", () => {
   before(async () => {
     gov = GovernorCharlieDelegate__factory.connect(governorAddress, s.Frank)
   })
-  it("queue and execute", async () => {
-    const votingPeriod = await gov.votingPeriod()
-    const votingDelay = await gov.votingDelay()
-    const timelock = await gov.proposalTimelockDelay()
+  it("execute", async () => {
+    proposal = 29
 
-    const block = await currentBlock()
-    const votes = await s.IPT.getPriorVotes(proposer, block.number - 2)
-    expect(await toNumber(votes)).to.eq(45000000, "Correct number of votes delegated")
-    proposal = Number(await gov.proposalCount())
-
-    await impersonateAccount(proposer)
-
-    await gov.connect(prop).castVote(proposal, 1)
-    await mineBlock()
-
-    showBodyCyan("Advancing a lot of blocks again...")
-    await hardhat_mine(votingPeriod.toNumber());
-    await mineBlock()
-
-    await gov.connect(prop).queue(proposal);
-    await mineBlock()
-
-    await fastForward(timelock.toNumber());
-    await mineBlock()
-
-    await gov.connect(prop).execute(proposal);
+    await gov.execute(proposal);
     await mineBlock();
-
-
-    await ceaseImpersonation(proposer)
-
   })
-
-
 })
 
 

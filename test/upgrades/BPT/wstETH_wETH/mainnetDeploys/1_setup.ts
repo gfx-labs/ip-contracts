@@ -26,7 +26,7 @@ const bank = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28"
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(17522249)).to.not.throw;
+        expect(await reset(17565094)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [true])).to.not

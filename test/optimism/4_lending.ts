@@ -177,6 +177,8 @@ describe("Liquidations - WETH", () => {
         expect(voteVaultWETH).to.be.gt(0, "Vote vault holds WETH")
         const vaultCappedWeth = await s.CappedWeth.balanceOf(s.BobVault.address)
 
+        const startSupply = await s.CappedWeth.totalSupply()
+
         await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedWeth.address, vaultCappedWeth)
         await mineBlock()
 
@@ -187,7 +189,9 @@ describe("Liquidations - WETH", () => {
         expect(await toNumber(balance)).to.eq(0, "All CappedWeth removed from vault")
 
         const supply = await s.CappedWeth.totalSupply()
-        expect(await toNumber(supply)).to.be.closeTo(0, 0.1, "All CappedWeth Burned")
+        const supplyDelta = startSupply.sub(supply)
+    
+        expect(await toNumber(supplyDelta)).to.eq(await toNumber(vaultCappedWeth), "All CappedWeth Burned")
 
         balance = await s.WETH.balanceOf(s.Bob.address)
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.Bob_WETH.sub(T2L)), 2, "Bob received collateral - liquidated amount")
