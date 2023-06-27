@@ -73,11 +73,17 @@ export class TestScope extends MainnetAddresses {
     BobBptVault!: VaultBPT
     BobNftVault!: VaultNft
     BobPositionId!: BigNumber
+    BobAmount0!: BigNumber
+    BobAmount1!: BigNumber
+
     CarolVotingVault!: VotingVault
     CarolBptVault!: VaultBPT
     CarolPositionId!: BigNumber
     CarolIllegalPositionId!: BigNumber
     CarolNftVault!: VaultNft
+    CarolAmount0!: BigNumber
+    CarolAmount1!: BigNumber
+
     DeployerVotingVault!: VotingVault
     DeployerVaultID = 1
     DeployerVault!: IVault
