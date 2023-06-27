@@ -33,6 +33,7 @@ export class MainnetAddresses {
     readonly compVotingAddress: string = "0x1F2AB8Ac759Fb0E3185630277A554Ae3110bF530";
     readonly richAVAXWallet: string = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
     readonly richBinance14: string = "0x28C6c06298d514Db089934071355E5743bf21d60";
+    readonly OPcrossChainMessenger: string = "0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1"
     constructor() { }
 }
 
@@ -57,6 +58,7 @@ export class OptimisimAddresses {
     readonly uniAddress: string = "0x6fd9d7AD17242c41f7131d257212c54A0e816691"
     readonly wstethAddress: string = "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb"
     readonly rethAddress: string = "0x9Bcef72be871e61ED4fBbc7630889beE758eb81D"
+    readonly snxAddress: string = "0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4"
 
 
     //oracle contracts
@@ -81,28 +83,35 @@ export class OptimisimAddresses {
     readonly AAVE_CL_FEED: string = "0x338ed6787f463394d24813b297401b9f05a8c9d1"
     readonly AAVE_UNI_POOL: string = "0x790fde1FD6d2568050061a88c375d5c2E06b140B" //wETH/AAVE 10k pool TRUE BAD LIQUIDITY ~2k USD WETH
 
+    readonly SNX_CL_FEED: string = "0x2fcf37343e916eaed1f1ddaaf84458a359b53877"
+    readonly SNX_UNI_POOL: string = "0x0392b358CE4547601BEFa962680BedE836606ae2"
+
 }
 
 export class OptimisimDeploys {
-        //protocol
-        readonly VaultController: string = "0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85"
-        readonly Oracle: string = "0xBdCF0bb40eb8642f907133bDB5Fcc681D81f0651"
-        readonly USDI: string = "0x889be273BE5F75a177f9a1D00d84D607d75fB4e1"
-        readonly ProxyAdmin: string = "0x2dB08783F13c4225A1963b2437f0D459a5BCB4D8"
-        readonly VotingVaultController: string = "0x9C3b60A1ad08740fCD842351ff0960C1Ee3FeA52"
-        readonly Curve: string = "0xC3A17DC6b70cD58f8aE49Fb969CCA5A57cf84A73"
-        readonly ThreeLines: string = "0x7C53378987F6e82050b1244B4d836f785147544b"
-        readonly CappedImplementation: string = "0x54fE0D5dA2C787a93f2Dcb4d25E202C4e44e4458"
-        readonly CappedWeth: string = "0x696607447225f6690883e718fd0Db0Abaf36B6E2"
-        readonly EthOracle: string = "0xcB88cf29121E5380c818A7dd4E8C21d964369dF3"
-        readonly CappedWbtc: string = "0x5a83002E6d8dF75c79ADe9c209F21C31B0AB14B2"
-        readonly wBtcOracle: string = "0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a"
-        readonly CappedOp: string = "0xb549c8cc8011CA0d023A73DAD54d725125b25F31"
-        readonly OpOracle: string = "0x8C8AE22fea16C43743C846902eC7E34204894189"
-        readonly CappedWstEth: string = "0xE1442bA08e330967Dab4fd4Fc173835e9730bff6"
-        readonly wstEthOracle: string = "0xB765006321C6Be998f0ef62802d2548E76870D3B"
-        readonly CappedRETH: string = "0x399bA3957D0e5F6e62836506e760787FDDFb01c3"
-        readonly rEthOracle: string = "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"    
+    //protocol
+    readonly optimismMessenger: string = "0x48fa7528bFD6164DdF09dF0Ed22451cF59c84130"
+    readonly VaultController: string = "0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85"
+    readonly Oracle: string = "0xBdCF0bb40eb8642f907133bDB5Fcc681D81f0651"
+    readonly USDI: string = "0x889be273BE5F75a177f9a1D00d84D607d75fB4e1"
+    readonly ProxyAdmin: string = "0x2dB08783F13c4225A1963b2437f0D459a5BCB4D8"
+    readonly VotingVaultController: string = "0x9C3b60A1ad08740fCD842351ff0960C1Ee3FeA52"
+    readonly Curve: string = "0xC3A17DC6b70cD58f8aE49Fb969CCA5A57cf84A73"
+    readonly ThreeLines: string = "0x7C53378987F6e82050b1244B4d836f785147544b"
+    readonly CappedImplementation: string = "0x54fE0D5dA2C787a93f2Dcb4d25E202C4e44e4458"
+    readonly CappedWeth: string = "0x696607447225f6690883e718fd0Db0Abaf36B6E2"
+    readonly EthOracle: string = "0xcB88cf29121E5380c818A7dd4E8C21d964369dF3"
+    readonly CappedWbtc: string = "0x5a83002E6d8dF75c79ADe9c209F21C31B0AB14B2"
+    readonly wBtcOracle: string = "0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a"
+    readonly CappedOp: string = "0xb549c8cc8011CA0d023A73DAD54d725125b25F31"
+    readonly OpOracle: string = "0x8C8AE22fea16C43743C846902eC7E34204894189"
+    readonly CappedWstEth: string = "0xE1442bA08e330967Dab4fd4Fc173835e9730bff6"
+    readonly wstEthOracle: string = "0xB765006321C6Be998f0ef62802d2548E76870D3B"
+    readonly CappedRETH: string = "0x399bA3957D0e5F6e62836506e760787FDDFb01c3"
+    readonly rEthOracle: string = "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"
+    readonly CappedSNX: string = "0x45b265c7919D7FD8a0D673D7ACaA8F5A7abb430D"
+    readonly SnxOracle: string = "0xd8284305b520FF5486ab718DBdfe46f18454aeDE"
+
 }
 
 export const Mainnet: Addresser = new MainnetAddresses();
