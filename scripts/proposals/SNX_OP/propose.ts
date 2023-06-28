@@ -23,8 +23,6 @@ const { ethers, network } = require("hardhat")
 
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 
-
-
 /*****************************CHANGE THESE/*****************************/
 const proposeFromScript = true //IF TRUE, PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
 const SnxLTV = BN("70e16")
@@ -42,6 +40,7 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
 
     const proposal = new ProposalContext("SNX on OP")
 
+    //set relay
     const addOracleData = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
@@ -52,43 +51,46 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
         forward(d.Oracle, addOracleData.data!)
     const addOracle = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
         populateTransaction.sendMessage(d.Oracle, addOracleForward.data!, 1000000)
-        
 
-   /**
-     //sending test tx
-    console.log("sending tx to: ", m.OPcrossChainMessenger)
-    const L1Messenger = ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer)
-    await L1Messenger.sendMessage(
-        d.optimismMessenger,
-        addOracle.data!,
-        1000000
-    )
-    */
+    //register erc20
+    const listData = await new VaultController__factory().
+        attach(d.VaultController).
+        populateTransaction.registerErc20(
+            d.CappedSNX,
+            SnxLTV,
+            d.CappedSNX,
+            SnxLiqInc
+        )
+    const listForward = await new CrossChainAccount__factory().attach(m.OPcrossChainMessenger).
+        populateTransaction.forward(d.VaultController, listData.data!)
+    const list = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(d.VaultController, listForward.data!, 1000000)
 
+    //register vvc
+    const registerData = await new VotingVaultController__factory().
+        attach(d.VotingVaultController).
+        populateTransaction.registerUnderlying(
+            a.snxAddress,
+            d.CappedSNX
+        )
+    const registerForward = await new CrossChainAccount__factory().attach(m.OPcrossChainMessenger).
+        populateTransaction.forward(d.VotingVaultController, registerData.data!)
+    const register = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(d.VotingVaultController, registerForward.data!, 1000000)
 
 
     proposal.addStep(addOracle, "sendMessage(address,bytes,uint32)")
-    //proposal.addStep(list, "forward(address,bytes)")
-    //proposal.addStep(register, "forward(address,bytes)")
+    proposal.addStep(list, "sendMessage(address,bytes,uint32)")
+    proposal.addStep(register, "sendMessage(address,bytes,uint32)")
 
 
     let out = proposal.populateProposal()
 
     const proposalText = fs.readFileSync('./scripts/proposals/SNX_OP/txt.md', 'utf8')
 
-    console.log("Populating proposal tx")
-    const data = await gov.connect(proposer).populateTransaction.propose(
-        out.targets,
-        out.values,
-        out.signatures,
-        out.calldatas,
-        proposalText,
-        false
-    )
-
     if (proposeFromScript) {
         console.log("Sending proposal")
-        //console.log("Data: ", out)
+        console.log("Data: ", out)
         const result = await gov.connect(proposer).propose(
             out.targets,
             out.values,
@@ -105,7 +107,16 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
             await quickTest(proposer, out)
         }
     } else {
-        //console.log("TRANSACTION DATA: \n", data.data)
+        console.log("Populating proposal tx")
+        const data = await gov.connect(proposer).populateTransaction.propose(
+            out.targets,
+            out.values,
+            out.signatures,
+            out.calldatas,
+            proposalText,
+            false
+        )
+        console.log("TRANSACTION DATA: \n", data.data)
     }
 }
 
