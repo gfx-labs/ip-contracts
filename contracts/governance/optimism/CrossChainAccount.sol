@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "hardhat/console.sol";
+
 //https://etherscan.io/address/0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1#code
 interface IMessenger {
   function sendMessage(address _target, bytes memory _message, uint32 _gasLimit) external;
@@ -33,6 +35,14 @@ contract CrossChainAccount {
     // 2. The L1 Messenger's caller MUST be the L1 Owner
     require(messenger.xDomainMessageSender() == l1Owner, "L1Sender is not the L1Owner");
     // 3. Make the external call
+    (bool success, bytes memory res) = target.call(data);
+    require(success, string(abi.encode("XChain call failed:", res)));
+  }
+
+  function testData(address target, bytes memory data) external {
+    console.log("target: ", target);
+    //console.log("domain: ", messenger.xDomainMessageSender());
+
     (bool success, bytes memory res) = target.call(data);
     require(success, string(abi.encode("XChain call failed:", res)));
   }
