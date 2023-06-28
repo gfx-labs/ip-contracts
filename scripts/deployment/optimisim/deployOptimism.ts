@@ -9,7 +9,7 @@ import { SignKeyObjectInput } from "crypto";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { impersonateAccount } from "@nomicfoundation/hardhat-network-helpers";
 import { OptimisimAddresses, OptimisimDeploys } from "../../../util/addresser";
-import { CrossChainAccount__factory, OracleMaster__factory, VaultController__factory } from "../../../typechain-types";
+import { OracleMaster__factory, VaultController__factory } from "../../../typechain-types";
 
 const { ethers } = require("hardhat");
 const deployerAddr = "0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89"

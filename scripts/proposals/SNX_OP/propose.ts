@@ -2,117 +2,141 @@ import { BN } from "../../../util/number"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import {
     GovernorCharlieDelegate,
-    GovernorCharlieDelegate__factory, OracleMaster__factory,
+    GovernorCharlieDelegate__factory, ILayer1Messenger, ILayer1Messenger__factory, OracleMaster__factory,
     ProxyAdmin__factory,
     VaultController__factory,
     VotingVaultController__factory
 } from "../../../typechain-types"
 import { ProposalContext } from "../suite/proposal"
-import { d } from "../DeploymentInfo"
 import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
 import { showBody, showBodyCyan } from "../../../util/format"
 import * as fs from 'fs'
 import { currentBlock, fastForward, hardhat_mine, resetCurrent } from "../../../util/block"
 import hre from 'hardhat'
+import { OptimisimAddresses, OptimisimDeploys, MainnetAddresses } from "../../../util/addresser";
+import { PromiseOrValue } from "../../../typechain-types/common"
+import { BytesLike } from "ethers"
+const a = new OptimisimAddresses()
+const d = new OptimisimDeploys()
+const m = new MainnetAddresses()
 const { ethers, network } = require("hardhat")
 
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 
-/**
- * Use this script to make the proposal
- * Deployment of the Cap stEthSTABLE proxy and Anchored View Relay should already be complete
- * and testing with these deployments should have been done
- * 
- * If the first param proposeFromScript == false, the hex data that is output to the console
- * can be pasted into MetaMask as hex data 
- * when sending a transaction to Interest Protocol Governance 0x266d1020A84B9E8B0ed320831838152075F8C4cA
- * 
- * If proposeFromScript is true, the private key of the proposer must be
- * in .env as PERSONAL_PRIVATE_KEY=42bb...
- */
+
 
 /*****************************CHANGE THESE/*****************************/
 const proposeFromScript = true //IF TRUE, PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
-const CappedB_stETH_STABLE = "0x7d3CD037aE7efA9eBed7432c11c9DFa73519303d"
-const B_stETH_STABLEPOOL_ORACLE = "0xD6B002316D4e13d2b7eAff3fa5Fc6c20D2CeF4be"
-const B_stETH_STABLE = "0x32296969Ef14EB0c6d29669C550D4a0449130230"
-const vvcImplementation = "0x17B7bD832666Ac28A6Ad35a93d4efF4eB9A07a17"
-const rewardsAddress = "0x59D66C58E83A26d6a0E35114323f65c3945c89c1"
-const booster = "0xA57b8d98dAE62B26Ec3bcC4a365338157060B234"
-const auraBalAddr = "0x616e8BfA43F920657B3497DBf40D6b1A02D4608d"
-const PID = "115"
-const stEthSTABLE_LiqInc = BN("8e16")
-const stEthSTABLE_LTV = BN("60e16")
+const SnxLTV = BN("70e16")
+const SnxLiqInc = BN("75e15")
+
 
 const proposerAddr = "0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908"
 
-
 const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
-    let gov: GovernorCharlieDelegate
-    gov = new GovernorCharlieDelegate__factory(proposer).attach(
+    console.log("STARTING")
+
+    let gov: GovernorCharlieDelegate = new GovernorCharlieDelegate__factory(proposer).attach(
         govAddress
     )
+    const L1Messenger: ILayer1Messenger = ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer)
 
-    const proposal = new ProposalContext("B-stETH-STABLE")
+    const proposal = new ProposalContext("SNX on OP - PAYLOAD")
 
-    //upgrade VVC
-    const upgradeVVC = await new ProxyAdmin__factory(proposer).
-        attach(d.ProxyAdmin).
-        populateTransaction.upgrade(
-            d.VotingVaultController,
-            vvcImplementation
+
+    //get contract message payloads
+    let abi = ["function setRelay(address token_address, address relay_address)"]
+    let iface = new ethers.utils.Interface(abi)
+    const addOracleMessage = iface.encodeFunctionData("setRelay", [a.snxAddress, d.CappedSNX])
+
+    abi = ["function registerErc20(address token_address, uint256 LTV, address oracle_address, uint256 liquidationIncentive)"]
+    iface = new ethers.utils.Interface(abi)
+    const listMessage = iface.encodeFunctionData("registerErc20", [d.CappedSNX, SnxLTV, d.CappedSNX, SnxLiqInc])
+
+    abi = ["function registerUnderlying(address underlying_address, address capped_token)"]
+    iface = new ethers.utils.Interface(abi)
+    const registerVvcMessage = iface.encodeFunctionData("registerUnderlying", [a.snxAddress, d.CappedSNX])
+
+    //nest with calls to forward on the L2 messenger
+    abi = ["function forward(address target, bytes memory data)"]
+    iface = new ethers.utils.Interface(abi)
+    const addOracleStep = iface.encodeFunctionData("forward", [d.Oracle, addOracleMessage])
+
+    abi = ["function forward(address target, bytes memory data)"]
+    iface = new ethers.utils.Interface(abi)
+    const listStep = iface.encodeFunctionData("forward", [d.VaultController, listMessage])
+
+    abi = ["function forward(address target, bytes memory data)"]
+    iface = new ethers.utils.Interface(abi)
+    const registerVVCStep = iface.encodeFunctionData("forward", [d.VotingVaultController, registerVvcMessage])
+
+
+
+    //set up calls to L1 messenger that governance will actually call
+    const addOracle = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).populateTransaction.
+        sendMessage(
+            d.optimismMessenger,
+            addOracleStep,
+            BN("10000000")
         )
 
-    const addOracle = await new OracleMaster__factory().
-        attach(d.Oracle).
-        populateTransaction.setRelay(
-            CappedB_stETH_STABLE,
-            B_stETH_STABLEPOOL_ORACLE
+    const list = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).populateTransaction.
+        sendMessage(
+            d.optimismMessenger,
+            listStep,
+            BN("10000000")
         )
 
-    const list = await new VaultController__factory().
-        attach(d.VaultController).
-        populateTransaction.registerErc20(
-            CappedB_stETH_STABLE,
-            stEthSTABLE_LTV,
-            CappedB_stETH_STABLE,
-            stEthSTABLE_LiqInc
+    const registerVVC = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).populateTransaction.
+        sendMessage(
+            d.optimismMessenger,
+            registerVVCStep,
+            BN("10000000")
         )
 
-    const register_VVC = await new VotingVaultController__factory().
-        attach(d.VotingVaultController).
-        populateTransaction.registerUnderlying(
-            B_stETH_STABLE,
-            CappedB_stETH_STABLE
-        )
+    //set up steps for proposal
+    proposal.addStep(addOracle, "sendMessage(address,bytes,uint256)")
+    proposal.addStep(list, "sendMessage(address,bytes,uint256)")
+    proposal.addStep(registerVVC, "sendMessage(address,bytes,uint256)")
 
-    //first time setup for VotingVault controller for BPTs
-    const registerAuraBal = await new VotingVaultController__factory(proposer).
-        attach(d.VotingVaultController).
-        populateTransaction.registerAuraBal(auraBalAddr)
-
-    const registerAuraBooster = await new VotingVaultController__factory(proposer).attach(d.VotingVaultController).
-        populateTransaction.registerAuraBooster(booster)
-
-    const populateAuraLpData = await new VotingVaultController__factory(proposer).attach(d.VotingVaultController).
-        populateTransaction.registerAuraLpData(B_stETH_STABLE, rewardsAddress, PID)
+    //test 
 
 
+    
+    const owner = ethers.provider.getSigner("0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89")
+    await impersonateAccount(owner._address)
 
-    proposal.addStep(upgradeVVC, "upgrade(address,address)")
-    proposal.addStep(addOracle, "setRelay(address,address)")
-    proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")
-    proposal.addStep(register_VVC, "registerUnderlying(address,address)")
-    proposal.addStep(registerAuraBal, "registerAuraBal(address)")
-    proposal.addStep(registerAuraBooster, "registerAuraBooster(address)")
-    proposal.addStep(populateAuraLpData, "registerAuraLpData(address,address,uint256)")
+
+    const OracleMaster = await OracleMaster__factory.connect(d.Oracle, owner)
+    console.log(await OracleMaster.owner())
+    await OracleMaster.connect(owner).transferOwnership(d.optimismMessenger)
+
+
+
+
+
+    await ceaseImpersonation(owner._address)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     let out = proposal.populateProposal()
 
-    const proposalText = fs.readFileSync('./scripts/proposals/B_wETH_STABLE/txt.md', 'utf8')
+    const proposalText = fs.readFileSync('./scripts/proposals/SNX_OP/txt.md', 'utf8')
 
-
-
+    console.log("Populating proposal tx")
     const data = await gov.connect(proposer).populateTransaction.propose(
         out.targets,
         out.values,
@@ -121,11 +145,10 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
         proposalText,
         false
     )
-    const prp = Number(await gov.proposalCount())
-    console.log("Start count", prp)
+
     if (proposeFromScript) {
         console.log("Sending proposal")
-        console.log("Data: ", out)
+        //console.log("Data: ", out)
         const result = await gov.connect(proposer).propose(
             out.targets,
             out.values,
@@ -139,8 +162,7 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
         const networkName = hre.network.name
         if (networkName == "hardhat" || networkName == "localhost") {
             //test execution if on test network 
-            console.log("Testing execution")
-            await quickTest(proposer, out)
+            //await quickTest(proposer, out)
         }
     } else {
         console.log("TRANSACTION DATA: \n", data.data)
@@ -148,6 +170,8 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
 }
 
 const quickTest = async (proposer: SignerWithAddress, out: any) => {
+    console.log("Testing execution")
+
     const gov = new GovernorCharlieDelegate__factory(proposer).attach(
         govAddress
     )
@@ -180,7 +204,10 @@ const quickTest = async (proposer: SignerWithAddress, out: any) => {
     await fastForward(timelock.toNumber())
 
 
-    const result = await gov.connect(prop).execute(proposal)
+    const result = await gov.connect(prop).execute(proposal, {
+        gasPrice: 200000000000,
+        gasLimit: 2000000
+    })
     await result.wait()
     showBodyCyan("EXECUTION COMPLETE")
 
@@ -199,7 +226,10 @@ async function main() {
         console.log("TEST PROPOSAL")
         await network.provider.send("evm_setAutomine", [true])
         await resetCurrent()
+        const block = await currentBlock()
+        console.log("reset to block ", block.number)
         await impersonateAccount(proposerAddr)
+        console.log("Impersonated ", proposerAddr)
         proposer = ethers.provider.getSigner(proposerAddr)
 
     } else {

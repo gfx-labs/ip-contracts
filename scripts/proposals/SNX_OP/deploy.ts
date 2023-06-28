@@ -16,22 +16,11 @@ const a = new OptimisimAddresses()
 const d = new OptimisimDeploys()
 const { ethers } = require("hardhat");
 
-/**
- * This script is for deploying the cap token and oracles for a new asset listing on Interest Protocol
- * This is for 'standard' asset listings, such that:
- * -There is a decent Chainlink Data Feed - see https://data.chain.link/
- * -There is a decent Uniswap V3 pool against wETH or USDC
- * -Existing cap token functionality is sufficient 
- * 
- * THIS SCRIPT DOES NOT TRANSFER OWNERSHIP
- * After deployment, once all contracts are VERRIFIED and everything looks good,
- * Ownership should be transferred to Interest Protocol Governance: 0x266d1020A84B9E8B0ed320831838152075F8C4cA
- */
+
 
 const snx = "0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4"
 
-const SnxLTV = BN("70e16")
-const SnxLiqInc = BN("75e15")
+
 const SnxCap = BN("238000e18") 
 
 
