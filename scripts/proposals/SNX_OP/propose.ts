@@ -11,10 +11,9 @@ import { ProposalContext } from "../suite/proposal"
 import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
 import { showBody, showBodyCyan } from "../../../util/format"
 import * as fs from 'fs'
-import { currentBlock, fastForward, hardhat_mine, resetCurrent } from "../../../util/block"
+import { currentBlock, fastForward, hardhat_mine, resetCurrent, resetCurrentOP } from "../../../util/block"
 import hre from 'hardhat'
 import { OptimisimAddresses, OptimisimDeploys, MainnetAddresses } from "../../../util/addresser";
-import { PromiseOrValue } from "../../../typechain-types/common"
 import { BytesLike } from "ethers"
 const a = new OptimisimAddresses()
 const d = new OptimisimDeploys()
@@ -75,8 +74,8 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
     //set up calls to L1 messenger that governance will actually call
     const addOracle = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).populateTransaction.
         sendMessage(
-            d.optimismMessenger,
-            addOracleStep,
+            d.Oracle,
+            addOracleMessage,
             BN("10000000")
         )
 
@@ -96,41 +95,44 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
 
     //set up steps for proposal
     proposal.addStep(addOracle, "sendMessage(address,bytes,uint256)")
-    proposal.addStep(list, "sendMessage(address,bytes,uint256)")
-    proposal.addStep(registerVVC, "sendMessage(address,bytes,uint256)")
+    //proposal.addStep(list, "sendMessage(address,bytes,uint256)")
+    //proposal.addStep(registerVVC, "sendMessage(address,bytes,uint256)")
 
     //test 
 
+    /**
+     await resetCurrentOP()
 
-    
+
     const owner = ethers.provider.getSigner("0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89")
     await impersonateAccount(owner._address)
 
 
     const OracleMaster = await OracleMaster__factory.connect(d.Oracle, owner)
     console.log(await OracleMaster.owner())
-    await OracleMaster.connect(owner).transferOwnership(d.optimismMessenger)
+    //await OracleMaster.connect(owner).transferOwnership(d.optimismMessenger)
 
 
+    console.log("Sending TX")
+    const result = await L1Messenger.connect(owner).sendMessage(
+        d.optimismMessenger,
+        addOracleStep,
+        BN("10000000")
+    )
+    const receipt = await result.wait()
+
+    console.log("TX sent", receipt)
 
 
 
     await ceaseImpersonation(owner._address)
 
+    await resetCurrent()
+    await impersonateAccount(proposerAddr)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+     */
 
     let out = proposal.populateProposal()
 
