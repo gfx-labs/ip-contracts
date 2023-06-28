@@ -1,6 +1,7 @@
 import { BN } from "../../../util/number"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import {
+    CrossChainAccount__factory,
     GovernorCharlieDelegate,
     GovernorCharlieDelegate__factory, ILayer1Messenger, ILayer1Messenger__factory, OracleMaster__factory,
     ProxyAdmin__factory,
@@ -38,101 +39,38 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
     let gov: GovernorCharlieDelegate = new GovernorCharlieDelegate__factory(proposer).attach(
         govAddress
     )
-    const L1Messenger: ILayer1Messenger = ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer)
 
-    const proposal = new ProposalContext("SNX on OP - PAYLOAD")
+    const proposal = new ProposalContext("SNX on OP")
 
-
-    //get contract message payloads
-    let abi = ["function setRelay(address token_address, address relay_address)"]
-    let iface = new ethers.utils.Interface(abi)
-    const addOracleMessage = iface.encodeFunctionData("setRelay", [a.snxAddress, d.CappedSNX])
-
-    abi = ["function registerErc20(address token_address, uint256 LTV, address oracle_address, uint256 liquidationIncentive)"]
-    iface = new ethers.utils.Interface(abi)
-    const listMessage = iface.encodeFunctionData("registerErc20", [d.CappedSNX, SnxLTV, d.CappedSNX, SnxLiqInc])
-
-    abi = ["function registerUnderlying(address underlying_address, address capped_token)"]
-    iface = new ethers.utils.Interface(abi)
-    const registerVvcMessage = iface.encodeFunctionData("registerUnderlying", [a.snxAddress, d.CappedSNX])
-
-    //nest with calls to forward on the L2 messenger
-    abi = ["function forward(address target, bytes memory data)"]
-    iface = new ethers.utils.Interface(abi)
-    const addOracleStep = iface.encodeFunctionData("forward", [d.Oracle, addOracleMessage])
-
-    abi = ["function forward(address target, bytes memory data)"]
-    iface = new ethers.utils.Interface(abi)
-    const listStep = iface.encodeFunctionData("forward", [d.VaultController, listMessage])
-
-    abi = ["function forward(address target, bytes memory data)"]
-    iface = new ethers.utils.Interface(abi)
-    const registerVVCStep = iface.encodeFunctionData("forward", [d.VotingVaultController, registerVvcMessage])
-
-
-
-    //set up calls to L1 messenger that governance will actually call
-    const addOracle = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).populateTransaction.
-        sendMessage(
-            d.Oracle,
-            addOracleMessage,
-            BN("10000000")
+    const addOracleData = await new OracleMaster__factory().
+        attach(d.Oracle).
+        populateTransaction.setRelay(
+            d.CappedSNX,
+            d.SnxOracle
         )
+    const addOracleForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).populateTransaction.
+        forward(d.Oracle, addOracleData.data!)
+    const addOracle = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(d.Oracle, addOracleForward.data!, 1000000)
+        
 
-    const list = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).populateTransaction.
-        sendMessage(
-            d.optimismMessenger,
-            listStep,
-            BN("10000000")
-        )
-
-    const registerVVC = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).populateTransaction.
-        sendMessage(
-            d.optimismMessenger,
-            registerVVCStep,
-            BN("10000000")
-        )
-
-    //set up steps for proposal
-    proposal.addStep(addOracle, "sendMessage(address,bytes,uint256)")
-    //proposal.addStep(list, "sendMessage(address,bytes,uint256)")
-    //proposal.addStep(registerVVC, "sendMessage(address,bytes,uint256)")
-
-    //test 
-
-    /**
-     await resetCurrentOP()
-
-
-    const owner = ethers.provider.getSigner("0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89")
-    await impersonateAccount(owner._address)
-
-
-    const OracleMaster = await OracleMaster__factory.connect(d.Oracle, owner)
-    console.log(await OracleMaster.owner())
-    //await OracleMaster.connect(owner).transferOwnership(d.optimismMessenger)
-
-
-    console.log("Sending TX")
-    const result = await L1Messenger.connect(owner).sendMessage(
+   /**
+     //sending test tx
+    console.log("sending tx to: ", m.OPcrossChainMessenger)
+    const L1Messenger = ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer)
+    await L1Messenger.sendMessage(
         d.optimismMessenger,
-        addOracleStep,
-        BN("10000000")
+        addOracle.data!,
+        1000000
     )
-    const receipt = await result.wait()
-
-    console.log("TX sent", receipt)
+    */
 
 
 
-    await ceaseImpersonation(owner._address)
+    proposal.addStep(addOracle, "sendMessage(address,bytes,uint32)")
+    //proposal.addStep(list, "forward(address,bytes)")
+    //proposal.addStep(register, "forward(address,bytes)")
 
-    await resetCurrent()
-    await impersonateAccount(proposerAddr)
-
-
-
-     */
 
     let out = proposal.populateProposal()
 
@@ -164,10 +102,10 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
         const networkName = hre.network.name
         if (networkName == "hardhat" || networkName == "localhost") {
             //test execution if on test network 
-            //await quickTest(proposer, out)
+            await quickTest(proposer, out)
         }
     } else {
-        console.log("TRANSACTION DATA: \n", data.data)
+        //console.log("TRANSACTION DATA: \n", data.data)
     }
 }
 
@@ -206,10 +144,7 @@ const quickTest = async (proposer: SignerWithAddress, out: any) => {
     await fastForward(timelock.toNumber())
 
 
-    const result = await gov.connect(prop).execute(proposal, {
-        gasPrice: 200000000000,
-        gasLimit: 2000000
-    })
+    const result = await gov.connect(prop).execute(proposal)
     await result.wait()
     showBodyCyan("EXECUTION COMPLETE")
 

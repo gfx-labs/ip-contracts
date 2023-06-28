@@ -58,15 +58,18 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
         )
 
     const forward = await new CrossChainAccount__factory().attach(testCrossChainAccount.address).
-        populateTransaction.testData(d.Oracle, addOracle.data!)
+        populateTransaction.forward(d.Oracle, addOracle.data!)
+    console.log("Forward data: ", forward.data)
 
     /**
+     const L1Messenger = ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, owner)
     await L1Messenger.sendMessage(
         d.optimismMessenger,
         forward.data!,
         1000000
     )
      */
+     
 
     const oracle = OracleMaster__factory.connect(d.Oracle, owner)
     const startResult = await oracle._relays(d.CappedSNX)
@@ -82,6 +85,7 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
         data: forward.data
     }
 
+    //this will revert as we are not sending from the right place
     const result = await owner.sendTransaction(tx)
 
     const endResult = await oracle._relays(d.CappedSNX)
