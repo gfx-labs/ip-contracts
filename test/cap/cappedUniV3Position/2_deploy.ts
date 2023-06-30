@@ -31,13 +31,8 @@ import {
   GovernorCharlieDelegate,
   OracleMaster__factory,
   VaultController__factory,
-<<<<<<< HEAD
-  V3PositionValuator,
   V3PositionValuator__factory,
   IUniV3Pool__factory
-=======
-  V3PositionValuator__factory
->>>>>>> b32a9095e9d6e1f6037e6ac4548a65f74764524f
 } from "../../../typechain-types"
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
@@ -124,9 +119,6 @@ type MintParams = {
   recipient: PromiseOrValue<string>,
   deadline: PromiseOrValue<BigNumberish>
 }
-
-let bobAmount1: BigNumber
-let bobAmount0: BigNumber
 
 describe("Mint position", () => {
   //const token0 = s.WBTC
@@ -546,7 +538,6 @@ describe("Setup, Queue and Execute proposal", () => {
 
 })
 
-<<<<<<< HEAD
 describe("Check valuations", async () => {
   it("Check weth/wbtc pool valuation", async () => {
     //derive value based on price
@@ -554,11 +545,13 @@ describe("Check valuations", async () => {
     let p1: BigNumber = await s.wethOracle.currentValue()
     //showBody("data: ", data)
     const value = await s.PositionValuator.getValue(s.BobPositionId)
+    showBody("Value: ", await toNumber(value))
+  
 
-
-    let v0: BigNumber = (p0.mul(BN(bobAmount0))).div(BN("1e8"))//reduced decimals for wbtc 
-    let v1: BigNumber = (p1.mul(BN(bobAmount1))).div(BN("1e18"))
+    let v0: BigNumber = (p0.mul(BN(s.BobAmount0))).div(BN("1e8"))//reduced decimals for wbtc 
+    let v1: BigNumber = (p1.mul(BN(s.BobAmount1))).div(BN("1e18"))
     const targetAmount = v1.add(v0)
+    showBody("targetAmount: ", await toNumber(targetAmount))
 
     expect(await toNumber(value)).to.be.closeTo(await toNumber(targetAmount), 0.5, "Accurate value derived for position")
   })
@@ -567,5 +560,3 @@ describe("Check valuations", async () => {
 
 
 })
-=======
->>>>>>> b32a9095e9d6e1f6037e6ac4548a65f74764524f

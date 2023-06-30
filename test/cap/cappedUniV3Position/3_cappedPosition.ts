@@ -176,9 +176,9 @@ describe("Capped Position Functionality", () => {
 
         const amountIn = BN("1e7")
 
-        await s.WBTC.connect(s.Carol).approve(uniSwap.address, amountIn)
-        await hardhat_mine(1)
-        await uniSwap.connect(s.Carol).doSwap(s.POOL_ADDR, true, amountIn)
+        //await s.WBTC.connect(s.Carol).approve(uniSwap.address, amountIn)
+        //await hardhat_mine(1)
+        //await uniSwap.connect(s.Carol).doSwap(s.POOL_ADDR, true, amountIn)
        
         
 
@@ -213,8 +213,8 @@ describe("Capped Position Functionality", () => {
         const endBalWBTC = await s.WBTC.balanceOf(s.Carol.address)
         const endBalWETH = await s.WETH.balanceOf(s.Carol.address)
 
-        showBody("WBTC: ", startBalWBTC, endBalWBTC)
-        showBody("WETH: ", await toNumber(startBalWETH), await toNumber(endBalWETH))
+        //showBody("WBTC: ", startBalWBTC, endBalWBTC)
+        //showBody("WETH: ", await toNumber(startBalWETH), await toNumber(endBalWETH))
 
         //add these amounts to collateral value while not collected? 
     })

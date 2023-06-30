@@ -10,11 +10,9 @@ import "../IVault.sol";
 import "../../oracle/IOracleMaster.sol";
 import "../../oracle/External/V3PositionValuator.sol";
 
-//import "../../_external/IERC721Metadata.sol";
 import "../../_external/uniswap/INonfungiblePositionManager.sol";
 
 import "../../_external/openzeppelin/ERC20Upgradeable.sol";
-import "../../_external/openzeppelin/ERC721Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
@@ -22,20 +20,10 @@ import "../../_external/openzeppelin/Initializable.sol";
 
 import "hardhat/console.sol";
 
-//not sure this is a thing
-//import "../../_external/openzeppelin/SafeERC721Upgradeable.sol";
-
-/**
-  generic todo
-  withdraw event on standard vault will have incorrect amount
-
- */
-
 /// @title Univ3CollateralToken
 /// @notice creates a token worth 1e18 with 18 visible decimals for vaults to consume
 /// @dev extends ierc20 upgradable
 contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
-  //using SafeERC721Upgradeable for ERC721Upgradeable;
   IOracleMaster public oracle;
 
   INonfungiblePositionManager public _underlying;
@@ -96,7 +84,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   /// @param vaultId receives the value from the position
   function deposit(uint256 tokenId, uint96 vaultId) public nonReentrant {
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vaultId);
-    require(address(univ3_vault_address) != address(0x0), "invalid voting vault");
+    require(address(univ3_vault_address) != address(0x0), "invalid nft vault");
 
     ///@notice only allow deposits from registered pools
     (bool registered, , ) = _positionValuator.verifyPool(tokenId);
@@ -128,12 +116,12 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vault.id());
     require(univ3_vault_address != address(0x0), "no univ3 vault");
 
-    console.log("Transfer length: ", _underlyingOwners[minter].length);
+    //console.log("Transfer length: ", _underlyingOwners[minter].length);
 
     // move every nft from the nft vault to the target
     for (uint256 i = 0; i < _underlyingOwners[minter].length; i++) {
       uint256 tokenId = _underlyingOwners[minter][i];
-      console.log("Transfer tokenId: ", tokenId);
+      //console.log("Transfer tokenId: ", tokenId);
       //todo figure out why there is a 0 id in the list
       if (tokenId != 0) {
         // no need to do the check here when removing from list
@@ -155,7 +143,6 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   }
 
   // TODO: will solidity be smart enough to gas optimize for us here? if not, we need to make sure this function is as cheap as we can get it
-
   ///@notice need to pass an address to match the interface
   ///@param vault should be the standard vault address (?)
   ///@notice we derive the minter of this vault and that is the vaultMinter that the asset is tied to
@@ -197,5 +184,6 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
         return true;
       }
     }
+    return false;
   }
 }

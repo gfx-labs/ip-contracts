@@ -12,7 +12,7 @@ import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
 //testing
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 /// @title CappedGovToken
 /// @notice handles all minting/burning of underlying

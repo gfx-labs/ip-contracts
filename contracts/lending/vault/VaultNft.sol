@@ -20,7 +20,7 @@ import "../../_external/openzeppelin/ERC721Upgradeable.sol";
 import "../../_external/balancer/IGauge.sol";
 
 //testing
-import "hardhat/console.sol";
+//import "hardhat/console.sol";
 
 /**
 todo 1 active pool per vault? Or positions from multiple pools will all be liquidated together
