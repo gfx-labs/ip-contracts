@@ -2,13 +2,13 @@
 pragma solidity 0.8.9;
 
 import "../../oracle/IOracleRelay.sol";
-import "../../oracle/OracleMaster.sol";
 
 import "../../_external/uniswap/TickMath.sol";
 import "../../_external/uniswap/LiquidityAmounts.sol";
 import "../../_external/uniswap/INonfungiblePositionManager.sol";
 import "../../_external/uniswap/PoolAddress.sol";
 import "../../_external/uniswap/IUniV3Pool.sol";
+
 import "../../_external/IERC20.sol";
 
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
@@ -16,16 +16,6 @@ import "../../_external/openzeppelin/Initializable.sol";
 
 //testing
 //import "hardhat/console.sol";
-
-/// based off of the MKR implementation https://github.com/makerdao/univ3-lp-oracle/blob/master/src/GUniLPOracle.sol
-interface IUniV3PoolImmutables {
-  /// @notice The pool tick spacing
-  /// @dev Ticks can only be used at multiples of this value, minimum of 1 and always positive
-  /// e.g.: a tickSpacing of 3 means ticks can be initialized every 3rd tick, i.e., ..., -6, -3, 0, 3, 6, ...
-  /// This value is an int24 to avoid casting even though it is always positive.
-  /// @return The tick spacing
-  function tickSpacing() external view returns (int24);
-}
 
 contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   address public constant FACTORY_V3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
@@ -35,11 +25,14 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   mapping(address => bool) public registeredPools;
   mapping(address => PoolData) public poolDatas;
 
+  ///@notice register data associated with pool
+  ///@param tickSpacing is immutable, so storing it here is safe
   struct PoolData {
     IOracleRelay token0Oracle;
     IOracleRelay token1Oracle;
     uint256 UNIT_0;
     uint256 UNIT_1;
+    int24 tickSpacing;
   }
 
   function initialize() public initializer {
@@ -54,7 +47,8 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
 
   ///@notice this is called by the custom balanceOf logic on the cap token
   function getValue(uint256 tokenId) external view returns (uint256) {
-    (bool registered, IUniV3PoolImmutables pool, uint128 liquidity) = verifyPool(tokenId);
+    (bool registered, address pool, uint128 liquidity) = verifyPool(tokenId);
+    PoolData memory data = poolDatas[pool];
 
     //unregistered pools will not have external oracle prices registered, and so won't work
     if (!registered) {
@@ -62,13 +56,12 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     }
 
     //independantly calculate sqrtPrice using external oracles
-    (uint160 sqrtPriceX96, uint256 p0, uint256 p1) = getSqrtPrice(address(pool));
+    (uint160 sqrtPriceX96, uint256 p0, uint256 p1) = getSqrtPrice(pool, data);
 
     int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
-    int24 tickSpacing = pool.tickSpacing();
 
-    int24 tickLower = tick - (tickSpacing * 2);
-    int24 tickUpper = tick + (tickSpacing * 2);
+    int24 tickLower = tick - (data.tickSpacing * 2);
+    int24 tickUpper = tick + (data.tickSpacing * 2);
 
     //get liquidity
     (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
@@ -78,21 +71,19 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
       liquidity
     );
 
-    PoolData memory data = poolDatas[address(pool)];
-
     //derive value based on price * amount
     return ((amount0 * p0) / data.UNIT_0) + ((amount1 * p1) / data.UNIT_1);
   }
 
   ///@notice compute the pool address using the info associated with @param tokenId
-  function verifyPool(uint256 tokenId) public view returns (bool, IUniV3PoolImmutables, uint128) {
+  function verifyPool(uint256 tokenId) public view returns (bool, address, uint128) {
     (, , address token0, address token1, uint24 fee, , , uint128 liquidity, , , , ) = nfpManager.positions(tokenId);
 
     address pool = PoolAddress.computeAddress(
       FACTORY_V3,
       PoolAddress.PoolKey({token0: token0, token1: token1, fee: uint24(fee)})
     );
-    return (registeredPools[pool], IUniV3PoolImmutables(pool), liquidity);
+    return (registeredPools[pool], pool, liquidity);
   }
 
   ///@notice toggle @param pool registered or not
@@ -103,14 +94,13 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
       token0Oracle: _token0Oracle,
       token1Oracle: _token1Oracle,
       UNIT_0: 10 ** IERC20(pool.token0()).decimals(),
-      UNIT_1: 10 ** IERC20(pool.token1()).decimals()
+      UNIT_1: 10 ** IERC20(pool.token1()).decimals(),
+      tickSpacing: pool.tickSpacing()
     });
   }
 
   //https://github.com/makerdao/univ3-lp-oracle/blob/master/src/GUniLPOracle.sol#L248
-  function getSqrtPrice(address pool) internal view returns (uint160 sqrtPrice, uint256 p0, uint256 p1) {
-    PoolData memory data = poolDatas[pool];
-
+  function getSqrtPrice(address pool, PoolData memory data) internal view returns (uint160 sqrtPrice, uint256 p0, uint256 p1) {
     //modify price by units
     p0 = data.token0Oracle.currentValue() / (1e18 / data.UNIT_0);
     p1 = data.token1Oracle.currentValue() / (1e18 / data.UNIT_1);
