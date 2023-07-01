@@ -100,7 +100,10 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   }
 
   //https://github.com/makerdao/univ3-lp-oracle/blob/master/src/GUniLPOracle.sol#L248
-  function getSqrtPrice(address pool, PoolData memory data) internal view returns (uint160 sqrtPrice, uint256 p0, uint256 p1) {
+  function getSqrtPrice(
+    address pool,
+    PoolData memory data
+  ) internal view returns (uint160 sqrtPrice, uint256 p0, uint256 p1) {
     //modify price by units
     p0 = data.token0Oracle.currentValue() / (1e18 / data.UNIT_0);
     p1 = data.token1Oracle.currentValue() / (1e18 / data.UNIT_1);
