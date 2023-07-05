@@ -1,10 +1,26 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber } from "ethers";
+import { BigNumber, BigNumberish, Contract } from "ethers";
 import { ethers } from "hardhat";
 import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken, IGauge, INonfungiblePositionManager__factory, Univ3CollateralToken, NftVaultController, VaultNft, INonfungiblePositionManager, V3PositionValuator, UniswapV3Pool, IUniV3Pool, IUniswapV3PoolDerivedState } from "../../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../../util/addresser";
 import { BN } from "../../../util/number";
 import { NonfungiblePositionManager } from "@uniswap/v3-sdk";
+import { PromiseOrValue } from "../../../typechain-types/common";
+
+export type MintParams = {
+    token0: PromiseOrValue<string>,
+    token1: PromiseOrValue<string>,
+    fee: PromiseOrValue<BigNumberish>,
+    tickLower: PromiseOrValue<BigNumberish>,
+    tickUpper: PromiseOrValue<BigNumberish>,
+    amount0Desired: PromiseOrValue<BigNumberish>,
+    amount1Desired: PromiseOrValue<BigNumberish>,
+    amount0Min: PromiseOrValue<BigNumberish>,
+    amount1Min: PromiseOrValue<BigNumberish>,
+    recipient: PromiseOrValue<string>,
+    deadline: PromiseOrValue<BigNumberish>
+  }
+
 export class TestScope extends MainnetAddresses {
     USDI!: USDI;
     USDC!: IERC20;
@@ -12,7 +28,6 @@ export class TestScope extends MainnetAddresses {
     UNI!: IVOTE;
     WBTC!: IERC20;
 
-    POOL!: IUniV3Pool
 
     CappedPosition!: Univ3CollateralToken
     NftVaultController!: NftVaultController
@@ -27,6 +42,8 @@ export class TestScope extends MainnetAddresses {
     
 
     POOL_ADDR = "0xCBCdF9626bC03E24f779434178A73a0B4bad62eD"
+    POOL!: IUniV3Pool
+    poolContract!:Contract
    
     LiquidationIncentive = BN("1e17")
     LTV = BN("6e17")

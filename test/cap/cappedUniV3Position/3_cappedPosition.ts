@@ -1,35 +1,19 @@
-import { s } from "./scope";
-import { d } from "../DeploymentInfo";
+import { s, MintParams } from "./scope";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear, hardhat_mine_timed } from "../../../util/block";
-import { utils, BigNumber } from "ethers";
-import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculatetokensToLiquidate, calculateUSDI2repurchase, changeInBalance } from "../../../util/math";
-import { currentBlock, reset, hardhat_mine } from "../../../util/block"
+import { hardhat_mine_timed, mineBlock } from "../../../util/block";
+import { BigNumber } from "ethers";
+import { getArgs, getGas } from "../../../util/math";
+import { currentBlock } from "../../../util/block";
 import { ethers } from "hardhat";
 
-import MerkleTree from "merkletreejs";
-import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
-import { expect, assert } from "chai";
-import { toNumber } from "../../../util/math"
-import { red } from "bn.js";
-import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
-import { start } from "repl";
+import { expect } from "chai";
+import { toNumber } from "../../../util/math";
 import {
-    IVault__factory,
-    VotingVault__factory,
-    VotingVault,
-    IVault,
-    CappedGovToken__factory,
-    CappedGovToken,
     VaultNft__factory,
     UniSwap__factory
-} from "../../../typechain-types"
-import { JsxEmit } from "typescript";
-import { stealMoney } from "../../../util/money";
-import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
-import { IERC20__factory } from "@certusone/wormhole-sdk/lib/cjs/ethers-contracts";
-import { PromiseOrValue } from "../../../typechain-types/common";
+} from "../../../typechain-types";
+import { nearestUsableTick } from "@uniswap/v3-sdk";
 require("chai").should();
 
 
@@ -179,8 +163,8 @@ describe("Capped Position Functionality", () => {
         //await s.WBTC.connect(s.Carol).approve(uniSwap.address, amountIn)
         //await hardhat_mine(1)
         //await uniSwap.connect(s.Carol).doSwap(s.POOL_ADDR, true, amountIn)
-       
-        
+
+
 
         /**
         for (let i = 0; i < 12; i++) {
@@ -281,105 +265,85 @@ describe("Check valuations", async () => {
         //derive value based on price
         let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
         let p1: BigNumber = await s.wethOracle.currentValue()
-   
-        let v0: BigNumber = (p0.mul(BN(s.BobAmount0))).div(BN("1e18"))
+
+        let v0: BigNumber = (p0.mul(BN(s.BobAmount0))).div(BN("1e8"))//decimal 8 because wbtc
         let v1: BigNumber = (p1.mul(BN(s.BobAmount1))).div(BN("1e18"))
         const targetAmount = v1.add(v0)
         const actual = await s.CappedPosition.balanceOf(s.BobVault.address)
-        showBodyCyan("Target: ", await toNumber(targetAmount))//todo improve accuracy?
-        showBodyCyan("Balanc: ", await toNumber(actual))
-        showBodyCyan("Delta: ", ((await toNumber(actual) - await toNumber(targetAmount)) / await toNumber(targetAmount)) * 100, "%")
+  
+        expect(await toNumber(targetAmount)).to.be.closeTo(await toNumber(actual), 1, "Value is correct")
+
+    })
+
+    it("Bob deposits a second position", async () => {
+        const startingValue = await s.CappedPosition.balanceOf(s.BobVault.address)
+
+        //mint second position
+        //approvals
+        await s.WBTC.connect(s.Bob).approve(s.nfpManager.address, s.wBTC_Amount)
+        await s.WETH.connect(s.Bob).approve(s.nfpManager.address, s.WETH_AMOUNT)
+
+        const [fee, tickSpacing, slot0] =
+            await Promise.all([
+                s.POOL.fee(),
+                s.POOL.tickSpacing(),
+                s.POOL.slot0(),
+            ])
+        const nut = nearestUsableTick(slot0[1], tickSpacing)
+        const tickLower = nut - (tickSpacing * 2)
+        const tickUpper = nut + (tickSpacing * 2)
+
+        const block = await currentBlock()
+
+        const params: MintParams = {
+            token0: s.WBTC.address,
+            token1: s.WETH.address,
+            fee: fee,
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            amount0Desired: s.wBTC_Amount,
+            amount1Desired: s.WETH_AMOUNT,
+            amount0Min: BN("0"),
+            amount1Min: BN("0"),
+            recipient: s.Bob.address,
+            deadline: block.timestamp + 500
+        }
+        const result = await s.nfpManager.connect(s.Bob).mint(params)
+        await hardhat_mine_timed(500, 15)
+        const args = await getArgs(result)
+
+        const positionId = args.tokenId
+        const amount0 = args.amount0
+        const amount1 = args.amount1
+
+        //deposit
+        await s.nfpManager.connect(s.Bob).approve(s.CappedPosition.address, positionId)
+        const deposit = await s.CappedPosition.connect(s.Bob).deposit(positionId, s.BobVaultID)
+
+        //check value
+        let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
+        let p1: BigNumber = await s.wethOracle.currentValue()
+
+        let v0: BigNumber = (p0.mul(BN(amount0))).div(BN("1e8"))//decimal 8 because wbtc
+        let v1: BigNumber = (p1.mul(BN(amount1))).div(BN("1e18"))
+        const targetAmount = v1.add(v0)
+  
+        const endingValue = await s.CappedPosition.balanceOf(s.BobVault.address)
+        expect(await toNumber(endingValue)).to.be.closeTo(await toNumber(startingValue.add(targetAmount)), 0.5, "Value increased as expected")
+
     })
 
     it("Check weth/wbtc pool valuation - Carol", async () => {
         //derive value based on price
         let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
         let p1: BigNumber = await s.wethOracle.currentValue()
-   
-        let v0: BigNumber = (p0.mul(BN(s.CarolAmount0))).div(BN("1e18"))
+
+        let v0: BigNumber = (p0.mul(BN(s.CarolAmount0))).div(BN("1e8"))//decimal 8 because wbtc
         let v1: BigNumber = (p1.mul(BN(s.CarolAmount1))).div(BN("1e18"))
         const targetAmount = v1.add(v0)
         const actual = await s.CappedPosition.balanceOf(s.CarolVault.address)
-        showBodyCyan("Target: ", await toNumber(targetAmount))//todo improve accuracy?
-        showBodyCyan("Balanc: ", await toNumber(actual))
-        showBodyCyan("Delta: ", ((await toNumber(actual) - await toNumber(targetAmount)) / await toNumber(targetAmount)) * 100, "%")
+   
+        expect(await toNumber(targetAmount)).to.be.closeTo(await toNumber(actual), 1, "Value is correct")
+
     })
 })
-
-type DecreaseLiquidityParams = {
-        tokenId: PromiseOrValue<BigNumberish>,
-        liquidity: PromiseOrValue<BigNumberish>,
-        amount0Min: PromiseOrValue<BigNumberish>,
-        amount1Min: PromiseOrValue<BigNumberish>,
-        deadline: PromiseOrValue<BigNumberish>,
-    }
-
-    type CollectParams = {
-        tokenId: PromiseOrValue<BigNumberish>,
-        recipient: PromiseOrValue<string>,
-        amount0Max: PromiseOrValue<BigNumberish>,
-        amount1Max: PromiseOrValue<BigNumberish>
-    }
-
-    it("return Carol's illegal position", async () => {
-
-        const startWeth = await s.WETH.balanceOf(s.Carol.address)
-        const startUSDC = await s.USDC.balanceOf(s.Carol.address)
-
-        showBody("Start weth: ", await toNumber(startWeth))
-        showBody("Start usdc: ", startUSDC)
-
-        let [, , , , , , , liquidity, , , ,] = await s.nfpManager.positions(s.CarolIllegalPositionId)
-        showBody("Liq: ", liquidity)
-        const block = await currentBlock()
-
-        //decrease liquidity 
-        const decreaseParams: DecreaseLiquidityParams = {
-            tokenId: s.CarolIllegalPositionId,
-            liquidity: liquidity,
-            amount0Min: BN("0"),
-            amount1Min: BN("0"),
-            deadline: block.timestamp + 120
-        }
-
-        await s.nfpManager.connect(s.Carol).decreaseLiquidity(decreaseParams)
-
-        const endWeth = await s.WETH.balanceOf(s.Carol.address)
-        const endUSDC = await s.USDC.balanceOf(s.Carol.address)
-        const [
-            nonce,
-            operator,
-            token0,
-            token1,
-            _fee,
-            tLow,
-            tUp,
-            endLiquidity,
-            feeGrowthInside0LastX128,
-            feeGrowthInside1LastX128,
-            tokensOwed0,
-            tokensOwed1
-        ] = await s.nfpManager.positions(s.CarolIllegalPositionId)
-        showBody("tokensOwed0: ", tokensOwed0)
-        showBody("tokensOwed1: ", tokensOwed1)
-
-        const collectParams: CollectParams = {
-            tokenId: s.CarolIllegalPositionId,
-            recipient: s.Carol.address,
-            amount0Max: tokensOwed0,
-            amount1Max: tokensOwed1
-        }
-        await s.nfpManager.connect(s.Carol).collect(collectParams)
-
-        showBody("End weth: ", await toNumber(endWeth))
-        showBody("End usdc: ", endUSDC)
-
-
-
-        showBody("End Liquidity: ", endLiquidity)
-        showBody("Delta weth: ", endWeth.sub(startWeth))
-        showBody("Delta usdc: ", endUSDC.sub(startUSDC))
-
-
-    })
- */

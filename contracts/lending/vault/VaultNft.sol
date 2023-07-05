@@ -10,22 +10,10 @@ import "../IVaultController.sol";
 import "../../_external/CompLike.sol";
 import "../../_external/IERC721.sol";
 import "../../_external/Context.sol";
-
 import "../../_external/uniswap/INonfungiblePositionManager.sol";
-
-//not sure this is a thing
-//import "../../_external/openzeppelin/SafeERC721Upgradeable.sol";
 import "../../_external/openzeppelin/ERC721Upgradeable.sol";
-
 import "../../_external/balancer/IGauge.sol";
 
-//testing
-//import "hardhat/console.sol";
-
-/**
-todo 1 active pool per vault? Or positions from multiple pools will all be liquidated together
-don't get liquidated...
- */
 
 contract VaultNft is Context {
   //using SafeERC721Upgradeable for IERC721;
@@ -103,14 +91,13 @@ contract VaultNft is Context {
     );
   }
 
-  /// callable by the VaultController only
   /// not currently in use, available for future upgrades
   /// @param _token token to transfer
   /// @param _to person to send the nft to
   /// @param _tokenId tokenId of nft to move
   function controllerTransfer(address _token, address _to, uint256 _tokenId) external onlyVaultController {
-    //todo
     //SafeERC721Upgradeable.safeTransfer(IERC721Upgradeable(_token, _to, _tokenId);
+    IERC721(_token).transferFrom(address(this), _to, _tokenId);
   }
 
   /// @notice function used by the NftVaultController to transfer tokens
@@ -119,7 +106,6 @@ contract VaultNft is Context {
   /// @param _to person to send the nft to
   /// @param _tokenId tokenId of nft to move
   function nftVaultControllerTransfer(address _token, address _to, uint256 _tokenId) external onlyNftVaultController {
-    //todo
     //SafeERC721Upgradeable.safeTransfer(IERC721Upgradeable(_token, _to, _tokenId);
     IERC721(_token).transferFrom(address(this), _to, _tokenId);
   }

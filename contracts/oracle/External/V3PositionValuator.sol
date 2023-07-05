@@ -14,13 +14,10 @@ import "../../_external/IERC20.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
-//testing
-//import "hardhat/console.sol";
-
 contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
-  address public constant FACTORY_V3 = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
-  INonfungiblePositionManager public constant nfpManager =
-    INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
+  address public FACTORY_V3; //= 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+  INonfungiblePositionManager public nfpManager;
+  //INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
 
   mapping(address => bool) public registeredPools;
   mapping(address => PoolData) public poolDatas;
@@ -35,8 +32,10 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     int24 tickSpacing;
   }
 
-  function initialize() public initializer {
+  function initialize(INonfungiblePositionManager _nfpManager, address _factoryV3) public initializer {
     __Ownable_init();
+    nfpManager = _nfpManager;
+    FACTORY_V3 = _factoryV3;
   }
 
   ///@notice we return 1 here, as the true value is achieved through balanceOf
@@ -46,6 +45,7 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   }
 
   ///@notice this is called by the custom balanceOf logic on the cap token
+  ///@notice returns the value of the position in USDi
   function getValue(uint256 tokenId) external view returns (uint256) {
     (bool registered, address pool, uint128 liquidity) = verifyPool(tokenId);
     PoolData memory data = poolDatas[pool];
@@ -56,7 +56,7 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     }
 
     //independantly calculate sqrtPrice using external oracles
-    (uint160 sqrtPriceX96, uint256 p0, uint256 p1) = getSqrtPrice(pool, data);
+    (uint160 sqrtPriceX96, uint256 p0, uint256 p1) = getSqrtPrice(data);
 
     int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
 
@@ -76,6 +76,8 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   }
 
   ///@notice compute the pool address using the info associated with @param tokenId
+  ///@notice if pool is not registered, value is always 0
+  ///@notice this is because we cannot assign a value without external oracle prices for the underlying
   function verifyPool(uint256 tokenId) public view returns (bool, address, uint128) {
     (, , address token0, address token1, uint24 fee, , , uint128 liquidity, , , , ) = nfpManager.positions(tokenId);
 
@@ -100,10 +102,7 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   }
 
   //https://github.com/makerdao/univ3-lp-oracle/blob/master/src/GUniLPOracle.sol#L248
-  function getSqrtPrice(
-    address pool,
-    PoolData memory data
-  ) internal view returns (uint160 sqrtPrice, uint256 p0, uint256 p1) {
+  function getSqrtPrice(PoolData memory data) internal view returns (uint160 sqrtPrice, uint256 p0, uint256 p1) {
     //modify price by units
     p0 = data.token0Oracle.currentValue() / (1e18 / data.UNIT_0);
     p1 = data.token1Oracle.currentValue() / (1e18 / data.UNIT_1);

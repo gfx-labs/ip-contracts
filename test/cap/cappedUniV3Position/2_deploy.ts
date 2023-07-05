@@ -1,31 +1,15 @@
-import { s } from "./scope";
-import { d } from "../DeploymentInfo";
-import { upgrades, ethers } from "hardhat";
+import { s, MintParams } from "./scope";
+import { ethers } from "hardhat";
 import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear, hardhat_mine, hardhat_mine_timed } from "../../../util/block";
-import { utils, BigNumber, BigNumberish } from "ethers";
-import { currentBlock, reset } from "../../../util/block"
-import MerkleTree from "merkletreejs";
-import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
-import { expect, assert } from "chai";
-import { toNumber, getGas, getArgs } from "../../../util/math"
-import { stealMoney } from "../../../util/money";
+import { fastForward, mineBlock, hardhat_mine, hardhat_mine_timed } from "../../../util/block";
+import { BigNumber } from "ethers";
+import { currentBlock } from "../../../util/block";
+import { expect } from "chai";
+import { toNumber, getGas, getArgs } from "../../../util/math";
 
 import {
-  AnchoredViewRelay__factory,
-  BPT_WEIGHTED_ORACLE__factory,
-  CappedBptToken__factory,
-  IOracleRelay,
-  IVault__factory,
-  UniswapV3TokenOracleRelay__factory,
-  VaultBPT__factory,
-  WstETHRelay__factory,
-  RateProofOfConcept__factory,
-  IOracleRelay__factory,
-  BPTstablePoolOracle__factory,
-  INonfungiblePositionManager__factory,
-  Univ3CollateralToken__factory,
+  IVault__factory, Univ3CollateralToken__factory,
   NftVaultController__factory,
   GovernorCharlieDelegate__factory,
   GovernorCharlieDelegate,
@@ -33,28 +17,18 @@ import {
   VaultController__factory,
   V3PositionValuator__factory,
   IUniV3Pool__factory
-} from "../../../typechain-types"
-import { red } from "bn.js";
-import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
+} from "../../../typechain-types";
+import { DeployContractWithProxy } from "../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
-import { PromiseOrValue } from "../../../typechain-types/common";
 
 import {
-  abi as FACTORY_ABI,
-} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json'
-import {
   abi as POOL_ABI,
-} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
+} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json';
 import {
-  MintOptions,
-  nearestUsableTick,
-  NonfungiblePositionManager,
-  Pool,
-  Position,
-} from '@uniswap/v3-sdk'
+  nearestUsableTick
+} from '@uniswap/v3-sdk';
 import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
 const nfpManagerAddr = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
-const wETHwBTC_pool_addr = "0xCBCdF9626bC03E24f779434178A73a0B4bad62eD"
 
 require("chai").should();
 describe("Check Interest Protocol contracts", () => {
@@ -106,19 +80,6 @@ describe("Check Interest Protocol contracts", () => {
   });
 });
 
-type MintParams = {
-  token0: PromiseOrValue<string>,
-  token1: PromiseOrValue<string>,
-  fee: PromiseOrValue<BigNumberish>,
-  tickLower: PromiseOrValue<BigNumberish>,
-  tickUpper: PromiseOrValue<BigNumberish>,
-  amount0Desired: PromiseOrValue<BigNumberish>,
-  amount1Desired: PromiseOrValue<BigNumberish>,
-  amount0Min: PromiseOrValue<BigNumberish>,
-  amount1Min: PromiseOrValue<BigNumberish>,
-  recipient: PromiseOrValue<string>,
-  deadline: PromiseOrValue<BigNumberish>
-}
 
 describe("Mint position", () => {
   //const token0 = s.WBTC
@@ -139,15 +100,7 @@ describe("Mint position", () => {
     const startWeth = await s.WETH.balanceOf(s.Bob.address)
     const startWbtc = await s.WBTC.balanceOf(s.Bob.address)
 
-    /**
-    const poolContract = new ethers.Contract(
-      wETHwBTC_pool_addr,
-      POOL_ABI,
-      ethers.provider
-    )
-    */
-
-    s.POOL = IUniV3Pool__factory.connect(wETHwBTC_pool_addr, s.Frank)
+    s.POOL = IUniV3Pool__factory.connect(s.POOL_ADDR, s.Frank)
 
     const [fee, tickSpacing, slot0] =
       await Promise.all([
@@ -175,18 +128,11 @@ describe("Mint position", () => {
       recipient: s.Bob.address,
       deadline: block.timestamp + 500
     }
-
-    const startingWbtcBalance = await s.WBTC.balanceOf(s.Bob.address)
-    const startingWethBalance = await s.WETH.balanceOf(s.Bob.address)
-
     //mint position
     const result = await s.nfpManager.connect(s.Bob).mint(params)
     await hardhat_mine_timed(500, 15)
     const args = await getArgs(result)
-    //showBody("wbtcAmount: ", s.wBTC_Amount)
-    //showBody("wethAmount: ", s.WETH_AMOUNT)
-
-    //showBodyCyan("Args: ", args)
+ 
     const tokenId = args.tokenId
     s.BobPositionId = tokenId
     expect(await s.nfpManager.balanceOf(s.Bob.address)).to.eq(BN("1"), "Bob has 1 NFT")
@@ -200,28 +146,6 @@ describe("Mint position", () => {
     s.BobAmount0 = args.amount0
     s.BobAmount1 = args.amount1
 
-    /**
-     const manager = INFPmanager__factory.connect(nfpManagerAddr, s.Frank)
-    const [
-      nonce,
-      operator,
-      token0,
-      token1,
-      _fee,
-      tLow,
-      tUp,
-      liquidity,
-      feeGrowthInside0LastX128,
-      feeGrowthInside1LastX128,
-      tokensOwed0,
-      tokensOwed1
-    ] = await s.nfpManager.positions(tokenId)
-     */
-
-    //showBody("TokensOwed0: ", tokensOwed0)
-    //showBody("TokensOwed1: ", tokensOwed1)
-    //showBody("liquidity: ", await toNumber(liquidity))
-
   })
 
   it("Mint position for Carol", async () => {
@@ -231,16 +155,16 @@ describe("Mint position", () => {
     const startWbtc = await s.WBTC.balanceOf(s.Carol.address)
 
 
-    const poolContract = new ethers.Contract(
-      wETHwBTC_pool_addr,
+    s.poolContract = new ethers.Contract(
+      s.POOL_ADDR,
       POOL_ABI,
       ethers.provider
     )
     const [fee, tickSpacing, slot0] =
       await Promise.all([
-        poolContract.fee(),
-        poolContract.tickSpacing(),
-        poolContract.slot0(),
+        s.poolContract.fee(),
+        s.poolContract.tickSpacing(),
+        s.poolContract.slot0(),
       ])
 
     const nut = nearestUsableTick(slot0[1], tickSpacing)
@@ -358,18 +282,13 @@ describe("deploy oracles and cap tokens", () => {
     s.PositionValuator = await DeployContractWithProxy(
       new V3PositionValuator__factory(s.Frank),
       s.Frank,
-      s.ProxyAdmin
-      /**
-      wETHwBTC_pool_addr,
-      s.wbtcOracle.address,
-      s.wethOracle.address,
-      await s.WBTC.decimals(),
-      await s.WETH.decimals()
-       */
+      s.ProxyAdmin,
+      "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",//nfpManager
+      "0x1F98431c8aD98523631AE4a59f267346ea31F984" //Factory v3     
     )
     await s.PositionValuator.deployed()
 
-    await s.PositionValuator.registerPool(wETHwBTC_pool_addr, s.wbtcOracle.address, s.wethOracle.address)
+    await s.PositionValuator.registerPool(s.POOL_ADDR, s.wbtcOracle.address, s.wethOracle.address)
 
     //showBody(await toNumber(await s.PositionValuator.currentValue()))
   })

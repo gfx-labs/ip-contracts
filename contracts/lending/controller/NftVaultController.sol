@@ -2,24 +2,18 @@
 pragma solidity 0.8.9;
 
 import "../IVaultController.sol";
-
 import "../vault/VaultNft.sol";
-//import "../vault/VaultBPT.sol";
 
 import "../../_external/IERC20Metadata.sol";
 import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
-//testing
-//import "hardhat/console.sol";
 
-/// @title CappedGovToken
+
+/// @title CappedPosition
 /// @notice handles all minting/burning of underlying
-/// @dev extends ierc20 upgradable
 contract NftVaultController is Initializable, OwnableUpgradeable {
-  //this is unused but needs to stay or the storage will be off by 8 bits for future upgrades
-  //uint8 private _underlying_decimals;
   IVaultController public _vaultController;
 
   address public _nfpManager;

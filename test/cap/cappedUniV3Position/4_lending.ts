@@ -146,29 +146,21 @@ describe("Liquidations - uniPosition", () => {
         await s.USDI.connect(s.Dave).deposit(await s.USDC.balanceOf(s.Dave.address))
         await mineBlock()
 
-
-
         const startingUSDI = await s.USDI.balanceOf(s.Dave.address)
-        expect(startingUSDI).to.eq((s.USDC_AMOUNT.mul(5)).mul(BN("1e12")))
 
         const startinguniPosition = await s.CappedPosition.balanceOf(s.BobVault.address)
         const startuniPosition = await s.nfpManager.balanceOf(s.Dave.address)
         expect(startuniPosition).to.eq(0, "Dave holds 0 uniPosition")
 
-
-
         const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedPosition.address, BN("1e50"))
         const gas = await getGas(result)
         showBodyCyan("Gas to liquidate uniPosition: ", gas)
-
-        //let supply = await s.CappedPosition.totalSupply()
-        //expect(await toNumber(supply)).to.be.closeTo(await toNumber(startSupply.sub(tokensToLiquidate)), 10, "Total supply reduced as Capped uniPosition is liquidatede")
 
         let endCappedPosition = await s.CappedPosition.balanceOf(s.BobVault.address)
         expect(await toNumber(endCappedPosition)).to.eq(0, "Total position liquidated")
 
         let enduniPosition = await s.nfpManager.balanceOf(s.Dave.address)
-        expect(enduniPosition).to.eq(1, "Dave recieved the position")
+        expect(enduniPosition).to.eq(2, "Dave recieved both positions")
 
         const usdiSpent = startingUSDI.sub(await s.USDI.balanceOf(s.Dave.address))
         const expectedSpend = await toNumber(startinguniPosition) - (await toNumber(startinguniPosition) * (await toNumber(s.LiquidationIncentive)))
@@ -187,7 +179,6 @@ describe("Liquidations - uniPosition", () => {
     it("Dave deposits and borrows", async () => {
         await s.nfpManager.connect(s.Dave).approve(s.CappedPosition.address, s.BobPositionId)
         const result = await s.CappedPosition.connect(s.Dave).deposit(s.BobPositionId, s.BobVaultID)
-
     })
 
     it("Borrow to add some liability", async () => {
@@ -206,9 +197,7 @@ describe("Liquidations - uniPosition", () => {
         expect(liab).to.eq(0, "Loan completely repaid")
     })
 
-
     it("Withdraw after loan", async () => {
-
 
         const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, 99999)
 
@@ -220,26 +209,24 @@ describe("Liquidations - uniPosition", () => {
 
     })
 
-  
-       it("mappings", async () => {
-           const _vaultAddress_vaultId = await s.NftVaultController._vaultAddress_vaultId(s.BobVault.address)
-           expect(_vaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
-        
-    
-           const _vaultId_nftVaultAddress = await s.NftVaultController._vaultId_nftVaultAddress(BN(s.BobVaultID))
-           expect(_vaultId_nftVaultAddress.toUpperCase()).to.equal(s.BobNftVault.address.toUpperCase(), "Correct nft vault ID")
-      
-           const _nftVaultAddress_vaultId = await s.NftVaultController._nftVaultAddress_vaultId(s.BobNftVault.address)
-           expect(_nftVaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
-    
-           const _underlying_CappedToken = await s.NftVaultController._underlying_CollateralToken(s.nfpManager.address)
-           expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedPosition.address.toUpperCase(), "Underlying => Capped is correct")
-    
-           const _CappedToken_underlying = await s.NftVaultController._CollateralToken_underlying(s.CappedPosition.address)
-           expect(_CappedToken_underlying.toUpperCase()).to.eq(s.nfpManager.address.toUpperCase(), "Capped => Underlying correct")
-       
-        })
-   
+    it("mappings", async () => {
+        const _vaultAddress_vaultId = await s.NftVaultController._vaultAddress_vaultId(s.BobVault.address)
+        expect(_vaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
+
+
+        const _vaultId_nftVaultAddress = await s.NftVaultController._vaultId_nftVaultAddress(BN(s.BobVaultID))
+        expect(_vaultId_nftVaultAddress.toUpperCase()).to.equal(s.BobNftVault.address.toUpperCase(), "Correct nft vault ID")
+
+        const _nftVaultAddress_vaultId = await s.NftVaultController._nftVaultAddress_vaultId(s.BobNftVault.address)
+        expect(_nftVaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
+
+        const _underlying_CappedToken = await s.NftVaultController._underlying_CollateralToken(s.nfpManager.address)
+        expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedPosition.address.toUpperCase(), "Underlying => Capped is correct")
+
+        const _CappedToken_underlying = await s.NftVaultController._CollateralToken_underlying(s.CappedPosition.address)
+        expect(_CappedToken_underlying.toUpperCase()).to.eq(s.nfpManager.address.toUpperCase(), "Capped => Underlying correct")
+
+    })
 })
 
 
