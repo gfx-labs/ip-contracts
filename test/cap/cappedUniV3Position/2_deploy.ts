@@ -289,7 +289,7 @@ describe("deploy oracles and cap tokens", () => {
 
   it("Deploy cap token", async () => {
 
-    s.CappedPosition = await DeployContractWithProxy(
+    s.WrappedPosition = await DeployContractWithProxy(
       new Univ3CollateralToken__factory(s.Frank),
       s.Frank,
       s.ProxyAdmin,
@@ -300,7 +300,7 @@ describe("deploy oracles and cap tokens", () => {
       s.NftVaultController.address,
       s.PositionValuator.address
     )
-    await s.CappedPosition.deployed()
+    await s.WrappedPosition.deployed()
   })
 })
 
@@ -320,29 +320,29 @@ describe("Setup, Queue and Execute proposal", () => {
       governorAddress
     )
   })
-  
+
   it("Makes the proposal", async () => {
     const proposal = new ProposalContext("Uni V3 Position")
 
     const addOracle = await new OracleMaster__factory(prop).
       attach(s.Oracle.address).
       populateTransaction.setRelay(
-        s.CappedPosition.address,
+        s.WrappedPosition.address,
         s.PositionValuator.address
       )
 
     const list = await new VaultController__factory(prop).
       attach(s.VaultController.address).
       populateTransaction.registerErc20(
-        s.CappedPosition.address,
+        s.WrappedPosition.address,
         s.LTV,
-        s.CappedPosition.address,
+        s.WrappedPosition.address,
         s.LiquidationIncentive
       )
 
     const registerNftController = await new NftVaultController__factory(prop).
       attach(s.NftVaultController.address).
-      populateTransaction.registerUnderlying(s.CappedPosition.address, nfpManagerAddr)
+      populateTransaction.registerUnderlying(s.WrappedPosition.address, nfpManagerAddr)
 
     proposal.addStep(addOracle, "setRelay(address,address)")
     //proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")
@@ -406,23 +406,23 @@ describe("Setup, Queue and Execute proposal", () => {
 
     await impersonateAccount(s.GOV._address)
     /**
-     await s.Oracle.connect(s.GOV).setRelay(s.CappedPosition.address, s.PositionValuator.address)
+     await s.Oracle.connect(s.GOV).setRelay(s.WrappedPosition.address, s.PositionValuator.address)
     await s.VaultController.connect(s.GOV).registerErc20(
-      s.CappedPosition.address,
+      s.WrappedPosition.address,
       s.LTV,
-      s.CappedPosition.address,
+      s.WrappedPosition.address,
       s.LiquidationIncentive
     )
      */
 
     await s.VaultController.connect(s.GOV).registerErc20(
-      s.CappedPosition.address,
+      s.WrappedPosition.address,
       s.LTV,
-      s.CappedPosition.address,
+      s.WrappedPosition.address,
       s.LiquidationIncentive
     )
     await s.NftVaultController.connect(s.GOV).registerUnderlying(
-      s.CappedPosition.address,
+      s.WrappedPosition.address,
       nfpManagerAddr
     )
 
@@ -431,7 +431,7 @@ describe("Setup, Queue and Execute proposal", () => {
     const implementation = await new VaultController__factory(s.GOV).deploy()
     await s.ProxyAdmin.connect(s.GOV).upgrade(s.VaultController.address, implementation.address)
 
-    await s.VaultController.connect(s.GOV).setCappedPositionAddress(s.CappedPosition.address)
+    await s.VaultController.connect(s.GOV).setPositionWrapperAddress(s.WrappedPosition.address)
 
     await ceaseImpersonation(s.GOV._address)
   })

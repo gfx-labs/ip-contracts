@@ -73,8 +73,8 @@ describe("Verify setup", () => {
 describe("Capped Position Functionality", () => {
 
     it("Bob deposits position", async () => {
-        await s.nfpManager.connect(s.Bob).approve(s.CappedPosition.address, s.BobPositionId)
-        const result = await s.CappedPosition.connect(s.Bob).deposit(s.BobPositionId, s.BobVaultID)
+        await s.nfpManager.connect(s.Bob).approve(s.WrappedPosition.address, s.BobPositionId)
+        const result = await s.WrappedPosition.connect(s.Bob).deposit(s.BobPositionId, s.BobVaultID)
         const gas = await getGas(result)
         showBodyCyan("Gas to deposit a position: ", gas)
 
@@ -84,14 +84,14 @@ describe("Capped Position Functionality", () => {
         expect(balance).to.eq(1, "1 uni v3 position minted")
 
         // Calling balanceOf on standard vault returns position value
-        balance = await s.CappedPosition.balanceOf(s.BobVault.address)
+        balance = await s.WrappedPosition.balanceOf(s.BobVault.address)
         expect(await toNumber(balance)).to.be.gt(0, "BalanceOf on og vault returns value")
     })
 
     it("Withdraw position", async () => {
 
 
-        const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, 1)
+        const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.WrappedPosition.address, 1)
         const gas = await getGas(result)
         showBodyCyan("Gas to withdraw position: ", gas)
 
@@ -101,15 +101,15 @@ describe("Capped Position Functionality", () => {
         expect(balance).to.eq(1, "1 uni v3 position returned to Bob")
 
         // Calling balanceOf on standard vault returns position value
-        balance = await s.CappedPosition.balanceOf(s.BobVault.address)
+        balance = await s.WrappedPosition.balanceOf(s.BobVault.address)
         expect(balance).to.eq(0, "BalanceOf is now 0")
 
 
     })
 
     it("Deposit position again for future tests", async () => {
-        await s.nfpManager.connect(s.Bob).approve(s.CappedPosition.address, s.BobPositionId)
-        const result = await s.CappedPosition.connect(s.Bob).deposit(s.BobPositionId, s.BobVaultID)
+        await s.nfpManager.connect(s.Bob).approve(s.WrappedPosition.address, s.BobPositionId)
+        const result = await s.WrappedPosition.connect(s.Bob).deposit(s.BobPositionId, s.BobVaultID)
 
         //check destinations
         // nft to vault NFT
@@ -117,13 +117,13 @@ describe("Capped Position Functionality", () => {
         expect(balance).to.eq(1, "1 uni v3 position minted")
 
         // Calling balanceOf on standard vault returns position value
-        balance = await s.CappedPosition.balanceOf(s.BobVault.address)
+        balance = await s.WrappedPosition.balanceOf(s.BobVault.address)
         expect(await toNumber(balance)).to.be.gt(0, "BalanceOf on og vault returns value")
     })
 
     it("Carol deposits the registered position", async () => {
-        await s.nfpManager.connect(s.Carol).approve(s.CappedPosition.address, s.CarolPositionId)
-        const result = await s.CappedPosition.connect(s.Carol).deposit(s.CarolPositionId, s.CaroLVaultID)
+        await s.nfpManager.connect(s.Carol).approve(s.WrappedPosition.address, s.CarolPositionId)
+        const result = await s.WrappedPosition.connect(s.Carol).deposit(s.CarolPositionId, s.CaroLVaultID)
         const gas = await getGas(result)
         showBodyCyan("Gas to deposit a position: ", gas)
 
@@ -133,14 +133,14 @@ describe("Capped Position Functionality", () => {
         expect(balance).to.eq(1, "1 uni v3 position minted")
 
         // Calling balanceOf on standard vault returns position value
-        balance = await s.CappedPosition.balanceOf(s.CarolVault.address)
+        balance = await s.WrappedPosition.balanceOf(s.CarolVault.address)
         expect(await toNumber(balance)).to.be.gt(0, "BalanceOf on og vault returns value")
     })
 
     it("Try to deposit unregistered position", async () => {
 
-        await s.nfpManager.connect(s.Carol).approve(s.CappedPosition.address, s.CarolIllegalPositionId)
-        expect(s.CappedPosition.connect(s.Carol).deposit(s.CarolIllegalPositionId, s.CaroLVaultID)).to.be.revertedWith("Pool not registered")
+        await s.nfpManager.connect(s.Carol).approve(s.WrappedPosition.address, s.CarolIllegalPositionId)
+        expect(s.WrappedPosition.connect(s.Carol).deposit(s.CarolIllegalPositionId, s.CaroLVaultID)).to.be.revertedWith("Pool not registered")
 
     })
 
@@ -269,14 +269,14 @@ describe("Check valuations", async () => {
         let v0: BigNumber = (p0.mul(BN(s.BobAmount0))).div(BN("1e8"))//decimal 8 because wbtc
         let v1: BigNumber = (p1.mul(BN(s.BobAmount1))).div(BN("1e18"))
         const targetAmount = v1.add(v0)
-        const actual = await s.CappedPosition.balanceOf(s.BobVault.address)
+        const actual = await s.WrappedPosition.balanceOf(s.BobVault.address)
   
         expect(await toNumber(targetAmount)).to.be.closeTo(await toNumber(actual), 1, "Value is correct")
 
     })
 
     it("Bob deposits a second position", async () => {
-        const startingValue = await s.CappedPosition.balanceOf(s.BobVault.address)
+        const startingValue = await s.WrappedPosition.balanceOf(s.BobVault.address)
 
         //mint second position
         //approvals
@@ -317,8 +317,8 @@ describe("Check valuations", async () => {
         const amount1 = args.amount1
 
         //deposit
-        await s.nfpManager.connect(s.Bob).approve(s.CappedPosition.address, positionId)
-        const deposit = await s.CappedPosition.connect(s.Bob).deposit(positionId, s.BobVaultID)
+        await s.nfpManager.connect(s.Bob).approve(s.WrappedPosition.address, positionId)
+        const deposit = await s.WrappedPosition.connect(s.Bob).deposit(positionId, s.BobVaultID)
 
         //check value
         let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
@@ -328,7 +328,7 @@ describe("Check valuations", async () => {
         let v1: BigNumber = (p1.mul(BN(amount1))).div(BN("1e18"))
         const targetAmount = v1.add(v0)
   
-        const endingValue = await s.CappedPosition.balanceOf(s.BobVault.address)
+        const endingValue = await s.WrappedPosition.balanceOf(s.BobVault.address)
         expect(await toNumber(endingValue)).to.be.closeTo(await toNumber(startingValue.add(targetAmount)), 0.5, "Value increased as expected")
 
     })
@@ -341,7 +341,7 @@ describe("Check valuations", async () => {
         let v0: BigNumber = (p0.mul(BN(s.CarolAmount0))).div(BN("1e8"))//decimal 8 because wbtc
         let v1: BigNumber = (p1.mul(BN(s.CarolAmount1))).div(BN("1e18"))
         const targetAmount = v1.add(v0)
-        const actual = await s.CappedPosition.balanceOf(s.CarolVault.address)
+        const actual = await s.WrappedPosition.balanceOf(s.CarolVault.address)
    
         expect(await toNumber(targetAmount)).to.be.closeTo(await toNumber(actual), 1, "Value is correct")
 

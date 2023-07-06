@@ -66,7 +66,7 @@ contract VaultController is
   }
   Interest public _interest;
 
-  address public _cappedPosition;
+  address public _positionWrapper;
 
   /// @notice any function with this modifier will call the pay_interest() function before
   modifier paysInterest() {
@@ -268,8 +268,8 @@ contract VaultController is
     emit UpdateRegisteredErc20(token_address, LTV, oracle_address, liquidationIncentive);
   }
 
-  function setCappedPositionAddress(address cappedPosition_) external onlyOwner {
-    _cappedPosition = cappedPosition_;
+  function setPositionWrapperAddress(address positionWrapper_) external onlyOwner {
+    _positionWrapper = positionWrapper_;
   }
 
   /// @notice check an vault for over-collateralization. returns false if amount borrowed is greater than borrowing power.
@@ -418,9 +418,6 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) external override paysInterest whenNotPaused returns (uint256) {
-    /////////////////////////////////////////////////////////////////////////////
-    INonfungiblePositionManager nfp = INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
-    /////////////////////////////////////////////////////////////////////////////
     //cannot liquidate 0
     require(tokens_to_liquidate > 0, "must liquidate>0");
     //check for registered asset - audit L3
@@ -438,13 +435,9 @@ contract VaultController is
     // get the vault that the liquidator wishes to liquidate
     IVault vault = getVault(id);
 
-    //check vault things
-    uint256 baseLiability = vault.baseLiability();
-    uint256 baseAmount = (usdi_to_repurchase * 1e18) / _interest.factor;
-
     //Q2 2023 upgrade
     //decrease the vault's liability
-    if (asset_address == _cappedPosition) {
+    if (asset_address == _positionWrapper) {
       //liability to 0
       //todo multiple separate positions? 
       vault.modifyLiability(false, vault.baseLiability());
@@ -460,11 +453,6 @@ contract VaultController is
 
     // finally, deliver tokens to liquidator
     vault.controllerTransfer(asset_address, _msgSender(), tokens_to_liquidate);
-
-    /////////////////////////////////////////////////////////////////////////////
-    /**
-     */
-    /////////////////////////////////////////////////////////////////////////////
 
     // this mainly prevents reentrancy
     require(get_vault_borrowing_power(vault) <= _vaultLiability(id), "overliquidation");
@@ -506,8 +494,8 @@ contract VaultController is
     require(!checkVault(id), "Vault is solvent");
     IVault vault = getVault(id);
 
-    //Q2 2023 upgrade, if capped position, liquidate entire positions
-    if (asset_address == _cappedPosition) {
+    //Q2 2023 upgrade, if wrapped position, liquidate entire positions
+    if (asset_address == _positionWrapper) {
       return (
         1e18, //the badFillPrice is the actual usdi_to_repurchase
         truncate(vault.tokenBalance(asset_address) * (1e18 - _tokenAddress_liquidationIncentive[asset_address]))

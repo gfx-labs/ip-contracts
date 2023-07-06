@@ -114,5 +114,5 @@ interface IVaultController is VaultControllerEvents {
     uint256 liquidationIncentive
   ) external;
 
-  function setCappedPositionAddress(address cappedPosition_) external;
+  function setPositionWrapperAddress(address positionWrapper) external;
 }

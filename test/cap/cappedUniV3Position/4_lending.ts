@@ -18,8 +18,8 @@ describe("Check starting values", () => {
         let borrowPower = await s.VaultController.vaultBorrowingPower(s.BobVaultID)
         expect(borrowPower).to.be.gt(0, "There exists a borrow power against capped token")
 
-        let balance = await s.CappedPosition.balanceOf(s.BobVault.address)
-        let price = await s.Oracle.getLivePrice(s.CappedPosition.address)
+        let balance = await s.WrappedPosition.balanceOf(s.BobVault.address)
+        let price = await s.Oracle.getLivePrice(s.WrappedPosition.address)
 
         let totalValue = (balance.mul(price)).div(BN("1e18"))
 
@@ -117,7 +117,7 @@ describe("Liquidations - uniPosition", () => {
 
     it("Try to withdraw when vault is underwater", async () => {
         const amount = BN("250e18")
-        expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, amount)).to.be.revertedWith("over-withdrawal")
+        expect(s.BobVault.connect(s.Bob).withdrawErc20(s.WrappedPosition.address, amount)).to.be.revertedWith("over-withdrawal")
     })
 
     it("Liquidate", async () => {
@@ -125,11 +125,11 @@ describe("Liquidations - uniPosition", () => {
         const amountToSolvency = await s.VaultController.amountToSolvency(s.BobVaultID)
         expect(amountToSolvency).to.be.gt(0, "Vault underwater")
 
-        const tokensToLiquidate = await s.VaultController.tokensToLiquidate(s.BobVaultID, s.CappedPosition.address)
+        const tokensToLiquidate = await s.VaultController.tokensToLiquidate(s.BobVaultID, s.WrappedPosition.address)
         T2L = tokensToLiquidate
         expect(tokensToLiquidate).to.be.gt(0, "Capped Tokens are liquidatable")
 
-        const price = await s.Oracle.getLivePrice(s.CappedPosition.address)
+        const price = await s.Oracle.getLivePrice(s.WrappedPosition.address)
         expect(await toNumber(price)).to.eq(1, "Expected price mofifier returned")
 
         const liquidationValue = (price.mul(tokensToLiquidate)).div(BN("1e18"))
@@ -140,16 +140,16 @@ describe("Liquidations - uniPosition", () => {
 
         const startingUSDI = await s.USDI.balanceOf(s.Dave.address)
 
-        const startinguniPosition = await s.CappedPosition.balanceOf(s.BobVault.address)
+        const startinguniPosition = await s.WrappedPosition.balanceOf(s.BobVault.address)
         const startuniPosition = await s.nfpManager.balanceOf(s.Dave.address)
         expect(startuniPosition).to.eq(0, "Dave holds 0 uniPosition")
 
-        const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.CappedPosition.address, BN("1e50"))
+        const result = await s.VaultController.connect(s.Dave).liquidateVault(s.BobVaultID, s.WrappedPosition.address, BN("1e50"))
         const gas = await getGas(result)
         showBodyCyan("Gas to liquidate uniPosition: ", gas)
 
-        let endCappedPosition = await s.CappedPosition.balanceOf(s.BobVault.address)
-        expect(await toNumber(endCappedPosition)).to.eq(0, "Total position liquidated")
+        let endWrappedPosition = await s.WrappedPosition.balanceOf(s.BobVault.address)
+        expect(await toNumber(endWrappedPosition)).to.eq(0, "Total position liquidated")
 
         let enduniPosition = await s.nfpManager.balanceOf(s.Dave.address)
         expect(enduniPosition).to.eq(2, "Dave recieved both positions")
@@ -169,8 +169,8 @@ describe("Liquidations - uniPosition", () => {
     })
 
     it("Dave deposits and borrows", async () => {
-        await s.nfpManager.connect(s.Dave).approve(s.CappedPosition.address, s.BobPositionId)
-        const result = await s.CappedPosition.connect(s.Dave).deposit(s.BobPositionId, s.BobVaultID)
+        await s.nfpManager.connect(s.Dave).approve(s.WrappedPosition.address, s.BobPositionId)
+        const result = await s.WrappedPosition.connect(s.Dave).deposit(s.BobPositionId, s.BobVaultID)
     })
 
     it("Borrow to add some liability", async () => {
@@ -191,13 +191,13 @@ describe("Liquidations - uniPosition", () => {
 
     it("Withdraw after loan", async () => {
 
-        const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedPosition.address, 99999)
+        const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.WrappedPosition.address, 99999)
 
         let balance = await s.nfpManager.balanceOf(s.BobNftVault.address)
         expect(await toNumber(balance)).to.eq(0, "All uniPosition withdrawn")
 
-        balance = await s.CappedPosition.balanceOf(s.BobVault.address)
-        expect(await toNumber(balance)).to.eq(0, "All CappedPosition removed from vault")
+        balance = await s.WrappedPosition.balanceOf(s.BobVault.address)
+        expect(await toNumber(balance)).to.eq(0, "All WrappedPosition removed from vault")
 
     })
 
@@ -213,9 +213,9 @@ describe("Liquidations - uniPosition", () => {
         expect(_nftVaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
 
         const _underlying_CappedToken = await s.NftVaultController._underlying_CollateralToken(s.nfpManager.address)
-        expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedPosition.address.toUpperCase(), "Underlying => Capped is correct")
+        expect(_underlying_CappedToken.toUpperCase()).to.eq(s.WrappedPosition.address.toUpperCase(), "Underlying => Capped is correct")
 
-        const _CappedToken_underlying = await s.NftVaultController._CollateralToken_underlying(s.CappedPosition.address)
+        const _CappedToken_underlying = await s.NftVaultController._CollateralToken_underlying(s.WrappedPosition.address)
         expect(_CappedToken_underlying.toUpperCase()).to.eq(s.nfpManager.address.toUpperCase(), "Capped => Underlying correct")
 
     })

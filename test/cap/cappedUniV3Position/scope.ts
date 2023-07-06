@@ -29,7 +29,7 @@ export class TestScope extends MainnetAddresses {
     WBTC!: IERC20;
 
 
-    CappedPosition!: Univ3CollateralToken
+    WrappedPosition!: Univ3CollateralToken
     NftVaultController!: NftVaultController
     nfpManager!: INonfungiblePositionManager
     PositionValuator!: V3PositionValuator
