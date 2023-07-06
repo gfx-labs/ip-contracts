@@ -1,5 +1,5 @@
 import { s } from "./scope";
-import { showBodyCyan } from "../../../util/format";
+import { showBody, showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
 import { fastForward, mineBlock, OneDay } from "../../../util/block";
 import { BigNumber } from "ethers";
@@ -191,6 +191,7 @@ describe("Liquidations - uniPosition", () => {
 
     it("Withdraw after loan", async () => {
 
+        const startCarolBalance = await s.WrappedPosition.balanceOf(s.CarolVault.address)
         const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.WrappedPosition.address, 99999)
 
         let balance = await s.nfpManager.balanceOf(s.BobNftVault.address)
@@ -198,6 +199,9 @@ describe("Liquidations - uniPosition", () => {
 
         balance = await s.WrappedPosition.balanceOf(s.BobVault.address)
         expect(await toNumber(balance)).to.eq(0, "All WrappedPosition removed from vault")
+
+        balance = await s.WrappedPosition.balanceOf(s.CarolVault.address)
+        expect(balance).to.eq(startCarolBalance, "Carol's balance is unaffected by withdraw")
 
     })
 

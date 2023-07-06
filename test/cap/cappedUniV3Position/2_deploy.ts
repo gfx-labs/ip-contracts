@@ -16,7 +16,8 @@ import {
   OracleMaster__factory,
   VaultController__factory,
   V3PositionValuator__factory,
-  IUniV3Pool__factory
+  IUniV3Pool__factory,
+  ProxyAdmin__factory
 } from "../../../typechain-types"
 import { DeployContractWithProxy } from "../../../util/deploy"
 import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator"
@@ -28,6 +29,7 @@ import {
   nearestUsableTick
 } from '@uniswap/v3-sdk'
 import { ProposalContext } from "../../../scripts/proposals/suite/proposal"
+import { ProxyAdmin } from "@certusone/wormhole-sdk/lib/cjs/ethers-contracts"
 const nfpManagerAddr = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
 
 require("chai").should()
@@ -119,7 +121,7 @@ describe("Mint position", () => {
     const result = await s.nfpManager.connect(s.Bob).mint(params)
     await hardhat_mine_timed(500, 15)
     const args = await getArgs(result)
- 
+
     const tokenId = args.tokenId
     s.BobPositionId = tokenId
     expect(await s.nfpManager.balanceOf(s.Bob.address)).to.eq(BN("1"), "Bob has 1 NFT")
@@ -344,11 +346,24 @@ describe("Setup, Queue and Execute proposal", () => {
       attach(s.NftVaultController.address).
       populateTransaction.registerUnderlying(s.WrappedPosition.address, nfpManagerAddr)
 
-    proposal.addStep(addOracle, "setRelay(address,address)")
-    //proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")
+    //deploy upgraded vault controller
+    const implementation = await new VaultController__factory(s.Frank).deploy()
+    await implementation.deployed()
 
-    //todo this is not working for some reason
-    //proposal.addStep(registerNftController, "registerNftController(address,address)")
+    //upgrade vault controller
+    const upgrade = await new ProxyAdmin__factory(s.GOV).attach(s.ProxyAdmin.address).
+      populateTransaction.upgrade(s.VaultController.address, implementation.address)
+
+    //set position wrapper on vault controller
+    const setPositionWrapper = await new VaultController__factory(s.GOV).
+      attach(s.VaultController.address).populateTransaction.
+      setPositionWrapperAddress(s.WrappedPosition.address)
+
+    proposal.addStep(addOracle, "setRelay(address,address)")
+    proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")
+    proposal.addStep(registerNftController, "registerUnderlying(address,address)")
+    proposal.addStep(upgrade, "upgrade(address,address)")
+    proposal.addStep(setPositionWrapper, "setPositionWrapperAddress(address)")
 
     out = proposal.populateProposal()
 
@@ -395,68 +410,4 @@ describe("Setup, Queue and Execute proposal", () => {
 
     await ceaseImpersonation(proposer)
   })
-
-  it("test execution", async () => {
-    //fund governor to make TXs
-    const tx = {
-      to: gov.address,
-      value: BN("1e18")
-    }
-    await s.Frank.sendTransaction(tx)
-
-    await impersonateAccount(s.GOV._address)
-    /**
-     await s.Oracle.connect(s.GOV).setRelay(s.WrappedPosition.address, s.PositionValuator.address)
-    await s.VaultController.connect(s.GOV).registerErc20(
-      s.WrappedPosition.address,
-      s.LTV,
-      s.WrappedPosition.address,
-      s.LiquidationIncentive
-    )
-     */
-
-    await s.VaultController.connect(s.GOV).registerErc20(
-      s.WrappedPosition.address,
-      s.LTV,
-      s.WrappedPosition.address,
-      s.LiquidationIncentive
-    )
-    await s.NftVaultController.connect(s.GOV).registerUnderlying(
-      s.WrappedPosition.address,
-      nfpManagerAddr
-    )
-
-
-    //upgrade to vc for testing
-    const implementation = await new VaultController__factory(s.GOV).deploy()
-    await s.ProxyAdmin.connect(s.GOV).upgrade(s.VaultController.address, implementation.address)
-
-    await s.VaultController.connect(s.GOV).setPositionWrapperAddress(s.WrappedPosition.address)
-
-    await ceaseImpersonation(s.GOV._address)
-  })
-
-})
-
-describe("Check valuations", async () => {
-  it("Check weth/wbtc pool valuation", async () => {
-    //derive value based on price
-    let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
-    let p1: BigNumber = await s.wethOracle.currentValue()
-    //showBody("data: ", data)
-    const value = await s.PositionValuator.getValue(s.BobPositionId)
-    showBody("Value: ", await toNumber(value))
-  
-
-    let v0: BigNumber = (p0.mul(BN(s.BobAmount0))).div(BN("1e8"))//reduced decimals for wbtc 
-    let v1: BigNumber = (p1.mul(BN(s.BobAmount1))).div(BN("1e18"))
-    const targetAmount = v1.add(v0)
-    showBody("targetAmount: ", await toNumber(targetAmount))
-
-    expect(await toNumber(value)).to.be.closeTo(await toNumber(targetAmount), 0.5, "Accurate value derived for position")
-  })
-
-
-
-
 })

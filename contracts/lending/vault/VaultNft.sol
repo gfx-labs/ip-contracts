@@ -15,8 +15,6 @@ import "../../_external/openzeppelin/ERC721Upgradeable.sol";
 import "../../_external/balancer/IGauge.sol";
 
 contract VaultNft is Context {
-  //using SafeERC721Upgradeable for IERC721;
-
   /// @title VaultInfo struct
   /// @notice This vault holds the underlying token
   /// @notice The Capped token is held by the parent vault

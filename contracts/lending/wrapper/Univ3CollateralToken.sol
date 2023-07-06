@@ -16,9 +16,7 @@ import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
-//import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-import "hardhat/console.sol";
 
 /// @title Univ3CollateralToken
 /// @notice creates a token worth 1e18 with 18 visible decimals for vaults to consume
@@ -66,8 +64,6 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     updateOracle();
     locked = false;
   }
-
-  ///todo
   function updateOracle() public {
     oracle = IOracleMaster(_vaultController.getOracleMaster());
   }
@@ -77,8 +73,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     return 18;
   }
 
-  /// todo use safe transfer from? Might not be needed as there is dedicated deposit function
-  /// todo maybe better to not allow transfer of erc721 and force to use deposit function so we can add_to_list
+  /// note Safe transfer not used - better to not allow transfer of erc721 and force to use deposit function so we can add_to_list
   /// @notice deposit _underlying to mint CappedToken
   /// @param tokenId //amount of underlying to deposit
   /// @param vaultId receives the value from the position
@@ -92,8 +87,8 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
 
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     add_to_list(vault.minter(), tokenId);
-    //todo total supply?
-    //todo emit mint event?
+    //note total supply?
+    //note emit mint event?
 
     _underlying.transferFrom(_msgSender(), univ3_vault_address, tokenId);
   }
@@ -109,13 +104,9 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vault.id());
     require(univ3_vault_address != address(0x0), "no VaultNft");
 
-    //console.log("Transfer length: ", _underlyingOwners[minter].length);
-
     // move every nft from the nft vault to the target
     for (uint256 i = 0; i < _underlyingOwners[minter].length; i++) {
       uint256 tokenId = _underlyingOwners[minter][i];
-      //console.log("Transfer tokenId: ", tokenId);
-      //todo figure out why there is a 0 id in the list
       if (tokenId != 0) {
         // no need to do the check here when removing from list
         remove_from_list(minter, tokenId);
