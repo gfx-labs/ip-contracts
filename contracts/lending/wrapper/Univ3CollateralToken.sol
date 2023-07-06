@@ -7,7 +7,6 @@ import "../controller/NftVaultController.sol";
 
 import "../IVaultController.sol";
 import "../IVault.sol";
-import "../../oracle/IOracleMaster.sol";
 import "../../oracle/External/V3PositionValuator.sol";
 
 import "../../_external/uniswap/INonfungiblePositionManager.sol";
@@ -16,24 +15,22 @@ import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
-
-
 /// @title Univ3CollateralToken
 /// @notice creates a token worth 1e18 with 18 visible decimals for vaults to consume
 /// @dev extends ierc20 upgradable
 contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
-  IOracleMaster public oracle;
 
   INonfungiblePositionManager public _underlying;
   IVaultController public _vaultController;
   NftVaultController public _nftVaultController;
   V3PositionValuator public _positionValuator;
 
+  ///@notice maps an array of position IDs to their owner
   mapping(address => uint256[]) public _underlyingOwners;
 
   bool private locked;
-
   modifier nonReentrant() {
+    require(locked == false, "Reentrancy");
     locked = true;
     _;
     locked = false;
@@ -54,19 +51,15 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     address positionValuator_
   ) public initializer {
     __Ownable_init();
-    //__ERC721_init(name_, symbol_);
     __ERC20_init(name_, symbol_);
 
     _underlying = INonfungiblePositionManager(underlying_);
     _positionValuator = V3PositionValuator(positionValuator_);
     _vaultController = IVaultController(vaultController_);
     _nftVaultController = NftVaultController(nftVaultController_);
-    updateOracle();
     locked = false;
   }
-  function updateOracle() public {
-    oracle = IOracleMaster(_vaultController.getOracleMaster());
-  }
+
 
   /// @notice 18 decimal erc20 spec should have been written into the fucking standard
   function decimals() public pure override returns (/**override */ uint8) {
@@ -93,7 +86,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     _underlying.transferFrom(_msgSender(), univ3_vault_address, tokenId);
   }
 
-
+  ///NOTE partial withdrawal not allowed, all positions are transferred to recipient
   ///@param recipient should already be the vault minter from the standard vault (v1)
   ///@notice msgSender should be the parent standard vault
   function transfer(address recipient, uint256 /**amount */) public override returns (bool) {
@@ -109,10 +102,11 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
       uint256 tokenId = _underlyingOwners[minter][i];
       if (tokenId != 0) {
         // no need to do the check here when removing from list
-        remove_from_list(minter, tokenId);
+        //remove_from_list(minter, tokenId);
         _nftVaultController.retrieveUnderlying(tokenId, univ3_vault_address, recipient);
       }
     }
+    resetList(minter);
     return true;
   }
 
@@ -126,21 +120,16 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     //return false; //no return for 721
   }
 
-  // TODO: will solidity be smart enough to gas optimize for us here? if not, we need to make sure this function is as cheap as we can get it
   ///@notice need to pass an address to match the interface
-  ///@param vault should be the standard vault address (?)
+  ///@param vault should be the standard vault address
   ///@notice we derive the minter of this vault and that is the vaultMinter that the asset is tied to
   function balanceOf(address vault) public view override returns (uint256) {
     IVault V = IVault(vault);
     require(V.id() > 0, "Univ3CollateralToken: OnlyVaults");
 
-    //get minter
     address account = V.minter();
-    // iterate across each user balance
     uint256 totalValue = 0;
     for (uint256 i; i < _underlyingOwners[account].length; i++) {
-      //TODO: investigate possible gas improvement through passing multiple tokenIds  instead of doing them one by one
-      // this would allow us to cache values from historical calculations, but im not sure if that would even save anything
       totalValue = totalValue + get_token_value(_underlyingOwners[account][i]);
     }
     return totalValue;
@@ -153,21 +142,60 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     value = _positionValuator.getValue(tokenId);
   }
 
-  ///todo  need to mint actual tokens such that the total supply increases here
   // Utility functions for mutating the address tokenId list
   /// @param vaultMinter should be the vault minter
   function add_to_list(address vaultMinter, uint256 tokenId) internal {
+    require(tokenId != 0, "invalid tokenId");
     _underlyingOwners[vaultMinter].push(tokenId);
   }
 
-  /// @param vaultMinter should be the vault minter
+  ///@notice partial withdrawal not allowed, upon transfer, reset list to new blank list
+  ///@param vaultMinter is the owner of the vault
+  function resetList(address vaultMinter) internal returns (bool) {
+    _underlyingOwners[vaultMinter] = new uint256[](0);
+    return true;
+  }
+
+  /**
+  //possible partial withdrawal / liquidation logic 
   function remove_from_list(address vaultMinter, uint256 tokenId) internal returns (bool) {
     for (uint256 i; i < _underlyingOwners[vaultMinter].length; i++) {
       if (_underlyingOwners[vaultMinter][i] == tokenId) {
-        _underlyingOwners[vaultMinter][i] = 0;
+        //old method - filter 0s in get_token_value
+        //delete _underlyingOwners[vaultMinter][i];
+
+        //new method, delete index, replace with final index, reset storage to new array
+        //if length == 0, return false / revert?
+        if (_underlyingOwners[vaultMinter].length == 0) {
+          return true;
+        }
+        //if length == 1, reset storage to empty array
+        if (_underlyingOwners[vaultMinter].length == 1) {
+          _underlyingOwners[vaultMinter] = new uint256[](0);
+          return true;
+        }
+
+
+        uint256 finalElement = _underlyingOwners[vaultMinter][_underlyingOwners[vaultMinter].length - 1];
+
+        //if final element == deleted element, simply return the array minus the final element
+        if (finalElement == _underlyingOwners[vaultMinter][i]) {
+          uint256[] memory newList = new uint256[](_underlyingOwners[vaultMinter].length - 1);
+          _underlyingOwners[vaultMinter] = newList;
+          return true;
+        }
+        _underlyingOwners[vaultMinter][i] = finalElement;
+
+        uint256[] memory newList = new uint256[](_underlyingOwners[vaultMinter].length - 1);
+        for (uint j = 0; j < newList.length; j++) {
+          newList[j] = _underlyingOwners[vaultMinter][j];
+        }
+        _underlyingOwners[vaultMinter] = newList;
+
         return true;
       }
     }
     return false;
   }
+   */
 }

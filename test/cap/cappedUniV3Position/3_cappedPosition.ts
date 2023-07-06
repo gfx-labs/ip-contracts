@@ -261,6 +261,7 @@ describe("Capped Position Functionality", () => {
 })
 
 describe("Check valuations", async () => {
+    let bobSecondPositionID:BigNumber
     it("Check weth/wbtc pool valuation", async () => {
         //derive value based on price
         let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
@@ -270,7 +271,7 @@ describe("Check valuations", async () => {
         let v1: BigNumber = (p1.mul(BN(s.BobAmount1))).div(BN("1e18"))
         const targetAmount = v1.add(v0)
         const actual = await s.WrappedPosition.balanceOf(s.BobVault.address)
-  
+
         expect(await toNumber(targetAmount)).to.be.closeTo(await toNumber(actual), 1, "Value is correct")
 
     })
@@ -312,13 +313,13 @@ describe("Check valuations", async () => {
         await hardhat_mine_timed(500, 15)
         const args = await getArgs(result)
 
-        const positionId = args.tokenId
+        bobSecondPositionID = args.tokenId
         const amount0 = args.amount0
         const amount1 = args.amount1
 
         //deposit
-        await s.nfpManager.connect(s.Bob).approve(s.WrappedPosition.address, positionId)
-        const deposit = await s.WrappedPosition.connect(s.Bob).deposit(positionId, s.BobVaultID)
+        await s.nfpManager.connect(s.Bob).approve(s.WrappedPosition.address, bobSecondPositionID)
+        const deposit = await s.WrappedPosition.connect(s.Bob).deposit(bobSecondPositionID, s.BobVaultID)
 
         //check value
         let p0: BigNumber = (await s.wbtcOracle.currentValue()).div(BN("1e10"))
@@ -327,9 +328,33 @@ describe("Check valuations", async () => {
         let v0: BigNumber = (p0.mul(BN(amount0))).div(BN("1e8"))//decimal 8 because wbtc
         let v1: BigNumber = (p1.mul(BN(amount1))).div(BN("1e18"))
         const targetAmount = v1.add(v0)
-  
+
         const endingValue = await s.WrappedPosition.balanceOf(s.BobVault.address)
         expect(await toNumber(endingValue)).to.be.closeTo(await toNumber(startingValue.add(targetAmount)), 0.5, "Value increased as expected")
+
+    })
+
+    it("withdraw when holding >1 position", async () => {
+        const startPositionCount = await s.nfpManager.balanceOf(s.Bob.address)
+        expect(startPositionCount).to.eq(0, "Bob starts with 0 positions")
+
+        const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.WrappedPosition.address, 1)//amount arg is not used
+
+        //partial withdrawals not allowed, withdraw receives all positions held by the vault
+        const endPositionCount = await s.nfpManager.balanceOf(s.Bob.address)
+        expect(endPositionCount).to.eq(2, "Bob recieved both positions")
+
+    })
+
+    it("Deposit both positions again for future testing", async () => {
+        await s.nfpManager.connect(s.Bob).approve(s.WrappedPosition.address, s.BobPositionId)
+        await s.WrappedPosition.connect(s.Bob).deposit(s.BobPositionId, s.BobVaultID)
+
+        await s.nfpManager.connect(s.Bob).approve(s.WrappedPosition.address, bobSecondPositionID)
+        await s.WrappedPosition.connect(s.Bob).deposit(bobSecondPositionID, s.BobVaultID)
+
+        const endPositionCount = await s.nfpManager.balanceOf(s.BobNftVault.address)
+        expect(endPositionCount).to.eq(2, "Bob now has both positions in the vault")
 
     })
 
@@ -342,7 +367,7 @@ describe("Check valuations", async () => {
         let v1: BigNumber = (p1.mul(BN(s.CarolAmount1))).div(BN("1e18"))
         const targetAmount = v1.add(v0)
         const actual = await s.WrappedPosition.balanceOf(s.CarolVault.address)
-   
+
         expect(await toNumber(targetAmount)).to.be.closeTo(await toNumber(actual), 1, "Value is correct")
 
     })

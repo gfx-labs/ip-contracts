@@ -28,6 +28,7 @@ contract CappedBptToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
 
   bool private locked;
   modifier nonReentrant() {
+    require(locked == false, "Reentrancy");
     locked = true;
     _;
     locked = false;

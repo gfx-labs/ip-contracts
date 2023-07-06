@@ -17,8 +17,6 @@ import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 import "../../_external/openzeppelin/PausableUpgradeable.sol";
 
-//testing
-import "hardhat/console.sol";
 import "../../_external/uniswap/INonfungiblePositionManager.sol";
 
 /// @title Controller of all vaults in the USDi borrow/lend system
@@ -439,7 +437,6 @@ contract VaultController is
     //decrease the vault's liability
     if (asset_address == _positionWrapper) {
       //liability to 0
-      //todo multiple separate positions? 
       vault.modifyLiability(false, vault.baseLiability());
     } else {
       vault.modifyLiability(false, (usdi_to_repurchase * 1e18) / _interest.factor);
@@ -489,7 +486,6 @@ contract VaultController is
     address asset_address,
     uint256 tokens_to_liquidate
   ) internal view returns (uint256, uint256) {
-
     //require that the vault is not solvent
     require(!checkVault(id), "Vault is solvent");
     IVault vault = getVault(id);
@@ -527,7 +523,6 @@ contract VaultController is
     if (tokens_to_liquidate > vault.tokenBalance(asset_address)) {
       tokens_to_liquidate = vault.tokenBalance(asset_address);
     }
-
 
     return (tokens_to_liquidate, badFillPrice);
   }
