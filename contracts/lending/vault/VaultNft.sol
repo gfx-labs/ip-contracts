@@ -14,7 +14,6 @@ import "../../_external/uniswap/INonfungiblePositionManager.sol";
 import "../../_external/openzeppelin/ERC721Upgradeable.sol";
 import "../../_external/balancer/IGauge.sol";
 
-
 contract VaultNft is Context {
   //using SafeERC721Upgradeable for IERC721;
 
@@ -68,8 +67,9 @@ contract VaultNft is Context {
     _nftController = NftVaultController(nft_controller_address);
   }
 
-  function parentVault() external view returns (address) {
-    return address(_vaultInfo.vault_address);
+  ///@notice @return vault address for v1 vault
+  function parentVault() external view returns (address vault) {
+    vault = address(_vaultInfo.vault_address);
   }
 
   /// @notice id of the vault
@@ -78,6 +78,9 @@ contract VaultNft is Context {
     return _vaultInfo.id;
   }
 
+  ///@notice collect revenue from the position
+  ///@param tokenId for the position
+  ///@param recipient to recieve the revenue
   function collect(uint256 tokenId, address recipient) external onlyMinter {
     INonfungiblePositionManager positionManager = INonfungiblePositionManager(_nftController._nfpManager());
 

@@ -1,12 +1,12 @@
-import { s, MintParams } from "./scope";
-import { ethers } from "hardhat";
-import { showBody, showBodyCyan } from "../../../util/format";
-import { BN } from "../../../util/number";
-import { fastForward, mineBlock, hardhat_mine, hardhat_mine_timed } from "../../../util/block";
-import { BigNumber } from "ethers";
-import { currentBlock } from "../../../util/block";
-import { expect } from "chai";
-import { toNumber, getGas, getArgs } from "../../../util/math";
+import { s, MintParams } from "./scope"
+import { ethers } from "hardhat"
+import { showBody, showBodyCyan } from "../../../util/format"
+import { BN } from "../../../util/number"
+import { fastForward, mineBlock, hardhat_mine, hardhat_mine_timed } from "../../../util/block"
+import { BigNumber } from "ethers"
+import { currentBlock } from "../../../util/block"
+import { expect } from "chai"
+import { toNumber, getGas, getArgs } from "../../../util/math"
 
 import {
   IVault__factory, Univ3CollateralToken__factory,
@@ -17,32 +17,29 @@ import {
   VaultController__factory,
   V3PositionValuator__factory,
   IUniV3Pool__factory
-} from "../../../typechain-types";
-import { DeployContractWithProxy } from "../../../util/deploy";
-import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator";
+} from "../../../typechain-types"
+import { DeployContractWithProxy } from "../../../util/deploy"
+import { ceaseImpersonation, impersonateAccount } from "../../../util/impersonator"
 
 import {
   abi as POOL_ABI,
-} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json';
+} from '@uniswap/v3-core/artifacts/contracts/UniswapV3Pool.sol/UniswapV3Pool.json'
 import {
   nearestUsableTick
-} from '@uniswap/v3-sdk';
-import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
+} from '@uniswap/v3-sdk'
+import { ProposalContext } from "../../../scripts/proposals/suite/proposal"
 const nfpManagerAddr = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
 
-require("chai").should();
+require("chai").should()
 describe("Check Interest Protocol contracts", () => {
   describe("Sanity check USDi deploy", () => {
     it("Should return the right name, symbol, and decimals", async () => {
 
-      expect(await s.USDI.name()).to.equal("USDI Token");
-      expect(await s.USDI.symbol()).to.equal("USDI");
-      expect(await s.USDI.decimals()).to.equal(18);
-      //expect(await s.USDI.owner()).to.equal(s.Frank.address);
-      //s.GOV = await s.USDI.owner()
-      s.pauser = await s.USDI.pauser()
-    });
-  });
+      expect(await s.USDI.name()).to.equal("USDI Token")
+      expect(await s.USDI.symbol()).to.equal("USDI")
+      expect(await s.USDI.decimals()).to.equal(18)
+    })
+  })
 
   describe("Sanity check VaultController deploy", () => {
     it("Check data on VaultControler", async () => {
@@ -50,17 +47,16 @@ describe("Check Interest Protocol contracts", () => {
       expect(tokensRegistered).to.be.gt(0)
       let interestFactor = await s.VaultController.interestFactor()
       expect(await toNumber(interestFactor)).to.be.gt(1)
-
-    });
+    })
 
     it("Mint vault for Bob", async () => {
       await expect(s.VaultController.connect(s.Bob).mintVault()).to.not
-        .reverted;
-      await mineBlock();
+        .reverted
+      await mineBlock()
       s.BobVaultID = await s.VaultController.vaultsMinted()
       let vaultAddress = await s.VaultController.vaultAddress(s.BobVaultID)
-      s.BobVault = IVault__factory.connect(vaultAddress, s.Bob);
-      expect(await s.BobVault.minter()).to.eq(s.Bob.address);
+      s.BobVault = IVault__factory.connect(vaultAddress, s.Bob)
+      expect(await s.BobVault.minter()).to.eq(s.Bob.address)
     })
 
     it("Mint vault for Carol", async () => {
@@ -71,29 +67,20 @@ describe("Check Interest Protocol contracts", () => {
 
       s.CaroLVaultID = await s.VaultController.vaultsMinted()
       let vaultAddress = await s.VaultController.vaultAddress(s.CaroLVaultID)
-      s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol);
-      expect(await s.CarolVault.minter()).to.eq(s.Carol.address);
+      s.CarolVault = IVault__factory.connect(vaultAddress, s.Carol)
+      expect(await s.CarolVault.minter()).to.eq(s.Carol.address)
     })
-
-
-
-  });
-});
+  })
+})
 
 
 describe("Mint position", () => {
-  //const token0 = s.WBTC
-  //const token1 = s.WETH
   it("Approve", async () => {
     await s.WBTC.connect(s.Bob).approve(nfpManagerAddr, s.wBTC_Amount)
     await s.WETH.connect(s.Bob).approve(nfpManagerAddr, s.WETH_AMOUNT)
 
     await s.WBTC.connect(s.Carol).approve(nfpManagerAddr, s.wBTC_Amount)
     await s.WETH.connect(s.Carol).approve(nfpManagerAddr, s.WETH_AMOUNT)
-  })
-
-  it("Create instance of pool", async () => {
-
   })
 
   it("Mint position for Bob", async () => {
@@ -205,9 +192,6 @@ describe("Mint position", () => {
     s.CarolAmount0 = args.amount0
     s.CarolAmount1 = args.amount1
 
-
-
-
   })
 
   it("Reset approvals", async () => {
@@ -290,7 +274,6 @@ describe("deploy oracles and cap tokens", () => {
 
     await s.PositionValuator.registerPool(s.POOL_ADDR, s.wbtcOracle.address, s.wethOracle.address)
 
-    //showBody(await toNumber(await s.PositionValuator.currentValue()))
   })
 
   it("Deploy nft vault controller", async () => {
@@ -318,28 +301,26 @@ describe("deploy oracles and cap tokens", () => {
       s.PositionValuator.address
     )
     await s.CappedPosition.deployed()
-
   })
 })
 
 describe("Setup, Queue and Execute proposal", () => {
-  const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA";
-  const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
+  const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
+  const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 "
   const prop = ethers.provider.getSigner(proposer)
 
-  let gov: GovernorCharlieDelegate;
+  let gov: GovernorCharlieDelegate
 
   let proposal: number
 
   let out: any
 
-  //connect to gov
   before(async () => {
     gov = new GovernorCharlieDelegate__factory(prop).attach(
       governorAddress
-    );
+    )
   })
-
+  
   it("Makes the proposal", async () => {
     const proposal = new ProposalContext("Uni V3 Position")
 
@@ -393,23 +374,23 @@ describe("Setup, Queue and Execute proposal", () => {
     await mineBlock()
     proposal = Number(await gov.proposalCount())
     showBodyCyan("Advancing a lot of blocks...")
-    await hardhat_mine(votingDelay.toNumber());
+    await hardhat_mine(votingDelay.toNumber())
 
     await gov.connect(prop).castVote(proposal, 1)
     await mineBlock()
 
     showBodyCyan("Advancing a lot of blocks again...")
-    await hardhat_mine(votingPeriod.toNumber());
+    await hardhat_mine(votingPeriod.toNumber())
     await mineBlock()
 
-    await gov.connect(prop).queue(proposal);
+    await gov.connect(prop).queue(proposal)
     await mineBlock()
 
-    await fastForward(timelock.toNumber());
+    await fastForward(timelock.toNumber())
     await mineBlock()
 
-    await gov.connect(prop).execute(proposal);
-    await mineBlock();
+    await gov.connect(prop).execute(proposal)
+    await mineBlock()
 
 
     await ceaseImpersonation(proposer)

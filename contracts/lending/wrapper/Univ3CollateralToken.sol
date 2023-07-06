@@ -98,14 +98,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     _underlying.transferFrom(_msgSender(), univ3_vault_address, tokenId);
   }
 
-  // transfer withdraws every single NFT from the vault.
-  // TODO: this means no partial liquidations/withdraws. We could possibly support partial withdraws -
-  // but it would mean changing our liquidation logic even more. Let's think about this.
-  // basically we can code the token id into the amount, but we would need to make sure that
-  // liquidations always move an amount that is not a tokenId to ensure no exploit is possible.
-  /**
-    underlying owner is associated with the vault (v1) addr so we need to derive that from the vaultMinter
-   */
+
   ///@param recipient should already be the vault minter from the standard vault (v1)
   ///@notice msgSender should be the parent standard vault
   function transfer(address recipient, uint256 /**amount */) public override returns (bool) {
@@ -114,7 +107,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     address minter = vault.minter();
 
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vault.id());
-    require(univ3_vault_address != address(0x0), "no univ3 vault");
+    require(univ3_vault_address != address(0x0), "no VaultNft");
 
     //console.log("Transfer length: ", _underlyingOwners[minter].length);
 

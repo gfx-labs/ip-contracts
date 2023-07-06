@@ -1,19 +1,11 @@
 import { s } from "./scope";
-import { d } from "../DeploymentInfo";
-import { showBody, showBodyCyan } from "../../../util/format";
+import { showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneYear, OneDay } from "../../../util/block";
-import { utils, BigNumber } from "ethers";
-import { calculateAccountLiability, payInterestMath, calculateBalance, getGas, getArgs, truncate, getEvent, calculatetokensToLiquidate, calculateUSDI2repurchase, changeInBalance } from "../../../util/math";
-import { currentBlock, reset } from "../../../util/block"
-import MerkleTree from "merkletreejs";
-import { keccak256, solidityKeccak256 } from "ethers/lib/utils";
-import { expect, assert } from "chai";
-import { toNumber } from "../../../util/math"
-import { red } from "bn.js";
-import { DeployContract, DeployContractWithProxy } from "../../../util/deploy";
-import { start } from "repl";
-import { VotingVault__factory } from "../../../typechain-types";
+import { fastForward, mineBlock, OneDay } from "../../../util/block";
+import { BigNumber } from "ethers";
+import { getGas } from "../../../util/math";
+import { expect } from "chai";
+import { toNumber } from "../../../util/math";
 require("chai").should();
 
 const borrowAmount = BN("500e18")
@@ -172,7 +164,7 @@ describe("Liquidations - uniPosition", () => {
         expect(endLiability).to.eq(0, "Liability is now 0")
 
         let endBalance = await s.nfpManager.balanceOf(s.Dave.address)
-        expect(endBalance).to.eq(1, "Dave received the position")
+        expect(endBalance).to.eq(2, "Dave received both positions")
 
     })
 

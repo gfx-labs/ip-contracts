@@ -1,5 +1,5 @@
 import { s, MintParams } from "./scope";
-import { showBody, showBodyCyan } from "../../../util/format";
+import { showBodyCyan } from "../../../util/format";
 import { BN } from "../../../util/number";
 import { hardhat_mine_timed, mineBlock } from "../../../util/block";
 import { BigNumber } from "ethers";
