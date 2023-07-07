@@ -15,9 +15,8 @@ import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
 contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
-  address public FACTORY_V3; //= 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+  address public FACTORY_V3; 
   INonfungiblePositionManager public nfpManager;
-  //INonfungiblePositionManager(0xC36442b4a4522E871399CD717aBDD847Ab11FE88);
 
   mapping(address => bool) public registeredPools;
   mapping(address => PoolData) public poolDatas;
