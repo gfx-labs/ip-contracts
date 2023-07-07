@@ -75,8 +75,8 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     require(address(univ3_vault_address) != address(0x0), "invalid nft vault");
 
     ///@notice only allow deposits from registered pools
-    (bool registered, , ) = _positionValuator.verifyPool(tokenId);
-    require(registered, "Pool not registered");
+    V3PositionValuator.VerifyData memory data = _positionValuator.verifyPool(tokenId);
+    require(data.registered, "Pool not registered");
 
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     add_to_list(vault.minter(), tokenId);

@@ -3,16 +3,13 @@ pragma solidity 0.8.9;
 
 import "../controller/NftVaultController.sol";
 
-import "../../IUSDI.sol";
 import "../IVault.sol";
 import "../IVaultController.sol";
 
-import "../../_external/CompLike.sol";
 import "../../_external/IERC721.sol";
 import "../../_external/Context.sol";
 import "../../_external/uniswap/INonfungiblePositionManager.sol";
 import "../../_external/openzeppelin/ERC721Upgradeable.sol";
-import "../../_external/balancer/IGauge.sol";
 
 contract VaultNft is Context {
   /// @title VaultInfo struct

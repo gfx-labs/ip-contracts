@@ -32,6 +32,14 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     int24 tickSpacing;
   }
 
+  struct VerifyData {
+    address pool;
+    bool registered;
+    int24 tickLower;
+    int24 tickUpper;
+    uint128 liquidity;
+  }
+
   function initialize(INonfungiblePositionManager _nfpManager, address _factoryV3) public initializer {
     __Ownable_init();
     nfpManager = _nfpManager;
@@ -47,28 +55,22 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   ///@notice this is called by the custom balanceOf logic on the cap token
   ///@notice returns the value of the position in USDi
   function getValue(uint256 tokenId) external view returns (uint256) {
-    (bool registered, address pool, uint128 liquidity) = verifyPool(tokenId);
-    PoolData memory data = poolDatas[pool];
+    VerifyData memory vData = verifyPool(tokenId);
+    PoolData memory data = poolDatas[vData.pool];
 
     //unregistered pools will not have external oracle prices registered, and so won't work
-    if (!registered) {
+    if (!vData.registered) {
       return 0;
     }
-
     //independantly calculate sqrtPrice using external oracles
     (uint160 sqrtPriceX96, uint256 p0, uint256 p1) = getSqrtPrice(data);
-
-    int24 tick = TickMath.getTickAtSqrtRatio(sqrtPriceX96);
-
-    int24 tickLower = tick - (data.tickSpacing * 2);
-    int24 tickUpper = tick + (data.tickSpacing * 2);
 
     //get liquidity
     (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
       sqrtPriceX96,
-      TickMath.getSqrtRatioAtTick(tickLower), //sqrtRatioAX96
-      TickMath.getSqrtRatioAtTick(tickUpper), //sqrtRatioBX96
-      liquidity
+      TickMath.getSqrtRatioAtTick(vData.tickLower), //sqrtRatioAX96
+      TickMath.getSqrtRatioAtTick(vData.tickUpper), //sqrtRatioBX96
+      vData.liquidity
     );
 
     //derive value based on price * amount
@@ -78,14 +80,34 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   ///@notice compute the pool address using the info associated with @param tokenId
   ///@notice if pool is not registered, value is always 0
   ///@notice this is because we cannot assign a value without external oracle prices for the underlying
-  function verifyPool(uint256 tokenId) public view returns (bool, address, uint128) {
-    (, , address token0, address token1, uint24 fee, , , uint128 liquidity, , , , ) = nfpManager.positions(tokenId);
+  function verifyPool(uint256 tokenId) public view returns (VerifyData memory) {
+    (
+      ,
+      ,
+      address token0,
+      address token1,
+      uint24 fee,
+      int24 tickLower,
+      int24 tickUpper,
+      uint128 liquidity,
+      ,
+      ,
+      ,
+
+    ) = nfpManager.positions(tokenId);
 
     address pool = PoolAddress.computeAddress(
       FACTORY_V3,
       PoolAddress.PoolKey({token0: token0, token1: token1, fee: uint24(fee)})
     );
-    return (registeredPools[pool], pool, liquidity);
+    return
+      VerifyData({
+        pool: pool,
+        registered: registeredPools[pool],
+        tickLower: tickLower,
+        tickUpper: tickUpper,
+        liquidity: liquidity
+      });
   }
 
   ///@notice toggle @param pool registered or not
