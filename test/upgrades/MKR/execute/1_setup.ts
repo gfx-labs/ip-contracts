@@ -19,7 +19,7 @@ require("chai").should();
 // configurable variables
 const weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
 const bank = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28"
-const MKR_WHALE = "0x0a3f6849f78076aefaDf113F5BED87720274dDC0"
+const MKR_WHALE = "0x741AA7CFB2c7bF2A1E7D4dA2e3Df6a56cA4131F3"
 const MKR = "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2";
 
 describe("hardhat settings", () => {
