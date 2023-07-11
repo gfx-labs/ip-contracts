@@ -45,7 +45,6 @@ export class deployInfo extends MainnetAddresses {
     AaveAnchorView = "0x27FC4059860F3d9758DCC9a871838F06333fc6ed"
     aaveAddress = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"
 
-
     CappedLDO = "0x7C1Caa71943Ef43e9b203B02678000755a4eCdE9"
     anchorViewLDO = "0x610d4DFAC3EC32e0be98D18DDb280DACD76A1889"
     LDOaddress = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"
@@ -60,12 +59,11 @@ export class deployInfo extends MainnetAddresses {
 
     CappedCBETH = "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"
 
-
-
-
-
-
+    mkrAddress = "";
+    CappedMKR = "";
+    MKRAnchorView = "";
+    MKRVotingVaultController = "";
 }
 
 const di = new deployInfo();
-export const d = di
+export const d = di;
