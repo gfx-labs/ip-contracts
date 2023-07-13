@@ -11,8 +11,6 @@ contract MKRVotingVaultController is Initializable, OwnableUpgradeable {
     error InvalidMKRVotingVault();
     error OnlyCappedToken();
 
-    //this is unused but needs to stay or the storage will be off by 8 bits for future upgrades
-    uint8 private _underlying_decimals;
     IVaultController public _vaultController;
 
     mapping(address => uint96) private _vaultAddress_vaultId; //standard vault addr

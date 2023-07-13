@@ -1,8 +1,8 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber } from "ethers";
-import { USDI, IERC20, IVOTE, VaultController, OracleMaster, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../typechain-types";
-import { Addresser, MainnetAddresses } from "../../util/addresser";
-import { BN } from "../../util/number";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import { BigNumber } from "ethers"
+import { USDI, IERC20, IVOTE, VaultController, OracleMaster, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../typechain-types"
+import { Addresser, MainnetAddresses } from "../../util/addresser"
+import { BN } from "../../util/number"
 
 
 export class deployInfo extends MainnetAddresses {
@@ -59,11 +59,13 @@ export class deployInfo extends MainnetAddresses {
 
     CappedCBETH = "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"
 
-    mkrAddress = "";
-    CappedMKR = "";
-    MKRAnchorView = "";
-    MKRVotingVaultController = "";
+    mkrAddress = "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2"
+    CappedMkrImplementation = "0x99904e5369c551e0a9824E9E95141C46ae2E1B0f"//"0xE4FD7f0f9D0749dD4863FB6827db6F0b06368F01"
+    CappedMKR = "0xbb5578c08bC08c15AcE5cd09c6683CcCcB2A9148"//"0x2c52EE10BD58Efa20FC6ee418BF9085639E8247E"//wrong vvc address
+    MKRAnchorView = "0xCF2FCd9B87113139E809d5F9Ea6f4D571BB1C12a"
+    MKRVotingVaultController = "0x491397f7eb6f5d9B82B15cEcaBFf835bA31f217F"
+    MKRVotingVaultControllerImplementation = "0xEba2255b1e8Bb9A5fcD456cf115A467e61008D73"
 }
 
-const di = new deployInfo();
-export const d = di;
+const di = new deployInfo()
+export const d = di

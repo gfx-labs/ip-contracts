@@ -196,11 +196,11 @@ async function main() {
 
     const networkName = hre.network.name
     if (networkName == "hardhat" || networkName == "localhost") {
-        console.log("TEST PROPOSAL")
         await network.provider.send("evm_setAutomine", [true])
         await resetCurrent()
         await impersonateAccount(proposerAddr)
         proposer = ethers.provider.getSigner(proposerAddr)
+        console.log("TEST PROPOSAL AT BLOCK: ", await (await currentBlock()).number)
 
     } else {
         const accounts = await ethers.getSigners()

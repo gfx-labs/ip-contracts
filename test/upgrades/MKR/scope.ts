@@ -32,9 +32,9 @@ export class TestScope extends MainnetAddresses {
     MKR!: IERC20;
     MKR_AMOUNT = BN("10000e18");
     CappedMKR!: CappedMkrToken;
-    MKR_CAP = BN("1000000e18");
-    MKR_LiqInc = BN("7500000000000000"); //0.0075 / 0.75%
-    MKR_LTV = BN("98e16");
+    MKR_CAP = BN("110000e18");
+    MKR_LiqInc = BN("1e17")
+    MKR_LTV =  BN("70e17")
 
     LiquidationIncentive = BN("5e16")
     wETH_LTV = BN("5e17")

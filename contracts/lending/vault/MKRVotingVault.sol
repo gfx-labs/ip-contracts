@@ -28,7 +28,7 @@ contract MKRVotingVault is Context {
     error OnlyMKRVotingVaultController();
     error OnlyVaultController();
 
-    /// @title VaultInfo struct
+    /// @title MKRVotingVault 
     /// @notice This vault holds the underlying token
     /// @notice The Capped token is held by the parent vault
     /// @notice Withdrawls must be initiated by the withdrawErc20() function on the parent vault
