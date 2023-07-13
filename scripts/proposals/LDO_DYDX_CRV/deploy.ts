@@ -9,10 +9,8 @@ import {
     ChainlinkOracleRelay__factory,
     ProxyAdmin__factory,
     TransparentUpgradeableProxy__factory,
-    ChainlinkTokenOracleRelay,
-    ChainlinkTokenOracleRelay__factory
 } from "../../../typechain-types";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 
 const { ethers, network, upgrades } = require("hardhat");
 
@@ -38,7 +36,7 @@ let anchorLDO: UniswapV3TokenOracleRelay
 let anchorDYDX: UniswapV3TokenOracleRelay
 let anchorCRV: UniswapV3TokenOracleRelay
 
-let mainLDO: ChainlinkTokenOracleRelay
+let mainLDO: ChainlinkOracleRelay
 let mainDYDX: ChainlinkOracleRelay
 let mainCRV: ChainlinkOracleRelay
 
@@ -125,7 +123,7 @@ const deployCapTokens = async (deployer: SignerWithAddress) => {
 const deployOracles = async (deployer: SignerWithAddress) => {
     let anchorFactory = new UniswapV3TokenOracleRelay__factory(deployer)
     let mainFactory = new ChainlinkOracleRelay__factory(deployer)
-    let mainTokenFactory = new ChainlinkTokenOracleRelay__factory(deployer)
+    let mainTokenFactory = new ChainlinkOracleRelay__factory(deployer)
     let anchorViewFactory = new AnchoredViewRelay__factory(deployer)
 
     anchorLDO = await anchorFactory.deploy(

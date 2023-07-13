@@ -9,7 +9,7 @@ import {
     ChainlinkOracleRelay
 } from "../../../typechain-types";
 import { ProposalContext } from "../suite/proposal";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { reset } from "../../../util/block";
 import * as fs from 'fs';
 
@@ -31,22 +31,22 @@ async function main() {
     const addLDOoracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedLDO,
-            d.anchorViewLDO
+            c.CappedLDO,
+            c.LdoAnchorView
         )
 
     const addDYDXoracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedDYDX,
-            d.anchorViewDYDX
+            c.CappedDYDX,
+            c.DydxAnchorView
         )
 
     const addCRVoracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedCRV,
-            d.anchorViewCRV
+            c.CappedCRV,
+            c.CrvAnchorView
         )
 
 
@@ -54,27 +54,27 @@ async function main() {
     const listLDO = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedLDO,
+            c.CappedLDO,
             BN("7e17"),
-            d.CappedLDO,
+            c.CappedLDO,
             BN("1e17")
         )
 
     const listDYDX = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedDYDX,
+            c.CappedDYDX,
             BN("7e17"),
-            d.CappedDYDX,
+            c.CappedDYDX,
             BN("1e17")
         )
 
     const listCRV = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedCRV,
+            c.CappedCRV,
             BN("7e17"),
-            d.CappedCRV,
+            c.CappedCRV,
             BN("1e17")
         )
 
@@ -82,20 +82,20 @@ async function main() {
     const registerLDO_VVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            d.LDOaddress,
-            d.CappedLDO
+            a.LDOaddress,
+            c.CappedLDO
         )
     const registerDYDX_VVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            d.DYDXaddress,
-            d.CappedDYDX
+            a.DYDXaddress,
+            c.CappedDYDX
         )
     const registerCRV_VVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            d.CRVaddress,
-            d.CappedCRV
+            a.CRVaddress,
+            c.CappedCRV
         )
 
 

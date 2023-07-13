@@ -15,7 +15,7 @@ import {
     VotingVaultController__factory
 } from "../../../typechain-types";
 import { toNumber } from "../../../util/math";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { currentBlock, reset, resetCurrent } from "../../../util/block";
 import { network } from "hardhat";
 import hre from 'hardhat'
@@ -82,7 +82,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     const stEThMetaStablePoolOracle = await new BPTstablePoolOracle__factory(deployer).deploy(
         B_stETH_STABLE, //pool_address
         balancerVault,
-        [wstETH, d.wethAddress], //_tokens
+        [wstETH, a.wethAddress], //_tokens
         [wstethRelay.address, wethOracleAddr], //_oracles
         BN("200"),//200 BIP / 2% buffer
         BN("10000")

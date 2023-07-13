@@ -5,7 +5,7 @@ import {
     AnchoredViewRelay, ChainlinkOracleRelay, ProxyAdmin__factory,
     TransparentUpgradeableProxy__factory
 } from "../../../typechain-types";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 
 const { ethers, network, upgrades } = require("hardhat");
 

@@ -16,7 +16,7 @@ import {
     IOracleRelay
 } from "../../../typechain-types"
 import { toNumber } from "../../../util/math"
-import { d } from "../DeploymentInfo"
+import { a, c, d } from "../../../util/addresser"
 import { showBody, showBodyCyan } from "../../../util/format"
 import { network } from "hardhat"
 import hre from 'hardhat'
@@ -78,7 +78,7 @@ const deployCapTokens = async (deployer: SignerWithAddress) => {
     const initMKR = await CappedMKR.initialize(
         "Capped MKR",
         "cMKR",
-        d.mkrAddress,
+        a.mkrAddress,
         d.VaultController,
         "0x491397f7eb6f5d9B82B15cEcaBFf835bA31f217F"
     )

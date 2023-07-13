@@ -11,7 +11,7 @@ export interface Addresser {
     compVotingAddress: string;
 
 }
-
+//mainnet addresses that are external to IP 
 export class MainnetAddresses {
     readonly wethAddress: string = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
     readonly usdcAddress: string = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
@@ -24,6 +24,7 @@ export class MainnetAddresses {
     readonly ensAddress: string = "0xc18360217d8f7ab5e7c516566761ea12ce7f9d72";
     readonly dydxAddress: string = "0x92d6c1e31e14520e676a687f0a93788b716beff5";
     readonly aaveAddress: string = "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9";
+    readonly mkrAddress: string = "0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2"
     readonly tribeAddress: string = "0xc7283b66eb1eb5fb86327f08e1b5816b0720212b";
     readonly usdcCompPool: string = "0x4786bb29a1589854204a4e62dcbe26a571224c0f";
     readonly chainlinkEthFeed: string = "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419";
@@ -34,9 +35,63 @@ export class MainnetAddresses {
     readonly richAVAXWallet: string = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
     readonly richBinance14: string = "0x28C6c06298d514Db089934071355E5743bf21d60";
     readonly OPcrossChainMessenger: string = "0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1"
+    readonly CRVaddress: string = "0xD533a949740bb3306d119CC777fa900bA034cd52"
+    readonly LDOaddress: string = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"
+    readonly balancerAddress: string = "0xba100000625a3754423978a60c9317c58a424e3D"
+
     constructor() { }
 }
 
+//mainnet protocol deploys
+export class MainnetDeploys {
+    readonly ProxyAdmin: string = "0x3D9d8c08dC16Aa104b5B24aBDd1aD857e2c0D8C5"
+    readonly VaultController: string = "0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3"
+    readonly USDI: string = "0x2A54bA2964C8Cd459Dc568853F79813a60761B58"
+    readonly Curve: string = "0x0029abd74B7B32e6a82Bf9f62CB9Dd4Bf8e39aAf"
+    readonly ThreeLines: string = "0x8Ef82C4C48FaaD513D157a86433cd7D9397eA278"
+    readonly Oracle: string = "0xf4818813045E954f5Dc55a40c9B60Def0ba3D477"
+    readonly CharlieDelegator: string = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
+    readonly CharlieDelegate: string = "0xdF352c2fcB3cbfdbBA619090E2A1DEB9aC534A29"
+    readonly IPTDelegator: string = "0xaF239a6fab6a873c779F3F33dbd34104287b93e1"
+    readonly IPTDelegate: string = "0x35Bb90c0B96DdB4B93ddF42aFEDd5204E91A1A10"
+    readonly EthOracle: string = "0x8eD31D7FF5D2ffBF17Fe3118A61123F50AdB523A"
+    readonly UniOracle: string = "0x93CEf8012460764D201b654fea85ABeCB28919fd"
+    readonly WBTCOracle: string = "0x0f2f7aa507d153aC04431a617840d1fF28A960AC"
+    readonly VotingVaultController: string = "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2"
+    readonly CappedMakrImplementation: string = "0x99904e5369c551e0a9824E9E95141C46ae2E1B0f"
+    readonly MKRVotingVaultController: string = "0x491397f7eb6f5d9B82B15cEcaBFf835bA31f217F"
+    readonly MKRVotingVaultControllerImplementation: string = "0xEba2255b1e8Bb9A5fcD456cf115A467e61008D73"
+
+}
+
+//standard cap tokens
+export class MainnetCappedTokens {
+    readonly CappedENS: string = "0xfb42f5AFb722d2b01548F77C31AC05bf80e03381"
+    readonly EnsAnchorView: string = "0x6DB54416CBB28C6a78F606947df53E83Dd69eb70"
+
+    readonly CappedBalancer: string = "0x05498574BD0Fa99eeCB01e1241661E7eE58F8a85"
+    readonly BalancerAnchorView: string = "0xf5E0e2827F60580304522E2C38177DFeC7a428a4"
+
+    readonly CappedAave: string = "0xd3bd7a8777c042De830965de1C1BCC9784135DD2"
+    readonly AaveAnchorView: string = "0x27FC4059860F3d9758DCC9a871838F06333fc6ed"
+
+    readonly CappedLDO: string = "0x7C1Caa71943Ef43e9b203B02678000755a4eCdE9"
+    readonly LdoAnchorView: string = "0x610d4DFAC3EC32e0be98D18DDb280DACD76A1889"
+
+    readonly CappedDYDX: string = "0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a"
+    readonly DydxAnchorView: string = "0x93A3411c9518D9c85054693137c87C5F14E7ECF9"
+
+    readonly CappedCRV: string = "0x9d878eC06F628e883D2F9F1D793adbcfd52822A8"
+    readonly CrvAnchorView: string = "0x864991b13691806be077E7Ca9ef566FE7762F908"
+
+    readonly CappedCBETH: string = "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"
+
+    //capped mkr is a separate cap token contract, but is very similar to existing cap tokens in practice
+    readonly CappedMKR: string = "0xbb5578c08bC08c15AcE5cd09c6683CcCcB2A9148"
+    readonly MkrAnchorView: string = "0xCF2FCd9B87113139E809d5F9Ea6f4D571BB1C12a"
+}
+
+//capped BPT
 export class MainnetBPTaddresses {
     readonly CappedBPT_Implementation: string = "0x0CDb61ab468a2f89D1636c95b32D88c0eA6ef826"
     readonly NewVVC_Implementation: string = "0x17B7bD832666Ac28A6Ad35a93d4efF4eB9A07a17"
@@ -115,3 +170,9 @@ export class OptimisimDeploys {
 }
 
 export const Mainnet: Addresser = new MainnetAddresses();
+
+export const a = new MainnetAddresses()
+
+export const c = new MainnetCappedTokens()
+
+export const d = new MainnetDeploys()

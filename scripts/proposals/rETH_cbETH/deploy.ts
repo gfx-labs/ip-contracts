@@ -11,7 +11,7 @@ import {
     BalancerPeggedAssetRelay__factory
 } from "../../../typechain-types";
 import { toNumber } from "../../../util/math";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { showBodyCyan } from "../../../util/format";
 import { reset } from "../../../util/block";
 

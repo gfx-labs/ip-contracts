@@ -6,7 +6,7 @@ import {
     VotingVaultController__factory
 } from "../../../typechain-types";
 import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { reset } from "../../../util/block";
 import * as fs from 'fs';
 
@@ -28,15 +28,15 @@ async function main() {
     const addBalOracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedBalancer,
-            d.BalancerAnchorView
+            c.CappedBalancer,
+            c.BalancerAnchorView
         )
 
     const addAaveOracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedAave,
-            d.AaveAnchorView
+            c.CappedAave,
+            c.AaveAnchorView
         )
 
 
@@ -44,18 +44,18 @@ async function main() {
     const listBal = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedBalancer,
+            c.CappedBalancer,
             BN("70e16"),
-            d.CappedBalancer,
+            c.CappedBalancer,
             BN("10e16")
         )
 
     const listAave = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedAave,
+            c.CappedAave,
             BN("70e16"),
-            d.CappedAave,
+            c.CappedAave,
             BN("10e16")
         )
 
@@ -63,14 +63,14 @@ async function main() {
     const registerBalVVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            d.balancerAddress,
-            d.CappedBalancer
+            a.balancerAddress,
+            c.CappedBalancer
         )
     const registerAaveVVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            d.aaveAddress,
-            d.CappedAave
+            a.aaveAddress,
+            c.CappedAave
         )
 
 

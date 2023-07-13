@@ -8,7 +8,7 @@ import {
 } from "../../../typechain-types";
 import { ProposalContext } from "../suite/proposal";
 import { getGas } from "../../../util/math";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { showBody } from "../../../util/format";
 
 import * as fs from 'fs';

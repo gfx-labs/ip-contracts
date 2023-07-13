@@ -4,7 +4,7 @@ import {
     UniswapV3TokenOracleRelay__factory,
     UniswapV3TokenOracleRelay,
     AnchoredViewRelay,
-    AnchoredViewRelay__factory, ChainlinkOracleRelay, ChainlinkTokenOracleRelay__factory
+    AnchoredViewRelay__factory, ChainlinkOracleRelay, ChainlinkTokenOracleRelay__factory, ChainlinkOracleRelay__factory
 } from "../../../../typechain-types";
 import { toNumber } from "../../../../util/math";
 import { showBodyCyan } from "../../../../util/format";
@@ -28,7 +28,7 @@ let anchorViewCBETH: AnchoredViewRelay
 
 
 const deployOracles = async (deployer: SignerWithAddress) => {
-    let chainlinkFactory = new ChainlinkTokenOracleRelay__factory(deployer)
+    let chainlinkFactory = new ChainlinkOracleRelay__factory(deployer)
     let anchorViewFactory = new AnchoredViewRelay__factory(deployer)
 
 

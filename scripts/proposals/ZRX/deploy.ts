@@ -8,10 +8,10 @@ import {
     AnchoredViewRelay__factory, VaultController__factory, ChainlinkOracleRelay,
     ChainlinkOracleRelay__factory,
     ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory, ChainlinkTokenOracleRelay__factory, BalancerPeggedAssetRelay__factory
+    TransparentUpgradeableProxy__factory, BalancerPeggedAssetRelay__factory
 } from "../../../typechain-types";
 import { toNumber } from "../../../util/math";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { showBodyCyan } from "../../../util/format";
 
 const { ethers, network, upgrades } = require("hardhat");
@@ -62,7 +62,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     let peggedBalancerFactory = new BalancerPeggedAssetRelay__factory(deployer)
     let UniV3Factory = new UniswapV3TokenOracleRelay__factory(deployer)
     let chainlinkFactory = new ChainlinkOracleRelay__factory(deployer)
-    let mainTokenFactory = new ChainlinkTokenOracleRelay__factory(deployer)
+    let mainTokenFactory = new ChainlinkOracleRelay__factory(deployer)
     let anchorViewFactory = new AnchoredViewRelay__factory(deployer)
 
 

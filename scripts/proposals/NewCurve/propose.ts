@@ -3,7 +3,7 @@ import {
     GovernorCharlieDelegate__factory, CurveMaster__factory
 } from "../../../typechain-types";
 import { ProposalContext } from "../suite/proposal";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { reset } from "../../../util/block";
 import * as fs from 'fs';
 

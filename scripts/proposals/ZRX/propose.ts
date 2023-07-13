@@ -6,7 +6,7 @@ import {
     VotingVaultController__factory, ProxyAdmin__factory
 } from "../../../typechain-types";
 import { ProposalContext } from "../suite/proposal";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { reset } from "../../../util/block";
 import * as fs from 'fs';
 
@@ -63,8 +63,8 @@ async function main() {
 
     const OracleVerbose = OracleMaster__factory.connect(d.Oracle, deployer)
     const VaultControllerVerbose = VaultController__factory.connect(d.VaultController, deployer)
-    const currentOracle = await OracleVerbose._relays(d.UNI)
-    const currentLiqInc = await VaultControllerVerbose._tokenAddress_liquidationIncentive(d.UNI)
+    const currentOracle = await OracleVerbose._relays(a.uniAddress)
+    const currentLiqInc = await VaultControllerVerbose._tokenAddress_liquidationIncentive(a.uniAddress)
 
     //showBody("Current Oracle: ", currentOracle)
 
@@ -72,9 +72,9 @@ async function main() {
     const updateUniLTV = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.updateRegisteredErc20(
-            d.UNI,
+            a.uniAddress,
             NEW_UNI_LTV,
-            d.UNI,
+            a.uniAddress,
             currentLiqInc
         )
 

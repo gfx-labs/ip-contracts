@@ -7,7 +7,7 @@ import {
     MKRVotingVaultController__factory
 } from "../../../typechain-types"
 import { ProposalContext } from "../../../scripts/proposals/suite/proposal"
-import { d } from "../DeploymentInfo"
+import { a, c, d } from "../../../util/addresser"
 import { currentBlock, fastForward, hardhat_mine, resetCurrent } from "../../../util/block"
 import * as fs from 'fs'
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -37,22 +37,22 @@ const propose = async (proposer: SignerWithAddress) => {
     const addOracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedMKR,
-            d.MKRAnchorView
+            c.CappedMKR,
+            c.MkrAnchorView
         )
     const list = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedMKR,
+            c.CappedMKR,
             BN("70e16"),
-            d.CappedMKR,
+            c.CappedMKR,
             BN("15e16")
         )
     const register = await new MKRVotingVaultController__factory().
         attach(d.MKRVotingVaultController).
         populateTransaction.registerUnderlying(
-            d.mkrAddress,
-            d.CappedMKR
+            a.mkrAddress,
+            c.CappedMKR
         )
 
     proposal.addStep(addOracle, "setRelay(address,address)")

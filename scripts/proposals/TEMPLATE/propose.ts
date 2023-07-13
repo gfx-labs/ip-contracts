@@ -7,7 +7,7 @@ import {
     VotingVaultController__factory
 } from "../../../typechain-types";
 import { ProposalContext } from "../suite/proposal";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { showBodyCyan } from "../../../util/format";
 import * as fs from 'fs';
 import { currentBlock, fastForward, hardhat_mine, resetCurrent } from "../../../util/block";

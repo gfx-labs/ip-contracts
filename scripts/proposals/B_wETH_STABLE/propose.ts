@@ -8,7 +8,7 @@ import {
     VotingVaultController__factory
 } from "../../../typechain-types"
 import { ProposalContext } from "../suite/proposal"
-import { d } from "../DeploymentInfo"
+import { a, c, d } from "../../../util/addresser"
 import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
 import { showBody, showBodyCyan } from "../../../util/format"
 import * as fs from 'fs'

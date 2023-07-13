@@ -9,7 +9,7 @@ import {
     ChainlinkOracleRelay
 } from "../../../typechain-types";
 import { ProposalContext } from "../../../scripts/proposals/suite/proposal";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { reset } from "../../../util/block";
 import * as fs from 'fs';
 
@@ -32,17 +32,17 @@ async function main() {
     const addOracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedENS,
-            d.ENS_AnchorView
+            c.CappedENS,
+            c.EnsAnchorView
         )
 
 
     const listENS = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedENS,
+            c.CappedENS,
             BN("70e16"),
-            d.CappedENS,
+            c.CappedENS,
             BN("10e16")
         )
 
@@ -51,7 +51,7 @@ async function main() {
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
             ensAddress,
-            d.CappedENS
+            c.CappedENS
         )
 
 

@@ -4,7 +4,7 @@ import {
     GovernorCharlieDelegate__factory, AnchoredViewRelay, OracleMaster__factory
 } from "../../../../typechain-types";
 import { ProposalContext } from "../../suite/proposal";
-import { d } from "../../DeploymentInfo";
+import { a, c, d } from "../../../../util/addresser"
 import { reset } from "../../../../util/block";
 import * as fs from 'fs';
 
@@ -30,7 +30,7 @@ async function main() {
     const addNewCBETH_Oracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedCBETH,
+            c.CappedCBETH,
             newAnchorView
         )
 

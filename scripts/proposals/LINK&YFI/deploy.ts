@@ -7,7 +7,7 @@ import {
     TransparentUpgradeableProxy__factory, IOracleRelay
 } from "../../../typechain-types";
 import { toNumber } from "../../../util/math";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { showBody, showBodyCyan } from "../../../util/format";
 
 const { ethers, network, upgrades } = require("hardhat");

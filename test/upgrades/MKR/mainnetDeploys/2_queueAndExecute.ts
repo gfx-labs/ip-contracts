@@ -131,14 +131,6 @@ describe("Setup proposal, queue, and execute", () => {
 
 describe("Verify", () => {
 
-  it("Temp set cap", async () => {
-
-    const deployer = ethers.provider.getSigner("0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89")
-    await impersonateAccount(deployer._address)
-    await CappedMkr.connect(deployer).setCap(BN("11000e18"))
-    await ceaseImpersonation(deployer._address)
-  })
-
   it("Mint Vaults", async () => {
     await expect(s.VaultController.connect(s.Bob).mintVault()).to.not.reverted
     await mineBlock()
