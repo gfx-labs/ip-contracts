@@ -2,16 +2,8 @@
 //
 //
 import { ethers } from "hardhat";
-import { Signer } from "ethers";
 import {
-  CurveMaster__factory,
-  GovernorCharlieDelegate__factory,
-  GovernorCharlieDelegator__factory,
-  ProxyAdmin__factory,
-  ThreeLines0_100__factory,
-  USDI__factory,
-  VaultController__factory,
-  WavePool__factory,
+  GovernorCharlieDelegate__factory, USDI__factory, WavePool__factory
 } from "../../../../typechain-types";
 import { BN } from "../../../../util/number";
 import { ProposalContext } from "../../suite/proposal";

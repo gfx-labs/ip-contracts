@@ -1,47 +1,34 @@
 import { s } from "../scope";
-import { upgrades, ethers } from "hardhat";
-import { expect, assert } from "chai";
+import { ethers } from "hardhat";
+import { expect } from "chai";
 import { showBody, showBodyCyan } from "../../../../../util/format";
 import { impersonateAccount, ceaseImpersonation } from "../../../../../util/impersonator"
-import * as fs from 'fs';
 
 import { BN } from "../../../../../util/number";
 import {
   IVault__factory,
   GovernorCharlieDelegate,
   GovernorCharlieDelegate__factory,
-  CappedGovToken__factory,
-  UniswapV3TokenOracleRelay__factory,
-  UniswapV3TokenOracleRelay,
-  AnchoredViewRelay,
-  AnchoredViewRelay__factory,
   OracleMaster__factory,
   VaultController__factory,
   VotingVaultController__factory,
-  OracleRETH,
-  BalancerPeggedAssetRelay,
-  UniswapV2OracleRelay__factory,
-  VaultController,
   ProxyAdmin__factory,
-  CHI_Oracle__factory,
   IOracleRelay,
-  UniswapV3OracleRelay__factory,
   WstETHRelay__factory,
   BPTstablePoolOracle__factory,
-  CappedBptToken__factory
+  CappedBptToken__factory,
+  BPTminSafePriceRelay__factory,
+  AnchoredViewRelay__factory
 } from "../../../../../typechain-types";
 import {
-  advanceBlockHeight,
   hardhat_mine,
   fastForward,
   mineBlock,
-  OneWeek,
-  OneYear,
   currentBlock
 } from "../../../../../util/block";
 import { toNumber } from "../../../../../util/math";
 import { ProposalContext } from "../../../../../scripts/proposals/suite/proposal";
-import { DeployContractWithProxy, DeployContract } from "../../../../../util/deploy";
+import { DeployContractWithProxy } from "../../../../../util/deploy";
 
 
 require("chai").should();
@@ -96,8 +83,10 @@ const wstETH = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"
 const B_stETH_STABLE = "0x32296969Ef14EB0c6d29669C550D4a0449130230"
 
 let vvcImplementationAddr: String
-let stEThMetaStablePoolOracle: IOracleRelay
 let wstethRelay: IOracleRelay
+let stEThMetaStablePoolOracle: IOracleRelay
+let minSafePriceRelay: IOracleRelay
+let anchoredView: IOracleRelay
 
 describe("Upgrade Voting Vault Controller for BPT collateral", () => {
   it("Deploy new implementation", async () => {
@@ -143,9 +132,29 @@ describe("Deploy Cap Tokens and Oracles", () => {
       BN("10000")
     )
     await stEThMetaStablePoolOracle.deployed()
+    //showBodyCyan("stETh MetaStablePool BPT price: ", await toNumber(await (await stEThMetaStablePoolOracle.currentValue())))
 
-    showBodyCyan("stETh MetaStablePool BPT price: ", await toNumber(await (await stEThMetaStablePoolOracle.currentValue())))
+  })
 
+  it("Deploy and check minSafePrice relay", async () => {
+    minSafePriceRelay = await new BPTminSafePriceRelay__factory(s.Frank).deploy(
+      B_stETH_STABLE, //pool_address
+      [wstETH, s.wethAddress], //_tokens
+      [wstethRelay.address, wethOracleAddr], //_oracles
+    )
+    await minSafePriceRelay.deployed()
+    //showBodyCyan("MinSafePrice relay BPT price: ", await toNumber(await minSafePriceRelay.currentValue()))
+  })
+
+  it("Deploy and check anchored view", async () => {
+    anchoredView = await new AnchoredViewRelay__factory(s.Frank).deploy(
+      minSafePriceRelay.address,
+      stEThMetaStablePoolOracle.address,
+      BN("5"),
+      BN("100")
+    )
+    await anchoredView.deployed()
+    showBodyCyan("anchoredView relay BPT price: ", await toNumber(await anchoredView.currentValue()))
   })
 })
 
@@ -183,7 +192,7 @@ describe("Setup, Queue, and Execute proposal", () => {
       attach(s.Oracle.address).
       populateTransaction.setRelay(
         s.CappedWSTETH_wETH.address,
-        stEThMetaStablePoolOracle.address
+        anchoredView.address
       )
 
     const list = await new VaultController__factory(prop).
@@ -214,12 +223,12 @@ describe("Setup, Queue, and Execute proposal", () => {
     //this is so we can assosiate each listed gauge token with its reward token
     //reward token is what is recived for staking the gauge token
     //call PID on reward token to get PID
-    const PID = BN("29")
-    const gaugeToken = s.wstETH_wETH.address
-    const rewardToken = "0xe4683Fe8F53da14cA5DAc4251EaDFb3aa614d528"
-    
+    const PID = BN("115")//BN("29")
+    const BPT = s.wstETH_wETH.address
+    const rewardToken = s.rewardToken.address
+
     const populateAuraLpData = await new VotingVaultController__factory(prop).attach(s.VotingVaultController.address).
-      populateTransaction.registerAuraLpData(gaugeToken, rewardToken, PID)
+      populateTransaction.registerAuraLpData(BPT, rewardToken, PID)
 
 
     proposal.addStep(upgradeVVC, "upgrade(address,address)")

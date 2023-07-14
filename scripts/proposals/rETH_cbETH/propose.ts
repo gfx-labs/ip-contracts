@@ -1,46 +1,21 @@
-import { getContractFactory } from "@nomiclabs/hardhat-ethers/types";
 import { BN } from "../../../util/number";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
     CappedGovToken,
     GovernorCharlieDelegate,
-    GovernorCharlieDelegate__factory,
-    CappedGovToken__factory,
-    UniswapV3TokenOracleRelay__factory,
-    UniswapV3TokenOracleRelay,
-    AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    OracleMaster__factory,
+    GovernorCharlieDelegate__factory, UniswapV3TokenOracleRelay,
+    AnchoredViewRelay, OracleMaster__factory,
     VaultController__factory,
     VotingVaultController__factory,
-    ChainlinkOracleRelay,
-    ChainlinkOracleRelay__factory,
-    ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory
+    ChainlinkOracleRelay
 } from "../../../typechain-types";
-import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
 import { ProposalContext } from "../suite/proposal";
-import { toNumber } from "../../../util/math";
-import { d } from "../DeploymentInfo"
-import { showBody } from "../../../util/format";
+import { a, c, d } from "../../../util/addresser"
 import { reset } from "../../../util/block";
 import * as fs from 'fs';
 
 const { ethers, network, upgrades } = require("hardhat");
 
-const ensAddress = "0xc18360217d8f7ab5e7c516566761ea12ce7f9d72"
-const ENS_CAP = BN("400000e18")//100k ENS tokens - ~$1.5mm USD
-
-const weth3k = "0x92560C178cE069CC014138eD3C2F5221Ba71f58a"//good liquidity - 910 weth, ~$3.4mm TVL 
-const chainLinkDataFeed = "0x5C00128d4d1c2F4f652C267d7bcdD7aC99C16E16"
-
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
-
-let anchor: UniswapV3TokenOracleRelay
-let mainRelay: ChainlinkOracleRelay
-let anchorView: AnchoredViewRelay
-let CappedENS: CappedGovToken
-
 
 
 async function main() {
@@ -56,22 +31,22 @@ async function main() {
     const addLDOoracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedLDO,
-            d.anchorViewLDO
+            c.CappedLDO,
+            c.LdoAnchorView
         )
 
     const addDYDXoracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedDYDX,
-            d.anchorViewDYDX
+            c.CappedDYDX,
+            c.DydxAnchorView
         )
 
     const addCRVoracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedCRV,
-            d.anchorViewCRV
+            c.CappedCRV,
+            c.CrvAnchorView
         )
 
 
@@ -79,27 +54,27 @@ async function main() {
     const listLDO = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedLDO,
+            c.CappedLDO,
             BN("7e17"),
-            d.CappedLDO,
+            c.CappedLDO,
             BN("1e17")
         )
 
     const listDYDX = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedDYDX,
+            c.CappedDYDX,
             BN("7e17"),
-            d.CappedDYDX,
+            c.CappedDYDX,
             BN("1e17")
         )
 
     const listCRV = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedCRV,
+            c.CappedCRV,
             BN("7e17"),
-            d.CappedCRV,
+            c.CappedCRV,
             BN("1e17")
         )
 
@@ -107,20 +82,20 @@ async function main() {
     const registerLDO_VVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            d.LDOaddress,
-            d.CappedLDO
+            a.LDOaddress,
+            c.CappedLDO
         )
     const registerDYDX_VVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            d.DYDXaddress,
-            d.CappedDYDX
+            a.DYDXaddress,
+            c.CappedDYDX
         )
     const registerCRV_VVC = await new VotingVaultController__factory().
         attach(d.VotingVaultController).
         populateTransaction.registerUnderlying(
-            d.CRVaddress,
-            d.CappedCRV
+            a.CRVaddress,
+            c.CappedCRV
         )
 
 

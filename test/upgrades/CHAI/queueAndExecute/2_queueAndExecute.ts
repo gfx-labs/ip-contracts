@@ -1,6 +1,6 @@
 import { s } from "../scope";
-import { upgrades, ethers } from "hardhat";
-import { expect, assert } from "chai";
+import { ethers } from "hardhat";
+import { expect } from "chai";
 import { showBody, showBodyCyan } from "../../../../util/format";
 import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
 import * as fs from 'fs';
@@ -11,40 +11,21 @@ import {
   GovernorCharlieDelegate,
   GovernorCharlieDelegate__factory,
   CappedGovToken__factory,
-  UniswapV3TokenOracleRelay__factory,
-  UniswapV3TokenOracleRelay,
-  AnchoredViewRelay,
-  AnchoredViewRelay__factory,
   OracleMaster__factory,
   VaultController__factory,
   VotingVaultController__factory,
-  ChainlinkOracleRelay,
-  ChainlinkOracleRelay__factory,
-  ChainlinkTokenOracleRelay__factory,
-  GeneralizedBalancerOracle,
-  GeneralizedBalancerOracle__factory,
-  OracleRETH,
-  BalancerPeggedAssetRelay,
-  UniswapV2OracleRelay__factory,
-  VaultController,
-  ProxyAdmin__factory,
   CHI_Oracle__factory,
   IOracleRelay
 } from "../../../../typechain-types";
 import {
-  advanceBlockHeight,
   hardhat_mine,
   fastForward,
   mineBlock,
-  OneWeek,
-  OneYear,
   currentBlock
 } from "../../../../util/block";
 import { toNumber } from "../../../../util/math";
 import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
-import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
-import { OracleRETH__factory } from "../../../../typechain-types/factories/oracle/External/OracleRETH.sol/OracleRETH__factory";
-import { BalancerPeggedAssetRelay__factory } from "../../../../typechain-types/factories/oracle/External/BalancerPeggedAssetRelay.sol";
+import { DeployContractWithProxy } from "../../../../util/deploy";
 
 let chaiAnchor: IOracleRelay
 

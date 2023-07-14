@@ -1,9 +1,8 @@
 import { s } from "../scope";
-import { upgrades, ethers } from "hardhat";
-import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
-import * as fs from 'fs';
+import { ethers } from "hardhat";
+import { expect } from "chai";
+import { showBodyCyan } from "../../../../util/format";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator";
 
 import { BN } from "../../../../util/number";
 import {
@@ -18,30 +17,17 @@ import {
   OracleMaster__factory,
   VaultController__factory,
   VotingVaultController__factory,
-  ChainlinkOracleRelay,
-  ChainlinkOracleRelay__factory,
-  ChainlinkTokenOracleRelay__factory,
-  GeneralizedBalancerOracle,
-  GeneralizedBalancerOracle__factory,
-  OracleRETH,
-  BalancerPeggedAssetRelay,
-  UniswapV2OracleRelay__factory,
-  VaultController,
+  ChainlinkOracleRelay, ChainlinkTokenOracleRelay__factory, VaultController,
   ProxyAdmin__factory
 } from "../../../../typechain-types";
 import {
-  advanceBlockHeight,
   fastForward,
-  mineBlock,
-  OneWeek,
-  OneYear,
-  currentBlock
+  mineBlock, currentBlock,
+  hardhat_mine
 } from "../../../../util/block";
 import { toNumber } from "../../../../util/math";
 import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
-import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
-import { OracleRETH__factory } from "../../../../typechain-types/factories/oracle/External/OracleRETH.sol/OracleRETH__factory";
-import { BalancerPeggedAssetRelay__factory } from "../../../../typechain-types/factories/oracle/External/BalancerPeggedAssetRelay.sol";
+import { DeployContractWithProxy } from "../../../../util/deploy";
 
 let anchorZRX: UniswapV3TokenOracleRelay
 let mainZRX: ChainlinkOracleRelay
@@ -303,13 +289,13 @@ describe("Setup, Queue, and Execute proposal", () => {
     await mineBlock()
     proposal = Number(await gov.proposalCount())
     showBodyCyan("Advancing a lot of blocks...")
-    await advanceBlockHeight(votingDelay.toNumber());
+    await hardhat_mine(votingDelay.toNumber());
 
     await gov.connect(prop).castVote(proposal, 1)
     await mineBlock()
 
     showBodyCyan("Advancing a lot of blocks again...")
-    await advanceBlockHeight(votingPeriod.toNumber());
+    await hardhat_mine(votingPeriod.toNumber());
     await mineBlock()
 
     await gov.connect(prop).queue(proposal);

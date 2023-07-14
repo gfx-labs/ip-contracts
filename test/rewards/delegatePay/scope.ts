@@ -5,7 +5,6 @@ import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRela
 import { Addresser, MainnetAddresses } from "../../../util/addresser";
 import { BN } from "../../../util/number";
 //import { minter } from "../../../util/math"
-import { uniMinters, borrowerMinters } from "../data"
 import MerkleTree from "merkletreejs";
 
 export type minter = {
@@ -14,11 +13,7 @@ export type minter = {
 }
 export class TestScope extends MainnetAddresses {
 
-    uniList = Array.from(uniMinters)
-    borrowList = Array.from(borrowerMinters)
-    
 
-    
 
     delegateList: minter[] = []
     delegateListObject!: JSON

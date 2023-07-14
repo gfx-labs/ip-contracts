@@ -1,10 +1,8 @@
 import {
-  BaseContract,
-  BigNumber,
-  BigNumberish,
+  BaseContract, BigNumberish,
   BytesLike,
   PopulatedTransaction,
-  Signer,
+  Signer
 } from "ethers";
 
 import { JsonDB } from "node-json-db";

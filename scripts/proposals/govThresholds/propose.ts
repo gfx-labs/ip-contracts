@@ -1,29 +1,10 @@
-import { getContractFactory } from "@nomiclabs/hardhat-ethers/types";
 import { BN } from "../../../util/number";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
-    CappedGovToken,
-    GovernorCharlieDelegate,
-    GovernorCharlieDelegate__factory,
-    CappedGovToken__factory,
-    UniswapV3TokenOracleRelay__factory,
-    UniswapV3TokenOracleRelay,
-    AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    OracleMaster__factory,
-    VaultController__factory,
-    VotingVaultController__factory,
-    ChainlinkOracleRelay,
-    ChainlinkOracleRelay__factory,
-    ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory,
-    USDI__factory
+  GovernorCharlieDelegate,
+  GovernorCharlieDelegate__factory, USDI__factory
 } from "../../../typechain-types";
-import { DeployContractWithProxy, DeployContract } from "../../../util/deploy";
 import { ProposalContext } from "../suite/proposal";
-import { toNumber } from "../../../util/math";
-import { d } from "../DeploymentInfo"
-import { showBody } from "../../../util/format";
+import { d } from "../DeploymentInfo";
 import { reset } from "../../../util/block";
 import * as fs from 'fs';
 
@@ -36,7 +17,6 @@ const feems = "0x6DD6934452eB4E6D87B9c874AE0EF83ec3bd5803"
 const newProposalThreshold = BN("200000e18")
 const newQuorum = BN("2000000e18")
 const newOptimisticQuorum = BN("500000e18")
-const anchorViewAddr = "0xEF12fa3183362506A2dd0ff1CF06b2f4156e751E"
 
 async function main() {
     //enable this for testing on hardhat network, disable for testnet/mainnet deploy

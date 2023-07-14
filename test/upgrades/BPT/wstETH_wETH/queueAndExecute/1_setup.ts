@@ -1,30 +1,16 @@
-import { expect, assert } from "chai";
-import { ethers, network, tenderly } from "hardhat";
+import { expect } from "chai";
+import { ethers, network } from "hardhat";
 import { stealMoney } from "../../../../../util/money";
 import { showBody } from "../../../../../util/format";
 import { BN } from "../../../../../util/number";
 import { s } from "../scope";
 import { d } from "../../DeploymentInfo";
-import { advanceBlockHeight, reset, mineBlock } from "../../../../../util/block";
+import { reset } from "../../../../../util/block";
 import {
-    AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    CurveMaster,
-    CurveMaster__factory,
-    IERC20,
     IERC20__factory,
-    IOracleRelay,
-    OracleMaster,
     OracleMaster__factory,
-    ProxyAdmin,
     ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory,
-    ThreeLines0_100,
-    ThreeLines0_100__factory,
-    CappedGovToken__factory,
-    USDI,
     USDI__factory,
-    Vault,
     VotingVaultController__factory,
     VaultController__factory,
     InterestProtocolTokenDelegate__factory,
@@ -35,20 +21,11 @@ import {
 require("chai").should();
 
 // configurable variables
-const weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
 const bank = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28"
-const LINK_WHALE = "0x0757e27AC1631beEB37eeD3270cc6301dD3D57D4"
-
-if (process.env.TENDERLY_KEY) {
-    if (process.env.TENDERLY_ENABLE == "true") {
-        let provider = new ethers.providers.Web3Provider(tenderly.network())
-        ethers.provider = provider
-    }
-}
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {
-        expect(await reset(17119430)).to.not.throw;
+        expect(await reset(17487484)).to.not.throw;
     });
     it("set automine OFF", async () => {
         expect(await network.provider.send("evm_setAutomine", [true])).to.not
@@ -82,7 +59,7 @@ describe("Initial Setup - wstETH/wETH - B-stETH-STABLE-gauge", () => {
          */
         s.wstETH_wETH = IERC20__factory.connect("0x32296969Ef14EB0c6d29669C550D4a0449130230", s.Frank)
         s.gaugeToken = IERC20__factory.connect("0xcD4722B7c24C29e0413BDCd9e51404B4539D14aE", s.Frank)
-        s.rewardToken = IERC20__factory.connect("0xe4683Fe8F53da14cA5DAc4251EaDFb3aa614d528", s.Frank)
+        s.rewardToken = IERC20__factory.connect("0x59D66C58E83A26d6a0E35114323f65c3945c89c1", s.Frank)
 
     });
 
@@ -109,7 +86,7 @@ describe("Initial Setup - wstETH/wETH - B-stETH-STABLE-gauge", () => {
         }
         await s.Frank.sendTransaction(tx)
 
-        const BPT_whale = "0x21ac89788d52070D23B8EaCEcBD3Dc544178DC60"
+        const BPT_whale = "0x64aE36eeaC5BF9c1F4b7Cc6F0Fa32bBa19aaF9Bc"
         //steal BPTs
         await stealMoney(BPT_whale, s.Bob.address, s.wstETH_wETH.address, s.BPT_AMOUNT)
         await stealMoney(BPT_whale, s.Carol.address, s.wstETH_wETH.address, s.BPT_AMOUNT)

@@ -1,10 +1,4 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BigNumber } from "ethers";
-import { ethers } from "hardhat";
-import { USDI, IERC20, IVOTE, VaultController, OracleMaster, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, CurveMaster, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster } from "../../../typechain-types";
-import { Addresser, MainnetAddresses } from "../../../util/addresser";
-import { BN } from "../../../util/number";
-
+import {  MainnetAddresses } from "../../../util/addresser";
 
 export class deployInfo extends MainnetAddresses {
     // start external contracts
@@ -33,11 +27,6 @@ export class deployInfo extends MainnetAddresses {
     EthOracle = "0x8eD31D7FF5D2ffBF17Fe3118A61123F50AdB523A"
     UniOracle = "0x93CEf8012460764D201b654fea85ABeCB28919fd"
     WBTCOracle = "0x0f2f7aa507d153aC04431a617840d1fF28A960AC"
-
-
-    LDOaddress = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"
-    DYDXaddress = "0x92D6C1e31e14520e676a687F0a93788B716BEff5"
-    CRVaddress = "0xD533a949740bb3306d119CC777fa900bA034cd52"
 
 }
 

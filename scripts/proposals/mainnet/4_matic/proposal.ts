@@ -1,22 +1,13 @@
 import { ethers } from "hardhat";
 import {
-    AnchoredViewRelay__factory,
+  AnchoredViewRelay__factory,
   CappedGovToken__factory,
   ChainlinkOracleRelay__factory,
-  GovernorCharlieDelegate__factory,
-  GovernorCharlieDelegator__factory,
-  OracleMaster__factory,
-  ProxyAdmin__factory,
-  SlowRoll__factory,
-  StEthOracleRelay__factory,
-  TransparentUpgradeableProxy__factory,
-  UniswapV3OracleRelay__factory,
-  USDI__factory,
-  VaultController__factory,
-  VotingVaultController__factory,
+  GovernorCharlieDelegate__factory, OracleMaster__factory, TransparentUpgradeableProxy__factory,
+  UniswapV3OracleRelay__factory, VaultController__factory
 } from "../../../../typechain-types";
 import { BN } from "../../../../util/number";
-import { countdownSeconds, ProposalContext, sleep } from "../../suite/proposal";
+import { countdownSeconds, ProposalContext } from "../../suite/proposal";
 
 
 const matic_token_address = "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0"

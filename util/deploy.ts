@@ -1,11 +1,9 @@
-import { Signer, utils, Contract, ContractFactory, Overrides } from "ethers";
-import { config, tenderly } from "hardhat";
-import hh from "hardhat"
-import { Proxy, ProxyAdmin, TransparentUpgradeableProxy__factory, OwnableUpgradeable } from "../typechain-types"
+import { Signer, ContractFactory } from "ethers";
+import { ProxyAdmin, TransparentUpgradeableProxy__factory } from "../typechain-types";
 
-import { advanceBlockHeight, fastForward, mineBlock, OneWeek, OneYear } from "./block";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { TenderlyContract } from "@tenderly/hardhat-tenderly/dist/tenderly/types";
+import { mineBlock } from "./block";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { Proxy } from "../typechain-types/_external/ozproxy";
 
 export const DeployContractWithProxy = async (
     factory: ContractFactory,
@@ -43,4 +41,36 @@ export const DeployContract = async (factory: ContractFactory, deployer: Signer,
     await mineBlock()
     await uVC.deployed()
     return mineBlock().then(() => { return factory.attach(uVC.address) })
+}
+
+
+//pass implementation if re-using an existing one, or pass "" to deploy a new one
+export const DeployNewProxyContract = async (
+    factory: ContractFactory,
+    deployer: SignerWithAddress,
+    admin: string,
+    implementation?: string,
+    ...args: any[]
+): Promise<any> => {
+    if (implementation ==  undefined) {
+        //deploy new implementation
+        const newImp = await factory.connect(deployer).deploy()
+        await newImp.deployed()
+        implementation = newImp.address
+        console.log("New Implementation Deployed: ", implementation)
+    }
+
+
+    const newProxy = await new TransparentUpgradeableProxy__factory(deployer).deploy(
+        implementation,
+        admin,
+        "0x"
+    )
+    await newProxy.deployed()
+
+    const contract = factory.attach(newProxy.address)
+    const initialize = await contract.initialize(...args)
+    await initialize.wait()
+    return mineBlock().then(() => { return contract })
+
 }

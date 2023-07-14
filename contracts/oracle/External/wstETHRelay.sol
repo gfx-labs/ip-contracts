@@ -20,8 +20,6 @@ contract wstETHRelay is IOracleRelay {
 
   IwstETH public wstETH = IwstETH(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
 
-  //steth addr = 0xae7ab96520de3a18e5e111b5eaab095312d7fe84
-
   function currentValue() external view override returns (uint256) {
     uint256 conversionRate = wstETH.getStETHByWstETH(1e18);
 

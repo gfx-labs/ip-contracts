@@ -1,39 +1,18 @@
 import { s } from "../scope";
-import { upgrades, ethers } from "hardhat";
-import { BigNumber, utils } from "ethers";
-import { expect, assert } from "chai";
+import { expect } from "chai";
 import { showBody, showBodyCyan } from "../../../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../../../util/impersonator"
 
 import { BN } from "../../../../../util/number";
 import {
-    IVault__factory,
-    VotingVault,
-    IVault,
     VotingVault__factory,
-    CurveMaster__factory,
-    curve,
-    VaultController__factory,
     VaultBPT__factory
 } from "../../../../../typechain-types";
 import {
-    advanceBlockHeight,
-    fastForward,
-    hardhat_mine,
     hardhat_mine_timed,
     mineBlock,
-    OneWeek,
-    OneYear,
 } from "../../../../../util/block";
 import { toNumber, getGas } from "../../../../../util/math";
 import { IERC20__factory } from "@certusone/wormhole-sdk/lib/cjs/ethers-contracts";
-
-const usdcAmount = BN("50e6")
-const usdiAmount = BN("50e18")
-
-const USDC_BORROW = BN("1000e6")//1k USDC
-const USDI_BORROW = BN("100e18")//500 USDI
-
 
 
 require("chai").should();
@@ -162,12 +141,12 @@ describe("Deposit and verify functions", () => {
         showBodyCyan("Gas to claim rewards: ", gas)
 
         let balRewards = await s.BAL.balanceOf(s.Bob.address)
-        showBody("Bal rewards: ", balRewards)
-        //expect(balRewards).to.be.gt(0, "Received BAL rewards")
+        //showBody("Bal rewards: ", await toNumber(balRewards))
+        expect(balRewards).to.be.gt(0, "Received BAL rewards")
 
         let newExtraRewardsBalance = await extraRewardToken.balanceOf(s.Bob.address)
-        showBody("Extra rewards: ", newExtraRewardsBalance)
-        //expect(newExtraRewardsBalance).to.be.gt(0, "Received more extra rewards")
+        //showBody("Extra rewards: ", newExtraRewardsBalance)
+        expect(newExtraRewardsBalance).to.be.gt(0, "Received more extra rewards")
 
     })
 

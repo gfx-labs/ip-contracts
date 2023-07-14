@@ -3,8 +3,6 @@ pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
 
-import "hardhat/console.sol";
-
 interface IrEethOracleFeed {
   function getEthValue(uint256 _rethAmount) external view returns (uint256);
 }

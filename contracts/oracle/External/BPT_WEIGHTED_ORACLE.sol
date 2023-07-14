@@ -2,20 +2,7 @@
 pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
-import "../../_external/IERC20.sol";
-import "../../_external/balancer/IBalancerVault.sol";
-
 import "../../_external/PRBMath/PRBMathSD59x18.sol";
-
-interface IBalancerPool {
-  function getPoolId() external view returns (bytes32);
-
-  function totalSupply() external view returns (uint256);
-
-  function getLastInvariant() external view returns (uint256);
-
-  function getNormalizedWeights() external view returns (uint256[] memory);
-}
 
 /*****************************************
  *
@@ -23,77 +10,45 @@ interface IBalancerPool {
  *
  */
 
+interface IBalancerPool {
+  function totalSupply() external view returns (uint256);
+
+  function getLastInvariant() external view returns (uint256);
+
+  function getNormalizedWeights() external view returns (uint256[] memory);
+}
+
 contract BPT_WEIGHTED_ORACLE is IOracleRelay {
   using PRBMathSD59x18 for *;
 
-  bytes32 public immutable _poolId;
-
-  uint256 public immutable _widthNumerator;
-  uint256 public immutable _widthDenominator;
-
   IBalancerPool public immutable _priceFeed;
-  mapping(address => IOracleRelay) public assetOracles;
-
-  //Balancer Vault
-  IBalancerVault public immutable VAULT;
+  mapping(address => IOracleRelay) public _assetOracles;
+  address[] public _tokens;
 
   /**
-   * @param pool_address - Balancer pool address
+   * @param priceFeed - Balancer weighted pool address
+   * @param tokens order must match the corrisponding weights of getNormalizedWeights()
+   * @param oracles must be in the same order as @param tokens
    */
-  constructor(
-    address pool_address,
-    IBalancerVault balancerVault,
-    address[] memory _tokens,
-    address[] memory _oracles,
-    uint256 widthNumerator,
-    uint256 widthDenominator
-  ) {
-    _priceFeed = IBalancerPool(pool_address);
-
-    VAULT = balancerVault;
+  constructor(IBalancerPool priceFeed, address[] memory tokens, address[] memory oracles) {
+    _priceFeed = priceFeed;
+    _tokens = tokens;
 
     //register oracles
     for (uint256 i = 0; i < _tokens.length; i++) {
-      assetOracles[_tokens[i]] = IOracleRelay(_oracles[i]);
+      _assetOracles[tokens[i]] = IOracleRelay(oracles[i]);
     }
-
-    _widthNumerator = widthNumerator;
-    _widthDenominator = widthDenominator;
-    _poolId = _priceFeed.getPoolId();
   }
 
   function currentValue() external view override returns (uint256) {
-    (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
-    uint256 robustPrice = getBPTprice(tokens, int256(_priceFeed.totalSupply()));
-    require(robustPrice > 0, "invalid robust price");
-
-    uint256 simplePrice = sumBalances(tokens, balances) / _priceFeed.totalSupply();
-    require(simplePrice > 0, "invalid simple price");
-
-    // calculate buffer
-    uint256 buffer = (_widthNumerator * simplePrice) / _widthDenominator;
-
-    // create upper and lower bounds
-    uint256 upperBounds = simplePrice + buffer;
-    uint256 lowerBounds = simplePrice - buffer;
-
-    // ensure the robust price is within bounds
-    require(robustPrice < upperBounds, "robustPrice too low");
-    require(robustPrice > lowerBounds, "robustPrice too high");
-
-    // return checked price
-    return robustPrice;
-  }
-
-  function getBPTprice(IERC20[] memory tokens, int256 totalSupply) internal view returns (uint256 price) {
     uint256[] memory weights = _priceFeed.getNormalizedWeights();
 
     int256 totalPi = PRBMathSD59x18.fromInt(1e18);
 
-    uint256[] memory prices = new uint256[](tokens.length);
+    uint256[] memory prices = new uint256[](_tokens.length);
 
-    for (uint256 i = 0; i < tokens.length; i++) {
-      prices[i] = assetOracles[address(tokens[i])].currentValue();
+    for (uint256 i = 0; i < _tokens.length; i++) {
+      prices[i] = _assetOracles[_tokens[i]].currentValue();
 
       int256 val = int256(prices[i]).div(int256(weights[i]));
 
@@ -104,20 +59,6 @@ contract BPT_WEIGHTED_ORACLE is IOracleRelay {
 
     int256 invariant = int256(_priceFeed.getLastInvariant());
     int256 numerator = totalPi.mul(invariant);
-    price = uint256((numerator.toInt().div(totalSupply)));
-  }
-
-  ///@notice get total values for calculating the simple price
-  function sumBalances(IERC20[] memory tokens, uint256[] memory balances) internal view returns (uint256 total) {
-    total = 0;
-    for (uint256 i = 0; i < tokens.length; i++) {
-      total += ((assetOracles[address(tokens[i])].currentValue() * balances[i]));
-    }
-  }
-
-  function registerOracles(address[] memory _tokens, address[] memory _oracles) internal {
-    for (uint256 i = 0; i < _tokens.length; i++) {
-      assetOracles[_tokens[i]] = IOracleRelay(_oracles[i]);
-    }
+    return uint256((numerator.toInt().div(int256(_priceFeed.totalSupply()))));
   }
 }

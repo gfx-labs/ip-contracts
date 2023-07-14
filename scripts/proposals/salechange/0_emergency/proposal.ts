@@ -11,17 +11,9 @@
 // 5. Modify a parameter of an existing token
 
 import { ethers } from "hardhat";
-import { Signer } from "ethers";
 import {
-  CurveMaster__factory,
   GovernorCharlieDelegate__factory,
-  GovernorCharlieDelegator__factory,
-  InterestProtocolTokenDelegate__factory,
-  InterestProtocolToken__factory,
-  ProxyAdmin__factory,
-  ThreeLines0_100__factory,
-  USDI__factory,
-  VaultController__factory,
+  GovernorCharlieDelegator__factory, InterestProtocolToken__factory
 } from "../../../../typechain-types";
 import { BN } from "../../../../util/number";
 import { ProposalContext } from "../../suite/proposal";

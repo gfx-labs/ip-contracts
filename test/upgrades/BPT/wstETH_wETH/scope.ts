@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, ThreeLines0_100__factory, CappedBptToken } from "../../../../typechain-types";
-import { Addresser, MainnetAddresses } from "../../../../util/addresser";
+import { MainnetAddresses, OptimisimDeploys } from "../../../../util/addresser";
 import { BN } from "../../../../util/number";
 
 export class TestScope extends MainnetAddresses {
@@ -12,15 +12,17 @@ export class TestScope extends MainnetAddresses {
     BAL!: IVOTE;
     WBTC!: IERC20;
 
+    
+
     wstETH_wETH!: IERC20
 
     gaugeToken!: IERC20
     rewardToken!: IERC20
-    BPT_AMOUNT = BN("25e18")
+    BPT_AMOUNT = BN("5e18")
     CappedWSTETH_wETH!: CappedBptToken
     BPT_CAP = this.BPT_AMOUNT
     BPT_LiqInc = BN("7500000000000000")
-    BPT_LTV = BN("75e16")
+    BPT_LTV = BN("6e17")
 
     wETH_LTV = BN("5e17")
 

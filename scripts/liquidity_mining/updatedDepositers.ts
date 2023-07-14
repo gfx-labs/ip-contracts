@@ -1,4 +1,3 @@
-import { VaultController__factory } from "../../typechain-types/factories/lending/VaultController__factory";
 import * as dotenv from "dotenv";
 import { AlchemyWebSocketProvider } from "@ethersproject/providers";
 import {
@@ -68,7 +67,7 @@ const main = async () => {
     cl
   );
 
-  const weekNum = 4
+  const weekNum = 5
   const week = BlockRounds.blockRanges[weekNum]
 
   const blockStart = week.start

@@ -1,36 +1,19 @@
-import { expect, assert } from "chai";
-import { ethers, network, tenderly } from "hardhat";
+import { expect } from "chai";
+import { ethers, network } from "hardhat";
 import { stealMoney } from "../../../../util/money";
 import { showBody } from "../../../../util/format";
 import { BN } from "../../../../util/number";
 import { s } from "../scope";
 import { d } from "../DeploymentInfo";
-import { advanceBlockHeight, reset, mineBlock } from "../../../../util/block";
+import {  reset, mineBlock } from "../../../../util/block";
 import {
-    AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    ChainlinkOracleRelay,
-    ChainlinkOracleRelay__factory,
-    CurveMaster,
-    CurveMaster__factory,
-    IERC20,
     IERC20__factory,
-    IOracleRelay,
-    OracleMaster,
     OracleMaster__factory,
-    ProxyAdmin,
     ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory,
-    ThreeLines0_100,
-    ThreeLines0_100__factory,
-    CappedGovToken__factory,
-    USDI,
     USDI__factory,
-    Vault,
     VotingVaultController__factory,
     VaultController__factory,
     InterestProtocolTokenDelegate__factory,
-    IVOTE,
     IVOTE__factory,
 } from "../../../../typechain-types";
 
@@ -40,13 +23,6 @@ require("chai").should();
 const weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28";
 const bank = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28"
 const CHAI_WHALE = "0x602f2E120A9956F2Ad1cE47cED286fcEfbBa9f8C"
-
-if (process.env.TENDERLY_KEY) {
-    if (process.env.TENDERLY_ENABLE == "true") {
-        let provider = new ethers.providers.Web3Provider(tenderly.network())
-        ethers.provider = provider
-    }
-}
 
 describe("hardhat settings", () => {
     it("Set hardhat network to a block after deployment", async () => {

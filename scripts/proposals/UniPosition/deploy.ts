@@ -1,144 +1,140 @@
-import { BN } from "../../../util/number";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
-    CappedGovToken, CappedGovToken__factory,
-    AnchoredViewRelay__factory,
     ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory,
-    IOracleRelay,
-    ChainlinkOracleRelay__factory,
-    UniswapV3TokenOracleRelay__factory
+    TransparentUpgradeableProxy__factory, V3PositionValuator,
+    V3PositionValuator__factory,
+    Univ3CollateralToken__factory,
+    Univ3CollateralToken,
+    NftVaultController,
+    NftVaultController__factory,
+    VaultController__factory
 } from "../../../typechain-types";
-import { toNumber } from "../../../util/math";
-import { d } from "../DeploymentInfo";
-import { currentBlock, reset, resetCurrent } from "../../../util/block";
+import { d } from "../../../util/addresser";
+import { currentBlock, resetCurrent } from "../../../util/block";
+import { DeployNewProxyContract } from "../../../util/deploy"
 import { network } from "hardhat";
-import hre from 'hardhat'
+import hre from 'hardhat';
 const { ethers } = require("hardhat");
 
-/**
- * This script is for deploying the cap token and oracles for a new asset listing on Interest Protocol
- * This is for 'standard' asset listings, such that:
- * -There is a decent Chainlink Data Feed - see https://data.chain.link/
- * -There is a decent Uniswap V3 pool against wETH or USDC
- * -Existing cap token functionality is sufficient 
- * 
- * THIS SCRIPT DOES NOT TRANSFER OWNERSHIP
- * After deployment, once all contracts are VERRIFIED and everything looks good,
- * Ownership should be transferred to Interest Protocol Governance: 0x266d1020A84B9E8B0ed320831838152075F8C4cA
- */
 
+const nfpManagerAddr = '0xC36442b4a4522E871399CD717aBDD847Ab11FE88'
+const FACTORY_V3_ADDR = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
 
-const nfpManagerAddr = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
-const POOL_ADDR = "0xCBCdF9626bC03E24f779434178A73a0B4bad62eD"
-
-/*****************************CHANGE THESE/*****************************/
-const ASSET_ADDRESS = "0x514910771AF9Ca656af840dff83E8264EcF986CA"
-const CHAINLINK_DATA_FEED = "0x2c1d072e956affc0d435cb7ac38ef18d24d9127c"
-const UNIV3_POOL = "0xa6Cc3C2531FdaA6Ae1A3CA84c2855806728693e8"
-const CAP = BN("375000e18")
-/***********************************************************************/
-
-
-const existingImplementation = "0x9F86bf2C380d3C63177e6104320Fd3D1DcAE88DA"
-
-let CappedTOKEN: CappedGovToken
-let AnchorView: IOracleRelay
+let WrappedPosition: Univ3CollateralToken
+let PositionValuator: V3PositionValuator
+let NftVC: NftVaultController
 
 const deployOracles = async (deployer: SignerWithAddress) => {
-
-    //TOKEN ORACLES
-    const clRelayTOKEN = await new ChainlinkOracleRelay__factory(deployer).deploy(
-        CHAINLINK_DATA_FEED,
-        BN("1e10"),
-        BN("1")
-    )
-    await clRelayTOKEN.deployed()
-    //console.log("ChainTOKEN TOKEN data feed price: ", await toNumber(await clRelayTOKEN.currentValue()))
-
-    //uni v3 oracle 
-    const uniRelayTOKEN = await new UniswapV3TokenOracleRelay__factory(deployer).deploy(
-        14400,
-        UNIV3_POOL,
-        false,
-        BN("1"),
-        BN("1")
-    )
-    await uniRelayTOKEN.deployed()
-    //console.log("uni v3 TOKEN relay price: ", await toNumber(await uniRelay.currentValue()))
-
-
-    AnchorView = await new AnchoredViewRelay__factory(deployer).deploy(
-        uniRelayTOKEN.address,
-        clRelayTOKEN.address,
-        BN("10"),
-        BN("100")
-    )
-    await AnchorView.deployed()
-    console.log("TOKEN anchor view deployed: ", AnchorView.address)
-    console.log("ANCHOR VIEW TOKEN PRICE: ", await toNumber(await AnchorView.currentValue()))
-
-}
-
-const deployCapTOKENs = async (deployer: SignerWithAddress) => {
     const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
 
-    //deploy a new capped TOKEN implementation if needed, otherwise use an existing implementation
-    //const ucTOKEN = await new CappedGovToken__factory(deployer).deploy()
+    const pvalImplementation = await new V3PositionValuator__factory(deployer).deploy()
+    await pvalImplementation.deployed()
+    console.log("Position Valuator Implementation deployed: ", pvalImplementation.address)
 
-    const cTOKEN = await new TransparentUpgradeableProxy__factory(deployer).deploy(
-        existingImplementation,
+    const pvalProxy = await new TransparentUpgradeableProxy__factory(deployer).deploy(
+        pvalImplementation.address,
         proxy.address,
         "0x"
     )
-    await cTOKEN.deployed()
+    await pvalProxy.deployed()
 
-    CappedTOKEN = new CappedGovToken__factory(deployer).attach(cTOKEN.address)
-    console.log("Capped TOKEN deployed to: ", cTOKEN.address)
-    const initTOKEN = await CappedTOKEN.initialize(
-        "Capped TOKEN",
-        "cTOKEN",
-        ASSET_ADDRESS,
-        d.VaultController,
-        d.VotingVaultController
+    PositionValuator = new V3PositionValuator__factory(deployer).attach(pvalProxy.address)
+    const init = await PositionValuator.initialize(
+        nfpManagerAddr,
+        FACTORY_V3_ADDR
     )
-    await initTOKEN.wait()
-    console.log("Capped TOKEN Initialized", CappedTOKEN.address)
+    await init.wait()
+    console.log("Position Valuator initialized: ", PositionValuator.address)
+
+    return PositionValuator.address
 
 }
 
+const deployWrappedPosition = async (deployer: SignerWithAddress) => {
+    const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
+
+    const wtImplementation = await new Univ3CollateralToken__factory(deployer).deploy()
+    await wtImplementation.deployed()
+    console.log("Wrapped Position Implementation deployed: ", wtImplementation.address)
+
+    const wtProxy = await new TransparentUpgradeableProxy__factory(deployer).deploy(
+        wtImplementation.address,
+        proxy.address,
+        "0x"
+    )
+    await wtProxy.deployed()
+
+    WrappedPosition = new Univ3CollateralToken__factory(deployer).attach(wtProxy.address)
+    const initTOKEN = await WrappedPosition.initialize(
+        "Wrapped Uniswap V3 Position",
+        "wPosition",
+        nfpManagerAddr,
+        d.VaultController,
+        d.VotingVaultController,
+        PositionValuator.address
+    )
+    await initTOKEN.wait()
+    console.log("Wrapped Position Initialized", WrappedPosition.address)
+
+    return WrappedPosition.address
+
+}
+
+const deployNftVaultController = async (deployer: SignerWithAddress) => {
+    NftVC = await DeployNewProxyContract(
+        new NftVaultController__factory(deployer),
+        deployer,
+        d.ProxyAdmin,
+        undefined,
+        d.VaultController
+    )
+    console.log("Deployed Nft Controller: ", NftVC.address)
+    return NftVC.address
+}
+
+const deployNewVcImplentation = async (deployer: SignerWithAddress) => {
+    const implementation = await new VaultController__factory(deployer).deploy()
+    await implementation.deployed()
+    console.log("New Vault Controller Implementation Deployed: ", implementation.address)
+    return implementation.address
+}
 
 
 const deploy = async (deployer: SignerWithAddress) => {
 
-    await deployOracles(deployer)
+    const oracleAddrs = await deployOracles(deployer)
 
     console.log("All oracles have been deployed successfully")
 
-    //await deployCapTOKENs(deployer)
+    const wrappedPosition = await deployWrappedPosition(deployer)
 
-    //console.log("All Cap TOKENs deployed")
+    const nftController = await deployNftVaultController(deployer)
 
+    const newImp = await deployNewVcImplentation(deployer)
 
-    //await CappedTOKEN.setCap(CAP)
-    //console.log("Set TOKEN cap to: ", await toNumber(CAP))
+    console.log("DONE")
+
+    return [oracleAddrs, wrappedPosition, nftController, newImp]
+
 
 };
+
+export const run = async (deployer: SignerWithAddress) => {
+    return await deploy(deployer)
+
+}
 
 async function main() {
     //check for test network
     const networkName = hre.network.name
     if (networkName == "hardhat" || networkName == "localhost") {
-        console.log("TEST DEPLOYMENT")
         await network.provider.send("evm_setAutomine", [true])
         await resetCurrent()
+        console.log("TEST DEPLOYMENT AT BLOCK: ", await (await currentBlock()).number)
     } else {
         console.log("DEPLOYING TO MAINNET")
     }
 
-
-    const block = await currentBlock()
-    console.log("Block: ", block.number)
 
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
@@ -148,9 +144,12 @@ async function main() {
 
 }
 
-main()
+/**
+ main()
     .then(() => process.exit(0))
     .catch((error) => {
         console.error(error);
         process.exit(1);
     });
+
+ */

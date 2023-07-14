@@ -1,41 +1,16 @@
 import { s } from "../scope";
-import { upgrades, ethers } from "hardhat";
-import { expect, assert } from "chai";
-import { showBody, showBodyCyan } from "../../../../util/format";
-import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
-import * as fs from 'fs';
+import { expect } from "chai";
+import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator";
 
-import { BN } from "../../../../util/number";
 import {
-  IVault__factory,
-  GovernorCharlieDelegate,
-  GovernorCharlieDelegate__factory,
-  CappedGovToken__factory,
-  UniswapV3TokenOracleRelay__factory,
-  UniswapV3TokenOracleRelay,
-  AnchoredViewRelay,
-  AnchoredViewRelay__factory,
-  OracleMaster__factory,
-  VaultController__factory,
-  VotingVaultController__factory,
-  ChainlinkOracleRelay,
-  ChainlinkOracleRelay__factory,
-  InterestProtocolToken__factory,
+  IVault__factory, InterestProtocolToken__factory,
   InterestProtocolTokenDelegate__factory
 } from "../../../../typechain-types";
 import {
-  advanceBlockHeight,
-  fastForward,
-  mineBlock,
-  OneWeek,
-  OneYear,
-  currentBlock
+  mineBlock, currentBlock
 } from "../../../../util/block";
 import { toNumber } from "../../../../util/math";
-import { ProposalContext } from "../../../../scripts/proposals/suite/proposal";
-import { DeployContractWithProxy, DeployContract } from "../../../../util/deploy";
 
-const proposalText = fs.readFileSync('test/upgrades/upgrade6/queueAndExecute/proposal.md', 'utf8');
 
 
 require("chai").should();

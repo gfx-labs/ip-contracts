@@ -1,24 +1,12 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { ethers } from "ethers";
-import fs from "fs";
 import {
   USDI,
   IERC20,
   IVOTE,
   VaultController,
-  OracleMaster,
-  AnchoredViewRelay,
-  ChainlinkOracleRelay,
-  IOracleRelay,
+  OracleMaster, IOracleRelay,
   CurveMaster,
-  ThreeLines0_100,
-  IVault,
-  IOracleMaster,
-  IVaultController,
-  ProxyAdmin,
-  IUSDI,
-  ICurveMaster,
-  ProxyAdmin__factory,
+  ThreeLines0_100, ProxyAdmin, ProxyAdmin__factory,
   VaultController__factory,
   OracleMaster__factory,
   AnchoredViewRelay__factory,
@@ -30,9 +18,7 @@ import {
   ThreeLines0_100__factory,
   UniswapV3OracleRelay__factory,
   IOracleRelay__factory,
-  ChainlinkOracleRelay__factory,
-  ERC20Detailed__factory,
-  TESTERC20__factory,
+  ChainlinkOracleRelay__factory, TESTERC20__factory,
   InterestProtocolTokenDelegate__factory,
   InterestProtocolTokenDelegate,
   InterestProtocolToken__factory,
@@ -40,9 +26,8 @@ import {
   GovernorCharlieDelegator__factory,
   GovernorCharlieDelegator,
   GovernorCharlieDelegate,
-  InterestProtocolToken,
+  InterestProtocolToken
 } from "../../typechain-types";
-import { Addresser, MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
 export interface DeploymentInfo {

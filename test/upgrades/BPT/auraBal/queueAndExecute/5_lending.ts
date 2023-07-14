@@ -1,12 +1,10 @@
 import { s } from "../scope";
-import { expect, assert } from "chai";
+import { expect } from "chai";
 import { showBody, showBodyCyan } from "../../../../../util/format";
 import { BN } from "../../../../../util/number";
-import { advanceBlockHeight, nextBlockTime, fastForward, mineBlock, OneWeek, OneDay } from "../../../../../util/block";
-import { utils, BigNumber } from "ethers";
-import { getGas, getArgs, truncate, getEvent, toNumber } from "../../../../../util/math";
-import { stealMoney } from "../../../../../util/money"
-import { IVault__factory } from "../../../../../typechain-types";
+import { fastForward, mineBlock, OneWeek, OneDay, hardhat_mine } from "../../../../../util/block";
+import {  BigNumber } from "ethers";
+import { toNumber } from "../../../../../util/math";
 require("chai").should();
 
 
@@ -64,7 +62,7 @@ describe("Lending", () => {
 
         await s.USDI.connect(s.Bob).approve(s.VaultController.address, await s.USDI.balanceOf(s.Bob.address))
         await s.VaultController.connect(s.Bob).repayAllUSDi(s.BobVaultID)
-        await advanceBlockHeight(1)
+        await hardhat_mine(1)
         await fastForward(OneDay)
 
         const liability = await s.VaultController.vaultLiability(s.BobVaultID)

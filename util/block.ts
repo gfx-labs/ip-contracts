@@ -48,6 +48,32 @@ export const nextBlockTime = async (blockTime: number) => {
     await network.provider.send("evm_setNextBlockTimestamp", [blockTime + 1])
 }
 
+//reset to a current block on mainnet
+export const resetCurrent = async () => {
+    await network.provider.request({
+        method: "hardhat_reset",
+        params: [
+            {
+                forking: {
+                    jsonRpcUrl: process.env.MAINNET_URL!
+                },
+            },
+        ],
+    });
+}
+export const resetCurrentOP = async () => {
+    await network.provider.request({
+        method: "hardhat_reset",
+        params: [
+            {
+                forking: {
+                    jsonRpcUrl: process.env.OP_URL!
+                },
+            },
+        ],
+    });
+}
+
 export const reset = async (block: number) => {
     dotenv.config();
     //pass 0 to return to starting block for main tests

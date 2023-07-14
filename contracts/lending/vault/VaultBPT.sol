@@ -46,6 +46,8 @@ interface IRewardsPool {
 interface IVirtualRewardPool {
   function getReward() external;
 
+  function earned(address account) external view returns (uint256);
+
   function balanceOf(address target) external view returns (uint256);
 
   function rewardToken() external view returns (address);
@@ -87,15 +89,17 @@ contract VaultBPT is Context {
   /// all assets stake all or nothing
   mapping(address => bool) public isStaked;
 
-  mapping(address => stakeType) public typeOfStake;
+  //mapping(address => stakeType) public typeOfStake;
 
-  mapping(address => address) public lp_rewardtoken;
+  //mapping(address => address) public lp_rewardtoken;
 
+/**
   enum stakeType {
     AURABAL,
     AURA_LP,
     BAL_LP
   }
+ */
 
   /// @notice checks if _msgSender is the controller of the voting vault
   modifier onlyVotingVaultController() {
@@ -150,7 +154,6 @@ contract VaultBPT is Context {
 
     //stake auraBal directly on rewards pool
     if (address(lp) == _votingController._auraBal()) {
-      console.log("staking auraBal, ", address(lp));
       IRewardsPool rp = IRewardsPool(rewardsToken);
       lp.approve(rewardsToken, lp.balanceOf(address(this)));
 
@@ -172,58 +175,65 @@ contract VaultBPT is Context {
   /// @param lp - the aura LP token address, or auraBal address
   /// @param claimExtra - claim extra token rewards, uses more gas
   function claimAuraLpRewards(IERC20 lp, bool claimExtra) external {
+    bool solvencyCheckNeeded = false;
+
     //get rewards pool
     (address rewardsToken, uint256 PID) = _votingController.getAuraLpData(address(lp));
     IRewardsPool rp = IRewardsPool(rewardsToken);
 
-    ///compare starting params
-    console.log("checking starting params");
-    console.log("Rewards token: ", rewardsToken);
-    console.log("PID: ", PID);
-    console.log("block: ", block.number);
-    console.log("token: ", address(lp));
-    console.log("tokenBal: ", lp.balanceOf(address(this)));
-    console.log("rewrdBal: ", IERC20(rewardsToken).balanceOf(address(this)));
-    console.log("claimExtra: ", claimExtra);
-    console.log("staked: ", isStaked[address(lp)]);
-    console.log("earned: ", rp.earned(address(this)));
-
-    //rewards (including extra) will be sent to this contract
+    //claim rewards
     rp.getReward(address(this), claimExtra);
 
+    //get minter
     address minter = IVault(_vaultInfo.vault_address).minter();
 
     //send rewards to minter
     IERC20 rewardToken = IERC20(rp.rewardToken());
+
+    //check if rewardToken is registered as a collateral, if not, the _rewardToken should be 0x0
+    (address _rewardToken, ) = _votingController.getAuraLpData(address(rewardToken));
+    if (_rewardToken != address(0x0)) {
+      solvencyCheckNeeded = true;
+    }
+
     rewardToken.transfer(minter, rewardToken.balanceOf(address(this)));
 
+    //repeat for claimExtra
     if (claimExtra) {
       for (uint256 i = 0; i < rp.extraRewardsLength(); i++) {
         IVirtualRewardPool extraRewardPool = IVirtualRewardPool(rp.extraRewards(i));
 
         IERC20 extraRewardToken = IERC20(extraRewardPool.rewardToken());
 
+        //check if extraRewardToken is registered as a collateral, if not, the _rewardToken should be 0x0
+        (address _rewardToken, ) = _votingController.getAuraLpData(address(extraRewardToken));
+        if (_rewardToken != address(0x0)) {
+          solvencyCheckNeeded = true;
+        }
         extraRewardPool.getReward();
 
         extraRewardToken.transfer(minter, extraRewardToken.balanceOf(address(this)));
       }
     }
+    
     // if an underlying reward or extra reward token is used as collateral,
     // claiming rewards will empty the vault of this token, this check prevents this
     // if it is the case that the underlying reward token is registered collateral held by this vault
     // the liability will need to be repaid sufficiently in order to claim rewards
-    //require(_controller.checkVault(_vaultInfo.id), "Claim causes insolvency");
+    if (solvencyCheckNeeded) {
+      require(_controller.checkVault(_vaultInfo.id), "Claim causes insolvency");
+    }
   }
 
   /// @notice manual unstake
   /// todo needed?
-  function unstakeAuraLP(IERC20 lp) external onlyMinter {
-    //_unstakeAuraLP(lp);
+  function unstakeAuraLP(address lp) external onlyMinter {
+    _unstakeAuraLP(lp, (lp == _votingController._auraBal()));
   }
 
-  function _unstakeAuraLP(IERC20 lp, bool auraBal) internal {
-    isStaked[address(lp)] = false;
-    (address rewardsToken, ) = _votingController.getAuraLpData(address(lp));
+  function _unstakeAuraLP(address lp, bool auraBal) internal {
+    isStaked[lp] = false;
+    (address rewardsToken, ) = _votingController.getAuraLpData(lp);
     IRewardsPool rp = IRewardsPool(rewardsToken);
 
     if (auraBal) {
@@ -231,13 +241,6 @@ contract VaultBPT is Context {
     } else {
       rp.withdrawAllAndUnwrap(false);
     }
-  }
-
-  /**Balancer LP token staking */
-  ///@notice claim rewards to the vault minter
-  ///todo TX: https://etherscan.io/tx/0x4d5950df8da6b93a435a9b9762a3e54745bc4e67adbfcab3ebf459beb9baaf52
-  function claimRewards(IGauge gauge) external {
-    gauge.claim_rewards(address(this), IVault(_vaultInfo.vault_address).minter());
   }
 
   /// @notice function used by the VaultController to transfer tokens
@@ -248,7 +251,7 @@ contract VaultBPT is Context {
   /// @param _amount amount of coins to move
   function controllerTransfer(address _token, address _to, uint256 _amount) external onlyVaultController {
     if (isStaked[_token] == true) {
-      _unstakeAuraLP(IERC20(_token), (_token == _votingController._auraBal()));
+      _unstakeAuraLP(_token, (_token == _votingController._auraBal()));
     }
 
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);
@@ -265,7 +268,7 @@ contract VaultBPT is Context {
     uint256 _amount
   ) external onlyVotingVaultController {
     if (isStaked[_token] == true) {
-      _unstakeAuraLP(IERC20(_token), (_token == _votingController._auraBal()));
+      _unstakeAuraLP(_token, (_token == _votingController._auraBal()));
     }
 
     SafeERC20Upgradeable.safeTransfer(IERC20Upgradeable(_token), _to, _amount);

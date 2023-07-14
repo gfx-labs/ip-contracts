@@ -1,18 +1,13 @@
-import { match } from "assert";
 import { ethers } from "hardhat";
 import {
-    AnchoredViewRelay__factory,
-    ChainlinkOracleRelay__factory,
+  AnchoredViewRelay__factory,
+  ChainlinkOracleRelay__factory,
   GovernorCharlieDelegate__factory,
   GovernorCharlieDelegator__factory,
-  OracleMaster__factory,
-  ProxyAdmin__factory,
-  StEthOracleRelay__factory,
-  USDI__factory,
-  VaultController__factory,
+  OracleMaster__factory, StEthOracleRelay__factory, VaultController__factory
 } from "../../../../typechain-types";
 import { BN } from "../../../../util/number";
-import { countdownSeconds, ProposalContext, sleep } from "../../suite/proposal";
+import { countdownSeconds, ProposalContext } from "../../suite/proposal";
 
 const description = `
 # IP July Update #2

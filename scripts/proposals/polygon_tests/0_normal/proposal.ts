@@ -11,7 +11,6 @@
 // 5. Modify a parameter of an existing token
 
 import { ethers } from "hardhat";
-import { Signer } from "ethers";
 import {
   CurveMaster__factory,
   GovernorCharlieDelegate__factory,
