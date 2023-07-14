@@ -1,5 +1,5 @@
 import { s } from "../scope";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../../util/addresser"
 import { ethers, network } from "hardhat";
 import { stealMoney } from "../../../../util/money";
 import { expect } from "chai";

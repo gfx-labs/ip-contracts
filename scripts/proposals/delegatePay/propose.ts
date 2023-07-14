@@ -8,7 +8,7 @@ import {
     VotingVaultController__factory
 } from "../../../typechain-types";
 import { ProposalContext } from "../suite/proposal";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { showBody, showBodyCyan } from "../../../util/format";
 import { getGas, toNumber } from "../../../util/math";
 

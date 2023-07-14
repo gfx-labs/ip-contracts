@@ -4,11 +4,11 @@ import {
     CappedGovToken, CappedGovToken__factory,
     UniswapV3TokenOracleRelay__factory, AnchoredViewRelay__factory, ChainlinkOracleRelay__factory,
     ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory, ChainlinkTokenOracleRelay__factory, BalancerPeggedAssetRelay__factory, CHI_Oracle__factory,
+    TransparentUpgradeableProxy__factory, , BalancerPeggedAssetRelay__factory, CHI_Oracle__factory,
     IOracleRelay
 } from "../../../typechain-types";
 import { toNumber } from "../../../util/math";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../util/addresser"
 import { showBody, showBodyCyan } from "../../../util/format";
 
 const { ethers, network, upgrades } = require("hardhat");
@@ -56,7 +56,6 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     let peggedBalancerFactory = new BalancerPeggedAssetRelay__factory(deployer)
     let UniV3Factory = new UniswapV3TokenOracleRelay__factory(deployer)
     let chainlinkFactory = new ChainlinkOracleRelay__factory(deployer)
-    let mainTokenFactory = new ChainlinkTokenOracleRelay__factory(deployer)
     let anchorViewFactory = new AnchoredViewRelay__factory(deployer)
 
     anchorViewCHAI = await new CHI_Oracle__factory(deployer).deploy("0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7")

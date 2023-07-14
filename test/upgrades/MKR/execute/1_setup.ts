@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { stealMoney } from "../../../../util/money";
 import { s } from "../scope";
-import { d } from "../DeploymentInfo";
+import { a, c, d } from "../../../../util/addresser"
 import { reset, mineBlock } from "../../../../util/block";
 import {
     IERC20__factory,
@@ -32,7 +32,7 @@ describe("hardhat settings", () => {
     });
 });
 
-describe("Initial Setup - MKR", () => {
+describe("Initial Setup - MKR - test proposal", () => {
     it("connect to signers", async () => {
         s.accounts = await ethers.getSigners();
         s.Frank = s.accounts[0];
