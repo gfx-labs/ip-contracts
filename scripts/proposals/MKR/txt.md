@@ -8,6 +8,8 @@ This collateral integration will support MKR holders’ ability to delegate MKR 
 
 Interest Protocol already supports CHAI, which is a DappHub token wrapper for DAI Savings Rate Module deposits.
 
+Big thanks to [Llama.xyz](https://llama.xyz/) for developing the new MKR voting vaults and other contracts for this proposal. 
+
 ## Parameters
 
 Token Address: [0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2](https://etherscan.io/token/0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2)  
