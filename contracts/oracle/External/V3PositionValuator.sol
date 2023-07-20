@@ -15,25 +15,22 @@ import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
 contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
-  address public FACTORY_V3; 
+  address public FACTORY_V3;
   INonfungiblePositionManager public nfpManager;
 
   mapping(address => bool) public registeredPools;
   mapping(address => PoolData) public poolDatas;
 
   ///@notice register data associated with pool
-  ///@param tickSpacing is immutable, so storing it here is safe
   struct PoolData {
     IOracleRelay token0Oracle;
     IOracleRelay token1Oracle;
     uint256 UNIT_0;
     uint256 UNIT_1;
-    int24 tickSpacing;
   }
 
   struct VerifyData {
     address pool;
-    bool registered;
     int24 tickLower;
     int24 tickUpper;
     uint128 liquidity;
@@ -57,10 +54,6 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     VerifyData memory vData = verifyPool(tokenId);
     PoolData memory data = poolDatas[vData.pool];
 
-    //unregistered pools will not have external oracle prices registered, and so won't work
-    if (!vData.registered) {
-      return 0;
-    }
     //independantly calculate sqrtPrice using external oracles
     (uint160 sqrtPriceX96, uint256 p0, uint256 p1) = getSqrtPrice(data);
 
@@ -99,26 +92,22 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
       FACTORY_V3,
       PoolAddress.PoolKey({token0: token0, token1: token1, fee: uint24(fee)})
     );
-    return
-      VerifyData({
-        pool: pool,
-        registered: registeredPools[pool],
-        tickLower: tickLower,
-        tickUpper: tickUpper,
-        liquidity: liquidity
-      });
+
+    require(registeredPools[pool], "Pool not registered");
+
+    return VerifyData({pool: pool, tickLower: tickLower, tickUpper: tickUpper, liquidity: liquidity});
   }
 
   ///@notice toggle @param pool registered or not
   //todo register oracles and token units to each pool in a struct
   function registerPool(IUniV3Pool pool, IOracleRelay _token0Oracle, IOracleRelay _token1Oracle) external onlyOwner {
     registeredPools[address(pool)] = !registeredPools[address(pool)];
+
     poolDatas[address(pool)] = PoolData({
       token0Oracle: _token0Oracle,
       token1Oracle: _token1Oracle,
       UNIT_0: 10 ** IERC20(pool.token0()).decimals(),
-      UNIT_1: 10 ** IERC20(pool.token1()).decimals(),
-      tickSpacing: pool.tickSpacing()
+      UNIT_1: 10 ** IERC20(pool.token1()).decimals()
     });
   }
 
@@ -136,11 +125,11 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   }
 
   function toUint160(uint256 x) internal pure returns (uint160 z) {
-    require((z = uint160(x)) == x, "GUniLPOracle/uint160-overflow");
+    require((z = uint160(x)) == x, "uint160-overflow");
   }
 
   function _mul(uint256 _x, uint256 _y) internal pure returns (uint256 z) {
-    require(_y == 0 || (z = _x * _y) / _y == _x, "GUniLPOracle/mul-overflow");
+    require(_y == 0 || (z = _x * _y) / _y == _x, "mul-overflow");
   }
 
   // FROM https://github.com/abdk-consulting/abdk-libraries-solidity/blob/16d7e1dd8628dfa2f88d5dadab731df7ada70bdd/ABDKMath64x64.sol#L687

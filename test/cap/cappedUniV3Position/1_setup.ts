@@ -68,6 +68,10 @@ describe("Token Setup", () => {
         await stealMoney(wbtc_minter, s.Carol.address, s.wbtcAddress, s.wBTC_Amount)
         await stealMoney(usdc_minter, s.Carol.address, s.USDC.address, s.USDC_AMOUNT)
 
+        await stealMoney(weth_minter, s.Gus.address, s.WETH.address, s.WETH_AMOUNT.mul(3))
+        await stealMoney(wbtc_minter, s.Gus.address, s.wbtcAddress, s.wBTC_Amount.mul(3))
+        await stealMoney(usdc_minter, s.Gus.address, s.USDC.address, s.USDC_AMOUNT)
+
     })
 })
 

@@ -15,11 +15,12 @@ import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
+import "hardhat/console.sol";
+
 /// @title Univ3CollateralToken
 /// @notice creates a token worth 1e18 with 18 visible decimals for vaults to consume
 /// @dev extends ierc20 upgradable
 contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
-
   INonfungiblePositionManager public _underlying;
   IVaultController public _vaultController;
   NftVaultController public _nftVaultController;
@@ -60,7 +61,6 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     locked = false;
   }
 
-
   /// @notice 18 decimal erc20 spec should have been written into the fucking standard
   function decimals() public pure override returns (/**override */ uint8) {
     return 18;
@@ -75,8 +75,8 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     require(address(univ3_vault_address) != address(0x0), "invalid nft vault");
 
     ///@notice only allow deposits from registered pools
-    V3PositionValuator.VerifyData memory data = _positionValuator.verifyPool(tokenId);
-    require(data.registered, "Pool not registered");
+    //todo double check if this is needed?
+    _positionValuator.verifyPool(tokenId);
 
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     add_to_list(vault.minter(), tokenId);
@@ -89,7 +89,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   ///NOTE partial withdrawal not allowed, all positions are transferred to recipient
   ///@param recipient should already be the vault minter from the standard vault (v1)
   ///@notice msgSender should be the parent standard vault
-  function transfer(address recipient, uint256 /**amount */) public override returns (bool) {
+  function transfer(address recipient, uint256 positionIndex) public override returns (bool) {
     IVault vault = IVault(_msgSender());
     require(vault.id() > 0, "Only Vaults");
     address minter = vault.minter();
@@ -97,12 +97,20 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     address univ3_vault_address = _nftVaultController.NftVaultAddress(vault.id());
     require(univ3_vault_address != address(0x0), "no VaultNft");
 
+    //partial withdrawal
+    if (positionIndex < _underlyingOwners[minter].length) {
+      uint256 positionId = _underlyingOwners[minter][positionIndex];
+      _nftVaultController.retrieveUnderlying(positionId, univ3_vault_address, recipient);
+      remove_from_list(minter, positionId);
+      return true;
+    }
+
+    // if we reach this line, we are withdrawing every position in the list
     // move every nft from the nft vault to the target
     for (uint256 i = 0; i < _underlyingOwners[minter].length; i++) {
       uint256 tokenId = _underlyingOwners[minter][i];
       if (tokenId != 0) {
         // no need to do the check here when removing from list
-        //remove_from_list(minter, tokenId);
         _nftVaultController.retrieveUnderlying(tokenId, univ3_vault_address, recipient);
       }
     }
@@ -156,14 +164,10 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     return true;
   }
 
-  /**
-  //possible partial withdrawal / liquidation logic 
+  //possible partial withdrawal / liquidation logic
   function remove_from_list(address vaultMinter, uint256 tokenId) internal returns (bool) {
     for (uint256 i; i < _underlyingOwners[vaultMinter].length; i++) {
       if (_underlyingOwners[vaultMinter][i] == tokenId) {
-        //old method - filter 0s in get_token_value
-        //delete _underlyingOwners[vaultMinter][i];
-
         //new method, delete index, replace with final index, reset storage to new array
         //if length == 0, return false / revert?
         if (_underlyingOwners[vaultMinter].length == 0) {
@@ -175,27 +179,32 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
           return true;
         }
 
-
         uint256 finalElement = _underlyingOwners[vaultMinter][_underlyingOwners[vaultMinter].length - 1];
 
         //if final element == deleted element, simply return the array minus the final element
         if (finalElement == _underlyingOwners[vaultMinter][i]) {
+          console.log("FINAL");
           uint256[] memory newList = new uint256[](_underlyingOwners[vaultMinter].length - 1);
+          for (uint k = 0; k < newList.length; k++) {
+            newList[k] = _underlyingOwners[vaultMinter][k];
+          }
+
           _underlyingOwners[vaultMinter] = newList;
           return true;
         }
+
+        //if not the final element, replace the withdrawn idx with the final element
         _underlyingOwners[vaultMinter][i] = finalElement;
 
-        uint256[] memory newList = new uint256[](_underlyingOwners[vaultMinter].length - 1);
-        for (uint j = 0; j < newList.length; j++) {
-          newList[j] = _underlyingOwners[vaultMinter][j];
+        uint256[] memory newList2 = new uint256[](_underlyingOwners[vaultMinter].length - 1);
+        for (uint j = 0; j < newList2.length; j++) {
+          newList2[j] = _underlyingOwners[vaultMinter][j];
         }
-        _underlyingOwners[vaultMinter] = newList;
+        _underlyingOwners[vaultMinter] = newList2;
 
         return true;
       }
     }
     return false;
   }
-   */
 }
