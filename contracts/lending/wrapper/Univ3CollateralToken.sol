@@ -15,8 +15,6 @@ import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
-import "hardhat/console.sol";
-
 /// @title Univ3CollateralToken
 /// @notice creates a token worth 1e18 with 18 visible decimals for vaults to consume
 /// @dev extends ierc20 upgradable
@@ -183,7 +181,6 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
 
         //if final element == deleted element, simply return the array minus the final element
         if (finalElement == _underlyingOwners[vaultMinter][i]) {
-          console.log("FINAL");
           uint256[] memory newList = new uint256[](_underlyingOwners[vaultMinter].length - 1);
           for (uint k = 0; k < newList.length; k++) {
             newList[k] = _underlyingOwners[vaultMinter][k];

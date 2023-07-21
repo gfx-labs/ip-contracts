@@ -96,7 +96,7 @@ describe("Capped Position Functionality", () => {
         //this withdraws the single position via remove_from_list
         const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.WrappedPosition.address, 0)
         const gas = await getGas(result)
-        showBodyCyan("Gas to withdraw position: ", gas)
+        showBodyCyan("Gas to withdraw idx 0 with list length == 1: ", gas)
         /**
          * Gas to withdraw all: 512028
          * Gas to withdraw spc: 512529
@@ -299,7 +299,7 @@ describe("Check valuations", async () => {
 
         const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.WrappedPosition.address, 0)
         const gas = await getGas(result)
-        showBodyCyan("Gas to withdraw a specific position: ", gas)//721k
+        showBodyCyan("Gas to withdraw idx 0 with list length == 2: ", gas)//721k
 
         //check that the list was mutated correctly
         const newPosition0 = await s.WrappedPosition._underlyingOwners(s.Bob.address, BN("0"))
@@ -323,7 +323,7 @@ describe("Check valuations", async () => {
 
         const result = await s.BobVault.connect(s.Bob).withdrawErc20(s.WrappedPosition.address, 9999)//amount arg is not used
         const gas = await getGas(result)
-        showBodyCyan("Gas to withdraw all positions: ", gas) //~~580k
+        showBodyCyan("Gas to withdraw all positions with list length == 2: ", gas) //~~580k
         //partial withdrawals not allowed, withdraw receives all positions held by the vault
         const endPositionCount = await s.nfpManager.balanceOf(s.Bob.address)
         expect(endPositionCount).to.eq(2, "Bob recieved both positions")
@@ -434,7 +434,10 @@ describe("Single position withdraw", () => {
 
     it("Withdrwa position 0", async () => {
         //before withdraw positions[] in the vault should be: [0,1,2,3,4]
-        await gusVault.connect(s.Gus).withdrawErc20(s.WrappedPosition.address, 0)
+        const result = await gusVault.connect(s.Gus).withdrawErc20(s.WrappedPosition.address, 0)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to withdraw idx 0 with list length == 5: ", gas)
+
         //positions[] in the vault should now be: [4,1,2,3]
 
         //check that the list was mutated correctly
@@ -467,7 +470,10 @@ describe("Single position withdraw", () => {
         const withdrawPositionIndex = 2
 
         //this should withdraw position 2
-        await gusVault.connect(s.Gus).withdrawErc20(s.WrappedPosition.address, withdrawPositionIndex)
+        const result = await gusVault.connect(s.Gus).withdrawErc20(s.WrappedPosition.address, withdrawPositionIndex)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to withdraw a middle idx with list length == 5: ", gas)
+
         //positions[] in the vault should now be: [4,1,0,3]
 
         //check that the list was mutated correctly
@@ -484,22 +490,31 @@ describe("Single position withdraw", () => {
 
     })
 
-    it("remove final index", async () => {
-        //positions[] in the vault should now be: [4,1,0,3,2]
-
-        //we should receive position 2
-        await gusVault.connect(s.Gus).withdrawErc20(s.WrappedPosition.address, positions.length - 1)
-        console.log("Withdraw done")
-
-        //check that the list was mutated correctly
-        const newPosition0 = await s.WrappedPosition._underlyingOwners(s.Gus.address, positions.length - 2)
-        expect(newPosition0).to.eq(positions[3], "correct position is now the final one")
-
-        //Gus has the position
-        expect(await s.nfpManager.ownerOf(positions[positions.length - 1])).to.eq(s.Gus.address, "Gus has the position")
-
+    it("Verify current order", async () => {
+        const expectedIdxOrder = [4, 1, 0, 3, 2]
+        for (let i = positions.length - 1; i >= 0; i--) {
+            const position = await s.WrappedPosition._underlyingOwners(s.Gus.address, i)
+            expect(position).to.eq(positions[expectedIdxOrder[i]])
+        }
     })
 
+    it("remove final index", async () => {
+        //we should receive position 2
+        const result = await gusVault.connect(s.Gus).withdrawErc20(s.WrappedPosition.address, positions.length - 1)
+        const gas = await getGas(result)
+        showBodyCyan("Gas to withdraw the final idx with list length == 5: ", gas)
 
+        const expectedIdxOrder = [4, 1, 0, 3]
+        for (let i = positions.length - 2; i >= 0; i--) {
+            const position = await s.WrappedPosition._underlyingOwners(s.Gus.address, i)
+            expect(position).to.eq(positions[expectedIdxOrder[i]])
+        }
 
+        //last idx is gone, length is now positions.length - 1
+        expect(s.WrappedPosition._underlyingOwners(s.Gus.address, positions.length - 1)).to.be.reverted
+
+        //Gus has the position
+        expect(await s.nfpManager.ownerOf(positions[2])).to.eq(s.Gus.address, "Gus has the position")
+
+    })
 })
