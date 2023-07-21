@@ -60,11 +60,6 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     locked = false;
   }
 
-  /// @notice 18 decimal erc20 spec should have been written into the fucking standard
-  function decimals() public pure override returns (/**override */ uint8) {
-    return 18;
-  }
-
   /// note Safe transfer not used - better to not allow transfer of erc721 and force to use deposit function so we can add_to_list
   /// @notice deposit _underlying to mint CappedToken
   /// @param tokenId //amount of underlying to deposit
@@ -142,6 +137,11 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     return totalValue;
   }
 
+  function depositedPositions(address minter) public view returns (uint256[] memory) {
+    return _underlyingOwners[minter];
+  }
+
+  ///@notice @param tokenId should be a positionId for a registered pool
   function get_token_value(uint256 tokenId) internal view returns (uint256 value) {
     if (tokenId == 0) {
       return 0;

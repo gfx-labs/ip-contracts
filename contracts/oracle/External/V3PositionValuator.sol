@@ -132,7 +132,7 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     require(_y == 0 || (z = _x * _y) / _y == _x, "mul-overflow");
   }
 
-  // FROM https://github.com/abdk-consulting/abdk-libraries-solidity/blob/16d7e1dd8628dfa2f88d5dadab731df7ada70bdd/ABDKMath64x64.sol#L687
+  // https://github.com/abdk-consulting/abdk-libraries-solidity/blob/16d7e1dd8628dfa2f88d5dadab731df7ada70bdd/ABDKMath64x64.sol#L687
   function sqrt(uint256 _x) private pure returns (uint128) {
     if (_x == 0) return 0;
     else {

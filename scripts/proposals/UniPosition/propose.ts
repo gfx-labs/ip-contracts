@@ -77,6 +77,13 @@ const proposeTOKEN = async (proposer: SignerWithAddress) => {
     const setPositionWrapper = await new VaultController__factory(proposer).
         attach(d.VaultController).populateTransaction.
         setPositionWrapperAddress(WrappedPosition)
+    
+    const registerPool = await new V3PositionValuator__factory(proposer).
+    attach(PositionValuator).populateTransaction.registerPool(
+        POOL_ADDR,
+        d.WBTCOracle,
+        d.EthOracle
+    )
 
 
     proposal.addStep(addOracle, "setRelay(address,address)")
@@ -84,6 +91,7 @@ const proposeTOKEN = async (proposer: SignerWithAddress) => {
     proposal.addStep(registerNftController, "registerUnderlying(address,address)")
     proposal.addStep(upgrade, "upgrade(address,address)")
     proposal.addStep(setPositionWrapper, "setPositionWrapperAddress(address)")
+    proposal.addStep(registerPool, "registerPool(address,address,address)")
 
     let out = proposal.populateProposal()
 

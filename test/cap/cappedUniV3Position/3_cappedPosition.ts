@@ -379,7 +379,7 @@ describe("Single position withdraw", () => {
         await s.NftVaultController.connect(s.Gus).mintVault(gusVaultId)
 
 
-        //mint 3 positions for gus
+        //mint positions for gus
         for (let i = 0; i < positionCount; i++) {
             //mint second position
             //approvals
@@ -416,14 +416,20 @@ describe("Single position withdraw", () => {
             const args = await getArgs(result)
             positions[i] = args.tokenId
 
+            await hardhat_mine_timed(50, 15)
+
             //deposit position
             await s.nfpManager.connect(s.Gus).approve(s.WrappedPosition.address, positions[i])
             await s.WrappedPosition.connect(s.Gus).deposit(positions[i], gusVaultId)
+
+            await hardhat_mine_timed(500, 15)
+
         }
 
     })
 
     it("Verify deposits", async () => {
+
         for (let i = 0; i < positionCount; i++) {
             const position = await s.WrappedPosition._underlyingOwners(s.Gus.address, BN(i))
             expect(position).to.eq(positions[i], `position ${positions[i]} found`)
