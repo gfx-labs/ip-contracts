@@ -20,7 +20,6 @@ import "../../_external/extensions/ArrayMutation.sol";
 /// @notice creates a token worth 1e18 with 18 visible decimals for vaults to consume
 /// @dev extends ierc20 upgradable
 contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
-  using ArrayMutation for uint256[];
   INonfungiblePositionManager public _underlying;
   IVaultController public _vaultController;
   NftVaultController public _nftVaultController;
@@ -174,41 +173,3 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     return false;
   }
 }
-
-
-/**
-//new method, delete index, replace with final index, reset storage to new array
-        //if length == 0, return false / revert?
-        if (_underlyingOwners[vaultMinter].length == 0) {
-          return true;
-        }
-        //if length == 1, reset storage to empty array
-        if (_underlyingOwners[vaultMinter].length == 1) {
-          _underlyingOwners[vaultMinter] = new uint256[](0);
-          return true;
-        }
-
-        uint256 finalElement = _underlyingOwners[vaultMinter][_underlyingOwners[vaultMinter].length - 1];
-
-        //if final element == deleted element, simply return the array minus the final element
-        if (finalElement == _underlyingOwners[vaultMinter][i]) {
-          uint256[] memory newList = new uint256[](_underlyingOwners[vaultMinter].length - 1);
-          for (uint k = 0; k < newList.length; k++) {
-            newList[k] = _underlyingOwners[vaultMinter][k];
-          }
-
-          _underlyingOwners[vaultMinter] = newList;
-          return true;
-        }
-
-        //if not the final element, replace the withdrawn idx with the final element
-        _underlyingOwners[vaultMinter][i] = finalElement;
-
-        uint256[] memory newList2 = new uint256[](_underlyingOwners[vaultMinter].length - 1);
-        for (uint j = 0; j < newList2.length; j++) {
-          newList2[j] = _underlyingOwners[vaultMinter][j];
-        }
-        _underlyingOwners[vaultMinter] = newList2;
-
-        return true;
- */

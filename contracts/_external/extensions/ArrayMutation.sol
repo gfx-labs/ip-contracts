@@ -2,11 +2,12 @@
 pragma solidity ^0.8.9;
 
 library ArrayMutation {
-  function removeFromArray(uint idx, uint256[] memory inputArray) internal pure returns (uint256[] memory) {
+  ///@param idx the element to remove from @param inputArray
+  function removeFromArray(uint idx, uint256[] memory inputArray) internal pure returns (uint256[] memory newList) {
     //if length == 0, return false / revert?
     require(inputArray.length > 0, "inputArray length == 0");
 
-    //if length == 1, reset storage to empty array
+    //if length == 1, reset to empty array
     if (inputArray.length == 1) {
       return new uint256[](0);
     }
@@ -15,7 +16,7 @@ library ArrayMutation {
 
     //if final element == deleted element, simply return the array minus the final element
     if (finalElement == inputArray[idx]) {
-      uint256[] memory newList = new uint256[](inputArray.length - 1);
+      newList = new uint256[](inputArray.length - 1);
       for (uint k = 0; k < newList.length; k++) {
         newList[k] = inputArray[k];
       }
@@ -26,10 +27,10 @@ library ArrayMutation {
     //if not the final element, replace the withdrawn idx with the final element
     inputArray[idx] = finalElement;
 
-    uint256[] memory newList2 = new uint256[](inputArray.length - 1);
-    for (uint j = 0; j < newList2.length; j++) {
-      newList2[j] = inputArray[j];
+    newList = new uint256[](inputArray.length - 1);
+    for (uint j = 0; j < newList.length; j++) {
+      newList[j] = inputArray[j];
     }
-    return newList2;
+    return newList;
   }
 }
