@@ -14,11 +14,13 @@ import "../../_external/uniswap/INonfungiblePositionManager.sol";
 import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
+import "../../_external/extensions/ArrayMutation.sol";
 
 /// @title Univ3CollateralToken
 /// @notice creates a token worth 1e18 with 18 visible decimals for vaults to consume
 /// @dev extends ierc20 upgradable
 contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
+  using ArrayMutation for uint256[];
   INonfungiblePositionManager public _underlying;
   IVaultController public _vaultController;
   NftVaultController public _nftVaultController;
@@ -166,7 +168,16 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
   function remove_from_list(address vaultMinter, uint256 tokenId) internal returns (bool) {
     for (uint256 i; i < _underlyingOwners[vaultMinter].length; i++) {
       if (_underlyingOwners[vaultMinter][i] == tokenId) {
-        //new method, delete index, replace with final index, reset storage to new array
+        _underlyingOwners[vaultMinter] = ArrayMutation.removeFromArray(i, _underlyingOwners[vaultMinter]);
+      }
+    }
+    return false;
+  }
+}
+
+
+/**
+//new method, delete index, replace with final index, reset storage to new array
         //if length == 0, return false / revert?
         if (_underlyingOwners[vaultMinter].length == 0) {
           return true;
@@ -200,8 +211,4 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
         _underlyingOwners[vaultMinter] = newList2;
 
         return true;
-      }
-    }
-    return false;
-  }
-}
+ */

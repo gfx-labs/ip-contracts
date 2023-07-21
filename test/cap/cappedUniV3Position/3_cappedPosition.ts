@@ -11,12 +11,12 @@ import { expect } from "chai";
 import { toNumber } from "../../../util/math";
 import {
     VaultNft__factory,
-    UniSwap__factory
+    UniSwap__factory,
+    IVault,
+    IVault__factory
 } from "../../../typechain-types";
 import { nearestUsableTick } from "@uniswap/v3-sdk";
 import { stealMoney } from "../../../util/money";
-import { IVault__factory } from "../../../typechain-types/factories/lending/IVault.sol";
-import { IVault } from "../../../typechain-types/lending/IVault.sol";
 require("chai").should();
 
 
