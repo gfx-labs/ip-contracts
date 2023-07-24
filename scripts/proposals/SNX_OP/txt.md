@@ -1,11 +1,11 @@
 # Proposal to add list SNX on the Optimism Deploy of Interest Protocol
 
 ## Overview
-The Optimism deployment of Interest Protocol has been completed and is nearly ready for action.  
+The Optimism deployment of Interest Protocol has been completed and is ready for action.  
 
 While several tokens have already been listed on this deployment, the final remaining task is to confirm that cross chan governance is working. To this end, this cross chain proposal will list SNX on the Optimism deployment. 
 
-For simplicity, all assets are currently listed with a cap. 
+For simplicity, all current and future assets will be listed with a cap. 
 
 The following have already been listed on the Optimism deployment, with their associated oracle deployments: 
 
@@ -44,11 +44,28 @@ Notable exchanges: Uniswap V3, Binance, Coinbase, Gemini
 ## Technical risks
 
 Type of contract: LP token  
-Time: Optimism Genisis 
+Time: Optimism Genesis  
 Value:  
 Privileges: SNX Governance  
 Upgradability: None  
 
 ## Relevant References
+[SNX website](https://synthetix.io/)
 
+## Technical Cross Chain Governance Details
 
+[Layer 1 Cross Chain Messenger](https://etherscan.io/address/0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1#code)  
+This is the official contract for sending data from Mainnet to Optimism. 
+
+[Cross Chain Account](https://optimistic.etherscan.io/address/0x48fa7528bFD6164DdF09dF0Ed22451cF59c84130)  
+This contract receives the data sent from Mainnet, and forwards it to the Interest Protocol contracts. As such, this contract has ownership of all Interest Protocol contracts on Optimism. 
+
+All of the data to make these transactions happen must be carefully nested in the proposal on Mainnet. The script to do this can be found [here](https://gfx.cafe/ip/contracts/-/blob/master/scripts/proposals/SNX_OP/propose.ts)
+
+So for example, if we are to set the new oracle on the [Oracle Master](https://optimistic.etherscan.io/address/0xBdCF0bb40eb8642f907133bDB5Fcc681D81f0651), we need to first package the data to do this, which we can call addOracleData.  
+
+Then we take this data, and use it as the "bytes" argument when we call call to forward(address,bytes) on the [Cross Chain Account](https://optimistic.etherscan.io/address/0x48fa7528bFD6164DdF09dF0Ed22451cF59c84130) on Optimism. This function takes two arguments, first the Oracle Master address on Optimism, and second, our addOracleData (bytes).
+
+We take our addOracleForwardData, and pass it as the _message (bytes) when we call sendMessage(address,bytes,uint32) on the [Layer 1 Cross Chain Messenger](https://etherscan.io/address/0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1#code)
+
+Assuming the Oracle Master on Optimism has its owner set to the [Cross Chain Account](https://optimistic.etherscan.io/address/0x48fa7528bFD6164DdF09dF0Ed22451cF59c84130), this should set the new relay as expected. 

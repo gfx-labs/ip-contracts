@@ -433,7 +433,7 @@ contract VaultController is
     // get the vault that the liquidator wishes to liquidate
     IVault vault = getVault(id);
 
-    //Q2 2023 upgrade
+    //Q3 2023 upgrade
     //decrease the vault's liability
     if (asset_address == _positionWrapper) {
       //liability to 0

@@ -1,4 +1,4 @@
-# Proposal to add the capability for Interest Protocol to utilize Uniswap V3 Positions as collateral
+# Proposal to Utilize Uniswap V3 Positions as collateral
 This proposal will complete the necessary upgrades in order to allow for Uniswap V3 Positions to be used as collateral.  
 
 ## Overview
@@ -6,7 +6,12 @@ This proposal will complete the necessary upgrades in order to allow for Uniswap
 The first pool being listed is the [wETH/wBTC pool @ fee: 3000](https://info.uniswap.org/#/pools/0xcbcdf9626bc03e24f779434178a73a0b4bad62ed)  
 
 In order to fully understand the pricing of Uniswap v3 positions, it is important to first understand the basics of how concentrated liquidity works in Uniswap V3. 
-The [Uniswap V3 Development Book](https://uniswapv3book.com/) is a good resource for this.  
+The [Uniswap V3 Development Book](https://uniswapv3book.com/) is a good resource for this.   
+
+This proposal will include a small upgrade to the Vault Controller to allow for effective liquidations to work. Specifically, liquidations where the collateral being liquidated is a Uniswap V3 Position will be total.  
+<u>__There are no partial liquidations__</u>.   
+As such, any liquidation of a loan where more than one position exists in the vault will transfer all positions to the liquidator. As such, the Vault Controller upgrade is needed to set the liability to 0 after liquidation, rather than compute the new liability. 
+
 More details on the inner workings of this upgrade to be found [below](#detailed-description). 
 
 ## Parameters
@@ -33,8 +38,8 @@ Type of contract: ERC-721 [NonfungiblePositionManager](https://etherscan.io/addr
 Underlying asset: wBTC/wETH  
 Time: Deployed May 4, 2021  
 Value: Uniswap V3 Position  
-Privileges: Owned by Uniswap Governance  
-Upgradability: Yes  
+Privileges: None  
+Upgradability: No  
 
 ## Relevant References
 [Uniswap V3 Development Book](https://uniswapv3book.com/)  
@@ -65,7 +70,10 @@ The key difference lies in the balanceOf function of the Univ3CollateralToken. T
 
 Positions are associated with a minter’s wallet address in an array. Multiple positions are allowed, and are stored in a dynamic array, which can be read by calling depositedPositions(address minter). 
 
-Partial liquidations are not allowed, in the case of liquidation, the liquidator will receive all positions held by the vault. 
+<u>__Partial liquidations are not allowed, in the case of liquidation, the liquidator will receive all positions held by the vault.__ </u>  
+
+Additionally, if a vault contains any standard or capped assets in addition to any Uniswap V3 Positions, those assets must be completely liquidated __before__ liquidation of the Uniswap position can occur. 
+
 
 Partial withdrawals are allowed. For the “amount” argument, pass the index of the position to withdraw with respect to where it is stored in the dynamic array. Mutation of the list is handled such that if a middle index is withdrawn, its index in the array will be replaced with the final index, and the new array’s length will be reduced by 1. 
 

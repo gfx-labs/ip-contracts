@@ -58,7 +58,7 @@ describe("Token Setup", () => {
         let weth_minter = "0x8EB8a3b98659Cce290402893d0123abb75E3ab28"
 
         await stealMoney(usdc_minter, s.Frank.address, s.USDC.address, s.USDC_AMOUNT)
-        await stealMoney(usdc_minter, s.Dave.address, s.USDC.address, s.USDC_AMOUNT.mul(10))
+        await stealMoney(usdc_minter, s.Dave.address, s.USDC.address, s.USDC_AMOUNT.mul(50))
 
         await stealMoney(weth_minter, s.Bob.address, s.WETH.address, s.WETH_AMOUNT.mul(2))
         await stealMoney(wbtc_minter, s.Bob.address, s.wbtcAddress, s.wBTC_Amount)
@@ -71,6 +71,10 @@ describe("Token Setup", () => {
         await stealMoney(weth_minter, s.Gus.address, s.WETH.address, s.WETH_AMOUNT.mul(3))
         await stealMoney(wbtc_minter, s.Gus.address, s.wbtcAddress, s.wBTC_Amount.mul(3))
         await stealMoney(usdc_minter, s.Gus.address, s.USDC.address, s.USDC_AMOUNT)
+
+        await stealMoney(weth_minter, s.Andy.address, s.WETH.address, s.WETH_AMOUNT.mul(3))
+        await stealMoney(wbtc_minter, s.Andy.address, s.wbtcAddress, s.wBTC_Amount.mul(3))
+        await stealMoney(usdc_minter, s.Andy.address, s.USDC.address, s.USDC_AMOUNT)
 
     })
 })

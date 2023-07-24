@@ -12,7 +12,7 @@ import { ProposalContext } from "../suite/proposal"
 import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
 import { showBody, showBodyCyan } from "../../../util/format"
 import * as fs from 'fs'
-import { currentBlock, fastForward, hardhat_mine, resetCurrent, resetCurrentOP } from "../../../util/block"
+import { currentBlock, fastForward, hardhat_mine, reset, resetCurrent, resetCurrentOP } from "../../../util/block"
 import hre from 'hardhat'
 import { OptimisimAddresses, OptimisimDeploys, MainnetAddresses } from "../../../util/addresser";
 import { BytesLike } from "ethers"
@@ -61,7 +61,7 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
             d.CappedSNX,
             SnxLiqInc
         )
-    const listForward = await new CrossChainAccount__factory().attach(m.OPcrossChainMessenger).
+    const listForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
         populateTransaction.forward(d.VaultController, listData.data!)
     const list = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
         populateTransaction.sendMessage(d.VaultController, listForward.data!, 1000000)
@@ -73,7 +73,7 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
             a.snxAddress,
             d.CappedSNX
         )
-    const registerForward = await new CrossChainAccount__factory().attach(m.OPcrossChainMessenger).
+    const registerForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
         populateTransaction.forward(d.VotingVaultController, registerData.data!)
     const register = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
         populateTransaction.sendMessage(d.VotingVaultController, registerForward.data!, 1000000)
@@ -173,7 +173,8 @@ async function main() {
     if (networkName == "hardhat" || networkName == "localhost") {
         console.log("TEST PROPOSAL")
         await network.provider.send("evm_setAutomine", [true])
-        await resetCurrent()
+        //await resetCurrent()
+        await reset(17696267)
         const block = await currentBlock()
         console.log("reset to block ", block.number)
         await impersonateAccount(proposerAddr)
