@@ -7,7 +7,7 @@ import "../controller/NftVaultController.sol";
 
 import "../IVaultController.sol";
 import "../IVault.sol";
-import "../../oracle/External/V3PositionValuator.sol";
+import "../controller/V3PositionValuator.sol";
 
 import "../../_external/uniswap/INonfungiblePositionManager.sol";
 
