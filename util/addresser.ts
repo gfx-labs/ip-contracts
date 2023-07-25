@@ -115,8 +115,10 @@ export class OptimisimAddresses {
     readonly rethAddress: string = "0x9Bcef72be871e61ED4fBbc7630889beE758eb81D"
     readonly snxAddress: string = "0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4"
 
+    //Contracts
+    readonly nfpManager: string = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
 
-    //oracle contracts
+    //Price Feeds
     readonly wETH_CL_FEED: string = "0x13e3ee699d1909e989722e753853ae30b17e08c5"
     readonly wETH_UNI_POOL: string = "0x85149247691df622eaF1a8Bd0CaFd40BC45154a9" //wETH/USDC 500 pool CONTRACT NOT VERRIFIED
 
@@ -140,6 +142,10 @@ export class OptimisimAddresses {
 
     readonly SNX_CL_FEED: string = "0x2fcf37343e916eaed1f1ddaaf84458a359b53877"
     readonly SNX_UNI_POOL: string = "0x0392b358CE4547601BEFa962680BedE836606ae2"
+
+    
+    //v3 pools
+    readonly wETH_USDC_POOL: string = this.wETH_UNI_POOL //~6.82mm TVL 
 
 }
 
