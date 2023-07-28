@@ -1,6 +1,7 @@
 import { BN } from "../../../util/number"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import {
+    CappedNonStandardToken__factory,
     CrossChainAccount__factory,
     GovernorCharlieDelegate,
     GovernorCharlieDelegate__factory, ILayer1Messenger, ILayer1Messenger__factory, OracleMaster__factory,
@@ -40,6 +41,14 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
 
     const proposal = new ProposalContext("SNX on OP")
 
+    //set cap for cwBTC
+    const setCapData = await new CappedNonStandardToken__factory().attach(d.CappedWbtc).populateTransaction
+        .setCap(BN("190e18"))
+    const setCapForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).populateTransaction.
+        forward(d.CappedWbtc, setCapData.data!)
+    const setCap = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(d.optimismMessenger, setCapForward.data!, 1000000)
+
     //set relay
     const addOracleData = await new OracleMaster__factory().
         attach(d.Oracle).
@@ -78,7 +87,7 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
     const register = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
         populateTransaction.sendMessage(d.optimismMessenger, registerForward.data!, 1000000)
 
-
+    proposal.addStep(setCap, "sendMessage(address,bytes,uint32)")
     proposal.addStep(addOracle, "sendMessage(address,bytes,uint32)")
     proposal.addStep(list, "sendMessage(address,bytes,uint32)")
     proposal.addStep(register, "sendMessage(address,bytes,uint32)")

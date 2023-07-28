@@ -24,6 +24,9 @@ wstEthOracle: "0xB765006321C6Be998f0ef62802d2548E76870D3B"
 CappedRETH: "0x399bA3957D0e5F6e62836506e760787FDDFb01c3"  
 rEthOracle: "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"  
 
+### Set Cap for Capped wBTC
+The cap for Capped wBTC needs to be adjusted via proposal, as it currently uses the incorrect units. 
+
 ## Parameters
 
 Token Address: [0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4](https://optimistic.etherscan.io/address/0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4)  
@@ -37,15 +40,14 @@ Price deviation: 10%
 ## Liquidity
 
 Market Cap: $881,541,610  
-Liquidity: [~$800k on Uniswap V3](https://info.uniswap.org/#/optimism/pools/0x0392b358ce4547601befa962680bede836606ae2)
-24h volume: $11mm
-Notable exchanges: Uniswap V3, Binance, Coinbase, Gemini
+Liquidity: [~$800k on Uniswap V3](https://info.uniswap.org/#/optimism/pools/0x0392b358ce4547601befa962680bede836606ae2)  
+24h volume: $11mm  
+Notable exchanges: Uniswap V3, Binance, Coinbase, Gemini  
 
 ## Technical risks
 
 Type of contract: LP token  
 Time: Optimism Genesis  
-Value:  
 Privileges: SNX Governance  
 Upgradability: None  
 
