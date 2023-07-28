@@ -3,8 +3,9 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import {
     CrossChainAccount__factory,
     GovernorCharlieDelegate,
-    GovernorCharlieDelegate__factory, ILayer1Messenger, ILayer1Messenger__factory, OracleMaster__factory,
+    GovernorCharlieDelegate__factory, ILayer1Messenger, ILayer1Messenger__factory, NftVaultController__factory, OracleMaster__factory,
     ProxyAdmin__factory,
+    V3PositionValuator__factory,
     VaultController__factory,
     VotingVaultController__factory
 } from "../../../typechain-types"
@@ -25,8 +26,17 @@ const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 
 /*****************************CHANGE THESE/*****************************/
 const proposeFromScript = true //IF TRUE, PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
-const SnxLTV = BN("70e16")
-const SnxLiqInc = BN("75e15")
+const LTV = BN("65e16")
+const LiquidationIncentive = BN("8e16")
+
+//tennative deploys on op
+let PositionValuator = "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF"
+let WrappedPosition = "0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00"
+let NftVaultController = "0x4c5859f0F772848b2D91F1D83E2Fe57935348029"
+let newVcImplementation = "0x5f3f1dBD7B74C6B46e8c44f98792A1dAf8d69154"
+
+const POOL_ADDR = a.wETH_USDC_POOL
+const nfpManagerAddr = a.nfpManager
 
 
 const proposerAddr = "0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908"
@@ -38,14 +48,14 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
         govAddress
     )
 
-    const proposal = new ProposalContext("SNX on OP")
+    const proposal = new ProposalContext("Uni V3 on OP")
 
     //set relay
     const addOracleData = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            d.CappedSNX,
-            d.SnxOracle
+            WrappedPosition,
+            PositionValuator
         )
     const addOracleForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).populateTransaction.
         forward(d.Oracle, addOracleData.data!)
@@ -56,37 +66,65 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
     const listData = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            d.CappedSNX,
-            SnxLTV,
-            d.CappedSNX,
-            SnxLiqInc
+            WrappedPosition,
+            LTV,
+            WrappedPosition,
+            LiquidationIncentive
         )
     const listForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
         populateTransaction.forward(d.VaultController, listData.data!)
     const list = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
         populateTransaction.sendMessage(d.optimismMessenger, listForward.data!, 1000000)
 
-    //register vvc
-    const registerData = await new VotingVaultController__factory().
-        attach(d.VotingVaultController).
-        populateTransaction.registerUnderlying(
-            a.snxAddress,
-            d.CappedSNX
-        )
+    //register nft controller
+    const registerData = await new NftVaultController__factory(proposer).
+        attach(NftVaultController).
+        populateTransaction.registerUnderlying(WrappedPosition, nfpManagerAddr)
     const registerForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
-        populateTransaction.forward(d.VotingVaultController, registerData.data!)
+        populateTransaction.forward(NftVaultController, registerData.data!)
     const register = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
         populateTransaction.sendMessage(d.optimismMessenger, registerForward.data!, 1000000)
+
+    //upgrade
+    const upgradeData = await new ProxyAdmin__factory(proposer).attach(d.ProxyAdmin).
+        populateTransaction.upgrade(d.VaultController, newVcImplementation)
+    const upgradeForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
+        populateTransaction.forward(d.ProxyAdmin, upgradeData.data!)
+    const upgrade = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(d.optimismMessenger, upgradeForward.data!, 1000000)
+
+    //set position wrapper on vault controller
+    const setPrData = await new VaultController__factory(proposer).
+        attach(d.VaultController).populateTransaction.
+        setPositionWrapperAddress(WrappedPosition)
+    const setPrForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
+        populateTransaction.forward(d.VaultController, setPrData.data!)
+    const setPositionWrapper = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(d.optimismMessenger, setPrForward.data!, 1000000)
+
+    //register pool
+    const registerPoolData = await new V3PositionValuator__factory(proposer).
+        attach(PositionValuator).populateTransaction.registerPool(
+            POOL_ADDR,
+            d.wBtcOracle,
+            d.EthOracle
+        )
+    const registerPoolForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
+        populateTransaction.forward(PositionValuator, registerPoolData.data!)
+    const registerPool = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(d.optimismMessenger, registerPoolForward.data!, 1000000)
 
 
     proposal.addStep(addOracle, "sendMessage(address,bytes,uint32)")
     proposal.addStep(list, "sendMessage(address,bytes,uint32)")
     proposal.addStep(register, "sendMessage(address,bytes,uint32)")
-
+    proposal.addStep(upgrade, "sendMessage(address,bytes,uint32)")
+    proposal.addStep(setPositionWrapper, "sendMessage(address,bytes,uint32)")
+    proposal.addStep(registerPool, "sendMessage(address,bytes,uint32)")
 
     let out = proposal.populateProposal()
 
-    const proposalText = fs.readFileSync('./scripts/proposals/SNX_OP/txt.md', 'utf8')
+    const proposalText = fs.readFileSync('./scripts/proposals/UniPosition_OP/txt.md', 'utf8')
 
     if (proposeFromScript) {
         console.log("Sending proposal")
