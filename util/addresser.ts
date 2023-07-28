@@ -154,6 +154,7 @@ export class OptimisimDeploys {
     readonly Curve: string = "0xC3A17DC6b70cD58f8aE49Fb969CCA5A57cf84A73"
     readonly ThreeLines: string = "0x7C53378987F6e82050b1244B4d836f785147544b"
     readonly CappedImplementation: string = "0x54fE0D5dA2C787a93f2Dcb4d25E202C4e44e4458"
+    readonly CappedNonStandardImplementation: string = "0x227bABe533fa9a1085f5261210E0B7137E44437B"
     readonly CappedWeth: string = "0x696607447225f6690883e718fd0Db0Abaf36B6E2"
     readonly EthOracle: string = "0xcB88cf29121E5380c818A7dd4E8C21d964369dF3"
     readonly CappedWbtc: string = "0x5a83002E6d8dF75c79ADe9c209F21C31B0AB14B2"

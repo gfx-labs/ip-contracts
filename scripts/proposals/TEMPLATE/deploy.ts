@@ -124,26 +124,14 @@ async function main() {
     //check for test network
     const networkName = hre.network.name
     if (networkName == "hardhat" || networkName == "localhost") {
-<<<<<<< HEAD
-        console.log("TEST DEPLOYMENT")
-        await network.provider.send("evm_setAutomine", [true])
-        await resetCurrent()
-=======
         await network.provider.send("evm_setAutomine", [true])
         await resetCurrent()
         console.log("TEST DEPLOYMENT AT BLOCK: ", await (await currentBlock()).number)
->>>>>>> bigCleanup
     } else {
         console.log("DEPLOYING TO MAINNET")
     }
 
 
-<<<<<<< HEAD
-    const block = await currentBlock()
-    console.log("Block: ", block.number)
-
-=======
->>>>>>> bigCleanup
     const accounts = await ethers.getSigners();
     const deployer = accounts[0];
     console.log("Deployer: ", deployer.address)
