@@ -182,8 +182,8 @@ async function main() {
     if (networkName == "hardhat" || networkName == "localhost") {
         console.log("TEST PROPOSAL")
         await network.provider.send("evm_setAutomine", [true])
-        //await resetCurrent()
-        await reset(17696267)
+        await resetCurrent()
+        //await reset(17696267)
         const block = await currentBlock()
         console.log("reset to block ", block.number)
         await impersonateAccount(proposerAddr)
@@ -193,7 +193,7 @@ async function main() {
     } else {
         const accounts = await ethers.getSigners()
         proposer = accounts[1]
-        console.log("PROPOSING ON MAINNET AS: ", proposer.address)
+        console.log(`PROPOSING ON ${networkName} AS: `, proposer.address)
     }
 
     await proposestEthSTABLE(proposer)
@@ -206,3 +206,4 @@ main()
         process.exit(1)
     })
 
+//Proposal sent:  0x4ab79dd0fb8673e6b951494307644977da481b09e68ec7c51f0d6534ebd34a80

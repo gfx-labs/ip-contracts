@@ -1,9 +1,11 @@
-# Proposal to add list SNX on the Optimism Deploy of Interest Protocol
+# Proposal to list SNX on the Optimism Deployment of Interest Protocol
 
 ## Overview
-The Optimism deployment of Interest Protocol has been completed and is ready for action.  
+The Optimism deployment of Interest Protocol has been completed and is ready for action!  
 
-While several tokens have already been listed on this deployment, the final remaining task is to confirm that cross chan governance is working. To this end, this cross chain proposal will list SNX on the Optimism deployment. 
+[See the announcement here!](https://forums.interestprotocol.io/t/interest-protocol-optimism/217)  
+
+While several tokens have already been listed on this deployment, the final remaining task is to confirm that cross chain governance is working. To this end, this cross chain proposal will list [SNX](https://optimistic.etherscan.io/address/0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4) on the Optimism deployment. 
 
 For simplicity, all current and future assets will be listed with a cap. 
 
@@ -11,9 +13,6 @@ The following have already been listed on the Optimism deployment, with their as
 
 CappedWeth: "0x696607447225f6690883e718fd0Db0Abaf36B6E2"  
 EthOracle: "0xcB88cf29121E5380c818A7dd4E8C21d964369dF3"  
-  
-CappedWbtc: "0x5a83002E6d8dF75c79ADe9c209F21C31B0AB14B2"  
-wBtcOracle: "0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a"  
   
 CappedOp: "0xb549c8cc8011CA0d023A73DAD54d725125b25F31"  
 OpOracle: "0x8C8AE22fea16C43743C846902eC7E34204894189"  
@@ -25,7 +24,11 @@ CappedRETH: "0x399bA3957D0e5F6e62836506e760787FDDFb01c3"
 rEthOracle: "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"  
 
 ### Set Cap for Capped wBTC
-The cap for Capped wBTC needs to be adjusted via proposal, as it currently uses the incorrect units. 
+wBTC has already been listed as well, however the cap for Capped wBTC needs to be adjusted via proposal, as it currently uses the incorrect units. 
+
+CappedWbtc: "0x5a83002E6d8dF75c79ADe9c209F21C31B0AB14B2"  
+wBtcOracle: "0xDDB3BCFe0304C970E263bf1366db8ed4DE0e357a"  
+  
 
 ## Parameters
 
@@ -55,6 +58,8 @@ Upgradability: None
 [SNX website](https://synthetix.io/)
 
 ## Technical Cross Chain Governance Details
+
+The following describes the general process for which mainnet IP governance will control the Optimisim deployment. 
 
 [Layer 1 Cross Chain Messenger](https://etherscan.io/address/0x25ace71c97B33Cc4729CF772ae268934F7ab5fA1#code)  
 This is the official contract for sending data from Mainnet to Optimism. 
