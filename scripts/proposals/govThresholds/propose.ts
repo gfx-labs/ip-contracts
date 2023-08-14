@@ -31,6 +31,12 @@ const propose = async (proposer: SignerWithAddress) => {
     govAddress
   );
 
+  //txt only proposal
+  out.targets = ["0x0000000000000000000000000000000000000000"]//out.targets,
+  out.values = [BN("0")]
+  out.signatures = [""]
+  out.calldatas = ["0x"]
+
   const data = await gov.connect(proposer).populateTransaction.propose(
     out.targets,
     out.values,
@@ -44,10 +50,10 @@ const propose = async (proposer: SignerWithAddress) => {
   if (proposeFromScript) {
     console.log("Sending proposal")
     const result = await gov.connect(proposer).propose(
-      ["0x0000000000000000000000000000000000000000"],//out.targets,
-      [BN("0")],
-      [""],
-      ["0x"],
+      out.targets,
+      out.values,
+      out.signatures,
+      out.calldatas,
       proposalText,
       false
     )
