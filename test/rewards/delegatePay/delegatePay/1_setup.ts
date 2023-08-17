@@ -44,15 +44,17 @@ describe("Token Setup", () => {
                 amount: BN("12374800000000000000000")
             },
              */
-            /**
-             {
-                minter: "0xe967F2232a6030BCc1D05E2CC5Dfa8fBB3ce9B53",//Adonis
-                amount: BN("9882500000000000000000")
+            {
+                minter: "0xc6510245a3d961746db4883916d2d600e19f4ff3",//diago ortiz
+                amount: BN("733860000000000000000")
             },
-             */
+            {
+                minter: "0xe967F2232a6030BCc1D05E2CC5Dfa8fBB3ce9B53",//Adonis
+                amount: BN("4124580000000000000000")
+            },
             {
                 minter: "0x5fee8d7d02B0cfC08f0205ffd6d6B41877c86558",//IPTman
-                amount: BN("14000560000000000000000")
+                amount: BN("22508800000000000000000")
             }
         ]
     })

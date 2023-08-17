@@ -3,6 +3,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
     GovernorCharlieDelegate,
     GovernorCharlieDelegate__factory, OracleMaster__factory,
+    USDI__factory,
     VaultController__factory,
     VotingVaultController__factory
 } from "../../../typechain-types";
@@ -31,54 +32,35 @@ const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
  */
 
 /*****************************CHANGE THESE/*****************************/
-const proposerAddr = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
+const proposerAddr = "0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908"//"0x958892b4a0512b28AaAC890FC938868BBD42f064"
 
 //if true: 
 //proposerAddr must have proposal power
 //if true && running on a live network:
 //PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
-const proposeFromScript = true
+const proposeFromScript = false
 
-const CappedTOKEN_ADDR = "0x5F39aD3df3eD9Cf383EeEE45218c33dA86479165"
-const AnchoredViewRelay = "0x8415011818C398dC40258f699a7cb58C85953F43"
-const TOKEN_ADDR = "0x514910771AF9Ca656af840dff83E8264EcF986CA"
-const TOKEN_LiqInc = BN("75000000000000000")
-const TOKEN_LTV = BN("75e16")
+
 /***********************************************************************/
 
 const proposeTOKEN = async (proposer: SignerWithAddress) => {
-    const proposal = new ProposalContext("LIST TOKEN")
+    const proposal = new ProposalContext("Pay USDI")
 
-    const addOracleTOKEN = await new OracleMaster__factory().
-        attach(d.Oracle).
-        populateTransaction.setRelay(
-            CappedTOKEN_ADDR,
-            AnchoredViewRelay
-        )
-    const listTOKEN = await new VaultController__factory().
-        attach(d.VaultController).
-        populateTransaction.registerErc20(
-            CappedTOKEN_ADDR,
-            TOKEN_LTV,
-            CappedTOKEN_ADDR,
-            TOKEN_LiqInc
+    const feemsAddr = "0x6DD6934452eB4E6D87B9c874AE0EF83ec3bd5803"
+    const amount = BN("600e18")
+
+    const pay = await new USDI__factory(proposer).attach(d.USDI).
+        populateTransaction.transfer(
+            feemsAddr,
+            amount
         )
 
-    const registerTOKEN_VVC = await new VotingVaultController__factory().
-        attach(d.VotingVaultController).
-        populateTransaction.registerUnderlying(
-            TOKEN_ADDR,
-            CappedTOKEN_ADDR
-        )
+    proposal.addStep(pay, "transfer(address,uint256)")
 
-    //list TOKEN
-    proposal.addStep(addOracleTOKEN, "setRelay(address,address)")
-    proposal.addStep(listTOKEN, "registerErc20(address,uint256,address,uint256)")
-    proposal.addStep(registerTOKEN_VVC, "registerUnderlying(address,address)")
 
     let out = proposal.populateProposal()
 
-    const proposalText = fs.readFileSync('./scripts/proposals/TEMPLATE/TOKEN_Proposal_Txt.md', 'utf8');
+    const proposalText = fs.readFileSync('./scripts/proposals/PayUSDi/txt.md', 'utf8');
 
     let gov: GovernorCharlieDelegate;
     gov = new GovernorCharlieDelegate__factory(proposer).attach(
@@ -93,8 +75,8 @@ const proposeTOKEN = async (proposer: SignerWithAddress) => {
         proposalText,
         false
     )
-
-    if (proposeFromScript) {
+    const networkName = hre.network.name
+    if (proposeFromScript || networkName == "hardhat" || networkName == "localhost") {
         console.log("Sending proposal")
         const result = await gov.connect(proposer).propose(
             out.targets,
@@ -106,13 +88,14 @@ const proposeTOKEN = async (proposer: SignerWithAddress) => {
         )
         const receipt = await result.wait()
         console.log("Proposal sent: ", receipt.transactionHash)
-        const networkName = hre.network.name
         if (networkName == "hardhat" || networkName == "localhost") {
             //test execution if on test network 
             console.log("Testing execution")
             await quickTest(proposer)
         }
-    } else {
+    }
+
+    if (!proposeFromScript || networkName == "hardhat" || networkName == "localhost") {
         console.log("TRANSACTION DATA: \n", data.data)
         //fs.writeFileSync('./scripts/proposals/MKR/proposalHexData.txt', JSON.stringify(data))
     }
