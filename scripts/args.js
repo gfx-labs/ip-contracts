@@ -1,13 +1,10 @@
 module.exports = [
-    "1",
-    "0x85a5fD00bB725661F639F7300D48f64671D33BE5",
+    "101",
+    "0x0542Bb6Fb48244beA6E59accfb6Da58096CcF89e",
     "0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3",
-    "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2"
+    "0xEba2255b1e8Bb9A5fcD456cf115A467e61008D73"
 ]
+
 /**
-hh verify --network mainnet --constructor-args ./scripts/args.js 0x140526c946C60F59177ab63D3BF1dAF3e3916fDB 
-
-hh verify --network mainnet --constructor-args ./scripts/args.js 0x140526c946C60F59177ab63D3BF1dAF3e3916fDB 
-
-
+hh verify --network mainnet --constructor-args ./scripts/args.js 0x0a3A5A32C7B76556D0bBF16da1ef24F6f2162992 
 */
