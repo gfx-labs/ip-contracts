@@ -4,19 +4,14 @@ pragma solidity 0.8.9;
 import {IVault} from "../IVault.sol";
 import {IVaultController} from "../IVaultController.sol";
 import "../../_external/IERC20.sol";
-import "../../_external/IERC20.sol";
 import "../../_external/Context.sol";
 import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
 import {MKRLike} from "../../_external/MKRLike.sol";
 import {MKRVotingVaultController} from "../controller/MKRVotingVaultController.sol";
 
-interface TokenLike_1 {
-  function approve(address, uint256) external returns (bool);
-}
-
 interface VoteDelegate {
-  function iou() external view returns (TokenLike_1);
+  function iou() external view returns (IERC20);
 
   function gov() external view returns (address);
 
@@ -48,7 +43,9 @@ contract MKRVotingVault is Context {
     bool delegated;
   }
 
-  mapping(address => DelegationStatus) delegationStatuses;
+  ///@notice delegation status per mkrLikeToken
+  ///@notice all or nothing delegation per mkrLikeToken
+  mapping(address => DelegationStatus) public delegationStatuses;
 
   /// @notice Metadata of vault, aka the id & the minter's address
   VaultInfo private _vaultInfo;
@@ -91,7 +88,10 @@ contract MKRVotingVault is Context {
     return _vaultInfo.id;
   }
 
-  ///note no more amount
+  function delegationStatus(address mkrLikeToken) external view returns (DelegationStatus memory) {
+    return delegationStatuses[mkrLikeToken];
+  }
+
   function delegateMKRLikeTo(address delegatee, address tokenAddress) external onlyMinter {
     uint256 amount = IERC20(tokenAddress).balanceOf(address(this));
 
@@ -102,24 +102,19 @@ contract MKRVotingVault is Context {
     delegationStatuses[tokenAddress] = DelegationStatus({delegatee: delegatee, delegated: true});
   }
 
-  ///note no more amount
   function undelegateMKRLike(address delegatee) external onlyMinter {
     require(delegationStatuses[VoteDelegate(delegatee).gov()].delegated, "Not delegated");
     _undelegate(delegatee);
   }
 
   function _undelegate(address delegatee) internal {
-    TokenLike_1 iou = VoteDelegate(delegatee).iou();
+    IERC20 iou = VoteDelegate(delegatee).iou();
     uint256 amount = IERC20(address(iou)).balanceOf(address(this));
 
     iou.approve(delegatee, amount);
     MKRLike(delegatee).free(amount);
 
     delete delegationStatuses[VoteDelegate(delegatee).gov()];
-  }
-
-  function delegationStatus(address mkrLikeToken) external view returns (DelegationStatus memory) {
-    return delegationStatuses[mkrLikeToken];
   }
 
   ///@notice if delegated, we need to un-delegate to allow for liquidations

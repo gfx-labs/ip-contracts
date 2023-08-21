@@ -20,6 +20,7 @@
         "./scripts/**/*",
         "./proposals/**/*",
         "./scripts/*",
+        "./scripts",
         "./test/**/*",
         "./typechain-types/**/*",
         "./util/**/*"

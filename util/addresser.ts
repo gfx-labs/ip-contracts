@@ -38,6 +38,7 @@ export class MainnetAddresses {
     readonly CRVaddress: string = "0xD533a949740bb3306d119CC777fa900bA034cd52"
     readonly LDOaddress: string = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"
     readonly balancerAddress: string = "0xba100000625a3754423978a60c9317c58a424e3D"
+    readonly rplAddress: string = "0xB4EFd85c19999D84251304bDA99E90B92300Bd93"
 
     constructor() { }
 }
@@ -60,12 +61,16 @@ export class MainnetDeploys {
     readonly VotingVaultController: string = "0xaE49ddCA05Fe891c6a5492ED52d739eC1328CBE2"
     readonly CappedMakrImplementation: string = "0x99904e5369c551e0a9824E9E95141C46ae2E1B0f"
     readonly MKRVotingVaultController: string = "0x491397f7eb6f5d9B82B15cEcaBFf835bA31f217F"
-    readonly MKRVotingVaultControllerImplementation: string = "0xEba2255b1e8Bb9A5fcD456cf115A467e61008D73"
+    readonly MKRVotingVaultControllerImplementation: string = "0x7B6160a0C3963903c2a050C6637009E2c1C60137"//update
+    //readonly MKRVotingVaultControllerImplementation: string = "0xEba2255b1e8Bb9A5fcD456cf115A467e61008D73"//old
 
 }
 
 //standard cap tokens
 export class MainnetCappedTokens {
+
+    readonly CappedGovTokenImplementation = "0x9F86bf2C380d3C63177e6104320Fd3D1DcAE88DA"
+
     readonly CappedENS: string = "0xfb42f5AFb722d2b01548F77C31AC05bf80e03381"
     readonly EnsAnchorView: string = "0x6DB54416CBB28C6a78F606947df53E83Dd69eb70"
 
@@ -85,6 +90,8 @@ export class MainnetCappedTokens {
     readonly CrvAnchorView: string = "0x864991b13691806be077E7Ca9ef566FE7762F908"
 
     readonly CappedCBETH: string = "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"
+
+    readonly CappedYFI: string = "0xe2C1d2E7aA4008081CAAFc350A040246b9EBB579"
 
     //capped mkr is a separate cap token contract, but is very similar to existing cap tokens in practice
     readonly CappedMKR: string = "0xbb5578c08bC08c15AcE5cd09c6683CcCcB2A9148"

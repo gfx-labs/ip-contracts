@@ -3,7 +3,6 @@ import { ProxyAdmin, TransparentUpgradeableProxy__factory } from "../typechain-t
 
 import { mineBlock } from "./block";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Proxy } from "../typechain-types/_external/ozproxy";
 
 export const DeployContractWithProxy = async (
     factory: ContractFactory,

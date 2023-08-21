@@ -1,10 +1,9 @@
 import { BN } from "../../../util/number"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import {
-    MKRVotingVaultController,
-    MKRVotingVaultController__factory,
-    CappedMkrToken,
-    CappedMkrToken__factory,
+    RPLVotingVaultController,
+    RPLVotingVaultController__factory,
+    CappedGovToken__factory,
     UniswapV3TokenOracleRelay,
     UniswapV3TokenOracleRelay__factory,
     AnchoredViewRelay,
@@ -13,7 +12,8 @@ import {
     ChainlinkOracleRelay__factory,
     ProxyAdmin__factory,
     TransparentUpgradeableProxy__factory,
-    IOracleRelay
+    IOracleRelay,
+    CappedGovToken
 } from "../../../typechain-types"
 import { toNumber } from "../../../util/math"
 import { a, c, d } from "../../../util/addresser"
@@ -24,66 +24,42 @@ import { currentBlock, resetCurrent } from "../../../util/block"
 
 const { ethers } = require("hardhat")
 
-const uniPriceFeed = "0xe8c6c9227491C0a8156A0106A0204d881BB7E531"
-const clFeed = "0xec1d1b3b0443256cc3860e24a46f108e699484aa"
+const uniPriceFeed = "0x632E675672F2657F227da8D9bB3fE9177838e726"
+const clFeed = "0x4e155ed98afe9034b7a5962f6c84c86d869daa9d"
 
-let MKRVotingController: MKRVotingVaultController
-let CappedMKR: CappedMkrToken
+let CappedRPL: CappedGovToken
 
 let uniswapOracle: IOracleRelay
 let chainlinkOracle: IOracleRelay
 let anchorViewRelay: IOracleRelay
 
-const deployController = async (deployer: SignerWithAddress) => {
-    const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
 
-    /**
-    //MKRVotingController = await new MKRVotingVaultController__factory(deployer).deploy()
-    const initController = await MKRVotingController.initialize(d.VaultController)
-    await initController.wait()
-     */
-    const mkrControllerImp = "0xEba2255b1e8Bb9A5fcD456cf115A467e61008D73"
-
-    const cMKRVVC = await new TransparentUpgradeableProxy__factory(deployer).deploy(
-        mkrControllerImp,
-        proxy.address,
-        "0x"
-    )
-    await cMKRVVC.deployed()
-
-    MKRVotingController = new MKRVotingVaultController__factory(deployer).attach(cMKRVVC.address)
-    await MKRVotingController.initialize(d.VaultController)
-
-    console.log("MKRVotingVaultController initialized", MKRVotingController.address)
-
-
-}
 
 const deployCapTokens = async (deployer: SignerWithAddress) => {
     const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
 
-    const ucMKR = await new CappedMkrToken__factory(deployer).deploy()
-    await ucMKR.deployed()
-    console.log("ucMKR deployed: ", ucMKR.address)
+    const ucRPL = await new CappedGovToken__factory(deployer).deploy()
+    await ucRPL.deployed()
+    console.log("ucRPL deployed: ", ucRPL.address)
 
-    const cMKR = await new TransparentUpgradeableProxy__factory(deployer).deploy(
-        ucMKR.address,
+    const cRPL = await new TransparentUpgradeableProxy__factory(deployer).deploy(
+        ucRPL.address,
         proxy.address,
         "0x"
     )
-    await cMKR.deployed()
+    await cRPL.deployed()
 
-    CappedMKR = new CappedMkrToken__factory(deployer).attach(cMKR.address)
-    console.log("Capped MKR deployed to: ", cMKR.address)
-    const initMKR = await CappedMKR.initialize(
-        "Capped MKR",
-        "cMKR",
-        a.mkrAddress,
+    CappedRPL = new CappedGovToken__factory(deployer).attach(cRPL.address)
+    console.log("Capped RPL deployed to: ", cRPL.address)
+    const initRPL = await CappedRPL.initialize(
+        "Capped RPL",
+        "cRPL",
+        a.rplAddress,
         d.VaultController,
-        "0x491397f7eb6f5d9B82B15cEcaBFf835bA31f217F"
+        d.VotingVaultController
     )
-    await initMKR.wait()
-    console.log("Capped MKR Initialized", CappedMKR.address)
+    await initRPL.wait()
+    console.log("Capped RPL Initialized", CappedRPL.address)
 }
 
 const deployOracles = async (deployer: SignerWithAddress) => {
@@ -119,22 +95,21 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     )
     await anchorViewRelay.deployed()
     console.log("Anchor View Relay address:", anchorViewRelay.address)
-    console.log("MKR anchor view price: ", await toNumber(await anchorViewRelay.currentValue()))
+    console.log("RPL anchor view price: ", await toNumber(await anchorViewRelay.currentValue()))
 }
 
 const deploy = async (deployer: SignerWithAddress) => {
-    //await deployController(deployer)
-    //console.log("Deployed new controller")
+
 
     await deployCapTokens(deployer)
     console.log("All Cap Tokens deployed")
 
-    //await deployOracles(deployer)
-    //console.log("All oracles have been deployed successfully")
+    await deployOracles(deployer)
+    console.log("All oracles have been deployed successfully")
 
-    const MKR_CAP = BN("5400000e18")
-    await CappedMKR.setCap(MKR_CAP)
-    //console.log("Set MKR cap to: ", await toNumber(MKR_CAP))
+    const RPL_CAP = BN("5400000e18")
+    await CappedRPL.setCap(RPL_CAP)
+    //console.log("Set RPL cap to: ", await toNumber(RPL_CAP))
 }
 
 async function main() {
