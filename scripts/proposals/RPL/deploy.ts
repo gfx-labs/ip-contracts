@@ -1,23 +1,13 @@
 import { BN } from "../../../util/number"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import {
-    RPLVotingVaultController,
-    RPLVotingVaultController__factory,
-    CappedGovToken__factory,
-    UniswapV3TokenOracleRelay,
-    UniswapV3TokenOracleRelay__factory,
-    AnchoredViewRelay,
-    AnchoredViewRelay__factory,
-    ChainlinkOracleRelay,
-    ChainlinkOracleRelay__factory,
-    ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory,
-    IOracleRelay,
-    CappedGovToken
+    UniswapV3TokenOracleRelay__factory, AnchoredViewRelay__factory, ChainlinkOracleRelay__factory, IOracleRelay,
+    CappedGovToken,
+    CappedGovToken__factory
 } from "../../../typechain-types"
 import { toNumber } from "../../../util/math"
+import { DeployNewProxyContract } from "../../../util/deploy"
 import { a, c, d } from "../../../util/addresser"
-import { showBody, showBodyCyan } from "../../../util/format"
 import { network } from "hardhat"
 import hre from 'hardhat'
 import { currentBlock, resetCurrent } from "../../../util/block"
@@ -28,38 +18,27 @@ const uniPriceFeed = "0x632E675672F2657F227da8D9bB3fE9177838e726"
 const clFeed = "0x4e155ed98afe9034b7a5962f6c84c86d869daa9d"
 
 let CappedRPL: CappedGovToken
+const rplCap = BN("21000e18")
 
 let uniswapOracle: IOracleRelay
 let chainlinkOracle: IOracleRelay
 let anchorViewRelay: IOracleRelay
 
 
-
 const deployCapTokens = async (deployer: SignerWithAddress) => {
-    const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
-
-    const ucRPL = await new CappedGovToken__factory(deployer).deploy()
-    await ucRPL.deployed()
-    console.log("ucRPL deployed: ", ucRPL.address)
-
-    const cRPL = await new TransparentUpgradeableProxy__factory(deployer).deploy(
-        ucRPL.address,
-        proxy.address,
-        "0x"
-    )
-    await cRPL.deployed()
-
-    CappedRPL = new CappedGovToken__factory(deployer).attach(cRPL.address)
-    console.log("Capped RPL deployed to: ", cRPL.address)
-    const initRPL = await CappedRPL.initialize(
+    CappedRPL = await DeployNewProxyContract(
+        new CappedGovToken__factory(deployer),
+        deployer,
+        d.ProxyAdmin,
+        c.CappedGovTokenImplementation,
         "Capped RPL",
         "cRPL",
         a.rplAddress,
         d.VaultController,
         d.VotingVaultController
     )
-    await initRPL.wait()
-    console.log("Capped RPL Initialized", CappedRPL.address)
+    await CappedRPL.deployed()
+    console.log("Capped RPL deployed: ", CappedRPL.address)
 }
 
 const deployOracles = async (deployer: SignerWithAddress) => {
@@ -67,6 +46,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     const chainlinkFactory = new ChainlinkOracleRelay__factory(deployer)
     const anchorViewFactory = new AnchoredViewRelay__factory(deployer)
 
+    /**
     uniswapOracle = await UniV3Factory.deploy(
         14400,
         uniPriceFeed,
@@ -86,10 +66,14 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     await chainlinkOracle.deployed()
     console.log("ChainLink oracle address:", chainlinkOracle.address)
     console.log("CL Price: ", await toNumber(await chainlinkOracle.currentValue()))
+     */
+
+    const uniOracle = "0x78FCf430D81DD51b367B059Ea2b9FF69FFA8bD74"
+    const clOracle = "0x1474303c04f72D47E0896a7FF8a585b14875C63d"
 
     anchorViewRelay = await anchorViewFactory.deploy(
-        uniswapOracle.address,
-        chainlinkOracle.address,
+        uniOracle,
+        clOracle,
         BN("10"),
         BN("100")
     )
@@ -101,15 +85,16 @@ const deployOracles = async (deployer: SignerWithAddress) => {
 const deploy = async (deployer: SignerWithAddress) => {
 
 
-    await deployCapTokens(deployer)
-    console.log("All Cap Tokens deployed")
+    //await deployCapTokens(deployer)
+    //console.log("All Cap Tokens deployed")
 
     await deployOracles(deployer)
     console.log("All oracles have been deployed successfully")
 
-    const RPL_CAP = BN("5400000e18")
-    await CappedRPL.setCap(RPL_CAP)
-    //console.log("Set RPL cap to: ", await toNumber(RPL_CAP))
+    CappedRPL = CappedGovToken__factory.connect("0x73CCB09737eDA66b66158f140834D68150c4c04B", deployer)
+
+    await CappedRPL.setCap(rplCap)    
+    console.log("Set RPL cap to: ", await toNumber(rplCap))
 }
 
 async function main() {
@@ -134,3 +119,18 @@ main()
         console.error(error)
         process.exit(1)
     })
+
+
+/**
+DEPLOYING TO MAINNET
+Capped RPL deployed:  0x73CCB09737eDA66b66158f140834D68150c4c04B
+All Cap Tokens deployed
+Uniswap oracle address: 0x78FCf430D81DD51b367B059Ea2b9FF69FFA8bD74
+Uni Price:  24.581626512715083
+ChainLink oracle address: 0x1474303c04f72D47E0896a7FF8a585b14875C63d
+CL Price:  24.48525767
+Anchor View Relay address: 0x8D63E151E3b6B0828Bebd212400aB9AaAFdeF312
+RPL anchor view price:  24.48525767
+All oracles have been deployed successfully
+Set RPL cap to:  21000
+*/

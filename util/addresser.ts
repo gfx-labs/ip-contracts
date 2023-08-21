@@ -93,6 +93,9 @@ export class MainnetCappedTokens {
 
     readonly CappedYFI: string = "0xe2C1d2E7aA4008081CAAFc350A040246b9EBB579"
 
+    readonly CappedRPL: string = "0x73CCB09737eDA66b66158f140834D68150c4c04B"
+    readonly RplAnchorView: string = "0x8D63E151E3b6B0828Bebd212400aB9AaAFdeF312"
+    
     //capped mkr is a separate cap token contract, but is very similar to existing cap tokens in practice
     readonly CappedMKR: string = "0xbb5578c08bC08c15AcE5cd09c6683CcCcB2A9148"
     readonly MkrAnchorView: string = "0xCF2FCd9B87113139E809d5F9Ea6f4D571BB1C12a"
@@ -149,6 +152,7 @@ export class OptimisimAddresses {
 
     readonly SNX_CL_FEED: string = "0x2fcf37343e916eaed1f1ddaaf84458a359b53877"
     readonly SNX_UNI_POOL: string = "0x0392b358CE4547601BEFa962680BedE836606ae2"
+
 
     
     //v3 pools

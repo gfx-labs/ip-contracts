@@ -4,7 +4,9 @@ import {
     GovernorCharlieDelegate__factory,
     OracleMaster__factory,
     VaultController__factory,
-    MKRVotingVaultController__factory
+    MKRVotingVaultController__factory,
+    CappedMkrToken__factory,
+    ProxyAdmin__factory
 } from "../../../typechain-types"
 import { ProposalContext } from "../suite/proposal"
 import { a, c, d } from "../../../util/addresser"
@@ -27,8 +29,9 @@ const proposerAddr = "0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908" //account with
 //if true && running on a live network:
 //PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
 const proposeFromScript = true
-const TOKEN_LiqInc = BN("1e17")
-const TOKEN_LTV = BN("70e17")
+const RPL_LTV = BN("6e17")
+const RPL_LIQINC = BN("1e17")
+const mkrCap = BN("1000e18")
 
 const propose = async (proposer: SignerWithAddress) => {
 
@@ -37,32 +40,41 @@ const propose = async (proposer: SignerWithAddress) => {
     const addOracle = await new OracleMaster__factory().
         attach(d.Oracle).
         populateTransaction.setRelay(
-            c.CappedMKR,
-            c.MkrAnchorView
+            c.CappedRPL,
+            c.RplAnchorView
         )
     const list = await new VaultController__factory().
         attach(d.VaultController).
         populateTransaction.registerErc20(
-            c.CappedMKR,
-            BN("70e16"),
-            c.CappedMKR,
-            BN("15e16")
+            c.CappedRPL,
+            RPL_LTV,
+            c.CappedRPL,
+            RPL_LIQINC
         )
     const register = await new MKRVotingVaultController__factory().
         attach(d.MKRVotingVaultController).
         populateTransaction.registerUnderlying(
-            a.mkrAddress,
-            c.CappedMKR
+            a.rplAddress,
+            c.CappedRPL
         )
+
+    const updateCap = await new CappedMkrToken__factory(proposer).attach(c.CappedMKR).
+        populateTransaction.setCap(mkrCap)
+
+    const upgrade = await new ProxyAdmin__factory(proposer).attach(d.ProxyAdmin).
+        populateTransaction.upgrade(d.MKRVotingVaultController, d.MKRVotingVaultControllerImplementation)
 
     proposal.addStep(addOracle, "setRelay(address,address)")
     proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")
     proposal.addStep(register, "registerUnderlying(address,address)")
+    proposal.addStep(updateCap, "setCap(uint256)")
+    proposal.addStep(upgrade, "upgrade(address,address)")
+
 
     let out = proposal.populateProposal()
 
     console.log(out)
-    const proposalText = fs.readFileSync('./scripts/proposals/MKR/txt.md', 'utf8')
+    const proposalText = fs.readFileSync('./scripts/proposals/RPL/txt.md', 'utf8')
 
     let gov: GovernorCharlieDelegate
     gov = new GovernorCharlieDelegate__factory(proposer).attach(
@@ -168,24 +180,3 @@ main()
         console.error(error)
         process.exit(1)
     })
-/**
-{
-  targets: [
-    '0xf4818813045E954f5Dc55a40c9B60Def0ba3D477',
-    '0x4aaE9823Fb4C70490F1d802fC697F3ffF8D5CbE3',
-    '0x491397f7eb6f5d9B82B15cEcaBFf835bA31f217F'
-  ],
-  values: [ 0, 0, 0 ],
-  signatures: [
-    'setRelay(address,address)',
-    'registerErc20(address,uint256,address,uint256)',
-    'registerUnderlying(address,address)'
-  ],
-  calldatas: [
-    '0x000000000000000000000000bb5578c08bc08c15ace5cd09c6683ccccb2a9148000000000000000000000000cf2fcd9b87113139e809d5f9ea6f4d571bb1c12a',
-    '0x000000000000000000000000bb5578c08bc08c15ace5cd09c6683ccccb2a914800000000000000000000000000000000000000000000000009b6e64a8ec60000000000000000000000000000bb5578c08bc08c15ace5cd09c6683ccccb2a91480000000000000000000000000000000000000000000000000214e8348c4f0000',
-    '0x0000000000000000000000009f8f72aa9304c8b593d555f12ef6589cc3a579a2000000000000000000000000bb5578c08bc08c15ace5cd09c6683ccccb2a9148'
-  ]
-}
-//Proposal sent:  0xfab9b08df0a8034d8c9fa2b212c21cef2700c0783cc0e0e0fead6c06e50df932
- */

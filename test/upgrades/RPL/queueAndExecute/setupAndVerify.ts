@@ -90,7 +90,7 @@ describe("Initial Setup", () => {
 
 describe("Deploy, Propose, Execute", async () => {
 
-    let imp: MKRVotingVaultController
+    let imp:string
     let gov: GovernorCharlieDelegate
 
     const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
@@ -162,7 +162,8 @@ describe("Deploy, Propose, Execute", async () => {
     })
 
     it("Deploy new implementation", async () => {
-        imp = await new MKRVotingVaultController__factory(s.Frank).deploy()
+        //already deployed
+        imp = d.MKRVotingVaultControllerImplementation
     })
 
     it("Make proposal", async () => {
@@ -197,7 +198,7 @@ describe("Deploy, Propose, Execute", async () => {
             populateTransaction.setCap(mkrCap)
 
         const upgrade = await new ProxyAdmin__factory(s.Frank).attach(s.ProxyAdmin.address).
-            populateTransaction.upgrade(s.MKRVotingVaultController.address, imp.address)
+            populateTransaction.upgrade(s.MKRVotingVaultController.address, imp)
 
         proposal.addStep(addOracle, "setRelay(address,address)")
         proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")

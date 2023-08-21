@@ -39,7 +39,7 @@ export const DeployContract = async (factory: ContractFactory, deployer: Signer,
     const uVC = await factory.connect(deployer).deploy(...args)
     await mineBlock()
     await uVC.deployed()
-    return mineBlock().then(() => { return factory.attach(uVC.address) })
+    return factory.attach(uVC.address)
 }
 
 
@@ -51,7 +51,7 @@ export const DeployNewProxyContract = async (
     implementation?: string,
     ...args: any[]
 ): Promise<any> => {
-    if (implementation ==  undefined) {
+    if (implementation == undefined) {
         //deploy new implementation
         const newImp = await factory.connect(deployer).deploy()
         await newImp.deployed()
@@ -70,6 +70,5 @@ export const DeployNewProxyContract = async (
     const contract = factory.attach(newProxy.address)
     const initialize = await contract.initialize(...args)
     await initialize.wait()
-    return mineBlock().then(() => { return contract })
-
+    return contract
 }
