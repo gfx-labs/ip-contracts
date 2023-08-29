@@ -38,7 +38,7 @@ export class MainnetAddresses {
     readonly CRVaddress: string = "0xD533a949740bb3306d119CC777fa900bA034cd52"
     readonly LDOaddress: string = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"
     readonly balancerAddress: string = "0xba100000625a3754423978a60c9317c58a424e3D"
-    readonly rplAddress: string = "0xB4EFd85c19999D84251304bDA99E90B92300Bd93"
+    readonly rplAddress: string = "0xD33526068D116cE69F19A9ee46F0bd304F21A51f"
 
     constructor() { }
 }
@@ -93,9 +93,9 @@ export class MainnetCappedTokens {
 
     readonly CappedYFI: string = "0xe2C1d2E7aA4008081CAAFc350A040246b9EBB579"
 
-    readonly CappedRPL: string = "0x73CCB09737eDA66b66158f140834D68150c4c04B"
-    readonly RplAnchorView: string = "0x8D63E151E3b6B0828Bebd212400aB9AaAFdeF312"
-    
+    readonly CappedRPL: string = "0x6b68C5708DAffD0393aCC6A8cc92f8C2146346Ae"
+    readonly RplAnchorView: string = "0xd3CEd54E5f5D950B1B8711A178e4Eab2de5DB3EC"
+
     //capped mkr is a separate cap token contract, but is very similar to existing cap tokens in practice
     readonly CappedMKR: string = "0xbb5578c08bC08c15AcE5cd09c6683CcCcB2A9148"
     readonly MkrAnchorView: string = "0xCF2FCd9B87113139E809d5F9Ea6f4D571BB1C12a"

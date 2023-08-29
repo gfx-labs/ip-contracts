@@ -46,7 +46,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     const chainlinkFactory = new ChainlinkOracleRelay__factory(deployer)
     const anchorViewFactory = new AnchoredViewRelay__factory(deployer)
 
-    /**
+ 
     uniswapOracle = await UniV3Factory.deploy(
         14400,
         uniPriceFeed,
@@ -57,7 +57,7 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     await uniswapOracle.deployed()
     console.log("Uniswap oracle address:", uniswapOracle.address)
     console.log("Uni Price: ", await toNumber(await uniswapOracle.currentValue()))
-
+   /**
     chainlinkOracle = await chainlinkFactory.deploy(
         clFeed,
         BN("1e10"),
@@ -68,11 +68,10 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     console.log("CL Price: ", await toNumber(await chainlinkOracle.currentValue()))
      */
 
-    const uniOracle = "0x78FCf430D81DD51b367B059Ea2b9FF69FFA8bD74"
     const clOracle = "0x1474303c04f72D47E0896a7FF8a585b14875C63d"
 
     anchorViewRelay = await anchorViewFactory.deploy(
-        uniOracle,
+        uniswapOracle.address,
         clOracle,
         BN("10"),
         BN("100")
@@ -85,13 +84,11 @@ const deployOracles = async (deployer: SignerWithAddress) => {
 const deploy = async (deployer: SignerWithAddress) => {
 
 
-    //await deployCapTokens(deployer)
-    //console.log("All Cap Tokens deployed")
+    await deployCapTokens(deployer)
+    console.log("All Cap Tokens deployed")
 
     await deployOracles(deployer)
     console.log("All oracles have been deployed successfully")
-
-    CappedRPL = CappedGovToken__factory.connect("0x73CCB09737eDA66b66158f140834D68150c4c04B", deployer)
 
     await CappedRPL.setCap(rplCap)    
     console.log("Set RPL cap to: ", await toNumber(rplCap))
@@ -105,7 +102,7 @@ async function main() {
         await resetCurrent()
         console.log("TEST DEPLOYMENT AT BLOCK: ", await (await currentBlock()).number)
     } else {
-        console.log("DEPLOYING TO MAINNET")
+        console.log("DEPLOYING TO: ", networkName)
     }
     const accounts = await ethers.getSigners()
     const deployer = accounts[0]
@@ -123,14 +120,14 @@ main()
 
 /**
 DEPLOYING TO MAINNET
-Capped RPL deployed:  0x73CCB09737eDA66b66158f140834D68150c4c04B
+Capped RPL deployed:  0x6b68C5708DAffD0393aCC6A8cc92f8C2146346Ae
 All Cap Tokens deployed
-Uniswap oracle address: 0x78FCf430D81DD51b367B059Ea2b9FF69FFA8bD74
-Uni Price:  24.581626512715083
+Uniswap oracle address: 0xA490CE00E4032A12BEFa2D3B35DeE7333BECfE54
+Uni Price:  24.636389117663093
 ChainLink oracle address: 0x1474303c04f72D47E0896a7FF8a585b14875C63d
 CL Price:  24.48525767
-Anchor View Relay address: 0x8D63E151E3b6B0828Bebd212400aB9AaAFdeF312
-RPL anchor view price:  24.48525767
+Anchor View Relay address: 0xd3CEd54E5f5D950B1B8711A178e4Eab2de5DB3EC
+RPL anchor view price:  24.01491007
 All oracles have been deployed successfully
 Set RPL cap to:  21000
 */

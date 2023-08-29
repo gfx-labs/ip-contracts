@@ -11,14 +11,14 @@ This proposal also includes some housekeeping to fix an incorrect maximum cap on
 ## Parameters
 
 Token Address: 0xD33526068D116cE69F19A9ee46F0bd304F21A51f
-Capped Token address:
+Capped Token address:0x73CCB09737eDA66b66158f140834D68150c4c04B
 LTV: 60%
 Liquidation incentive: 10%
 Maximum Cap: 21,000 RPL (~$1,000,000 market value at time of writing)
-Oracle Address: 
-Primary oracle: Chainlink feed TBD
-Secondary oracle:
-Price deviation: 20%
+Oracle Address: 0x8D63E151E3b6B0828Bebd212400aB9AaAFdeF312
+Primary oracle: 0x1474303c04f72D47E0896a7FF8a585b14875C63d
+Secondary oracle: 0x78FCf430D81DD51b367B059Ea2b9FF69FFA8bD74
+Price deviation: 10%
 
 ## Liquidity
 
