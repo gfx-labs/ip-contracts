@@ -43,26 +43,6 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
 
     const proposal = new ProposalContext("SNX on OP")
 
-    //set cap for cwBTC
-    const setCapData = await new CappedNonStandardToken__factory().attach(d.CappedWbtc).populateTransaction
-        .setCap(BN("190e18"))
-    const setCapForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).populateTransaction.
-        forward(d.CappedWbtc, setCapData.data!)
-    const setCap = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
-        populateTransaction.sendMessage(d.optimismMessenger, setCapForward.data!, 1000000)
-
-    //set relay
-    const addOracleData = await new OracleMaster__factory().
-        attach(d.Oracle).
-        populateTransaction.setRelay(
-            d.CappedSNX,
-            d.SnxOracle
-        )
-    const addOracleForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).populateTransaction.
-        forward(d.Oracle, addOracleData.data!)
-    const addOracle = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
-        populateTransaction.sendMessage(d.optimismMessenger, addOracleForward.data!, 1000000)
-
     //register erc20
     const listData = await new VaultController__factory().
         attach(d.VaultController).
@@ -75,25 +55,9 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
     const listForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
         populateTransaction.forward(d.VaultController, listData.data!)
     const list = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
-        populateTransaction.sendMessage(d.optimismMessenger, listForward.data!, 1000000)
+        populateTransaction.sendMessage(d.optimismMessenger, listForward.data!, 1500000)
 
-    //register vvc
-    const registerData = await new VotingVaultController__factory().
-        attach(d.VotingVaultController).
-        populateTransaction.registerUnderlying(
-            a.snxAddress,
-            d.CappedSNX
-        )
-    const registerForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
-        populateTransaction.forward(d.VotingVaultController, registerData.data!)
-    const register = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
-        populateTransaction.sendMessage(d.optimismMessenger, registerForward.data!, 1000000)
-
-    proposal.addStep(setCap, "sendMessage(address,bytes,uint32)")
-    proposal.addStep(addOracle, "sendMessage(address,bytes,uint32)")
     proposal.addStep(list, "sendMessage(address,bytes,uint32)")
-    proposal.addStep(register, "sendMessage(address,bytes,uint32)")
-
 
     let out = proposal.populateProposal()
 
