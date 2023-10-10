@@ -39,6 +39,8 @@ export class MainnetAddresses {
     readonly LDOaddress: string = "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32"
     readonly balancerAddress: string = "0xba100000625a3754423978a60c9317c58a424e3D"
     readonly rplAddress: string = "0xD33526068D116cE69F19A9ee46F0bd304F21A51f"
+    readonly oethAddress: string = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3"
+    readonly woethAddress: string = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192"
 
     constructor() { }
 }

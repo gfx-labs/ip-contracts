@@ -15,11 +15,11 @@ Specifically, the listing of SNX on the Oracle Master failed due to the ownershi
 
 This in turn  resulted in the listing of SNX on the Vault Controller to fail, as the listing on the Oracle Master must occur prior to listing on the Vault Controller. 
 
-However, listing SNX on the VotingVaultController did indeed occur successfully! Likewise, the cap for Capped WBTC has been updated, and this asset is now ready for use on Optimism!
+However, listing SNX on the VotingVaultController did indeed occur successfully! Likewise, the cap for Capped WBTC has been updated, and WBTC is now ready for use as collateral on Optimism!
 
 **No security or integrity issues have occurred as a result of this error.**
 
-Currently, it is possible to deposit SNX and receive Capped SNX, however this asset has no LTV or oracle price at the moment. 
+Currently, it is possible to deposit SNX and receive Capped SNX, however Capped SNX will have no LTV or oracle price at the moment. 
 
 Borrowers should note: While it is possible to deposit SNX for Capped SNX, if a vault contains a listed asset in addition and is not solvent, then withdrawal of the SNX will be impossible until solvency is reached. 
 
