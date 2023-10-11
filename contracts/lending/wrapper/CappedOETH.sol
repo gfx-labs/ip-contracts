@@ -110,14 +110,15 @@ contract CappedOETH is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     // check allowance and ensure transfer success
     uint256 allowance = _underlying.allowance(_msgSender(), address(this));
     require(allowance >= amount, "Insufficient Allowance");
-    // mint this token, the collateral token, to the vault
-    ERC20Upgradeable._mint(address(vault), amount);
 
     console.log("bouda wrap");
-    wrap(amount, address(votingVault));
+    uint256 shares = wrap(amount, address(votingVault));
+
+    // mint this token, the collateral token, to the vault
+    ERC20Upgradeable._mint(address(vault), shares);
   }
 
-  function wrap(uint256 amount, address votingVault) internal {
+  function wrap(uint256 amount, address votingVault) internal returns (uint256) {
     // send the actual underlying here so we can wrap it first
     _underlying.safeTransferFrom(_msgSender(), address(this), amount);
 
@@ -130,10 +131,9 @@ contract CappedOETH is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     console.log("Wrapping: ", _underlying.balanceOf(address(this)));
 
     //send woeth to voting vault
-    woeth.deposit(amount, votingVault);
+    return woeth.deposit(amount, votingVault);
   }
 
-  //todo this will need to unwrap
   function transfer(address recipient, uint256 amount) public override returns (bool) {
     uint96 vault_id = _votingVaultController.vaultId(_msgSender());
     // only vaults will ever send this. only vaults will ever hold this token.
@@ -141,23 +141,16 @@ contract CappedOETH is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     // get the corresponding voting vault
     address voting_vault_address = _votingVaultController.votingVaultAddress(vault_id);
     require(voting_vault_address != address(0x0), "no voting vault");
+    console.log("Burning");
     // burn the collateral tokens from the sender, which is the vault that holds the collateral tokens
     ERC20Upgradeable._burn(_msgSender(), amount);
+    console.log("Getting", amount);
 
-    unwrap(recipient, amount, voting_vault_address);
+    // move the underlying tokens from voting vault to the target
+    _votingVaultController.retrieveUnderlying(amount, voting_vault_address, recipient);
 
+    console.log("GOT");
     return true;
-  }
-
-  function unwrap(address recipient, uint256 amount, address voting_vault_address) internal {
-    console.log("UNWRAP", amount);
-    // move the underlying tokens from voting vault to this contract
-    _votingVaultController.retrieveUnderlying(amount, voting_vault_address, address(this));
-
-    console.log("Retrieved underlying");
-    //now that we have the underlying woeth, we can unwrap it to the target
-    console.log("BURNING");
-    woeth.withdraw(amount, recipient, address(this));
   }
 
   function transferFrom(

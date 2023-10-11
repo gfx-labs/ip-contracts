@@ -78,8 +78,8 @@ describe("Verify Contracts", () => {
     s.BobVotingVault = VotingVault__factory.connect(vaultAddr, s.Bob)
 
     expect(s.BobVotingVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Bob's voting vault setup complete")
-})
-it("Mint voting vault for Carol", async () => {
+  })
+  it("Mint voting vault for Carol", async () => {
 
     let _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_votingVaultAddress(s.CaroLVaultID)
     expect(_vaultId_votingVaultAddress).to.eq("0x0000000000000000000000000000000000000000", "Voting vault not yet minted")
@@ -90,9 +90,9 @@ it("Mint voting vault for Carol", async () => {
     s.CarolVotingVault = VotingVault__factory.connect(vaultAddr, s.Carol)
 
     expect(s.CarolVotingVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Carol's voting vault setup complete")
-})
+  })
 
-it("Bob's Voting Vault setup correctly", async () => {
+  it("Bob's Voting Vault setup correctly", async () => {
     const vaultInfo = await s.BobVotingVault._vaultInfo()
     const parentVault = await s.BobVotingVault.parentVault()
 
@@ -100,13 +100,13 @@ it("Bob's Voting Vault setup correctly", async () => {
 
     expect(vaultInfo.id).to.eq(s.BobVaultID, "Voting Vault ID is correct")
     expect(vaultInfo.vault_address).to.eq(s.BobVault.address, "Vault address is correct")
-})
-it("Carol's Voting Vault setup correctly", async () => {
+  })
+  it("Carol's Voting Vault setup correctly", async () => {
     const vaultInfo = await s.CarolVotingVault._vaultInfo()
 
     expect(vaultInfo.id).to.eq(s.CaroLVaultID, "Voting Vault ID is correct")
     expect(vaultInfo.vault_address).to.eq(s.CarolVault.address, "Vault address is correct")
-})
+  })
 
 })
 
@@ -279,11 +279,7 @@ describe("Setup, Queue, and Execute proposal", () => {
     await ceaseImpersonation(proposer)
 
   })
-
-
 })
-
-
 
 describe("Check Wrapping", () => {
 
@@ -292,17 +288,23 @@ describe("Check Wrapping", () => {
     await s.OETH.connect(s.Carol).approve(s.CappedOETH.address, s.OETH_AMOUNT)
 
     const gas = await getGas(await s.CappedOETH.connect(s.Carol).deposit(s.OETH_AMOUNT, s.CaroLVaultID))
-    showBodyCyan("Gas to deposit: ", gas)
+    showBodyCyan("Gas to deposit and wrap: ", gas)
 
     //verify
     const wbal = await s.wOETH.balanceOf(s.CarolVotingVault.address)
-    showBody(wbal)
+    const capBal = await s.CappedOETH.balanceOf(s.CarolVault.address)
+
+    expect(wbal).to.eq(capBal, "Cap tokens minted matches ending wOETH amount")
 
   })
 
   it("Withdraw and unwrap", async () => {
 
-    const gas = await getGas(await s.CarolVault.connect(s.Carol).withdrawErc20(s.CappedOETH.address, s.OETH_AMOUNT))
+    const gas = await getGas(
+      await s.CarolVault.connect(s.Carol).withdrawErc20(
+        s.CappedOETH.address,
+        await s.CappedOETH.balanceOf(s.CarolVault.address))
+    )
     showBodyCyan("Gas: ", gas)
 
   })

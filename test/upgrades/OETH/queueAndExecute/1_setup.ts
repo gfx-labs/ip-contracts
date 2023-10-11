@@ -28,6 +28,11 @@ describe("hardhat settings", () => {
     })
 })
 
+/**
+ * We are listing wOETH
+ * Deposits can be OETH or wOETH, but naked OETH must be wrapped on deposit
+ * Withdrawals are currently processed in wOETH
+ */
 describe("Initial Setup - OETH", () => {
     it("connect to signers", async () => {
         s.accounts = await ethers.getSigners()
