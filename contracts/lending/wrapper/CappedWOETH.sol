@@ -40,15 +40,15 @@ interface IWOETH {
 /// @notice Users can deposit OETH, which is wrapped to wOETH before being sent to the vault
 /// @dev logic is otherwise the same as CappedGovToken
 /// @dev extends ierc20 upgradable
-contract CappedOETH is Initializable, OwnableUpgradeable, ERC20Upgradeable {
+contract CappedWOETH is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   using SafeERC20Upgradeable for ERC20Upgradeable;
 
   ERC20Upgradeable public _underlying;
   IVaultController public _vaultController;
   VotingVaultController public _votingVaultController;
 
-  IWOETH public constant woeth = IWOETH(0xDcEe70654261AF21C44c093C300eD3Bb97b78192);
-
+  //IWOETH public constant woeth = IWOETH(0xDcEe70654261AF21C44c093C300eD3Bb97b78192);
+  ERC20Upgradeable public immutable oeth = ERC20Upgradeable(0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3);
   // in actual units
   uint256 public _cap;
 
@@ -99,39 +99,33 @@ contract CappedOETH is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   /// @notice deposit _underlying to mint CappedToken
   /// @param amount of underlying to deposit
   /// @param vaultId recipient vault of tokens
-  function deposit(uint256 amount, uint96 vaultId) public {
+  function deposit(uint256 amount, uint96 vaultId, bool depositOETH) public {
+    //todo non reentrant
     require(amount > 0, "Cannot deposit 0");
     VotingVault votingVault = VotingVault(_votingVaultController.votingVaultAddress(vaultId));
     require(address(votingVault) != address(0x0), "invalid voting vault");
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     require(address(vault) != address(0x0), "invalid vault");
+
+    if (depositOETH) {
+      amount = depositAndWrap(amount, address(votingVault));
+    } else {
+      // send the actual underlying to the voting vault for the vault
+      _underlying.safeTransferFrom(_msgSender(), address(votingVault), amount);
+    }
+
     // check cap
     checkCap(amount);
-    // check allowance and ensure transfer success
-    uint256 allowance = _underlying.allowance(_msgSender(), address(this));
-    require(allowance >= amount, "Insufficient Allowance");
-
-    console.log("bouda wrap");
-    uint256 shares = wrap(amount, address(votingVault));
 
     // mint this token, the collateral token, to the vault
-    ERC20Upgradeable._mint(address(vault), shares);
+    ERC20Upgradeable._mint(address(vault), amount);
   }
 
-  function wrap(uint256 amount, address votingVault) internal returns (uint256) {
-    // send the actual underlying here so we can wrap it first
-    _underlying.safeTransferFrom(_msgSender(), address(this), amount);
-
-    //now we have the OETH, so we can wrap to wOETH
-
-    console.log("Approving: ", _underlying.balanceOf(address(this)));
-
-    _underlying.approve(address(woeth), amount);
-
-    console.log("Wrapping: ", _underlying.balanceOf(address(this)));
-
-    //send woeth to voting vault
-    return woeth.deposit(amount, votingVault);
+  function depositAndWrap(uint256 oethAmount, address votingVault) internal returns (uint256) {
+    console.log("Deposit and wrap");
+    oeth.safeTransferFrom(_msgSender(), address(this), oethAmount);
+    oeth.approve(address(_underlying), oethAmount);
+    return IWOETH(address(_underlying)).deposit(oethAmount, votingVault);
   }
 
   function transfer(address recipient, uint256 amount) public override returns (bool) {

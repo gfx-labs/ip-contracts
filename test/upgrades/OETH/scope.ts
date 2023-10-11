@@ -14,7 +14,7 @@ export class TestScope extends MainnetAddresses {
     OETH!: IERC20;
     wOETH!: IERC20;
     OETH_AMOUNT = BN("10e18")
-    CappedOETH!: CappedOETH
+    CappedWOETH!: CappedOETH
     OETH_CAP = BN("350e18")
     OETH_LiqInc = BN("100000000000000000")
     OETH_LTV = BN("7e17")

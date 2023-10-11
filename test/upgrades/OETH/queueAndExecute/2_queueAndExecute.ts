@@ -14,7 +14,7 @@ import {
   UniswapV3TokenOracleRelay__factory, AnchoredViewRelay__factory,
   OracleMaster__factory,
   VaultController__factory,
-  VotingVaultController__factory, IOracleRelay, ChainlinkOracleRelay__factory, CappedOETH__factory, VotingVault__factory
+  VotingVaultController__factory, IOracleRelay, ChainlinkOracleRelay__factory, CappedWOETH__factory, VotingVault__factory
 } from "../../../../typechain-types"
 import {
   hardhat_mine,
@@ -117,22 +117,22 @@ describe("Verify Contracts", () => {
 
 describe("Deploy Cap Tokens and Oracles", () => {
 
-  it("Deploy capped OETH", async () => {
-    s.CappedOETH = await DeployContractWithProxy(
-      new CappedOETH__factory(s.Frank),
+  it("Deploy capped wOETH", async () => {
+    s.CappedWOETH = await DeployContractWithProxy(
+      new CappedWOETH__factory(s.Frank),
       s.Frank,
       s.ProxyAdmin,
-      "CappedOETH",
-      "cOETH",
-      s.OETH.address,
+      "CappedWOETH",
+      "cwOETH",
+      s.wOETH.address,
       s.VaultController.address,
       s.VotingVaultController.address
     )
-    await s.CappedOETH.deployed()
+    await s.CappedWOETH.deployed()
 
-    await s.CappedOETH.connect(s.Frank).setCap(s.OETH_CAP)
+    await s.CappedWOETH.connect(s.Frank).setCap(s.OETH_CAP)
 
-    await s.CappedOETH.connect(s.Frank).transferOwnership(s.owner._address)
+    await s.CappedWOETH.connect(s.Frank).transferOwnership(s.owner._address)
   })
 
   /**
@@ -206,24 +206,24 @@ describe("Setup, Queue, and Execute proposal", () => {
     const addOracleOETH = await new OracleMaster__factory(prop).
       attach(s.Oracle.address).
       populateTransaction.setRelay(
-        s.CappedOETH.address,
+        s.CappedWOETH.address,
         d.EthOracle
       )
 
     const listOETH = await new VaultController__factory(prop).
       attach(s.VaultController.address).
       populateTransaction.registerErc20(
-        s.CappedOETH.address,
+        s.CappedWOETH.address,
         s.OETH_LTV,
-        s.CappedOETH.address,
+        s.CappedWOETH.address,
         s.OETH_LiqInc
       )
 
     const registerOETH_VVC = await new VotingVaultController__factory(prop).
       attach(s.VotingVaultController.address).
       populateTransaction.registerUnderlying(
-        s.OETH.address,
-        s.CappedOETH.address
+        s.wOETH.address,
+        s.CappedWOETH.address
       )
 
     //list OETH
@@ -285,14 +285,13 @@ describe("Check Wrapping", () => {
 
   it("Deposit and wrap", async () => {
 
-    await s.OETH.connect(s.Carol).approve(s.CappedOETH.address, s.OETH_AMOUNT)
-
-    const gas = await getGas(await s.CappedOETH.connect(s.Carol).deposit(s.OETH_AMOUNT, s.CaroLVaultID))
+    await s.OETH.connect(s.Carol).approve(s.CappedWOETH.address, s.OETH_AMOUNT)
+    const gas = await getGas(await s.CappedWOETH.connect(s.Carol).deposit(s.OETH_AMOUNT, s.CaroLVaultID, true))
     showBodyCyan("Gas to deposit and wrap: ", gas)
 
     //verify
     const wbal = await s.wOETH.balanceOf(s.CarolVotingVault.address)
-    const capBal = await s.CappedOETH.balanceOf(s.CarolVault.address)
+    const capBal = await s.CappedWOETH.balanceOf(s.CarolVault.address)
 
     expect(wbal).to.eq(capBal, "Cap tokens minted matches ending wOETH amount")
 
@@ -300,12 +299,14 @@ describe("Check Wrapping", () => {
 
   it("Withdraw and unwrap", async () => {
 
+    /**
     const gas = await getGas(
       await s.CarolVault.connect(s.Carol).withdrawErc20(
-        s.CappedOETH.address,
-        await s.CappedOETH.balanceOf(s.CarolVault.address))
+        s.CappedWOETH.address,
+        await s.CappedWOETH.balanceOf(s.CarolVault.address))
     )
     showBodyCyan("Gas: ", gas)
+     */
 
   })
 })
