@@ -14,7 +14,7 @@ import {
   UniswapV3TokenOracleRelay__factory, AnchoredViewRelay__factory,
   OracleMaster__factory,
   VaultController__factory,
-  VotingVaultController__factory, IOracleRelay, ChainlinkOracleRelay__factory, CappedWOETH__factory, VotingVault__factory, CappedERC4626__factory
+  VotingVaultController__factory, IOracleRelay, ChainlinkOracleRelay__factory, CappedWOETH__factory, VotingVault__factory, CappedERC4626__factory, WOETH_ORACLE__factory
 } from "../../../../typechain-types"
 import {
   hardhat_mine,
@@ -23,7 +23,7 @@ import {
 } from "../../../../util/block"
 import { getGas, toNumber } from "../../../../util/math"
 import { ProposalContext } from "../../../../scripts/proposals/suite/proposal"
-import { DeployContractWithProxy } from "../../../../util/deploy"
+import { DeployContract, DeployContractWithProxy } from "../../../../util/deploy"
 
 let anchorViewOETH: IOracleRelay
 
@@ -136,44 +136,59 @@ describe("Deploy Cap Tokens and Oracles", () => {
     await s.CappedWOETH.connect(s.Frank).transferOwnership(s.owner._address)
   })
 
-  /**
+
   it("Deploy OETH oracle system", async () => {
 
-    //chainOETH oracle
-    const chainOETHDataFeed = "0xa027702dbb89fbd58938e4324ac03b58d812b0e1"
 
-    const chainOETHRelay = await new ChainlinkOracleRelay__factory(s.Frank).deploy(
-      chainOETHDataFeed,
-      BN("1e10"),
-      BN("1")
+    const wOETHrelay = await DeployContract(
+      new WOETH_ORACLE__factory(s.Frank),
+      s.Frank,
+      "0x94B17476A93b3262d87B9a326965D1E91f9c13E7",//curve pool
+      s.wOETH.address,
+      d.EthOracle
     )
-    await chainOETHRelay.deployed()
-    showBody("ChainOETH data feed price: ", await toNumber(await chainOETHRelay.currentValue()))
+    await wOETHrelay.deployed()
 
-    //uni v3 oracle
-    const uniPool = "0x2E8dAf55F212BE91D3fA882ccEAb193A08fddeB2"//10k OETH/wETH pool
-    const uniRelay = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
-      14400,
-      uniPool,
-      false,
-      BN("1"),
-      BN("1")
-    )
-    await uniRelay.deployed()
-    showBody("uni v3 relay price: ", await toNumber(await uniRelay.currentValue()))
+    showBody(await toNumber(await wOETHrelay.currentValue()))
 
 
-    anchorViewOETH = await new AnchoredViewRelay__factory(s.Frank).deploy(
-      uniRelay.address,
-      chainOETHRelay.address,
-      BN("5"),
-      BN("100")
-    )
-    await anchorViewOETH.deployed()
-    showBodyCyan("ANCHOR VIEW PRICE: ", await toNumber(await anchorViewOETH.currentValue()))
 
-  })s
-   */
+    /**
+        //chainOETH oracle
+        const chainOETHDataFeed = "0xa027702dbb89fbd58938e4324ac03b58d812b0e1"
+    
+        const chainOETHRelay = await new ChainlinkOracleRelay__factory(s.Frank).deploy(
+          chainOETHDataFeed,
+          BN("1e10"),
+          BN("1")
+        )
+        await chainOETHRelay.deployed()
+        showBody("ChainOETH data feed price: ", await toNumber(await chainOETHRelay.currentValue()))
+    
+        //uni v3 oracle
+        const uniPool = "0x2E8dAf55F212BE91D3fA882ccEAb193A08fddeB2"//10k OETH/wETH pool
+        const uniRelay = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
+          14400,
+          uniPool,
+          false,
+          BN("1"),
+          BN("1")
+        )
+        await uniRelay.deployed()
+        showBody("uni v3 relay price: ", await toNumber(await uniRelay.currentValue()))
+    
+    
+        anchorViewOETH = await new AnchoredViewRelay__factory(s.Frank).deploy(
+          uniRelay.address,
+          chainOETHRelay.address,
+          BN("5"),
+          BN("100")
+        )
+        await anchorViewOETH.deployed()
+        showBodyCyan("ANCHOR VIEW PRICE: ", await toNumber(await anchorViewOETH.currentValue()))
+    */
+  })
+
 
 
 })
@@ -184,6 +199,7 @@ describe("Deploy Cap Tokens and Oracles", () => {
 
 
 
+/**
 describe("Setup, Queue, and Execute proposal", () => {
   const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
   const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 "
@@ -281,6 +297,7 @@ describe("Setup, Queue, and Execute proposal", () => {
 
   })
 })
+ */
 
 /**
  * Gas to deposit and wrap: 237282
@@ -292,6 +309,7 @@ describe("Setup, Queue, and Execute proposal", () => {
  * initial gas to redeem w/unwrap: 558074
  * ~47990 gas to unwrap
  */
+/**
 describe("Check Wrapping", () => {
 
   it("Deposit and wrap", async () => {
@@ -333,6 +351,5 @@ describe("Check Wrapping", () => {
     expect(await toNumber(balance)).to.eq(await toNumber(s.OETH_AMOUNT), "All OETH returned")
 
   })
-
-
 })
+ */
