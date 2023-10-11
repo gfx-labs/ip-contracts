@@ -14,7 +14,7 @@ import {
   UniswapV3TokenOracleRelay__factory, AnchoredViewRelay__factory,
   OracleMaster__factory,
   VaultController__factory,
-  VotingVaultController__factory, IOracleRelay, ChainlinkOracleRelay__factory, CappedWOETH__factory, VotingVault__factory
+  VotingVaultController__factory, IOracleRelay, ChainlinkOracleRelay__factory, CappedWOETH__factory, VotingVault__factory, CappedERC4626__factory
 } from "../../../../typechain-types"
 import {
   hardhat_mine,
@@ -119,12 +119,13 @@ describe("Deploy Cap Tokens and Oracles", () => {
 
   it("Deploy capped wOETH", async () => {
     s.CappedWOETH = await DeployContractWithProxy(
-      new CappedWOETH__factory(s.Frank),
+      new CappedERC4626__factory(s.Frank),
       s.Frank,
       s.ProxyAdmin,
       "CappedWOETH",
       "cwOETH",
       s.wOETH.address,
+      s.OETH.address,
       s.VaultController.address,
       s.VotingVaultController.address
     )
@@ -281,6 +282,16 @@ describe("Setup, Queue, and Execute proposal", () => {
   })
 })
 
+/**
+ * Gas to deposit and wrap: 237282
+ * Gas to deposit wrapped : 147613
+ * ~90k to wrap
+ * 
+ * gas to withdraw without unwrap: 510084
+ * initial gas to withdraw/unwrap: 583916
+ * initial gas to redeem w/unwrap: 558074
+ * ~47990 gas to unwrap
+ */
 describe("Check Wrapping", () => {
 
   it("Deposit and wrap", async () => {
@@ -297,16 +308,31 @@ describe("Check Wrapping", () => {
 
   })
 
-  it("Withdraw and unwrap", async () => {
+  it("Withdraw", async () => {
 
-    /**
+
     const gas = await getGas(
       await s.CarolVault.connect(s.Carol).withdrawErc20(
         s.CappedWOETH.address,
         await s.CappedWOETH.balanceOf(s.CarolVault.address))
     )
     showBodyCyan("Gas: ", gas)
-     */
+
+
+    //verify
+    //ending wOETH balance in vault should be 0
+    let balance = await s.wOETH.balanceOf(s.CarolVotingVault.address)
+    expect(balance).to.eq(0, "All wOETH removed")
+
+    //ending total supply should be 0
+    let ts = await s.CappedWOETH.totalSupply()
+    expect(ts).to.eq(0, "Total supply returned to 0")
+
+    //ending oeth balance of Carol should be OETH_AMOUNT +- some small amount? 
+    balance = await s.OETH.balanceOf(s.Carol.address)
+    expect(await toNumber(balance)).to.eq(await toNumber(s.OETH_AMOUNT), "All OETH returned")
 
   })
+
+
 })

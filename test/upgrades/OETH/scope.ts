@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainOETHOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, ThreeLines0_100__factory, CappedOETH } from "../../../typechain-types";
+import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, CappedERC4626, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainOETHOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, IUSDI, ICurveMaster, ILido, CappedGovToken, VotingVaultController, ThreeLines0_100__factory, CappedOETH } from "../../../typechain-types";
 import { Addresser, MainnetAddresses } from "../../../util/addresser";
 import { BN } from "../../../util/number";
 
@@ -14,7 +14,7 @@ export class TestScope extends MainnetAddresses {
     OETH!: IERC20;
     wOETH!: IERC20;
     OETH_AMOUNT = BN("10e18")
-    CappedWOETH!: CappedOETH
+    CappedWOETH!: CappedERC4626
     OETH_CAP = BN("350e18")
     OETH_LiqInc = BN("100000000000000000")
     OETH_LTV = BN("7e17")
