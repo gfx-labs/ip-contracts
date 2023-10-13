@@ -19,21 +19,6 @@ interface ICurvePool {
   function price_oracle() external view returns (uint256);
 }
 
-/**
-
-If OETH is ~= to ETH
-And we have an orcle for OETH already
-
-Convert ETH to wOETH price, wOETH price should be gt ETH price
-wOETH amount should be lt OETH amount
-
-use preview deposit
-I give 1 OETH and get x wOETH
-
-
-
- */
-
 contract wOETH_ORACLE is IOracleRelay {
   IWOETH public immutable _priceFeed;
   IOracleRelay public immutable _ethOracle;
@@ -49,31 +34,26 @@ contract wOETH_ORACLE is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
-    console.log("Curve price: ", getCurvePrice());
-
     uint256 curvePrice = getCurvePrice();
     uint256 ethPrice = _ethOracle.currentValue();
     compare(ethPrice, curvePrice);
-    //confirm ethPrice and curvePrice are sufficiently close to eachother
 
+    //apply wOETH conversion
     uint256 priceInOeth = _priceFeed.previewDeposit(AMOUNT);
 
     return ((curvePrice * 1e18) / priceInOeth);
-
-    /**
-    uint256 priceInEth = _priceFeed.rate();
-    uint256 ethPrice = _ethOracle.currentValue();
-
-    return (ethPrice * priceInEth) / 1e18;
-     */
   }
 
+  ///@notice this confirms @param curvePrice is within 1% of @param ethPrices
   function compare(uint256 ethPrice, uint256 curvePrice) internal pure {
-    uint256 buffer = 10000000000000000; //1%
+    uint256 buffer = (curvePrice) / 100;
 
-    ethPrice > curvePrice
-      ? require(ethPrice - curvePrice > buffer, "curvePrice too low")
-      : require(curvePrice - ethPrice > buffer, "curvePrice too high");
+    uint256 upperBounds = curvePrice + buffer;
+    uint256 lowerBounds = curvePrice - buffer;
+
+    require(ethPrice > lowerBounds, "Eth price too low");
+    require(ethPrice < upperBounds, "Eth price too high");
+
   }
 
   function getCurvePrice() internal view returns (uint256 cPrice) {

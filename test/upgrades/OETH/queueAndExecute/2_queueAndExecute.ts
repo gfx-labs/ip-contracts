@@ -29,22 +29,18 @@ let anchorViewOETH: IOracleRelay
 
 require("chai").should()
 describe("Verify Contracts", () => {
+  
   it("Should return the right name, symbol, and decimals", async () => {
-
     expect(await s.USDI.name()).to.equal("USDI Token")
     expect(await s.USDI.symbol()).to.equal("USDI")
     expect(await s.USDI.decimals()).to.equal(18)
-    //expect(await s.USDI.owner()).to.equal(s.Frank.address)
-    //s.owner = await s.USDI.owner()
   })
-
 
   it("Check data on VaultControler", async () => {
     let tokensRegistered = await s.VaultController.tokensRegistered()
     expect(tokensRegistered).to.be.gt(0)
     let interestFactor = await s.VaultController.interestFactor()
     expect(await toNumber(interestFactor)).to.be.gt(1)
-
   })
 
   it("mint vaults for testing", async () => {
@@ -79,6 +75,7 @@ describe("Verify Contracts", () => {
 
     expect(s.BobVotingVault.address.toString().toUpperCase()).to.eq(vaultAddr.toString().toUpperCase(), "Bob's voting vault setup complete")
   })
+
   it("Mint voting vault for Carol", async () => {
 
     let _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_votingVaultAddress(s.CaroLVaultID)
@@ -101,19 +98,14 @@ describe("Verify Contracts", () => {
     expect(vaultInfo.id).to.eq(s.BobVaultID, "Voting Vault ID is correct")
     expect(vaultInfo.vault_address).to.eq(s.BobVault.address, "Vault address is correct")
   })
+
   it("Carol's Voting Vault setup correctly", async () => {
     const vaultInfo = await s.CarolVotingVault._vaultInfo()
 
     expect(vaultInfo.id).to.eq(s.CaroLVaultID, "Voting Vault ID is correct")
     expect(vaultInfo.vault_address).to.eq(s.CarolVault.address, "Vault address is correct")
   })
-
 })
-
-
-
-
-
 
 describe("Deploy Cap Tokens and Oracles", () => {
 
@@ -136,70 +128,22 @@ describe("Deploy Cap Tokens and Oracles", () => {
     await s.CappedWOETH.connect(s.Frank).transferOwnership(s.owner._address)
   })
 
-
   it("Deploy OETH oracle system", async () => {
 
-
-    const wOETHrelay = await DeployContract(
+    anchorViewOETH = await DeployContract(
       new WOETH_ORACLE__factory(s.Frank),
       s.Frank,
       "0x94B17476A93b3262d87B9a326965D1E91f9c13E7",//curve pool
       s.wOETH.address,
       d.EthOracle
     )
-    await wOETHrelay.deployed()
+    await anchorViewOETH.deployed()
 
-    showBody(await toNumber(await wOETHrelay.currentValue()))
-
-
-
-    /**
-        //chainOETH oracle
-        const chainOETHDataFeed = "0xa027702dbb89fbd58938e4324ac03b58d812b0e1"
-    
-        const chainOETHRelay = await new ChainlinkOracleRelay__factory(s.Frank).deploy(
-          chainOETHDataFeed,
-          BN("1e10"),
-          BN("1")
-        )
-        await chainOETHRelay.deployed()
-        showBody("ChainOETH data feed price: ", await toNumber(await chainOETHRelay.currentValue()))
-    
-        //uni v3 oracle
-        const uniPool = "0x2E8dAf55F212BE91D3fA882ccEAb193A08fddeB2"//10k OETH/wETH pool
-        const uniRelay = await new UniswapV3TokenOracleRelay__factory(s.Frank).deploy(
-          14400,
-          uniPool,
-          false,
-          BN("1"),
-          BN("1")
-        )
-        await uniRelay.deployed()
-        showBody("uni v3 relay price: ", await toNumber(await uniRelay.currentValue()))
-    
-    
-        anchorViewOETH = await new AnchoredViewRelay__factory(s.Frank).deploy(
-          uniRelay.address,
-          chainOETHRelay.address,
-          BN("5"),
-          BN("100")
-        )
-        await anchorViewOETH.deployed()
-        showBodyCyan("ANCHOR VIEW PRICE: ", await toNumber(await anchorViewOETH.currentValue()))
-    */
+    showBody(await toNumber(await anchorViewOETH.currentValue()))
   })
-
-
-
 })
 
 
-
-
-
-
-
-/**
 describe("Setup, Queue, and Execute proposal", () => {
   const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
   const proposer = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 "
@@ -224,7 +168,7 @@ describe("Setup, Queue, and Execute proposal", () => {
       attach(s.Oracle.address).
       populateTransaction.setRelay(
         s.CappedWOETH.address,
-        d.EthOracle
+        anchorViewOETH.address
       )
 
     const listOETH = await new VaultController__factory(prop).
@@ -248,15 +192,10 @@ describe("Setup, Queue, and Execute proposal", () => {
     proposal.addStep(listOETH, "registerErc20(address,uint256,address,uint256)")
     proposal.addStep(registerOETH_VVC, "registerUnderlying(address,address)")
 
-
-
-
     await ceaseImpersonation(proposer)
 
     out = proposal.populateProposal()
     //showBody(out)
-
-
   })
 
   it("queue and execute", async () => {
@@ -292,12 +231,10 @@ describe("Setup, Queue, and Execute proposal", () => {
 
     await gov.connect(prop).execute(proposal)
 
-
     await ceaseImpersonation(proposer)
 
   })
 })
- */
 
 /**
  * Gas to deposit and wrap: 237282
@@ -309,7 +246,7 @@ describe("Setup, Queue, and Execute proposal", () => {
  * initial gas to redeem w/unwrap: 558074
  * ~47990 gas to unwrap
  */
-/**
+
 describe("Check Wrapping", () => {
 
   it("Deposit and wrap", async () => {
@@ -352,4 +289,3 @@ describe("Check Wrapping", () => {
 
   })
 })
- */

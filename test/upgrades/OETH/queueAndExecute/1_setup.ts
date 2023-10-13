@@ -80,6 +80,9 @@ describe("Initial Setup - OETH", () => {
         const minter = "0xEADB3840596cabF312F2bC88A4Bb0b93A4E1FF5F"
         await stealMoney(minter, s.Bob.address, s.OETH.address, s.OETH_AMOUNT)
         await stealMoney(minter, s.Carol.address, s.OETH.address, s.OETH_AMOUNT)
+        await stealMoney(minter, s.Gus.address, s.OETH.address, s.OETH_AMOUNT)
+
+        await stealMoney(s.richBinance14, s.Bob.address, s.usdcAddress, s.USDC_AMOUNT)
 
     })
 })

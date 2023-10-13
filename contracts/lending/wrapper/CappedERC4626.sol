@@ -121,7 +121,6 @@ contract CappedERC4626 is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   }
 
   function depositAndWrap(uint256 amount, address votingVault) internal returns (uint256) {
-    console.log("Deposit and wrap");
     _baseUnderlying.safeTransferFrom(_msgSender(), address(this), amount);
     _baseUnderlying.approve(address(_underlying), amount);
     return IERC4626(address(_underlying)).deposit(amount, votingVault);
