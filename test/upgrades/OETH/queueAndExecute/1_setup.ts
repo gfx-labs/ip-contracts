@@ -83,6 +83,8 @@ describe("Initial Setup - OETH", () => {
         await stealMoney(minter, s.Gus.address, s.OETH.address, s.OETH_AMOUNT)
 
         await stealMoney(s.richBinance14, s.Bob.address, s.usdcAddress, s.USDC_AMOUNT)
+        await stealMoney(s.richBinance14, s.Dave.address, s.usdcAddress, s.USDC_AMOUNT.mul(5))
+
 
     })
 })

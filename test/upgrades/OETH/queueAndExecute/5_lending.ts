@@ -35,8 +35,6 @@ describe("Check starting values", () => {
 
 describe("Lending", () => {
     const borrowAmount = BN("500e18")
-
-
     it("Borrow a small amount against capped tokens", async () => {
 
         const startUSDI = await s.USDI.balanceOf(s.Bob.address)
@@ -194,7 +192,7 @@ describe("Liquidations", () => {
 
 
     it("Withdraw after loan", async () => {
-        const voteVaultOETH = await s.OETH.balanceOf(s.BobVotingVault.address)
+        const voteVaultOETH = await s.wOETH.balanceOf(s.BobVotingVault.address)
         expect(voteVaultOETH).to.be.gt(0, "Vote vault holds underlying")
         const vaultCappedOETH = await s.CappedWOETH.balanceOf(s.BobVault.address)
 
@@ -226,11 +224,11 @@ describe("Liquidations", () => {
         const _votingVaultAddress_vaultId = await s.VotingVaultController._votingVaultAddress_vaultId(s.BobVotingVault.address)
         expect(_votingVaultAddress_vaultId.toNumber()).to.eq(s.BobVaultID.toNumber(), "Correct vault ID")
 
-        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.OETH.address)
+        const _underlying_CappedToken = await s.VotingVaultController._underlying_CappedToken(s.wOETH.address)
         expect(_underlying_CappedToken.toUpperCase()).to.eq(s.CappedWOETH.address.toUpperCase(), "Underlying => Capped is correct")
 
         const _CappedToken_underlying = await s.VotingVaultController._CappedToken_underlying(s.CappedWOETH.address)
-        expect(_CappedToken_underlying.toUpperCase()).to.eq(s.OETH.address.toUpperCase(), "Capped => Underlying correct")
+        expect(_CappedToken_underlying.toUpperCase()).to.eq(s.wOETH.address.toUpperCase(), "Capped => Underlying correct")
     })
 })
 
