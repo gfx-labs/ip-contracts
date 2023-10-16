@@ -12,11 +12,10 @@ import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
+import "../../_external/openzeppelin/ReentrancyGuardUpgradeable.sol";
 
-//testing
-import "hardhat/console.sol";
 
-//0xDcEe70654261AF21C44c093C300eD3Bb97b78192
+
 interface IERC4626 {
   // mints exactly shares vault shares to receiver by depositing assets of underlying tokens.
   function mint(uint256 shares, address receiver) external returns (uint256 assets);
@@ -36,7 +35,7 @@ interface IERC4626 {
 /// @dev _underlying should be the wrapped shares, whcih appreciate in price
 /// @dev logic is otherwise the same as CappedGovToken
 /// @dev extends ierc20 upgradable
-contract CappedERC4626 is Initializable, OwnableUpgradeable, ERC20Upgradeable {
+contract CappedERC4626 is Initializable, OwnableUpgradeable, ERC20Upgradeable, ReentrancyGuardUpgradeable {
   using SafeERC20Upgradeable for ERC20Upgradeable;
 
   //should be the wrapped asset
@@ -67,6 +66,7 @@ contract CappedERC4626 is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     address votingVaultController_
   ) public initializer {
     __Ownable_init();
+    __ReentrancyGuard_init();
     __ERC20_init(name_, symbol_);
     _underlying = ERC20Upgradeable(underlying_);
     _baseUnderlying = ERC20Upgradeable(baseUnderlying_);
@@ -98,7 +98,7 @@ contract CappedERC4626 is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   /// @param amount of underlying to deposit
   /// @param vaultId recipient vault of tokens
   /// @param depositBase is true if depositing the rebasing base asset
-  function deposit(uint256 amount, uint96 vaultId, bool depositBase) public {
+  function deposit(uint256 amount, uint96 vaultId, bool depositBase) public nonReentrant{
     //todo non reentrant
     require(amount > 0, "Cannot deposit 0");
     VotingVault votingVault = VotingVault(_votingVaultController.votingVaultAddress(vaultId));
@@ -126,10 +126,6 @@ contract CappedERC4626 is Initializable, OwnableUpgradeable, ERC20Upgradeable {
     return IERC4626(address(_underlying)).deposit(amount, votingVault);
   }
 
-  /**
-    todo
-    might be able to utilize redeem instead of withdraw? 
-   */
   function transfer(address recipient, uint256 amount) public override returns (bool) {
     uint96 vault_id = _votingVaultController.vaultId(_msgSender());
     // only vaults will ever send this. only vaults will ever hold this token.

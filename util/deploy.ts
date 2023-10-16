@@ -37,7 +37,6 @@ export const DeployContractWithProxy = async (
 
 export const DeployContract = async (factory: ContractFactory, deployer: Signer, ...args: any[]): Promise<any> => {
     const uVC = await factory.connect(deployer).deploy(...args)
-    await mineBlock()
     await uVC.deployed()
     return factory.attach(uVC.address)
 }
