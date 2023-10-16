@@ -3,9 +3,6 @@ pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
 
-//testing
-import "hardhat/console.sol";
-
 /*****************************************
  * This gets USD price on Optimism based on the exchange rate
  * found on the RocketOvmPriceOracle @ 0x1a8F81c256aee9C640e14bB0453ce247ea0DFE6F
@@ -36,7 +33,6 @@ contract wOETH_ORACLE is IOracleRelay {
   function currentValue() external view override returns (uint256) {
     uint256 curvePrice = getCurvePrice();
     uint256 ethPrice = _ethOracle.currentValue();
-    compare(ethPrice, curvePrice);
 
     //apply wOETH conversion
     uint256 priceInOeth = _priceFeed.previewDeposit(AMOUNT);
@@ -44,18 +40,7 @@ contract wOETH_ORACLE is IOracleRelay {
     return ((curvePrice * 1e18) / priceInOeth);
   }
 
-  ///@notice this confirms @param curvePrice is within 1% of @param ethPrices
-  function compare(uint256 ethPrice, uint256 curvePrice) internal pure {
-    uint256 buffer = (curvePrice) / 100;
-
-    uint256 upperBounds = curvePrice + buffer;
-    uint256 lowerBounds = curvePrice - buffer;
-
-    require(ethPrice > lowerBounds, "Eth price too low");
-    require(ethPrice < upperBounds, "Eth price too high");
-
-  }
-
+  ///@notice price_oracle() returns a manipulation resistant EMA price
   function getCurvePrice() internal view returns (uint256 cPrice) {
     uint256 ethPrice = _ethOracle.currentValue();
     uint256 priceInEth = _curvePool.price_oracle();

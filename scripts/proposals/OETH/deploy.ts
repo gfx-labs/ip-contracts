@@ -21,13 +21,9 @@ const { ethers } = require("hardhat");
 
 /*****************************CHANGE THESE/*****************************/
 const ASSET_ADDRESS = a.woethAddress
-//const CHAINLINK_DATA_FEED = "0x2c1d072e956affc0d435cb7ac38ef18d24d9127c"
-//const UNIV3_POOL = "0xa6Cc3C2531FdaA6Ae1A3CA84c2855806728693e8"
-const CAP = BN("375000e18")
+const CURVE_POOL = "0x94B17476A93b3262d87B9a326965D1E91f9c13E7"
+const CAP = BN("575e18")
 /***********************************************************************/
-
-
-//const existingImplementation = "0x9F86bf2C380d3C63177e6104320Fd3D1DcAE88DA"
 
 let CappedWOETH: CappedGovToken
 let AnchorView: IOracleRelay
@@ -40,7 +36,7 @@ const deployCapTOKENs = async (deployer: SignerWithAddress) => {
         undefined,
         "CappedWOETH",
         "cwOETH",
-        a.woethAddress,
+        ASSET_ADDRESS,
         a.oethAddress,
         d.VaultController,
         d.VotingVaultController
@@ -53,8 +49,8 @@ const deployOracles = async (deployer: SignerWithAddress) => {
     AnchorView = await DeployContract(
         new WOETH_ORACLE__factory(deployer),
         deployer,
-        "0x94B17476A93b3262d87B9a326965D1E91f9c13E7",//curve pool
-        a.woethAddress,
+        CURVE_POOL,
+        ASSET_ADDRESS,
         d.EthOracle
     )
     await AnchorView.deployed()
@@ -67,14 +63,14 @@ const deploy = async (deployer: SignerWithAddress) => {
 
     await deployCapTOKENs(deployer)
 
-    console.log("All Cap TOKENs deployed")
+    console.log("All contracts deployed")
 
     await deployOracles(deployer)
 
-    console.log("All oracles have been deployed successfully")
+    console.log("All oracles have been deployed")
 
-    //await CappedWOETH.setCap(CAP)
-    //console.log("Set TOKEN cap to: ", await toNumber(CAP))
+    await CappedWOETH.setCap(CAP)
+    console.log("Set cap to: ", await toNumber(CAP))
 
 };
 
@@ -89,8 +85,9 @@ async function main() {
         console.log("DEPLOYING TO MAINNET")
     }
 
-
+    console.log("Getting accounts")
     const accounts = await ethers.getSigners();
+    console.log("Got accounts")
     const deployer = accounts[0];
     console.log("Deployer: ", deployer.address)
 

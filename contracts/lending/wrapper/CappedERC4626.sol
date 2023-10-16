@@ -14,25 +14,21 @@ import "../../_external/openzeppelin/Initializable.sol";
 import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
 import "../../_external/openzeppelin/ReentrancyGuardUpgradeable.sol";
 
-
-
 interface IERC4626 {
-  // mints exactly shares vault shares to receiver by depositing assets of underlying tokens.
-  function mint(uint256 shares, address receiver) external returns (uint256 assets);
-
   // deposits assets of underlying tokens into the vault and grants ownership of shares to receiver
   function deposit(uint256 assets, address receiver) external returns (uint256 shares);
 
-  // redeems a specific number of shares from owner and sends assets of underlying token from the vault to receiver
+  // redeems a specific number of shares from owner and sends assets of underlying token to receiver
   function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets);
-
-  // burns shares from owner and send exactly assets token from the vault to receiver
-  function withdraw(uint256 assets, address receiver, address owner) external returns (uint256 shares);
 }
 
 /// @title CappedERC4626
-/// @notice Wraps rebasing ERC4626 before being sent to the vault
-/// @dev _underlying should be the wrapped shares, whcih appreciate in price
+/// @notice Read more about ERC-4626 - https://eips.ethereum.org/EIPS/eip-4626
+/// @notice Wraps rebasing ERC4626 before being sending the wrapped asset to the IP vault
+/// @notice Deposits can be either the base or the wrapped asset
+/// @notice Withdrawals are ALWAYS the base asset (rebasing)
+/// @dev _underlying should be the wrapped shares, whcih appreciates in price
+/// @dev _baseUnderlying should be the base asset, which appreciates in balance
 /// @dev logic is otherwise the same as CappedGovToken
 /// @dev extends ierc20 upgradable
 contract CappedERC4626 is Initializable, OwnableUpgradeable, ERC20Upgradeable, ReentrancyGuardUpgradeable {
@@ -98,14 +94,17 @@ contract CappedERC4626 is Initializable, OwnableUpgradeable, ERC20Upgradeable, R
   /// @param amount of underlying to deposit
   /// @param vaultId recipient vault of tokens
   /// @param depositBase is true if depositing the rebasing base asset
-  function deposit(uint256 amount, uint96 vaultId, bool depositBase) public nonReentrant{
-    //todo non reentrant
+  function deposit(uint256 amount, uint96 vaultId, bool depositBase) public nonReentrant {
     require(amount > 0, "Cannot deposit 0");
     VotingVault votingVault = VotingVault(_votingVaultController.votingVaultAddress(vaultId));
     require(address(votingVault) != address(0x0), "invalid voting vault");
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     require(address(vault) != address(0x0), "invalid vault");
 
+    //if deposit base (base rebasing token)
+    //then we wrap and get new amount
+    //else we are depositing the wrapped token (appreciates in price rather than balance)
+    //so we just transfer normally
     if (depositBase) {
       amount = depositAndWrap(amount, address(votingVault));
     } else {
@@ -135,7 +134,7 @@ contract CappedERC4626 is Initializable, OwnableUpgradeable, ERC20Upgradeable, R
     require(voting_vault_address != address(0x0), "no voting vault");
     // burn the collateral tokens from the sender, which is the vault that holds the collateral tokens
     ERC20Upgradeable._burn(_msgSender(), amount);
-    // move the underlying tokens from voting vault to the target
+    // move the underlying tokens from voting vault to the this contract so we can then unwrap
     _votingVaultController.retrieveUnderlying(amount, voting_vault_address, address(this));
     return unwrap(amount, recipient);
   }
