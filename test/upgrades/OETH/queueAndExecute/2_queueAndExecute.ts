@@ -3,7 +3,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai"
 import { showBody, showBodyCyan } from "../../../../util/format"
 import { impersonateAccount, ceaseImpersonation } from "../../../../util/impersonator"
-import { a, d } from "../../../../util/addresser"
+import { a, c, d } from "../../../../util/addresser"
 
 import { BN } from "../../../../util/number"
 import {
@@ -167,16 +167,16 @@ describe("Setup, Queue, and Execute proposal", () => {
     const addOracleOETH = await new OracleMaster__factory(prop).
       attach(s.Oracle.address).
       populateTransaction.setRelay(
-        s.CappedWOETH.address,
-        anchorViewOETH.address
+        c.CappedWOETH,
+        c.wOethOracle
       )
 
     const listOETH = await new VaultController__factory(prop).
       attach(s.VaultController.address).
       populateTransaction.registerErc20(
-        s.CappedWOETH.address,
+        c.CappedWOETH,
         s.OETH_LTV,
-        s.CappedWOETH.address,
+        c.CappedWOETH,
         s.OETH_LiqInc
       )
 
@@ -184,7 +184,7 @@ describe("Setup, Queue, and Execute proposal", () => {
       attach(s.VotingVaultController.address).
       populateTransaction.registerUnderlying(
         s.wOETH.address,
-        s.CappedWOETH.address
+        c.CappedWOETH
       )
 
     //list OETH
@@ -251,7 +251,7 @@ describe("Check Wrapping", () => {
 
   it("Deposit and wrap", async () => {
 
-    await s.OETH.connect(s.Carol).approve(s.CappedWOETH.address, s.OETH_AMOUNT)
+    await s.OETH.connect(s.Carol).approve(c.CappedWOETH, s.OETH_AMOUNT)
     const gas = await getGas(await s.CappedWOETH.connect(s.Carol).deposit(s.OETH_AMOUNT, s.CaroLVaultID, true))
     showBodyCyan("Gas to deposit and wrap: ", gas)
 
@@ -268,7 +268,7 @@ describe("Check Wrapping", () => {
 
     const gas = await getGas(
       await s.CarolVault.connect(s.Carol).withdrawErc20(
-        s.CappedWOETH.address,
+        c.CappedWOETH,
         await s.CappedWOETH.balanceOf(s.CarolVault.address))
     )
     showBodyCyan("Gas: ", gas)

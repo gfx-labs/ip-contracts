@@ -42,6 +42,7 @@ const deployCapTOKENs = async (deployer: SignerWithAddress) => {
         d.VotingVaultController
     )
     await CappedWOETH.deployed()
+    console.log("Capped Token Deployed: ", CappedWOETH.address)
 }
 
 const deployOracles = async (deployer: SignerWithAddress) => {
@@ -101,3 +102,17 @@ main()
         console.error(error);
         process.exit(1);
     });
+
+/**
+hh verify --network mainnet 0x739D346421a42beb13FD8D560dd2F42250d4Ac88
+ */
+
+/**
+Deployer:  0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89
+New Implementation Deployed:  0x09fD32C702117BB1dEaA2dD43e2bc8a63A831c7A
+CappedToken Deployed: 0x739D346421a42beb13FD8D560dd2F42250d4Ac88
+All contracts deployed
+Anchor View Price:  1696.4091802028759
+All oracles have been deployed
+Set cap to:  575
+*/

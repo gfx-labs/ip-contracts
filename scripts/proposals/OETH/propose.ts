@@ -39,11 +39,11 @@ const proposerAddr = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
 //PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
 const proposeFromScript = true
 
-const CappedTOKEN_ADDR = "0x5F39aD3df3eD9Cf383EeEE45218c33dA86479165"
-const AnchoredViewRelay = "0x8415011818C398dC40258f699a7cb58C85953F43"
-const TOKEN_ADDR = "0x514910771AF9Ca656af840dff83E8264EcF986CA"
-const TOKEN_LiqInc = BN("75000000000000000")
-const TOKEN_LTV = BN("75e16")
+const CappedTOKEN_ADDR = c.CappedWOETH
+const AnchoredViewRelay = c.wOethOracle
+const TOKEN_ADDR = a.woethAddress
+const TOKEN_LiqInc = BN("1e17")//todo
+const TOKEN_LTV = BN("50e16")
 /***********************************************************************/
 
 const proposeTOKEN = async (proposer: SignerWithAddress) => {
@@ -78,7 +78,7 @@ const proposeTOKEN = async (proposer: SignerWithAddress) => {
 
     let out = proposal.populateProposal()
 
-    const proposalText = fs.readFileSync('./scripts/proposals/TEMPLATE/TOKEN_Proposal_Txt.md', 'utf8');
+    const proposalText = fs.readFileSync('./scripts/proposals/OETH/Proposal_Txt.md', 'utf8');
 
     let gov: GovernorCharlieDelegate;
     gov = new GovernorCharlieDelegate__factory(proposer).attach(
@@ -111,6 +111,8 @@ const proposeTOKEN = async (proposer: SignerWithAddress) => {
             //test execution if on test network 
             console.log("Testing execution")
             await quickTest(proposer)
+            console.log("TRANSACTION DATA: \n", data.data)
+
         }
     } else {
         console.log("TRANSACTION DATA: \n", data.data)
@@ -136,7 +138,7 @@ const quickTest = async (proposer: SignerWithAddress) => {
     await gov.connect(proposer).castVote(proposal, 1)
 
     await ceaseImpersonation(proposerAddr)
-    const whale = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
+    const whale = "0xa6e8772af29b29b9202a073f8e36f447689beef6"
     const prop = ethers.provider.getSigner(whale)
     await impersonateAccount(whale)
     await gov.connect(prop).castVote(proposal, 1)

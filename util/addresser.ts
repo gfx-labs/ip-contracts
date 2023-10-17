@@ -66,7 +66,6 @@ export class MainnetDeploys {
     readonly MKRVotingVaultController: string = "0x491397f7eb6f5d9B82B15cEcaBFf835bA31f217F"
     readonly MKRVotingVaultControllerImplementation: string = "0x7B6160a0C3963903c2a050C6637009E2c1C60137"//update
     //readonly MKRVotingVaultControllerImplementation: string = "0xEba2255b1e8Bb9A5fcD456cf115A467e61008D73"//old
-
 }
 
 //standard cap tokens
@@ -102,6 +101,11 @@ export class MainnetCappedTokens {
     //capped mkr is a separate cap token contract, but is very similar to existing cap tokens in practice
     readonly CappedMKR: string = "0xbb5578c08bC08c15AcE5cd09c6683CcCcB2A9148"
     readonly MkrAnchorView: string = "0xCF2FCd9B87113139E809d5F9Ea6f4D571BB1C12a"
+
+    readonly CappedERC4626Implementation: string = "0x09fD32C702117BB1dEaA2dD43e2bc8a63A831c7A"
+    readonly CappedWOETH: string = "0x739D346421a42beb13FD8D560dd2F42250d4Ac88"
+    readonly wOethOracle: string = "0x7b518e0C898c0Bcd80e8E5B5E8d7735007012834"
+
 }
 
 //capped BPT
