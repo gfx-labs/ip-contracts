@@ -198,6 +198,14 @@ describe("Setup, Queue, and Execute proposal", () => {
     //showBody(out)
   })
 
+  it("transfer ownership for testing post deploy", async () => {
+    s.CappedWOETH = CappedERC4626__factory.connect(c.CappedWOETH, s.Frank)
+
+    await impersonateAccount(s.deployer._address)
+    await s.CappedWOETH.connect(s.deployer).transferOwnership(d.CharlieDelegator)
+    await ceaseImpersonation(s.deployer._address)
+  })
+
   it("queue and execute", async () => {
     const votingPeriod = await gov.votingPeriod()
     const votingDelay = await gov.votingDelay()

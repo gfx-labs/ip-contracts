@@ -46,7 +46,7 @@ const TOKEN_LiqInc = BN("1e17")//todo
 const TOKEN_LTV = BN("50e16")
 /***********************************************************************/
 
-const proposeTOKEN = async (proposer: SignerWithAddress) => {
+const propose = async (proposer: SignerWithAddress) => {
     const proposal = new ProposalContext("LIST TOKEN")
 
     const addOracleTOKEN = await new OracleMaster__factory().
@@ -181,7 +181,7 @@ async function main() {
         }
     }
 
-    await proposeTOKEN(proposer)
+    await propose(proposer)
 
 }
 

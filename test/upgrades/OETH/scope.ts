@@ -17,8 +17,8 @@ export class TestScope extends MainnetAddresses {
     WOETH_AMOUNT!:BigNumber
     CappedWOETH!: CappedERC4626
     OETH_CAP = BN("350e18")
-    OETH_LiqInc = BN("100000000000000000")
-    OETH_LTV = BN("7e17")
+    OETH_LiqInc = BN("1e17")
+    OETH_LTV = BN("5e17")
 
     wETH_LTV = BN("5e17")
 

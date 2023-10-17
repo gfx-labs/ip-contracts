@@ -40,7 +40,6 @@ describe("Testing CappedToken functions", () => {
 
         //wrapped OETH balance should be less than OETH balance
         s.WOETH_AMOUNT = await s.CappedWOETH.balanceOf(s.BobVault.address)
-        showBody(await toNumber(s.WOETH_AMOUNT))
         expect(s.WOETH_AMOUNT).to.be.lt(s.OETH_AMOUNT, "Bob's vault received the capped WOETH tokens")
 
 
