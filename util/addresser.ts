@@ -200,3 +200,6 @@ export const a = new MainnetAddresses()
 export const c = new MainnetCappedTokens()
 
 export const d = new MainnetDeploys()
+
+export const od = new OptimisimDeploys()
+export const oa = new OptimisimAddresses()

@@ -1,15 +1,15 @@
 import { ProxyAdmin__factory } from "@certusone/wormhole-sdk/lib/cjs/ethers-contracts";
-import { CappedERC4626__factory, CappedNonStandardToken__factory, GovernorCharlieDelegate__factory, USDI__factory, VaultController__factory } from "../../typechain-types";
-import { currentBlock, fastForward, hardhat_mine, resetCurrent, resetCurrentOP } from "../../util/block";
+import { CappedERC4626__factory, CappedNonStandardToken__factory, GovernorCharlieDelegate__factory, IUniV3Pool__factory, IVault, IVault__factory, USDI__factory, VaultController__factory } from "../../typechain-types";
+import { currentBlock, fastForward, hardhat_mine, hardhat_mine_timed, resetCurrent, resetCurrentOP } from "../../util/block";
 import { DeployContract } from "../../util/deploy"
 import hre from 'hardhat'
-import { a, c, d } from "../../util/addresser";
+import { a, c, d, oa, od } from "../../util/addresser";
 import { impersonateAccount } from "@nomicfoundation/hardhat-network-helpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ProposalContext } from "../proposals/suite/proposal";
 import { IERC20__factory } from "../../typechain-types/factories/contracts/IPTsale/SlowRoll.sol";
 import { BN } from "../../util/number";
-import { toNumber } from "../../util/math";
+import { getGas, toNumber } from "../../util/math";
 import { showBodyCyan } from "../../util/format";
 import { ceaseImpersonation } from "../../util/impersonator";
 
@@ -43,7 +43,7 @@ const propose = async (proposer: SignerWithAddress) => {
     const startUSDI = await toNumber(await USDI.balanceOf(feems))
 
     await quickTest(proposer)
-    
+
     const endUSDI = await toNumber(await USDI.balanceOf(feems))
 
     console.log("DIFF: ", endUSDI - startUSDI)
@@ -108,7 +108,7 @@ const deposit = async (depositer: SignerWithAddress) => {
         to: minter._address,
         value: BN('1e18')
     }
-    
+
     await depositer.sendTransaction(tx)
 
     //confirm money
@@ -123,12 +123,45 @@ const deposit = async (depositer: SignerWithAddress) => {
     await CappedWOETH.connect(minter).deposit(amount, vaultID, true)
 
 
-    
+
 
 }
 
+const withdraw = async () => {
+
+    console.log("WITHDRAW")
+
+    const vaultID = 11
+    const minterAddr = "0x767A60F295AEDd958932088F9Cd6a4951D8739b6"
+    const minter = ethers.provider.getSigner(minterAddr)
+    const vault: IVault = IVault__factory.connect("0xBd212D1b6f1c31F9B6B1cAc291a00F281C8C7FFb", minter)
+
+    await impersonateAccount(minterAddr)
+    await vault.connect(minter).withdrawErc20(od.CappedOp, BN("1e15"))
+
+}
+
+const increseObs = async (signer: SignerWithAddress) => {
+    let opPool = IUniV3Pool__factory.connect(oa.OP_UNI_POOL, signer)
+    let [,
+        ,
+        ,
+        opObservations,
+        ,
+        ,
+    ] = await opPool.slot0()
+
+    console.log("Current obs: ", opObservations)
+
+    const observations = 4800
+
+    console.log("Setting higher observations...")
+    const result = await opPool.increaseObservationCardinalityNext(observations)
+    const gas = await getGas(result)
+    console.log(`Set OP pool observations to ${observations}, gas: `, gas)
 
 
+}
 
 async function main() {
 
@@ -139,7 +172,7 @@ async function main() {
     const networkName = hre.network.name
     if (networkName == "hardhat" || networkName == "localhost") {
         await network.provider.send("evm_setAutomine", [true])
-        await resetCurrent()
+        await resetCurrentOP()
         console.log("TEST AT BLOCK: ", await (await currentBlock()).number)
         //await impersonateAccount(owner._address)
         //deployer = owner
@@ -150,8 +183,13 @@ async function main() {
     console.log("TESTING")
     //await deposit(deployer)
 
-    await impersonateAccount(proposerAddr)
-    await propose(ethers.provider.getSigner(proposerAddr))
+    //await impersonateAccount(proposerAddr)
+    //await propose(ethers.provider.getSigner(proposerAddr))
+
+    //await increseObs(deployer)
+    await hardhat_mine_timed(5000, 15)
+    await withdraw()
+
 
 
 
