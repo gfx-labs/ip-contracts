@@ -7,7 +7,8 @@ import {
     MKRVotingVaultController__factory,
     CappedMkrToken__factory,
     ProxyAdmin__factory,
-    VotingVaultController__factory
+    InterestProtocolTokenDelegate__factory,
+    InterestProtocolToken__factory
 } from "../../../typechain-types"
 import { ProposalContext } from "../suite/proposal"
 import { a, c, d } from "../../../util/addresser"
@@ -23,59 +24,50 @@ import { impersonateAccount } from "@nomicfoundation/hardhat-network-helpers"
 const { ethers } = require("hardhat")
 
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
-const proposerAddr = "0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908" //account with proposal power
+const proposerAddr = "0x5fee8d7d02B0cfC08f0205ffd6d6B41877c86558" //account with proposal power
+const illegalAddr = "0x41173311aB332fb08d2B0bB9398aE6d178B3aDAf"
+const governorAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 
+const newImpAddr = "0x387EedD357836A73eCEf07067E6360A95C254b17"
+const existingImplementation = "0x384542D720A765aE399CFDDF079CBE515731F044"
 //if true: 
 //proposerAddr must have proposal power
 //if true && running on a live network:
 //PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
 const proposeFromScript = true
-const RPL_LTV = BN("6e17")
-const RPL_LIQINC = BN("1e17")
-const mkrCap = BN("1000e18")
+
 
 const propose = async (proposer: SignerWithAddress) => {
+    
+    const IPT = InterestProtocolTokenDelegate__factory.connect(d.IPT, proposer)
+    const amount = await IPT.balanceOf(illegalAddr)
 
-    const proposal = new ProposalContext("MKR Listing and Contracts")
+    const proposal = new ProposalContext("eminent domain")
 
-    const addOracle = await new OracleMaster__factory().
-        attach(d.Oracle).
-        populateTransaction.setRelay(
-            c.CappedRPL,
-            c.RplAnchorView
-        )
-    const list = await new VaultController__factory().
-        attach(d.VaultController).
-        populateTransaction.registerErc20(
-            c.CappedRPL,
-            RPL_LTV,
-            c.CappedRPL,
-            RPL_LIQINC
-        )
-    const register = await new VotingVaultController__factory().
-        attach(d.VotingVaultController).
-        populateTransaction.registerUnderlying(
-            a.rplAddress,
-            c.CappedRPL
-        )
+    //set new implementation
+    const setImp = await new InterestProtocolToken__factory(proposer).
+      attach(d.IPT).
+      populateTransaction._setImplementation(newImpAddr)
 
-    const updateCap = await new CappedMkrToken__factory(proposer).attach(c.CappedMKR).
-        populateTransaction.setCap(mkrCap)
+    //do the transfer
+    const eminentDomain = await new InterestProtocolTokenDelegate__factory(proposer).
+      attach(d.IPT).
+      populateTransaction.eminentDomain(illegalAddr, governorAddress, amount)
 
-    const upgrade = await new ProxyAdmin__factory(proposer).attach(d.ProxyAdmin).
-        populateTransaction.upgrade(d.MKRVotingVaultController, d.MKRVotingVaultControllerImplementation)
+    //revert to old implementation
+    const revertImp = await new InterestProtocolToken__factory(proposer).
+      attach(d.IPT).
+      populateTransaction._setImplementation(existingImplementation)
 
-    proposal.addStep(addOracle, "setRelay(address,address)")
-    proposal.addStep(list, "registerErc20(address,uint256,address,uint256)")
-    proposal.addStep(register, "registerUnderlying(address,address)")
-    proposal.addStep(updateCap, "setCap(uint256)")
-    proposal.addStep(upgrade, "upgrade(address,address)")
+    proposal.addStep(setImp, "_setImplementation(address)")
+    proposal.addStep(eminentDomain, "eminentDomain(address,address,uint96)")
+    proposal.addStep(revertImp, "_setImplementation(address)")
 
 
     let out = proposal.populateProposal()
 
-    console.log(out)
-    const proposalText = fs.readFileSync('./scripts/proposals/RPL/txt.md', 'utf8')
+    //console.log(out)
+    const proposalText = fs.readFileSync('./scripts/proposals/iptFix/txt.md', 'utf8')
 
     let gov: GovernorCharlieDelegate
     gov = new GovernorCharlieDelegate__factory(proposer).attach(
@@ -135,24 +127,27 @@ const quickTest = async (proposer: SignerWithAddress) => {
 
     await gov.connect(proposer).castVote(proposal, 1)
 
-    await ceaseImpersonation(proposerAddr)
-    const whale = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
+    /**
+     *     await ceaseImpersonation(proposerAddr)
+
+    const whale = "0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
     const prop = ethers.provider.getSigner(whale)
     await impersonateAccount(whale)
     await gov.connect(prop).castVote(proposal, 1)
+     */
 
     showBodyCyan("Advancing a lot of blocks again...")
     await hardhat_mine(votingPeriod.toNumber())
 
-    await gov.connect(prop).queue(proposal)
+    await gov.connect(proposer).queue(proposal)
 
     await fastForward(timelock.toNumber())
 
-    const result = await gov.connect(prop).execute(proposal)
+    const result = await gov.connect(proposer).execute(proposal)
     await result.wait()
     showBodyCyan("EXECUTION COMPLETE")
 
-    await ceaseImpersonation(whale)
+    //await ceaseImpersonation(whale)
 }
 
 

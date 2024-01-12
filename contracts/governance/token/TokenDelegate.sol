@@ -63,6 +63,13 @@ contract InterestProtocolTokenDelegate is TokenDelegateStorageV1, TokenEvents, I
   }
 
   /**
+   * @notice Called by the admin to sieze IPT from @param holder, and transfer to @param recipient
+   */
+  function eminentDomain(address holder, address recipient, uint96 amount) external onlyOwner {
+    _transferTokens(holder, recipient, amount);
+  }
+
+  /**
    * @notice Get the number of tokens `spender` is approved to spend on behalf of `account`
    * @param account The address of the account holding the funds
    * @param spender The address of the account spending the funds
