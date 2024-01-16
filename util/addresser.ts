@@ -42,6 +42,7 @@ export class MainnetAddresses {
     readonly rplAddress: string = "0xD33526068D116cE69F19A9ee46F0bd304F21A51f"
     readonly oethAddress: string = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3"
     readonly woethAddress: string = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192"
+    readonly wstethAddress: string = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"
 
     constructor() { }
 }
