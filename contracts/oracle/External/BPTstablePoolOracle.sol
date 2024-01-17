@@ -72,8 +72,8 @@ contract BPTstablePoolOracle is IOracleRelay {
     (IERC20[] memory tokens, uint256[] memory balances /**uint256 lastChangeBlock */, ) = VAULT.getPoolTokens(_poolId);
 
     //updated 1/2024
-    //tokenAmountIn == 1% of BPT total supply
-    uint256 tokenAmountIn = (_priceFeed.totalSupply() * 1e16) / 1e18;
+    //tokenAmountIn == 1% of token 0 balance
+    uint256 tokenAmountIn = (balances[0] * 1e16) / 1e18;
 
     uint256 outGivenIn = getOutGivenIn(balances, tokenAmountIn);
 

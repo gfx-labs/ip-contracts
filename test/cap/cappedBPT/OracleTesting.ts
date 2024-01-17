@@ -112,14 +112,5 @@ describe("Deploy and test oracles for underlying assets", () => {
 
         showBodyCyan("PRICE: ", await toNumber(await testOracle.currentValue()))
     })
-
-    
-
-    it("Test read", async () => {
-        //showBodyCyan(await toNumber(await oracle.currentValue()))
-
-    })
-
-
 })
 
