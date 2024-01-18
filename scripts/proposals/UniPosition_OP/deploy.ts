@@ -1,21 +1,20 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import {
-    ProxyAdmin__factory,
-    TransparentUpgradeableProxy__factory, V3PositionValuator,
+    V3PositionValuator,
     V3PositionValuator__factory,
     Univ3CollateralToken__factory,
     Univ3CollateralToken,
     NftVaultController,
     NftVaultController__factory,
-    VaultController__factory
+    VaultController__factory,
+    UsdcRelay__factory
 } from "../../../typechain-types"
-import { d } from "../../../util/addresser"
-import { currentBlock, resetCurrent, resetCurrentOP } from "../../../util/block"
+import { od } from "../../../util/addresser"
+import { currentBlock, resetCurrentOP } from "../../../util/block"
 import { DeployNewProxyContract } from "../../../util/deploy"
 import { network } from "hardhat"
 import hre from 'hardhat'
 const { ethers } = require("hardhat")
-
 
 const nfpManagerAddr = '0xC36442b4a4522E871399CD717aBDD847Ab11FE88'
 const FACTORY_V3_ADDR = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
@@ -25,57 +24,32 @@ let PositionValuator: V3PositionValuator
 let NftVC: NftVaultController
 
 const deployOracles = async (deployer: SignerWithAddress) => {
-    const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
-
-    const pvalImplementation = await new V3PositionValuator__factory(deployer).deploy()
-    await pvalImplementation.deployed()
-    console.log("Position Valuator Implementation deployed: ", pvalImplementation.address)
-
-    const pvalProxy = await new TransparentUpgradeableProxy__factory(deployer).deploy(
-        pvalImplementation.address,
-        proxy.address,
-        "0x"
-    )
-    await pvalProxy.deployed()
-
-    PositionValuator = new V3PositionValuator__factory(deployer).attach(pvalProxy.address)
-    const init = await PositionValuator.initialize(
+    PositionValuator = await DeployNewProxyContract(
+        new V3PositionValuator__factory(deployer),
+        deployer,
+        od.ProxyAdmin,
+        od.PositionValuatorImplementation,
         nfpManagerAddr,
         FACTORY_V3_ADDR
     )
-    await init.wait()
-    console.log("Position Valuator initialized: ", PositionValuator.address)
-
+    console.log("Deployed PositionValuator: ", PositionValuator.address)
     return PositionValuator.address
-
 }
 
 const deployWrappedPosition = async (deployer: SignerWithAddress) => {
-    const proxy = ProxyAdmin__factory.connect(d.ProxyAdmin, deployer)
-
-    const wtImplementation = await new Univ3CollateralToken__factory(deployer).deploy()
-    await wtImplementation.deployed()
-    console.log("Wrapped Position Implementation deployed: ", wtImplementation.address)
-
-    const wtProxy = await new TransparentUpgradeableProxy__factory(deployer).deploy(
-        wtImplementation.address,
-        proxy.address,
-        "0x"
-    )
-    await wtProxy.deployed()
-
-    WrappedPosition = new Univ3CollateralToken__factory(deployer).attach(wtProxy.address)
-    const initTOKEN = await WrappedPosition.initialize(
+    WrappedPosition = await DeployNewProxyContract(
+        new Univ3CollateralToken__factory(deployer),
+        deployer,
+        od.ProxyAdmin,
+        od.WrappedPositionImplementation,
         "Wrapped Uniswap V3 Position",
         "wPosition",
         nfpManagerAddr,
-        d.VaultController,
-        d.VotingVaultController,
+        od.VaultController,
+        od.NftController,
         PositionValuator.address
     )
-    await initTOKEN.wait()
-    console.log("Wrapped Position Initialized", WrappedPosition.address)
-
+    console.log("Deployed WrappedPosition: ", WrappedPosition.address)
     return WrappedPosition.address
 }
 
@@ -83,9 +57,9 @@ const deployNftVaultController = async (deployer: SignerWithAddress) => {
     NftVC = await DeployNewProxyContract(
         new NftVaultController__factory(deployer),
         deployer,
-        d.ProxyAdmin,
-        undefined,
-        d.VaultController
+        od.ProxyAdmin,
+        od.NftControllerImplementation,
+        od.VaultController
     )
     console.log("Deployed Nft Controller: ", NftVC.address)
     return NftVC.address
@@ -100,21 +74,24 @@ const deployNewVcImplentation = async (deployer: SignerWithAddress) => {
 
 
 const deploy = async (deployer: SignerWithAddress) => {
+    console.log("Deploying")
 
-    const oracleAddrs = await deployOracles(deployer)
+    //deploy usdc relay
+    const usdcRelay = await new UsdcRelay__factory(deployer).deploy()
+    console.log("UDSC relay deployed: ", usdcRelay.address)
 
-    console.log("All oracles have been deployed successfully")
+    //const oracleAddrs = await deployOracles(deployer)
 
-    const wrappedPosition = await deployWrappedPosition(deployer)
+    //PositionValuator = V3PositionValuator__factory.connect(od.V3PositionValuator, deployer)
+    //const wrappedPosition = await deployWrappedPosition(deployer)
 
-    const nftController = await deployNftVaultController(deployer)
+    //const nftController = await deployNftVaultController(deployer)
 
-    const newImp = await deployNewVcImplentation(deployer)
+    //const newImp = await deployNewVcImplentation(deployer)
 
-    console.log("DONE")
+    //console.log("DONE")
 
-    return [oracleAddrs, wrappedPosition, nftController, newImp]
-
+    //return [oracleAddrs, wrappedPosition, nftController, od.VC_Implementation]
 
 }
 
@@ -152,3 +129,10 @@ main()
     })
 
 
+/**
+Wrapped Position Implementation deployed:  0x833A17FA29bc2772e4302823B7d39eDd7C4bB79a
+Wrapped Position Initialized 0xe7101ec20E1bdfd1509369C026eaD532B17C04c1
+New Implementation Deployed:  0x68338eC08c8bA70230F8621effCb89b2BA45e80F
+Deployed Nft Controller:  0xec993a3C466F6876a79C0AE9E7954E3e0181097a
+New Vault Controller Implementation Deployed:  0x95c157Fe454AC1aDFA17dC9C3745bdBa992F9Caf
+ */

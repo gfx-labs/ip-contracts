@@ -1,5 +1,7 @@
-# Proposal to Utilize Uniswap V3 Positions as collateral
-This proposal will complete the necessary upgrades in order to allow for Uniswap V3 Positions to be used as collateral  
+# Proposal to Utilize Uniswap V3 Positions as Collateral on the Optimism Deployment of Interest Protocol
+This proposal will complete the necessary upgrades in order to allow for Uniswap V3 Positions to be used as collateral on Interest Protocol. 
+
+<b>This is specifically for the Optimism deployment of Interest Protocol only.</b>
 
 ## Overview
 
@@ -16,26 +18,26 @@ More details on the inner workings of this upgrade to be found [below](#detailed
 
 ## Parameters
 
-Pool Address: [0xCBCdF9626bC03E24f779434178A73a0B4bad62eD](https://etherscan.io/token/0xCBCdF9626bC03E24f779434178A73a0B4bad62eD)  
-Wrapper address: UniV3CollateralToken [To Be Deployed](https://etherscan.io/token/0x5F39aD3df3eD9Cf383EeEE45218c33dA86479165)  
+Pool Address: [0x85149247691df622eaF1a8Bd0CaFd40BC45154a9](https://optimistic.etherscan.io/address/0x85149247691df622eaf1a8bd0cafd40bc45154a9)  
+Wrapper address: [UniV3CollateralToken](https://optimistic.etherscan.io/address/0x7131FF92a3604966d7D96CCc9d596F7e9435195c)
 LTV: 75%  
 Liquidation incentive: 7.5%  
-Primary Valuation Contract: V3PositionValuator [To Be Deployed](https://etherscan.io/token/0x5F39aD3df3eD9Cf383EeEE45218c33dA86479165)  
-Underlying Asset Oracle: token 0: [wBTC](https://etherscan.io/token/0x0f2f7aa507d153aC04431a617840d1fF28A960AC)  
-Underlying Asset Oracle: token 1: [wETH](https://etherscan.io/token/0x8eD31D7FF5D2ffBF17Fe3118A61123F50AdB523A)  
+Primary Valuation Contract: [V3PositionValuator](https://optimistic.etherscan.io/address/0x5c69C9551E2fE670eDC82EC0288843c1956eE644)  
+Underlying Asset Oracle: token 0: [wETH](https://optimistic.etherscan.io/address/0xcB88cf29121E5380c818A7dd4E8C21d964369dF3) 
+Underlying Asset Oracle: token 1: [USDC](https://optimistic.etherscan.io/address/0xcEe78cE44e98d16f59C775494Be24E0D2cFF19A4) 
 
 ## Liquidity
 
 POOL: [wETH/USDC fee: 500](https://info.uniswap.org/#/optimism/pools/0x85149247691df622eaf1a8bd0cafd40bc45154a9)  
-TVL: $227,630,000  
-Liquidity at current price: ~2k wETH & ~125 wBTC for ~$7,500,000  
-Volatility: Similar to wETH & wBTC  
-24hr volume (pool): $205,000  
+TVL: $5.36mm  
+Liquidity at current price: ~427 wETH & ~4.27mm USDC
+Volatility: Similar to wETH & USDC  
+24hr volume (pool): $18.84mm
 
 ## Technical risks
 
-Type of contract: ERC-721 [NonfungiblePositionManager](https://etherscan.io/address/0xC36442b4a4522E871399CD717aBDD847Ab11FE88#code)  
-Underlying asset: wBTC/wETH  
+Type of contract: ERC-721 [NonfungiblePositionManager](https://optimistic.etherscan.io/address/0xc36442b4a4522e871399cd717abdd847ab11fe88)  
+Underlying asset: USDC/wETH  
 Time: Deployed May 4, 2021  
 Value: Uniswap V3 Position  
 Privileges: None  
@@ -51,12 +53,15 @@ Upgradability: No
 [V3PositionValuator](https://gfx.cafe/ip/contracts/-/blob/master/contracts/oracle/External/V3PositionValuator.sol)  
 [Univ3CollateralToken](https://gfx.cafe/ip/contracts/-/blob/master/contracts/lending/wrapper/Univ3CollateralToken.sol)  
 
+## Housekeeping
+
+A previous proposal to list SNX had a step which ran out of gas in the cross chain proposal process. This proposal includes a fix for this, and the gas limit has been increased across the board to prevent this from happening in the future. 
 
 ## Detailed Description
 
 Pricing for the positions is determined by a single valuator contract, V3PositionManager. The Position Valuator is an upgradeable proxy which will be owned by Interest Protocol governance. This contract independently calculates the current sqrt price (using external oracles for the two underlying tokens), and then calculates the amounts for the underlying tokens of the position, were they to be withdrawn immediately. Based on these token amounts, we can determine the value of the position
 
-In short, a position is represented by a single non-fungible token ([NFT](https://eips.ethereum.org/EIPS/eip-721)), which contains data describing the position. From this data,  the upper and lower bounds of the position (tickUpper/tickLower) as well as the liquidity are used to determine the price. 
+In short, a position is represented by a single non-fungible token ([NFT](https://eips.ethereum.org/EIPS/eip-721)), which contains data describing the position. From this data, the upper and lower bounds of the position (tickUpper/tickLower) as well as the liquidity are used to determine the price. 
 
 Additionally, the token0, token1, and fee from the position are used to calculate the pool address, which is needed in order to confirm registration of the pool, as well as to determine the correct external oracles to use to price the underlying asset of the pool. The Position Valuator keeps track of which pools are registered for use on Interest Protocol.
 

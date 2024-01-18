@@ -16,6 +16,7 @@ import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 import "../../_external/extensions/ArrayMutation.sol";
 
+
 /// @title Univ3CollateralToken
 /// @notice creates a token worth 1e18 with 18 visible decimals for vaults to consume
 /// @dev extends ierc20 upgradable
@@ -53,6 +54,7 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     __Ownable_init();
     __ERC20_init(name_, symbol_);
 
+
     _underlying = INonfungiblePositionManager(underlying_);
     _positionValuator = V3PositionValuator(positionValuator_);
     _vaultController = IVaultController(vaultController_);
@@ -69,13 +71,10 @@ contract Univ3CollateralToken is Initializable, OwnableUpgradeable, ERC20Upgrade
     require(address(univ3_vault_address) != address(0x0), "invalid nft vault");
 
     ///@notice only allow deposits from registered pools
-    //todo double check if this is needed?
     _positionValuator.verifyPool(tokenId);
 
     IVault vault = IVault(_vaultController.vaultAddress(vaultId));
     add_to_list(vault.minter(), tokenId);
-    //note total supply?
-    //note emit mint event?
 
     _underlying.transferFrom(_msgSender(), univ3_vault_address, tokenId);
   }

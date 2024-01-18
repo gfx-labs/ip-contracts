@@ -47,19 +47,24 @@ describe("Token Setup", () => {
                 minter: "0xe967F2232a6030BCc1D05E2CC5Dfa8fBB3ce9B53",//Adonis
                 amount: BN("4124580000000000000000")
             },
+            {
+                minter: "0x3fb19771947072629c8eee7995a2ef23b72d4c8a",//PGov
+                amount: BN("7271520000000000000000")
+            }
              */
             {
-                minter: "0xc6510245a3d961746db4883916d2d600e19f4ff3",//diago ortiz
-                amount: BN("4870600000000000000000")
+                minter: "0x5762F3074605df17AebE3f5BC8FC7f8702aca752",//Daoplomats/Daostewards
+                amount: BN("824920000000000000000")
+            },
+            {
+                minter: "0xc6510245a3d961746db4883916d2d600e19f4ff3",//diago ortiz Saludiego 
+                amount: BN("4910760000000000000000")
             },
             {
                 minter: "0x5fee8d7d02B0cfC08f0205ffd6d6B41877c86558",//IPTman
-                amount: BN("22681100000000000000000")
+                amount: BN("22742870000000000000000")
             },
-            {
-                minter: "0x3fb19771947072629c8eee7995a2ef23b72d4c8a",//PGov
-                amount: BN("4124600000000000000000")
-            }
+            
         ]
     })
     it("connect to signers", async () => {

@@ -32,7 +32,6 @@ contract wOETH_ORACLE is IOracleRelay {
 
   function currentValue() external view override returns (uint256) {
     uint256 curvePrice = getCurvePrice();
-    uint256 ethPrice = _ethOracle.currentValue();
 
     //apply wOETH conversion
     uint256 priceInOeth = _priceFeed.previewDeposit(AMOUNT);

@@ -56,6 +56,7 @@ export class MainnetDeploys {
     readonly Oracle: string = "0xf4818813045E954f5Dc55a40c9B60Def0ba3D477"
     readonly CharlieDelegator: string = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
     readonly CharlieDelegate: string = "0xdF352c2fcB3cbfdbBA619090E2A1DEB9aC534A29"
+    readonly IPT: string = "0xd909C5862Cdb164aDB949D92622082f0092eFC3d"
     readonly IPTDelegator: string = "0xaF239a6fab6a873c779F3F33dbd34104287b93e1"
     readonly IPTDelegate: string = "0x35Bb90c0B96DdB4B93ddF42aFEDd5204E91A1A10"
     readonly EthOracle: string = "0x8eD31D7FF5D2ffBF17Fe3118A61123F50AdB523A"
@@ -191,6 +192,17 @@ export class OptimisimDeploys {
     readonly rEthOracle: string = "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"
     readonly CappedSNX: string = "0x45b265c7919D7FD8a0D673D7ACaA8F5A7abb430D"
     readonly SnxOracle: string = "0xd8284305b520FF5486ab718DBdfe46f18454aeDE"
+    readonly UsdcRelay: string = "0xcEe78cE44e98d16f59C775494Be24E0D2cFF19A4"
+
+    //uni v3 positions
+    readonly PositionValuatorImplementation: string = "0x5676e28f594A919F018e4888e43B432870b1856C"
+    readonly V3PositionValuator: string = "0x5c69C9551E2fE670eDC82EC0288843c1956eE644" 
+    readonly WrappedPositionImplementation: string = "0x833A17FA29bc2772e4302823B7d39eDd7C4bB79a"
+    readonly WrappedPosition: string = "0x7131FF92a3604966d7D96CCc9d596F7e9435195c"
+    readonly NftControllerImplementation: string = "0x68338eC08c8bA70230F8621effCb89b2BA45e80F"
+    readonly NftController: string = "0xd5832070A81d607E8932B524f507B47117564CD3"
+
+    readonly VC_Implementation: string = "0x95c157Fe454AC1aDFA17dC9C3745bdBa992F9Caf"
 }
 
 export const Mainnet: Addresser = new MainnetAddresses()
