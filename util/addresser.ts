@@ -192,6 +192,14 @@ export class OptimisimDeploys {
     readonly rEthOracle: string = "0x99bd1f28a5A7feCbE39a53463a916794Be798FC3"
     readonly CappedSNX: string = "0x45b265c7919D7FD8a0D673D7ACaA8F5A7abb430D"
     readonly SnxOracle: string = "0xd8284305b520FF5486ab718DBdfe46f18454aeDE"
+
+
+    //uni v3 positions
+    readonly WrappedPositionImplementation: string = ""
+    readonly WrappedPosition: string = ""
+    readonly V3PositionManager: string = ""
+
+
 }
 
 export const Mainnet: Addresser = new MainnetAddresses()
