@@ -24,6 +24,7 @@
     "license": "ISC",
     "dependencies": {
         "@certusone/wormhole-sdk": "^0.9.9",
+        "@defi-wonderland/smock": "^2.3.5",
         "@ethersproject/providers": "^5.3.0",
         "@ethersproject/wallet": "^5.6.2",
         "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
@@ -62,7 +63,7 @@
         "@typechain/hardhat": "^6.0.0",
         "@types/chai": "^4.3.0",
         "@types/jest": "^29.4.1",
-        "@types/mocha": "^10.0.1",
+        "@types/mocha": "^9.1.0",
         "@types/node": "12",
         "chai": "^4.3.6",
         "chai-bignumber": "^3.0.0",

@@ -99,7 +99,6 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   }
 
   ///@notice toggle @param pool registered or not
-  //todo register oracles and token units to each pool in a struct
   function registerPool(IUniV3Pool pool, IOracleRelay _token0Oracle, IOracleRelay _token1Oracle) external onlyOwner {
     registeredPools[address(pool)] = !registeredPools[address(pool)];
 

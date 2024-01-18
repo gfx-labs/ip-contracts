@@ -29,7 +29,6 @@ import {
   nearestUsableTick
 } from '@uniswap/v3-sdk'
 import { ProposalContext } from "../../../scripts/proposals/suite/proposal"
-import { ProxyAdmin } from "@certusone/wormhole-sdk/lib/cjs/ethers-contracts"
 const nfpManagerAddr = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
 
 require("chai").should()

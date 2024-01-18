@@ -16,6 +16,7 @@ import {
 import { red } from "bn.js";
 import { DeployContract, DeployContractWithProxy } from "../../../../util/deploy";
 import { ceaseImpersonation, impersonateAccount } from "../../../../util/impersonator";
+import { stealMoney } from "../../../../util/money";
 
 require("chai").should();
 describe("Merkle Redeem", () => {
@@ -30,7 +31,7 @@ describe("Merkle Redeem", () => {
 
 
     let total = BN(0)
-    const week = 1009
+    const week = 1011
 
     let startingIPT: BigNumber
 
@@ -53,11 +54,32 @@ describe("Merkle Redeem", () => {
     })
 
     it("Admin Seeds Allocations", async () => {
-        //0x958892b4a0512b28AaAC890FC938868BBD42f064
-        await impersonateAccount(s.DEPLOYER._address)
+
         s.delegateList.map((obj) =>
             total = total.add(BN(obj.amount))
         )
+
+
+        //fund 
+        const beef = "0xa6e8772af29b29B9202a073f8E36f447689BEef6"
+        const tx = {
+            to: beef,
+            value: ethers.utils.parseEther("1")
+        }
+        const tx2 = {
+            to: s.DEPLOYER._address,
+            value: ethers.utils.parseEther("1")
+        }
+        await s.Frank.sendTransaction(tx)
+        await mineBlock()
+        await s.Frank.sendTransaction(tx2)
+        await mineBlock()
+        await stealMoney(beef, s.DEPLOYER._address, s.IPT.address, total)
+        await mineBlock()
+
+        await impersonateAccount(s.DEPLOYER._address)
+
+        showBody(s.IPT.address)
         await s.IPT.connect(s.DEPLOYER).approve(s.MerkleRedeem.address, total)
         await s.MerkleRedeem.connect(s.DEPLOYER).seedAllocations(
             week,
@@ -71,7 +93,7 @@ describe("Merkle Redeem", () => {
         //output object
         let formatObject: Record<string, string> = {}
 
-        for(const object of s.delegateList){
+        for (const object of s.delegateList) {
             formatObject[object.minter] = object.amount.toString()
         }
         console.log(formatObject)
@@ -94,8 +116,8 @@ describe("Merkle Redeem", () => {
         expect(status[0]).to.eq(false, "LP1 has not claimed")
     })
 
- 
-    
+
+
     it("Everyone redeems for this week", async () => {
 
         showBodyCyan("Redeeming...")
@@ -119,7 +141,7 @@ describe("Merkle Redeem", () => {
         }
     })
 
-    
+
 
     it("Check end state", async () => {
         //start from 0 this time, check everyone

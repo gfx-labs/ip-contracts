@@ -178,7 +178,7 @@ contract VaultBPT is Context {
     bool solvencyCheckNeeded = false;
 
     //get rewards pool
-    (address rewardsToken, uint256 PID) = _votingController.getAuraLpData(address(lp));
+    (address rewardsToken, /**uint256 PID */) = _votingController.getAuraLpData(address(lp));
     IRewardsPool rp = IRewardsPool(rewardsToken);
 
     //claim rewards
@@ -206,8 +206,8 @@ contract VaultBPT is Context {
         IERC20 extraRewardToken = IERC20(extraRewardPool.rewardToken());
 
         //check if extraRewardToken is registered as a collateral, if not, the _rewardToken should be 0x0
-        (address _rewardToken, ) = _votingController.getAuraLpData(address(extraRewardToken));
-        if (_rewardToken != address(0x0)) {
+        (address _extraRewardToken, ) = _votingController.getAuraLpData(address(extraRewardToken));
+        if (_extraRewardToken != address(0x0)) {
           solvencyCheckNeeded = true;
         }
         extraRewardPool.getReward();
