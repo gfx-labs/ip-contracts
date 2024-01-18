@@ -57,15 +57,9 @@ export class MainnetDeploys {
     readonly Oracle: string = "0xf4818813045E954f5Dc55a40c9B60Def0ba3D477"
     readonly CharlieDelegator: string = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
     readonly CharlieDelegate: string = "0xdF352c2fcB3cbfdbBA619090E2A1DEB9aC534A29"
-<<<<<<< HEAD
-    //readonly IPTDelegator: string = "0xaF239a6fab6a873c779F3F33dbd34104287b93e1"
-    //readonly IPTDelegate: string = "0x35Bb90c0B96DdB4B93ddF42aFEDd5204E91A1A10"
-    readonly IPT:string = "0xd909C5862Cdb164aDB949D92622082f0092eFC3d"
-=======
     readonly IPT: string = "0xd909C5862Cdb164aDB949D92622082f0092eFC3d"
     readonly IPTDelegator: string = "0xaF239a6fab6a873c779F3F33dbd34104287b93e1"
     readonly IPTDelegate: string = "0x35Bb90c0B96DdB4B93ddF42aFEDd5204E91A1A10"
->>>>>>> uniProposal
     readonly EthOracle: string = "0x8eD31D7FF5D2ffBF17Fe3118A61123F50AdB523A"
     readonly UniOracle: string = "0x93CEf8012460764D201b654fea85ABeCB28919fd"
     readonly WBTCOracle: string = "0x0f2f7aa507d153aC04431a617840d1fF28A960AC"
