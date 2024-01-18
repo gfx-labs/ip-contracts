@@ -2,7 +2,7 @@ import { BN } from "../../../util/number";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
     GovernorCharlieDelegate,
-    GovernorCharlieDelegate__factory, OracleMaster__factory,
+    GovernorCharlieDelegate__factory, IOracleMaster__factory, OracleMaster__factory,
     VaultController__factory,
     VotingVaultController__factory
 } from "../../../typechain-types";
@@ -14,6 +14,7 @@ import { currentBlock, fastForward, hardhat_mine, resetCurrent } from "../../../
 import hre from 'hardhat';
 import { impersonateAccount } from "@nomicfoundation/hardhat-network-helpers";
 import { ceaseImpersonation } from "../../../util/impersonator";
+import { toNumber } from "../../../util/math";
 const { ethers, network } = require("hardhat");
 const addrs = new MainnetBPTaddresses()
 
@@ -32,39 +33,31 @@ const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
  */
 
 /*****************************CHANGE THESE/*****************************/
-const proposerAddr = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
+const proposerAddr = "0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908"
 
 //if true: 
 //proposerAddr must have proposal power
 //if true && running on a live network:
 //PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
 const proposeFromScript = true
-
-const CappedTOKEN_ADDR = "0x5F39aD3df3eD9Cf383EeEE45218c33dA86479165"
-const AnchoredViewRelay = "0x8415011818C398dC40258f699a7cb58C85953F43"
-const TOKEN_ADDR = "0x514910771AF9Ca656af840dff83E8264EcF986CA"
-const TOKEN_LiqInc = BN("75000000000000000")
-const TOKEN_LTV = BN("75e16")
+const updatedOracle = "0xD26567E51Be02B3c835fD57b30d461a029e3986b"
 /***********************************************************************/
 
 const proposeTOKEN = async (proposer: SignerWithAddress) => {
     const proposal = new ProposalContext("update bpt oracle")
 
-    const updateOracle = await new OracleMaster__factory(prop).
+    const updateOracle = await new OracleMaster__factory(proposer).
       attach(d.Oracle).populateTransaction.
       setRelay(
         addrs.CappedB_stETH_STABLE,
-        updatedOracle.address
+        updatedOracle
       )
 
     proposal.addStep(updateOracle, "setRelay(address,address)")
 
-
-    await ceaseImpersonation(proposer)
-
     let out = proposal.populateProposal()
 
-    const proposalText = fs.readFileSync('./scripts/proposals/TEMPLATE/TOKEN_Proposal_Txt.md', 'utf8');
+    const proposalText = fs.readFileSync('./scripts/proposals/bptOracleUpdate/txt.md', 'utf8');
 
     let gov: GovernorCharlieDelegate;
     gov = new GovernorCharlieDelegate__factory(proposer).attach(
@@ -122,7 +115,7 @@ const quickTest = async (proposer: SignerWithAddress) => {
     await gov.connect(proposer).castVote(proposal, 1)
 
     await ceaseImpersonation(proposerAddr)
-    const whale = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
+    const whale = "0x5fee8d7d02B0cfC08f0205ffd6d6B41877c86558"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
     const prop = ethers.provider.getSigner(whale)
     await impersonateAccount(whale)
     await gov.connect(prop).castVote(proposal, 1)
@@ -139,6 +132,13 @@ const quickTest = async (proposer: SignerWithAddress) => {
     showBodyCyan("EXECUTION COMPLETE")
 
     await ceaseImpersonation(whale)
+
+    //verify
+    const Oracle = IOracleMaster__factory.connect(d.Oracle, proposer)
+    showBodyCyan("Price: ", await toNumber(await Oracle.getLivePrice(addrs.CappedB_stETH_STABLE)))
+
+
+
 }
 
 

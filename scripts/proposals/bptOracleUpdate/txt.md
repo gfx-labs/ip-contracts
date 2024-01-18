@@ -7,7 +7,7 @@ The oracle for [CappedB_stETH_STABLE](https://etherscan.io/address/0x7d3CD037aE7
 Token Address: [0x32296969Ef14EB0c6d29669C550D4a0449130230](https://etherscan.io/address/0x32296969Ef14EB0c6d29669C550D4a0449130230)
 Capped Token address: [0x7d3CD037aE7efA9eBed7432c11c9DFa73519303d](https://etherscan.io/address/0x7d3CD037aE7efA9eBed7432c11c9DFa73519303d)
 Depricated Oracle: [0xD6B002316D4e13d2b7eAff3fa5Fc6c20D2CeF4be](https://etherscan.io/token/0xD6B002316D4e13d2b7eAff3fa5Fc6c20D2CeF4be)
-Updated Oracle: [0xcEe78cE44e98d16f59C775494Be24E0D2cFF19A4](https://etherscan.io/token/0xcEe78cE44e98d16f59C775494Be24E0D2cFF19A4)
+Updated Oracle: [0xD26567E51Be02B3c835fD57b30d461a029e3986b](https://etherscan.io/token/0xD26567E51Be02B3c835fD57b30d461a029e3986b)
 
 
 ## Detailed Description

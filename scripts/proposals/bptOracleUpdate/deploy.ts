@@ -49,7 +49,13 @@ const deployOracle = async (deployer: SignerWithAddress, mainnet: boolean) => {
         newBips,
         den
     )
-
+    /**
+    ,
+        {
+            gasPrice: 50000000000, //gas price of 200 gwei - extreeemely high
+            gasLimit: 1200000
+          }
+     */
 
     await updatedOracle.deployed()
     showBody("Deployed: ", updatedOracle.address)
