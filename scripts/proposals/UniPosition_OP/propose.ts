@@ -220,20 +220,17 @@ const quickTest = async (proposer: SignerWithAddress, out: any) => {
     await gov.connect(proposer).castVote(proposal, 1)
 
     await ceaseImpersonation(proposerAddr)
-    const whale = "0x958892b4a0512b28AaAC890FC938868BBD42f064"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
+    const whale = "0x5fee8d7d02B0cfC08f0205ffd6d6B41877c86558"//0xa6e8772af29b29b9202a073f8e36f447689beef6 ";
     const prop = ethers.provider.getSigner(whale)
     await impersonateAccount(whale)
     await gov.connect(prop).castVote(proposal, 1)
 
-
     showBodyCyan("Advancing a lot of blocks again...")
     await hardhat_mine(votingPeriod.toNumber())
-
 
     await gov.connect(prop).queue(proposal)
 
     await fastForward(timelock.toNumber())
-
 
     const result = await gov.connect(prop).execute(proposal)
     await result.wait()
@@ -254,7 +251,7 @@ async function main() {
         console.log("TEST PROPOSAL")
         await network.provider.send("evm_setAutomine", [true])
         //await resetCurrent()
-        await reset(17696267)
+        await reset(18971281)
         const block = await currentBlock()
         console.log("reset to block ", block.number)
         await impersonateAccount(proposerAddr)
