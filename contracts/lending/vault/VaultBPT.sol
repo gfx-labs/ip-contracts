@@ -89,18 +89,6 @@ contract VaultBPT is Context {
   /// all assets stake all or nothing
   mapping(address => bool) public isStaked;
 
-  //mapping(address => stakeType) public typeOfStake;
-
-  //mapping(address => address) public lp_rewardtoken;
-
-/**
-  enum stakeType {
-    AURABAL,
-    AURA_LP,
-    BAL_LP
-  }
- */
-
   /// @notice checks if _msgSender is the controller of the voting vault
   modifier onlyVotingVaultController() {
     require(_msgSender() == address(_votingController), "sender not VotingVaultController");
@@ -144,8 +132,8 @@ contract VaultBPT is Context {
   }
 
   /** auraBal && aura LP token staking */
-  ///@param lp underlying lp
-  ///@param lp is NOT the gauge token, but the actual LP
+  ///@param lp underlying BPT
+  ///@param lp is NOT the gauge token, but the actual BPT
   ///@notice unfortunately, there is no simple way to stake directly from the gauge token to the Aura rewards token
   function stakeAuraLP(IERC20 lp) external returns (bool) {
     require(isStaked[address(lp)] == false, "already staked");
@@ -226,7 +214,6 @@ contract VaultBPT is Context {
   }
 
   /// @notice manual unstake
-  /// todo needed?
   function unstakeAuraLP(address lp) external onlyMinter {
     _unstakeAuraLP(lp, (lp == _votingController._auraBal()));
   }
