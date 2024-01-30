@@ -380,7 +380,6 @@ describe("Single position withdraw", () => {
 
         await s.NftVaultController.connect(s.Gus).mintVault(gusVaultId)
 
-
         //mint positions for gus
         for (let i = 0; i < positionCount; i++) {
             //mint second position
@@ -425,9 +424,7 @@ describe("Single position withdraw", () => {
             await s.WrappedPosition.connect(s.Gus).deposit(positions[i], gusVaultId)
 
             await hardhat_mine_timed(500, 15)
-
         }
-
     })
 
     it("Verify deposits", async () => {
@@ -437,7 +434,6 @@ describe("Single position withdraw", () => {
             expect(position).to.eq(positions[i], `position ${positions[i]} found`)
         }
         expect(s.WrappedPosition._underlyingOwners(s.Bob.address, BN(positionCount + 1))).to.be.reverted
-
     })
 
     it("Withdrwa position 0", async () => {
@@ -458,8 +454,6 @@ describe("Single position withdraw", () => {
         //deposit position again for future tests
         await s.nfpManager.connect(s.Gus).approve(s.WrappedPosition.address, positions[0])
         await s.WrappedPosition.connect(s.Gus).deposit(positions[0], gusVaultId)
-
-
 
     })
 
