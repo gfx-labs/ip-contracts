@@ -43,6 +43,7 @@ export class MainnetAddresses {
     readonly oethAddress: string = "0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3"
     readonly woethAddress: string = "0xDcEe70654261AF21C44c093C300eD3Bb97b78192"
     readonly wstethAddress: string = "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0"
+    readonly stethAddress: string = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84"
 
     constructor() { }
 }
@@ -134,6 +135,7 @@ export class OptimisimAddresses {
     readonly wstethAddress: string = "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb"
     readonly rethAddress: string = "0x9Bcef72be871e61ED4fBbc7630889beE758eb81D"
     readonly snxAddress: string = "0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4"
+    readonly aOptUsdcAddress: string = "0x625e7708f30ca75bfd92586e17077590c60eb4cd"
 
     //Contracts
     readonly nfpManager: string = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88"

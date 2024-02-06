@@ -5,7 +5,7 @@ import {
     CrossChainAccount__factory,
     FromL1_ControlL2Greeter__factory,
     GovernorCharlieDelegate,
-    GovernorCharlieDelegate__factory, ILayer1Messenger, ILayer1Messenger__factory, IOracleMaster__factory, NftVaultController, NftVaultController__factory, OracleMaster__factory,
+    GovernorCharlieDelegate__factory, ILayer1Messenger, ILayer1Messenger__factory, INonfungiblePositionManager__factory, IOracleMaster__factory, IVault__factory, NftVaultController, NftVaultController__factory, OracleMaster__factory,
     ProxyAdmin__factory,
     Univ3CollateralToken,
     Univ3CollateralToken__factory,
@@ -16,7 +16,7 @@ import { ProposalContext } from "../suite/proposal"
 import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
 import { showBody, showBodyCyan } from "../../../util/format"
 import * as fs from 'fs'
-import { currentBlock, fastForward, hardhat_mine, hardhat_mine_timed, resetCurrent, resetCurrentOP } from "../../../util/block"
+import { currentBlock, fastForward, hardhat_mine, hardhat_mine_timed, resetCurrent, resetCurrentOP, resetOP } from "../../../util/block"
 import hre from 'hardhat'
 import { OptimisimAddresses, OptimisimDeploys, MainnetAddresses, MainnetDeploys, oa } from "../../../util/addresser";
 import { BytesLike } from "ethers"
@@ -24,6 +24,7 @@ import { getGas, toNumber } from "../../../util/math"
 import { IERC20__factory } from "@certusone/wormhole-sdk/lib/cjs/ethers-contracts"
 import { stealMoney } from "../../../util/money"
 import { send } from "process"
+import { NonfungiblePositionManager } from "@uniswap/v3-sdk"
 const a = new OptimisimAddresses()
 const od = new OptimisimDeploys()
 const m = new MainnetAddresses()
@@ -55,19 +56,20 @@ const execute = async (sender: SignerWithAddress) => {
 }
 
 const verifyUpgrade = async (sender: SignerWithAddress) => {
-    await resetCurrentOP()
+    await resetOP(115575217)
     const block = await currentBlock()
     console.log("reset to block ", block.number)
 
 
     const vc = VaultController__factory.connect(od.VaultController, sender)
     const pa = ProxyAdmin__factory.connect(od.ProxyAdmin, sender)
-    const nftController:NftVaultController = NftVaultController__factory.connect(od.NftController, sender)
+    const nftController: NftVaultController = NftVaultController__factory.connect(od.NftController, sender)
     const wrapper: Univ3CollateralToken = Univ3CollateralToken__factory.connect(od.WrappedPosition, sender)
     const vvc = VotingVaultController__factory.connect(od.VotingVaultController, sender)
     const imp = await pa.getProxyImplementation(od.VaultController)
 
 
+    /**
     //get snx
     const snx = IERC20__factory.connect(oa.snxAddress, sender)
     const snxWhale = "0xF977814e90dA44bFA03b6295A0616a897441aceC"
@@ -77,18 +79,45 @@ const verifyUpgrade = async (sender: SignerWithAddress) => {
     await vc.connect(user).mintVault()
     const vaultId = await vc.vaultsMinted()
     await vvc.connect(user).mintVault(vaultId)
-    showBody("Minted vault: ", vaultId)
+    //showBody("Minted vault: ", vaultId)
 
     //deposit
     const amount = BN("50e18")
     const cappedSNX = CappedGovToken__factory.connect(od.CappedSNX, sender)
     await snx.connect(user).approve(cappedSNX.address, amount)
     await cappedSNX.connect(user).deposit(amount, vaultId)
-    
+
 
     //check borrow power
     const bp = await vc.vaultBorrowingPower(vaultId)
-    showBodyCyan(await toNumber(bp))
+    //showBodyCyan(await toNumber(bp))
+
+
+
+     */
+
+    //test withdraw of position
+    const minterAddr = "0x0542Bb6Fb48244beA6E59accfb6Da58096CcF89e"
+    const minter = ethers.provider.getSigner(minterAddr)
+    const positionId = 488901
+    const positionVaultId = 2
+    await impersonateAccount(minterAddr)
+
+    //get vault
+    const vaultAddr = await vc._vaultId_vaultAddress(positionVaultId)
+    const vault = IVault__factory.connect(vaultAddr, minter)
+    showBodyCyan("VALUE: ", await toNumber(await wrapper.balanceOf(vaultAddr)))
+
+    //withdraw
+    const nfpManager = INonfungiblePositionManager__factory.connect(oa.nfpManager, minter)
+    showBody(await nfpManager.balanceOf(minterAddr))
+    await vault.connect(minter).withdrawErc20(wrapper.address, 0)
+    console.log("Done")
+    showBody(await nfpManager.balanceOf(minterAddr))
+
+
+    await ceaseImpersonation(minterAddr)
+
 
 }
 
