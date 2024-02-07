@@ -47,14 +47,16 @@ describe("Deploy and register new capped rebase token", async () => {
       undefined,
       "Capped OP aUSDC",
       "caoUSDC",
-      oa.aOptUsdcAddress
+      oa.aOptUsdcAddress,
+      od.VaultController,
+      od.VotingVaultController
     )
     await s.CappedOAUSDC.deployed()
 
   })
 
   it("Set Cap", async () => {
-    await s.CappedOAUSDC.connect(s.Frank).setCap(s.aUSDCamount)//100K USDC
+    await s.CappedOAUSDC.connect(s.Frank).setCap(s.aUSDCcap)
   })
 
   it("register", async () => {
@@ -100,7 +102,7 @@ describe("Deploy and register new capped rebase token", async () => {
 
     let _vaultId_votingVaultAddress = await s.VotingVaultController._vaultId_votingVaultAddress(s.BobVaultID)
     expect(_vaultId_votingVaultAddress).to.eq("0x0000000000000000000000000000000000000000", "Voting vault not yet minted")
-    
+
     const result = await s.VotingVaultController.connect(s.Bob).mintVault(s.BobVaultID)
     await mineBlock()
 

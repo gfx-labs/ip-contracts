@@ -2,7 +2,6 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { InterestProtocolTokenDelegate, USDI, IERC20, IVOTE, UniswapV2OracleRelay, VotingVault, CappedToken, CappedSTETH, CappedRebaseToken, CappedFeeOnTransferToken, AnchoredViewRelay, ChainlinkOracleRelay, IOracleRelay, ILidoOracle, ThreeLines0_100, IVault, IOracleMaster, IVaultController, ProxyAdmin, ICurveMaster, ILido, CappedGovToken, VotingVaultController, IBalancerVault, VaultBPT, CappedBptToken, IGauge } from "../../typechain-types";
-import { BPT_VaultController } from "../../typechain-types/lending/BPT_VaultController";
 import { MainnetAddresses } from "../../util/addresser";
 import { BN } from "../../util/number";
 
@@ -13,8 +12,9 @@ export class TestScope extends MainnetAddresses {
     WETH!: IERC20;
     UNI!: IVOTE;
     WBTC!: IERC20;
-    aOptUSDC!: IERC20
+    aUSDC!: IERC20
     aUSDCamount = BN("1000e6")
+    aUSDCcap = BN("1100e6")
     CappedOAUSDC!: CappedRebaseToken
 
     MTA!: IERC20;

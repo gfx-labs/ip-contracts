@@ -32,7 +32,7 @@ describe("Rebase Token Setup", () => {
         s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank)
         s.WETH = IERC20__factory.connect(s.wethAddress, s.Frank)
 
-        s.aOptUSDC = IERC20__factory.connect(oa.aOptUsdcAddress, s.Frank)
+        s.aUSDC = IERC20__factory.connect(oa.aOptUsdcAddress, s.Frank)
       
     })
 
@@ -45,9 +45,5 @@ describe("Rebase Token Setup", () => {
 
         s.ProxyAdmin = ProxyAdmin__factory.connect(od.ProxyAdmin, s.Frank)
 
-    })
-    it("Should succesfully transfer money", async () => {
-        const aUSDCminter = "0xC9B826BAD20872EB29f9b1D8af4BefE8460b50c6"
-        await stealMoney(aUSDCminter, s.Bob.address, oa.aOptUsdcAddress, s.aUSDCamount)
     })
 })
