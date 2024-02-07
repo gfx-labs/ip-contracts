@@ -1,25 +1,32 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.9;
+pragma solidity ^0.8.9;
+
+import "../vault/VotingVault.sol";
+import "../controller/VotingVaultController.sol";
+
+import "../IVaultController.sol";
+import "../IVault.sol";
 
 import "../../_external/IERC20Metadata.sol";
 import "../../_external/openzeppelin/ERC20Upgradeable.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
+import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
-import {SafeERC20} from "../../_external/extensions/SafeERC20.sol";
-
+//testing
 import "hardhat/console.sol";
 
-/// @title CappedRebaseToken - uses logic from Wrapped USDI which uses logic from WAMPL
-/// @notice handles all minting/burning of underlying
+/// @title Capped Rebase Token
+/// @notice handles all minting/burning of underlying rebasing token
 /// @dev extends ierc20 upgradable
 contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
-  using SafeERC20 for IERC20;
+  using SafeERC20Upgradeable for ERC20Upgradeable;
 
-  IERC20Metadata public _underlying;
-  uint8 private _underlying_decimals;
+  ERC20Upgradeable public _underlying;
+  IVaultController public _vaultController;
+  VotingVaultController public _votingVaultController;
 
-  ///@notice this cap is represented in underlying amount, not the wrapped version issued by this contract
+  // in actual units
   uint256 public _cap;
 
   /// @notice This must remain constant for conversions to work, the cap is separate
@@ -29,202 +36,110 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   /// @param name_ name of capped token
   /// @param symbol_ symbol of capped token
   /// @param underlying_ the address of underlying
-  function initialize(string memory name_, string memory symbol_, address underlying_) public initializer {
+  /// @param vaultController_ the address of vault controller
+  /// @param votingVaultController_ the address of voting vault controller
+  function initialize(
+    string memory name_,
+    string memory symbol_,
+    address underlying_,
+    address vaultController_,
+    address votingVaultController_
+  ) public initializer {
     __Ownable_init();
     __ERC20_init(name_, symbol_);
-    _underlying = IERC20Metadata(underlying_);
-    _underlying_decimals = _underlying.decimals();
+    _underlying = ERC20Upgradeable(underlying_);
+
+    _vaultController = IVaultController(vaultController_);
+    _votingVaultController = VotingVaultController(votingVaultController_);
   }
 
-  /// @notice getter for address of the underlying currency, or underlying
-  /// @return decimals for of underlying currency
-  function underlyingAddress() public view returns (address) {
-    return address(_underlying);
+  /// @notice 18 decimal erc20 spec should have been written into the fucking standard
+  function decimals() public pure override returns (uint8) {
+    return 18;
   }
 
-  ///////////////////////// CAP FUNCTIONS /////////////////////////
-  /// @notice get the Cap
-  /// @return cap
+  /// @notice NOTE cap is in underlying terms NOT IN WRAPPED TERMS
+  /// @return cap uint256
   function getCap() public view returns (uint256) {
     return _cap;
   }
 
   /// @notice set the Cap
+  /// @notice NOTE cap is in underlying terms NOT IN WRAPPED TERMS
   function setCap(uint256 cap_) external onlyOwner {
     _cap = cap_;
   }
 
-  /// @notice check the incoming supply of underlying against the cap, which is also expressed in underlying units
-  function checkCap(uint256 wrappedAmount) internal view {
-    uint256 incomingUnderlyingAmount = _capped_to_underlying(wrappedAmount, _underlying.totalSupply());
-
-    uint256 currentUnderlyingSupply = _capped_to_underlying(ERC20Upgradeable.totalSupply(), _underlying.totalSupply());
-
-    require(currentUnderlyingSupply + incomingUnderlyingAmount <= _cap, "cap reached");
+  /// @notice because this wrapper holds the underlying rebase token,
+  /// we can simply compare input amount + current holdings
+  /// to determine if cap has been reached
+  /// NOTE @param amount_ is in underlying terms NOT WRAPPED TERMS
+  function checkCap(uint256 amount_) internal view {
+    require(_underlying.balanceOf(address(this)) + amount_ <= _cap, "cap reached");
   }
 
-  function decimals() public pure override returns (uint8) {
-    return 18;
+  /// @notice deposit _underlying to mint CappedToken
+  /// @param amount of underlying to deposit
+  /// @param vaultId recipient vault of tokens
+  function deposit(uint256 amount, uint96 vaultId) public {
+    //verify vault
+    require(amount > 0, "Cannot deposit 0");
+    IVault vault = IVault(_vaultController.vaultAddress(vaultId));
+    require(address(vault) != address(0x0), "invalid vault");
+    // check cap
+    checkCap(amount);
+    // check allowance and ensure transfer success
+    uint256 allowance = _underlying.allowance(_msgSender(), address(this));
+    require(allowance >= amount, "Insufficient Allowance");
+    //calculate the amount of wrapper tokens to mint to the standard vault
+    uint256 wrappedAmount = _underlying_to_capped(amount, _underlying.totalSupply());
+    //take tokens and wrap
+    _deposit(_msgSender(), address(vault), amount, wrappedAmount);
   }
 
-  function underlyingScalar() public view returns (uint256) {
-    return (10 ** (18 - _underlying_decimals));
+  function transfer(address recipient, uint256 amount) public override returns (bool) {
+    //get vault info
+    IVault vault = IVault(_msgSender());
+    // only vaults will ever send this. only vaults will ever hold this token.
+    require(vault.id() > 0, "only vaults");
+    //calculate the amount of wrapper tokens to burn from the standard vault
+    uint256 unwrapAmount = _capped_to_underlying(amount, _underlying.totalSupply());
+    //burn and unwrap
+    _withdraw(address(vault), recipient, unwrapAmount, amount);
+    return true;
   }
 
-  /// @notice get underlying ratio
-  /// @return e18_underlying_ratio underlying ratio of coins
-  function underlyingRatio() public view returns (uint256 e18_underlying_ratio) {
-    e18_underlying_ratio = (((_underlying.balanceOf(address(this)) * underlyingScalar()) * 1e18) /
-      _underlying.totalSupply());
+  function transferFrom(
+    address /*sender*/,
+    address /*recipient*/,
+    uint256 /*amount*/
+  ) public pure override returns (bool) {
+    // allowances are never granted, as the VotingVault does not grant allowances.
+    // this function is therefore always uncallable and so we will just return false
+    return false;
   }
 
-  ///////////////////////// WRAP AND UNWRAP /////////////////////////
-
-  //cappedTokenUnits
-
-  /// @notice Transfers underlyingAmount from {msg.sender} and mints cappedTokenAmount.
-  ///
-  /// @param cappedTokenAmount The amount of cappedTokens to mint.
-  /// @return The amount of underlyingAmount deposited.
-  function mint(uint256 cappedTokenAmount) external returns (uint256) {
-    checkCap(cappedTokenAmount);
-    uint256 underlyingAmount = _capped_to_underlying(cappedTokenAmount, _query_Underlying_Supply());
-    _deposit(_msgSender(), _msgSender(), underlyingAmount, cappedTokenAmount);
-    return underlyingAmount;
-  }
-
-  /// @notice Transfers underlyingAmount from {msg.sender} and mints cappedTokenAmount,
-  ///         to the specified beneficiary.
-  ///
+  /// @dev Internal helper function to handle deposit state change.
+  /// @param from The initiator wallet.
   /// @param to The beneficiary wallet.
+  /// @param underlyingAmount The amount of underlyingAmount to deposit.
   /// @param cappedTokenAmount The amount of cappedTokenAmount to mint.
-  /// @return The amount of underlyingAmount deposited.
-  function mintFor(address to, uint256 cappedTokenAmount) external returns (uint256) {
-    checkCap(cappedTokenAmount);
-    uint256 underlyingAmount = _capped_to_underlying(cappedTokenAmount, _query_Underlying_Supply());
-    _deposit(_msgSender(), to, underlyingAmount, cappedTokenAmount);
-    return underlyingAmount;
+  function _deposit(address from, address to, uint256 underlyingAmount, uint256 cappedTokenAmount) private {
+    _mint(to, cappedTokenAmount);
+    _underlying.safeTransferFrom(from, address(this), underlyingAmount);
   }
 
-  /// @notice Burns cappedTokenAmount from {msg.sender} and transfers underlyingAmount back.
-  ///
-  /// @param cappedTokenAmount The amount of cappedTokenAmount to burn.
-  /// @return The amount of usdi withdrawn.
-  function burn(uint256 cappedTokenAmount) external returns (uint256) {
-    uint256 underlyingAmount = _capped_to_underlying(cappedTokenAmount, _query_Underlying_Supply());
-    _withdraw(_msgSender(), _msgSender(), underlyingAmount, cappedTokenAmount);
-    return underlyingAmount;
-  }
-
-  /// @notice Burns cappedTokenAmount from {msg.sender} and transfers underlyingAmount back,
-  ///         to the specified beneficiary.
-  ///
-  /// @param to The beneficiary wallet.
-  /// @param cappedTokenAmount The amount of cappedTokenAmount to burn.
-  /// @return The amount of underlyingAmount withdrawn.
-  function burnTo(address to, uint256 cappedTokenAmount) external returns (uint256) {
-    uint256 underlyingAmount = _capped_to_underlying(cappedTokenAmount, _query_Underlying_Supply());
-    _withdraw(_msgSender(), to, underlyingAmount, cappedTokenAmount);
-    return underlyingAmount;
-  }
-
-  /// @notice Burns all cappedTokenAmount from {msg.sender} and transfers underlyingAmount back.
-  ///
-  /// @return The amount of underlyingAmount withdrawn.
-  function burnAll() external returns (uint256) {
-    uint256 cappedTokenAmount = balanceOf(_msgSender());
-    uint256 underlyingAmount = _capped_to_underlying(cappedTokenAmount, _query_Underlying_Supply());
-    _withdraw(_msgSender(), _msgSender(), underlyingAmount, cappedTokenAmount);
-    return underlyingAmount;
-  }
-
-  /// @notice Burns all cappedTokenAmount from {msg.sender} and transfers underlyingAmount back,
-  ///         to the specified beneficiary.
-  ///
-  /// @param to The beneficiary wallet.
-  /// @return The amount of underlyingAmount withdrawn.
-  function burnAllTo(address to) external returns (uint256) {
-    uint256 cappedTokenAmount = balanceOf(_msgSender());
-    uint256 underlyingAmount = _capped_to_underlying(cappedTokenAmount, _query_Underlying_Supply());
-    _withdraw(_msgSender(), to, underlyingAmount, cappedTokenAmount);
-    return underlyingAmount;
-  }
-
-  //underlying units
-
-  /// @notice Transfers underlyingAmount from {msg.sender} and mints cappedTokenAmount.
-  ///
-  /// @param underlyingAmount The amount of underlyingAmount to deposit.
-  /// @return The amount of cappedTokenAmount minted.
-  function deposit(uint256 underlyingAmount) external returns (uint256) {
-    checkCap(underlyingAmount);
-    uint256 cappedTokenAmount = _underlying_to_capped(underlyingAmount, _query_Underlying_Supply());
-    _deposit(_msgSender(), _msgSender(), underlyingAmount, cappedTokenAmount);
-    return cappedTokenAmount;
-  }
-
-  /// @notice Transfers underlyingAmount from {msg.sender} and mints cappedTokenAmount,
-  ///         to the specified beneficiary.
-  ///
-  /// @param to The beneficiary wallet.
-  /// @param underlyingAmount The amount of underlyingAmount to deposit.
-  /// @return The amount of cappedTokenAmount minted.
-  function depositFor(address to, uint256 underlyingAmount) external returns (uint256) {
-    checkCap(underlyingAmount);
-    uint256 cappedTokenAmount = _underlying_to_capped(underlyingAmount, _query_Underlying_Supply());
-    _deposit(_msgSender(), to, underlyingAmount, cappedTokenAmount);
-    return cappedTokenAmount;
-  }
-
-  /// @notice Burns cappedTokenAmount from {msg.sender} and transfers underlyingAmount back.
-  ///
-  /// @param underlyingAmount The amount of underlyingAmount to withdraw.
-  /// @return The amount of burnt cappedTokenAmount.
-  function withdraw(uint256 underlyingAmount) external returns (uint256) {
-    uint256 cappedTokenAmount = _underlying_to_capped(underlyingAmount, _query_Underlying_Supply());
-    _withdraw(_msgSender(), _msgSender(), underlyingAmount, cappedTokenAmount);
-    return cappedTokenAmount;
-  }
-
-  /// @notice Burns cappedTokenAmount from {msg.sender} and transfers underlyingAmount back,
-  ///         to the specified beneficiary.
-  ///
+  /// @dev Internal helper function to handle withdraw state change.
+  /// @param from The initiator wallet.
   /// @param to The beneficiary wallet.
   /// @param underlyingAmount The amount of underlyingAmount to withdraw.
-  /// @return The amount of burnt cappedTokenAmount.
-  function withdrawTo(address to, uint256 underlyingAmount) external returns (uint256) {
-    uint256 cappedTokenAmount = _underlying_to_capped(underlyingAmount, _query_Underlying_Supply());
-    _withdraw(_msgSender(), to, underlyingAmount, cappedTokenAmount);
-    return cappedTokenAmount;
-  }
-
-  /// @notice Burns all cappedTokenAmount from {msg.sender} and transfers underlyingAmount back.
-  ///
-  /// @return The amount of burnt cappedTokenAmount.
-  function withdrawAll() external returns (uint256) {
-    uint256 cappedTokenAmount = balanceOf(_msgSender());
-    uint256 underlyingAmount = _capped_to_underlying(cappedTokenAmount, _query_Underlying_Supply());
-
-    require(underlyingAmount <= _underlying.balanceOf(address(this)), "Insufficient funds in bank");
-
-    _withdraw(_msgSender(), _msgSender(), underlyingAmount, cappedTokenAmount);
-    return cappedTokenAmount;
-  }
-
-  /// @notice Burns all cappedTokenAmount from {msg.sender} and transfers underlyingAmount back,
-  ///         to the specified beneficiary.
-  ///
-  /// @param to The beneficiary wallet.
-  /// @return The amount of burnt cappedTokenAmount.
-  function withdrawAllTo(address to) external returns (uint256) {
-    uint256 cappedTokenAmount = balanceOf(_msgSender());
-    uint256 underlyingAmount = _capped_to_underlying(cappedTokenAmount, _query_Underlying_Supply());
-    _withdraw(_msgSender(), to, underlyingAmount, cappedTokenAmount);
-    return cappedTokenAmount;
+  /// @param cappedTokenAmount The amount of cappedTokenAmount to burn.
+  function _withdraw(address from, address to, uint256 underlyingAmount, uint256 cappedTokenAmount) private {
+    _burn(from, cappedTokenAmount);
+    _underlying.safeTransfer(to, underlyingAmount);
   }
 
   ///////////////////////// VIEW FUNCTIONS /////////////////////////
-
   /// @return The address of the underlying "wrapped" token ie) usdi.
   function underlying() external view returns (address) {
     return address(_underlying);
@@ -270,27 +185,5 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
 
   function _capped_to_underlying(uint256 cappedAmount, uint256 underlyingTotalSupply) private pure returns (uint256) {
     return (cappedAmount * underlyingTotalSupply) / MAX_SUPPLY;
-  }
-
-  /// @dev Internal helper function to handle deposit state change.
-  /// @param from The initiator wallet.
-  /// @param to The beneficiary wallet.
-  /// @param underlyingAmount The amount of underlyingAmount to deposit.
-  /// @param cappedTokenAmount The amount of cappedTokenAmount to mint.
-  function _deposit(address from, address to, uint256 underlyingAmount, uint256 cappedTokenAmount) private {
-    IERC20(address(_underlying)).safeTransferFrom(from, address(this), underlyingAmount);
-
-    _mint(to, cappedTokenAmount);
-  }
-
-  /// @dev Internal helper function to handle withdraw state change.
-  /// @param from The initiator wallet.
-  /// @param to The beneficiary wallet.
-  /// @param underlyingAmount The amount of underlyingAmount to withdraw.
-  /// @param cappedTokenAmount The amount of cappedTokenAmount to burn.
-  function _withdraw(address from, address to, uint256 underlyingAmount, uint256 cappedTokenAmount) private {
-    _burn(from, cappedTokenAmount);
-
-    IERC20(address(_underlying)).safeTransfer(to, underlyingAmount);
   }
 }
