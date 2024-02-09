@@ -14,7 +14,7 @@ export class TestScope extends MainnetAddresses {
     WBTC!: IERC20;
     aUSDC!: IERC20
     aUSDCamount = BN("1000e6")
-    aUSDCcap = BN("1100e6")
+    aUSDCcap = this.aUSDCamount.mul(12)
     CappedOAUSDC!: CappedRebaseToken
 
     MTA!: IERC20;

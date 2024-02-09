@@ -58,7 +58,7 @@ const wethSnx3000: poolData = {
     oracle1: d.SnxOracle//double check token0/token1? 
 }
 const wethWBTC500: poolData = {
-    addr: "0x85C31FFA3706d1cce9d525a00f1C7D4A2911754c",//not verrified
+    addr: "0x85c31ffa3706d1cce9d525a00f1c7d4a2911754c",//not verrified
     oracle0: d.EthOracle,
     oracle1: d.wBtcOracle//double check token0/token1? 
 }
@@ -79,11 +79,11 @@ const listings: poolData[] = [
 ]
 
 const generate = async (listings: poolData[], proposer: SignerWithAddress) => {
-    
+
     const proposal = new ProposalContext("Uni V3 listings")
 
     for (const pool of listings) {
-        console.log(pool)
+        //console.log(pool)
 
         const registerPoolData = await new V3PositionValuator__factory(proposer).
             attach(od.V3PositionValuator).populateTransaction.registerPool(
@@ -93,7 +93,7 @@ const generate = async (listings: poolData[], proposer: SignerWithAddress) => {
             )
         const registerPoolForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
             populateTransaction.forward(od.V3PositionValuator, registerPoolData.data!)
-        //console.log("Forward Data: ", registerPoolForward)
+        console.log("Forward Data: ", registerPoolForward)
         const registerPool = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
             populateTransaction.sendMessage(d.optimismMessenger, registerPoolForward.data!, gasLimit)
 
@@ -105,8 +105,7 @@ const generate = async (listings: poolData[], proposer: SignerWithAddress) => {
     return out
 }
 
-const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
-    console.log("STARTING")
+const makeProposal = async (proposer: SignerWithAddress) => {
 
     let gov: GovernorCharlieDelegate = new GovernorCharlieDelegate__factory(proposer).attach(
         govAddress
@@ -128,7 +127,7 @@ const proposestEthSTABLE = async (proposer: SignerWithAddress) => {
             false
         )
         const receipt = await result.wait()
-        console.log("Gas: ", await getGas(result))
+        //console.log("Gas: ", await getGas(result))
         console.log("Proposal sent: ", receipt.transactionHash)
         const networkName = hre.network.name
         if (networkName == "hardhat" || networkName == "localhost") {
@@ -211,7 +210,7 @@ async function main() {
         console.log("PROPOSING ON MAINNET AS: ", proposer.address)
     }
 
-    await proposestEthSTABLE(proposer)
+    await makeProposal(proposer)
 }
 
 main()

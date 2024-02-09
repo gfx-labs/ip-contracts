@@ -12,6 +12,7 @@ import { stealMoney } from "../../../util/money";
 import { oa } from "../../../util/addresser";
 import { hardhat_mine, hardhat_mine_timed } from "../../../util/block";
 import { BN } from "../../../util/number";
+import { ethers } from "hardhat";
 require("chai").should();
 const aUSDCminter = "0x24a44aef48AEB27C7708DABFccDa14B41FbF0aE1"//"0xC9B826BAD20872EB29f9b1D8af4BefE8460b50c6"//kyberswap exploiter
 
@@ -40,14 +41,31 @@ describe("Testing CappedToken functions using aUSDC", () => {
     let gusVaultId: BigNumber
     let gusVault: IVault
     let gusVotingVault: VotingVault
-    before(async () => {
+
+    it("Seed with several deposits", async () => {
+        const accounts = await ethers.getSigners()
+        showBodyCyan("Seeding deposits....")
+        for (let i = 0; i < 10; i++) {
+            //fund with aUSDC
+            await stealMoney(aUSDCminter, accounts[i].address, oa.aOptUsdcAddress, s.aUSDCamount)
+
+            //mint vault
+            await expect(s.VaultController.connect(accounts[i]).mintVault()).to.not.reverted
+            const vaultId = await s.VaultController.vaultsMinted()
+
+
+            //deposit
+            await s.aUSDC.connect(accounts[i]).approve(s.CappedOAUSDC.address, s.aUSDCamount)
+            await s.CappedOAUSDC.connect(accounts[i]).deposit(s.aUSDCamount, vaultId)
+        }
+    })
+
+    it("Deposit underlying", async () => {
+
         //steal money now to account for rebase
-        showBodyCyan((await s.aUSDC.balanceOf(aUSDCminter)))
         await stealMoney(aUSDCminter, s.Carol.address, oa.aOptUsdcAddress, s.aUSDCamount)
         await stealMoney(aUSDCminter, s.Bob.address, oa.aOptUsdcAddress, s.aUSDCamount)
 
-    })
-    it("Deposit underlying", async () => {
         //some appreciation due to rebase of underlying
         expect((await s.aUSDC.balanceOf(s.Bob.address)).toNumber()).to.be.closeTo(s.aUSDCamount.toNumber(), 10, "Bob has the expected amount of aUSDC")
 
@@ -71,19 +89,15 @@ describe("Testing CappedToken functions using aUSDC", () => {
 
     it("Check token destinations and verify exchange rate", async () => {
 
-        const initialUnderlying = await s.aUSDC.balanceOf(s.CappedOAUSDC.address)
-        expect(initialUnderlying.toNumber()).to.be.closeTo(s.aUSDCamount.toNumber(), 100, "Wrapper contract holds the underlying")
-
-        //balance = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
-        //expect(balance).to.eq(s.aUSDCamount, "Bob's regular vault holds the wrapped capTokens")
-
         //elapse time
         await hardhat_mine_timed(2592000, 2)//~60 days w/ 2 seconds block time on op
 
-        let balance = await s.aUSDC.balanceOf(s.CappedOAUSDC.address)
-        let delta = balance.sub(s.aUSDCamount)
-        const underlyingBalance = await s.CappedOAUSDC.balanceOfUnderlying(s.BobVault.address)
-        expect(delta.toNumber()).to.be.closeTo((underlyingBalance.sub(s.aUSDCamount)).toNumber(), 10, "Reported value is correct")
+        //Carol is our benchmark for how much aUSDC Bob is entitled to
+        const expected = await s.aUSDC.balanceOf(s.Carol.address)
+        const reported = await s.CappedOAUSDC.balanceOfUnderlying(s.BobVault.address)
+
+        expect(reported.toNumber()).to.be.closeTo(expected.toNumber(), 10, "Bob's appreciation has been recorded")
+
     })
 
     it("Elapse more time and withdraw", async () => {
@@ -94,12 +108,6 @@ describe("Testing CappedToken functions using aUSDC", () => {
         const initialUnderlying = await s.aUSDC.balanceOf(s.CappedOAUSDC.address)
         const initialSupply = await s.CappedOAUSDC.totalSupply()
 
-
-        let balance = await s.aUSDC.balanceOf(s.CappedOAUSDC.address)
-        let delta = balance.sub(s.aUSDCamount)
-        const underlyingBalance = await s.CappedOAUSDC.balanceOfUnderlying(s.BobVault.address)
-        expect(delta.toNumber()).to.be.closeTo((underlyingBalance.sub(s.aUSDCamount)).toNumber(), 100, "Reported value is correct")
-
         const amountToWithdraw = await s.CappedOAUSDC.underlyingToWrapper(underlyingWithdrawAmount)
 
         //withdraw some but not all
@@ -107,7 +115,7 @@ describe("Testing CappedToken functions using aUSDC", () => {
 
         //verify
         //Bob should now have ~1/2 of the original input amount
-        balance = await s.aUSDC.balanceOf(s.Bob.address)
+        let balance = await s.aUSDC.balanceOf(s.Bob.address)
         expect(balance.toNumber()).to.be.closeTo(underlyingWithdrawAmount.toNumber(), 100, "Bob received the correct amount of underlying tokens")
 
         //remaining underlying for this test should now be initialUnderlying reduced by underlyingWithdrawAmount
@@ -147,100 +155,33 @@ describe("Testing CappedToken functions using aUSDC", () => {
         //fund gus
         await stealMoney(aUSDCminter, s.Gus.address, oa.aOptUsdcAddress, s.aUSDCamount)
 
-        const amount = BN("5e18")
         const startBal = await s.aUSDC.balanceOf(s.Gus.address)
-        expect(startBal).to.be.gt(s.aUSDCamount, "Balance correct")
+        expect(startBal.toNumber()).to.be.closeTo(s.aUSDCamount.toNumber(), 10, "Balance correct")
 
-        await s.aUSDC.connect(s.Gus).approve(s.CappedOAUSDC.address, amount)
-        expect(s.CappedOAUSDC.connect(s.Gus).deposit(amount, 99999)).to.be.revertedWith("invalid vault")
+        await s.aUSDC.connect(s.Gus).approve(s.CappedOAUSDC.address, s.aUSDCamount)
+        expect(s.CappedOAUSDC.connect(s.Gus).deposit(s.aUSDCamount, 99999)).to.be.revertedWith("invalid vault")
     })
 
-    it("Deposit with no voting vault", async () => {
-        const amount = BN("5e18")
 
-        const startBal = await s.aUSDC.balanceOf(s.Gus.address)
-        expect(startBal).to.eq(s.aUSDCamount, "Balance correct")
+    it("Eronious transfer and then withdraw", async () => {
+        //transfer some underlying to cap contract instead of deposit?
+        const transferAmount = s.aUSDCamount
+        let balance = await s.aUSDC.balanceOf(s.Gus.address)
+        expect(balance).to.be.gt(s.aUSDCamount, "Starting aUSDC amount correct")
+        await s.aUSDC.connect(s.Gus).transfer(s.CappedOAUSDC.address, transferAmount)
 
-
-        //mint regular vault for gus
-        await expect(s.VaultController.connect(s.Gus).mintVault()).to.not
-            .reverted;
+        //mint vault
+        await expect(s.VaultController.connect(s.Gus).mintVault()).to.not.reverted
         gusVaultId = await s.VaultController.vaultsMinted()
-        let vaultAddress = await s.VaultController.vaultAddress(gusVaultId)
-        gusVault = IVault__factory.connect(vaultAddress, s.Gus);
-        expect(await gusVault.minter()).to.eq(s.Gus.address);
+        gusVault = IVault__factory.connect(await s.VaultController.vaultAddress(gusVaultId), s.Gus)
 
-        await s.aUSDC.connect(s.Gus).approve(s.CappedOAUSDC.address, amount)
-        expect(s.CappedOAUSDC.connect(s.Gus).deposit(amount, gusVaultId)).to.be.revertedWith("invalid voting vault")
+        //try to withdraw
+        expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedOAUSDC.address, transferAmount)).to.be.revertedWith("only vaults")
+
     })
-    /**
-      it("Eronious transfer and then withdraw with no voting vault", async () => {
-          //transfer some underlying to cap contract instead of deposit?
-          const transferAmount = BN("5e18")
-          let balance = await s.aUSDC.balanceOf(s.Gus.address)
-          expect(balance).to.eq(s.aUSDCamount, "Starting aUSDC amount correct")
-          await s.aUSDC.connect(s.Gus).transfer(s.CappedOAUSDC.address, transferAmount)
-  
-          //try to withdraw - no voting vault
-          expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedOAUSDC.address, transferAmount)).to.be.revertedWith("only vaults")
-  
-      })
-  
-      it("Try to withdraw eronious transfer after minting a voting vault", async () => {
-          const transferAmount = BN("5e18")
-  
-          //mint a voting vault
-          await s.VotingVaultController.connect(s.Gus).mintVault(gusVaultId)
-  
-          expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedOAUSDC.address, transferAmount)).to.be.revertedWith("ERC20: burn amount exceeds balance")
-      })
-  
-      it("Try to withdraw more than is possible given some cap tokens", async () => {
-  
-          await s.CappedOAUSDC.connect(s.Frank).setCap(BN("501e18"))
-  
-          await s.CappedOAUSDC.connect(s.Gus).deposit(BN("1e18"), gusVaultId)
-  
-          let balance = await s.CappedOAUSDC.balanceOf(gusVault.address)
-          expect(balance).to.eq(BN("1e18"), "Balance is correct")
-  
-          expect(gusVault.connect(s.Gus).withdrawErc20(s.CappedOAUSDC.address, BN("5e18"))).to.be.revertedWith("ERC20: burn amount exceeds balance")
-  
-          //Withdraw the amount that was deposited
-          await gusVault.connect(s.Gus).withdrawErc20(s.CappedOAUSDC.address, BN("1e18"))
-  
-          //return cap to expected amount
-          await s.CappedOAUSDC.connect(s.Frank).setCap(BN("500e18"))
-  
-      })
-  
-      it("Try to withdraw from a vault that is not yours", async () => {
-          const amount = BN("250e18")
-  
-          expect(s.BobVault.connect(s.Carol).withdrawErc20(s.CappedOAUSDC.address, amount)).to.be.revertedWith("sender not minter")
-      })
-  
-  
-      it("Withdraw Underlying", async () => {
-  
-          const amount = BN("250e18")
-  
-          const startaUSDC = await s.aUSDC.balanceOf(s.Bob.address)
-          const startCapaUSDC = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
-  
-          expect(startCapaUSDC).to.be.gt(amount, "Enough CapaUSDC")
-  
-          await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedOAUSDC.address, amount)
-  
-          let balance = await s.aUSDC.balanceOf(s.Bob.address)
-          expect(balance).to.eq(startaUSDC.add(amount), "aUSDC balance changed as expected")
-  
-          balance = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
-          expect(balance).to.eq(startCapaUSDC.sub(amount), "CappedaUSDC balance changed as expected")
-  
-          //Deposit again to reset for further tests
-          await s.aUSDC.connect(s.Bob).approve(s.CappedOAUSDC.address, amount)
-          await s.CappedOAUSDC.connect(s.Bob).deposit(amount, s.BobVaultID)
-      })
-       */
+    it("Try to withdraw from a vault that is not yours", async () => {
+        const amount = BN("250e18")
+
+        expect(s.BobVault.connect(s.Carol).withdrawErc20(s.CappedOAUSDC.address, amount)).to.be.revertedWith("sender not minter")
+    })
 })

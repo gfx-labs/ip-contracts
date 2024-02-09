@@ -26,6 +26,10 @@ const config: HardhatUserConfig = {
         auto: true,
       },
     },
+    tenderly: {
+      chainId: 10,
+      url: "https://rpc.tenderly.co/fork/adf41990-851e-4040-b825-3a655ef24277"
+    },
     mainnet: {
       url: process.env.MAINNET_URL ? process.env.MAINNET_URL : zaddr,
       accounts: [

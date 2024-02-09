@@ -61,6 +61,18 @@ export const resetCurrent = async () => {
         ],
     });
 }
+export const resetCustom = async (rpc:string) => {
+    await network.provider.request({
+        method: "hardhat_reset",
+        params: [
+            {
+                forking: {
+                    jsonRpcUrl: rpc
+                },
+            },
+        ],
+    });
+}
 export const resetOP = async (block: number) => {
     await network.provider.request({
         method: "hardhat_reset",

@@ -20,17 +20,17 @@ describe("hardhat settings", () => {
 describe("Rebase Token Setup", () => {
     it("connect to signers", async () => {
         let accounts = await ethers.getSigners()
-        s.Frank = accounts[0]
-        s.Eric = accounts[5]
-        s.Andy = accounts[6]
-        s.Bob = accounts[7]
-        s.Carol = accounts[8]
-        s.Dave = accounts[9]
-        s.Gus = accounts[10]
+        s.Frank = accounts[14]
+        s.Eric = accounts[15]
+        s.Andy = accounts[16]
+        s.Bob = accounts[17]
+        s.Carol = accounts[18]
+        s.Dave = accounts[19]
+        s.Gus = accounts[13]
     })
     it("Connect to existing contracts", async () => {
-        s.USDC = IERC20__factory.connect(s.usdcAddress, s.Frank)
-        s.WETH = IERC20__factory.connect(s.wethAddress, s.Frank)
+        s.USDC = IERC20__factory.connect(oa.usdcAddress, s.Frank)
+        s.WETH = IERC20__factory.connect(oa.wethAddress, s.Frank)
 
         s.aUSDC = IERC20__factory.connect(oa.aOptUsdcAddress, s.Frank)
       
@@ -44,6 +44,13 @@ describe("Rebase Token Setup", () => {
         s.Oracle = OracleMaster__factory.connect(od.Oracle, s.Frank)
 
         s.ProxyAdmin = ProxyAdmin__factory.connect(od.ProxyAdmin, s.Frank)
+
+    })
+
+    it("Fund", async () => {
+        const usdcMinter = "0xacD03D601e5bB1B275Bb94076fF46ED9D753435A"
+        await stealMoney(usdcMinter, s.Bob.address, s.USDC.address, s.USDC_AMOUNT)
+        await stealMoney(usdcMinter, s.Dave.address, s.USDC.address, s.USDC_AMOUNT.mul(2))
 
     })
 })
