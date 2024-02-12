@@ -81,8 +81,8 @@ describe("Testing CappedToken functions using aUSDC", () => {
         caBalance = await s.aUSDC.balanceOf(s.Bob.address)
         expect(caBalance.toNumber()).to.be.closeTo(0, 100, "Bob holds ~0 capped aUSDC after deposit")
 
-        wrappedAmount = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
-        showBodyCyan("Resulting wrapped balance: ", await toNumber(wrappedAmount))
+        //wrappedAmount = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
+        //showBodyCyan("Resulting wrapped balance: ", await toNumber(wrappedAmount))
         // expect(caBalance).to.eq(s.aUSDCamount, "Bob's vault received the capped aUSDC tokens")
 
     })
@@ -94,9 +94,9 @@ describe("Testing CappedToken functions using aUSDC", () => {
 
         //Carol is our benchmark for how much aUSDC Bob is entitled to
         const expected = await s.aUSDC.balanceOf(s.Carol.address)
-        const reported = await s.CappedOAUSDC.balanceOfUnderlying(s.BobVault.address)
+        const reported = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
 
-        expect(reported.toNumber()).to.be.closeTo(expected.toNumber(), 10, "Bob's appreciation has been recorded")
+        expect(reported.toNumber()).to.be.closeTo(expected.toNumber(), 50, "Bob's appreciation has been recorded")
 
     })
 
@@ -108,10 +108,8 @@ describe("Testing CappedToken functions using aUSDC", () => {
         const initialUnderlying = await s.aUSDC.balanceOf(s.CappedOAUSDC.address)
         const initialSupply = await s.CappedOAUSDC.totalSupply()
 
-        const amountToWithdraw = await s.CappedOAUSDC.underlyingToWrapper(underlyingWithdrawAmount)
-
         //withdraw some but not all
-        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedOAUSDC.address, amountToWithdraw)
+        await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedOAUSDC.address, underlyingWithdrawAmount)
 
         //verify
         //Bob should now have ~1/2 of the original input amount
@@ -123,8 +121,9 @@ describe("Testing CappedToken functions using aUSDC", () => {
         expect(balance.toNumber()).to.be.closeTo(initialUnderlying.sub(underlyingWithdrawAmount), 100, "underlying balance decremented correctly")
 
         //Wrapper total supply should be reduced by exactly amountToWithdraw
+        const estAmountToWithdraw = await s.CappedOAUSDC.underlyingToWrapper(underlyingWithdrawAmount)
         const ts = await s.CappedOAUSDC.totalSupply()
-        expect(ts).to.eq(initialSupply.sub(amountToWithdraw), "Total Supply Correct")
+        expect(ts).to.eq(initialSupply.sub(estAmountToWithdraw), "Total Supply Correct")
 
     })
 

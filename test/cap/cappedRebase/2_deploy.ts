@@ -1,14 +1,14 @@
 import { s } from "../scope"
 import { expect } from "chai"
 import { toNumber } from "../../../util/math"
-import { DeployNewProxyContract } from "../../../util/deploy"
+import { DeployContract, DeployNewProxyContract } from "../../../util/deploy"
 import { oa, od } from "../../../util/addresser"
 import { BN } from "../../../util/number"
 import { impersonateAccount } from "@nomicfoundation/hardhat-network-helpers"
 import { ceaseImpersonation } from "../../../util/impersonator"
 import { ethers } from "hardhat"
 import { showBody } from "../../../util/format"
-import { CappedRebaseToken__factory, IVault__factory, VotingVault__factory } from "../../../typechain-types"
+import { CappedRebaseToken__factory, IOracleRelay, IVault__factory, UsdcStandardRelay__factory, VotingVault__factory } from "../../../typechain-types"
 import { setBalance } from "@nomicfoundation/hardhat-network-helpers"
 import { mineBlock } from "../../../util/block"
 import { providers } from "ethers"
@@ -37,7 +37,7 @@ describe("Check Interest Protocol contracts", () => {
 })
 
 describe("Deploy and register new capped rebase token", async () => {
-
+  let usdcStandardRelay: IOracleRelay
   it("deploy", async () => {
 
     s.CappedOAUSDC = await DeployNewProxyContract(
@@ -53,6 +53,12 @@ describe("Deploy and register new capped rebase token", async () => {
     )
     await s.CappedOAUSDC.deployed()
 
+    //deploy oracle
+    usdcStandardRelay = await DeployContract(
+      new UsdcStandardRelay__factory(s.Frank),
+      s.Frank
+    )
+
   })
 
   it("Set Cap", async () => {
@@ -67,12 +73,12 @@ describe("Deploy and register new capped rebase token", async () => {
     await impersonateAccount(ownerAddr)
     const owner = ethers.provider.getSigner(ownerAddr)
     await s.VotingVaultController.connect(owner).registerUnderlying(oa.aOptUsdcAddress, s.CappedOAUSDC.address)
-    await s.Oracle.connect(owner).setRelay(s.CappedOAUSDC.address, od.UsdcRelay)
+    await s.Oracle.connect(owner).setRelay(s.CappedOAUSDC.address, usdcStandardRelay.address)
     await s.VaultController.connect(owner).registerErc20(
       s.CappedOAUSDC.address,
       BN("75e16"),
       s.CappedOAUSDC.address,
-      BN("1e17")
+      s.LiquidationIncentive
     )
     await ceaseImpersonation(ownerAddr)
   })

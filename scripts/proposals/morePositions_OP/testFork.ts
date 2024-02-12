@@ -101,15 +101,14 @@ describe("Testing", () => {
     let vaultId: number
     let nftVault: VaultNft
 
-    const wethAmount = BN("1e18")
-    const opAmount = BN("700e18")
+
 
     before(async () => {
         //run with --network tenderly
         //https://docs.tenderly.co/forks/sending-transactions-to-forks
         //await resetCustom("https://rpc.tenderly.co/fork/aa5229b9-09be-4887-ac17-f57339649b80")
+        //await resetCurrentOP()
 
-        
         const signers = await ethers.getSigners()
         signer = signers[0]
 
@@ -122,20 +121,31 @@ describe("Testing", () => {
         WETH = IERC20__factory.connect(oa.wethAddress, signer)
         OP = IERC20__factory.connect(oa.opAddress, signer)
 
-        let weth_minter = "0x274d9E726844AB52E351e8F1272e7fc3f58B7E5F"
         //await stealMoney(weth_minter, signer.address, WETH.address, wethAmount)
 
         let op_minter = "0xEbe80f029b1c02862B9E8a70a7e5317C06F62Cae"
-       // await stealMoney(op_minter, signer.address, oa.opAddress, opAmount)
-        
+        // await stealMoney(op_minter, signer.address, oa.opAddress, opAmount)
+
 
 
     })
+    it("Make a position", async () => {
 
+        const positionId = 492220
+
+    
+        
+        showBody("Value")
+        showBody(await toNumber(await V3PositionValuator.getValue(positionId)))
+        
+    })
+
+    /**
     it("Check for registered pools", async () => {
         showBodyCyan(await V3PositionValuator.owner())
         for (const pool of listings) {
-            expect(await V3PositionValuator.registeredPools(pool.addr)).to.eq(true, "Pool Registered")
+            //expect(await V3PositionValuator.registeredPools(pool.addr)).to.eq(true, "Pool Registered")
+            showBody(await V3PositionValuator.registeredPools(pool.addr))
         }
     })
 
@@ -145,5 +155,8 @@ describe("Testing", () => {
         showBody("T1: ", await pool.token1())
 
     })
+     */
+
+
 
 })

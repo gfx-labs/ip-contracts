@@ -97,15 +97,25 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
     _deposit(_msgSender(), address(vault), amount, wrappedAmount);
   }
 
+  ///@notice because these tokens only exist in the vault, we can override balanceOf
+  /// and simply account in only the underlying balance and not worry about the wrapper balance
+  /// to get the wrapper balance, we can plug the underlying balance into
+  /// function underlyingToWrapper(<underlying balance>)
+  function balanceOf(address account) public view override returns (uint256 balance) {
+    return _capped_to_underlying(super.balanceOf(account), _query_Underlying_Supply());
+  }
+
+  ///@notice for withdrawals, 
+  ///@param amount is in UNDERLYING terms, not wrapper terms
   function transfer(address recipient, uint256 amount) public override returns (bool) {
     //get vault info
     IVault vault = IVault(_msgSender());
     // only vaults will ever send this. only vaults will ever hold this token.
     require(vault.id() > 0, "only vaults");
     //calculate the amount of wrapper tokens to burn from the standard vault
-    uint256 unwrapAmount = _capped_to_underlying(amount, _underlying.totalSupply());
+    uint256 wraperAmount = _underlying_to_capped(amount, _underlying.totalSupply());
     //burn and unwrap
-    _withdraw(address(vault), recipient, unwrapAmount, amount);
+    _withdraw(address(vault), recipient, amount, wraperAmount);
     return true;
   }
 
@@ -153,7 +163,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   /// @param owner The account address.
   /// @return The usdi balance redeemable by the owner.
   function balanceOfUnderlying(address owner) external view returns (uint256) {
-    return _capped_to_underlying(balanceOf(owner), _query_Underlying_Supply());
+    return _capped_to_underlying(super.balanceOf(owner), _query_Underlying_Supply());
   }
 
   /// @param underlyingAmount The amount of usdi tokens.

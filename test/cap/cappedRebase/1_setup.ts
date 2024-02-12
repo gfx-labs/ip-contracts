@@ -50,7 +50,7 @@ describe("Rebase Token Setup", () => {
     it("Fund", async () => {
         const usdcMinter = "0xacD03D601e5bB1B275Bb94076fF46ED9D753435A"
         await stealMoney(usdcMinter, s.Bob.address, s.USDC.address, s.USDC_AMOUNT)
-        await stealMoney(usdcMinter, s.Dave.address, s.USDC.address, s.USDC_AMOUNT.mul(2))
+        await stealMoney(usdcMinter, s.Dave.address, s.USDC.address, s.Dave_USDC)
 
     })
 })
