@@ -13,9 +13,6 @@ import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
-//testing
-import "hardhat/console.sol";
-
 /// @title Capped Rebase Token
 /// @notice handles all minting/burning of underlying rebasing token
 /// @dev extends ierc20 upgradable
@@ -98,8 +95,8 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   }
 
   ///@notice because these tokens only exist in the vault, we can override balanceOf
-  /// and simply account in only the underlying balance and not worry about the wrapper balance
-  /// to get the wrapper balance, we can plug the underlying balance into
+  /// and simply account in only the underlying balance and not worry about the wrapper balance.
+  /// To get the wrapper balance, we can plug the underlying balance into
   /// function underlyingToWrapper(<underlying balance>)
   function balanceOf(address account) public view override returns (uint256 balance) {
     return _capped_to_underlying(super.balanceOf(account), _query_Underlying_Supply());

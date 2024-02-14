@@ -53,7 +53,6 @@ describe("Testing CappedToken functions using aUSDC", () => {
             await expect(s.VaultController.connect(accounts[i]).mintVault()).to.not.reverted
             const vaultId = await s.VaultController.vaultsMinted()
 
-
             //deposit
             await s.aUSDC.connect(accounts[i]).approve(s.CappedOAUSDC.address, s.aUSDCamount)
             await s.CappedOAUSDC.connect(accounts[i]).deposit(s.aUSDCamount, vaultId)
@@ -75,15 +74,23 @@ describe("Testing CappedToken functions using aUSDC", () => {
         caBalance = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
         expect(caBalance).to.eq(0, "Bob's vault holds 0 capped aUSDC at the start")
 
+        //deposit 0
+        expect(s.CappedOAUSDC.connect(s.Bob).deposit(BN("0"), s.BobVaultID)).to.be.revertedWith("Cannon deposit 0") 
+
+        //deposit too much
+        const excessiveDeposit = BN("1e36")
+        //temporarily set the cap to be high enough to allow for failing deposit to error correctly 
+        await s.CappedOAUSDC.connect(s.Frank).setCap(excessiveDeposit.mul(2))
+        await s.aUSDC.connect(s.Bob).approve(s.CappedOAUSDC.address, excessiveDeposit)
+        expect(s.CappedOAUSDC.connect(s.Bob).deposit(excessiveDeposit, s.BobVaultID)).to.be.reverted
+        //return cap to expected amount
+        await s.CappedOAUSDC.connect(s.Frank).setCap(s.aUSDCcap)
+
         await s.aUSDC.connect(s.Bob).approve(s.CappedOAUSDC.address, s.aUSDCamount)
         await s.CappedOAUSDC.connect(s.Bob).deposit(s.aUSDCamount, s.BobVaultID)
 
         caBalance = await s.aUSDC.balanceOf(s.Bob.address)
-        expect(caBalance.toNumber()).to.be.closeTo(0, 100, "Bob holds ~0 capped aUSDC after deposit")
-
-        //wrappedAmount = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
-        //showBodyCyan("Resulting wrapped balance: ", await toNumber(wrappedAmount))
-        // expect(caBalance).to.eq(s.aUSDCamount, "Bob's vault received the capped aUSDC tokens")
+        expect(caBalance.toNumber()).to.be.closeTo(0, 50, "Bob holds ~0 capped aUSDC after deposit")
 
     })
 
@@ -96,7 +103,7 @@ describe("Testing CappedToken functions using aUSDC", () => {
         const expected = await s.aUSDC.balanceOf(s.Carol.address)
         const reported = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
 
-        expect(reported.toNumber()).to.be.closeTo(expected.toNumber(), 50, "Bob's appreciation has been recorded")
+        expect(reported.toNumber()).to.be.closeTo(expected.toNumber(), 50, "Bob's appreciation has been recorded accurately")
 
     })
 
@@ -108,13 +115,18 @@ describe("Testing CappedToken functions using aUSDC", () => {
         const initialUnderlying = await s.aUSDC.balanceOf(s.CappedOAUSDC.address)
         const initialSupply = await s.CappedOAUSDC.totalSupply()
 
+        //test failing withdraw cases
+        //withdraw more than is had
+        const excessiveWithdraw = BN("1e36")
+        expect(s.BobVault.connect(s.Bob).withdrawErc20(s.CappedOAUSDC.address, excessiveWithdraw)).to.be.revertedWith("ERC20: burn amount exceeds balance") 
+
         //withdraw some but not all
         await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedOAUSDC.address, underlyingWithdrawAmount)
 
         //verify
         //Bob should now have ~1/2 of the original input amount
         let balance = await s.aUSDC.balanceOf(s.Bob.address)
-        expect(balance.toNumber()).to.be.closeTo(underlyingWithdrawAmount.toNumber(), 100, "Bob received the correct amount of underlying tokens")
+        expect(balance.toNumber()).to.be.closeTo(underlyingWithdrawAmount.toNumber(), 10, "Bob received the correct amount of underlying tokens")
 
         //remaining underlying for this test should now be initialUnderlying reduced by underlyingWithdrawAmount
         balance = await s.aUSDC.balanceOf(s.CappedOAUSDC.address)

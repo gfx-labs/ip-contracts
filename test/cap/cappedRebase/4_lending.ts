@@ -163,7 +163,6 @@ describe("Liquidations", () => {
         const expected = (liquidationValue.mul(s.LiquidationIncentive)).div(BN("1e18"))
 
         expect(await toNumber(profit)).to.be.closeTo(await toNumber(expected), 0.1, "Expected profit achieved")
-
     })
 
     it("repay all", async () => {
@@ -177,19 +176,18 @@ describe("Liquidations", () => {
         expect(liab).to.eq(0, "Loan completely repaid")
     })
 
-    it("Withdraw after loan", async () => {
+    it("Withdraw all after loan", async () => {
 
         const vaultCappedOAUSDC = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
 
         await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedOAUSDC.address, vaultCappedOAUSDC)
 
-        let balance = await s.aUSDC.balanceOf(s.BobVault.address)
-        expect(await toNumber(balance)).to.eq(0, "All aUSDC withdrawn")
-
-        balance = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
-        expect(balance.toNumber()).to.be.closeTo(0, 10, "All CappedOAUSDC removed from vault")
+        let balance = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
+        expect(balance.toNumber()).to.eq(0, "All CappedOAUSDC removed from vault")
 
         balance = await s.aUSDC.balanceOf(s.Bob.address)
+        showBody(balance)
+        showBody(s.aUSDCamount.sub(T2L))
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.aUSDCamount.sub(T2L)), 2, "Bob received collateral - liquidated amount")
     })
 })
