@@ -145,7 +145,6 @@ async function main() {
 
     let proposer: SignerWithAddress
 
-
     const networkName = hre.network.name
     if (networkName == "hardhat" || networkName == "localhost") {
         console.log("TEST PROPOSAL")
