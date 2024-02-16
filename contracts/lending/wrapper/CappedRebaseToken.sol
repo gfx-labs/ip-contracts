@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import "../vault/VotingVault.sol";
-import "../controller/VotingVaultController.sol";
-
 import "../IVaultController.sol";
 import "../IVault.sol";
 
@@ -21,7 +18,6 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
 
   ERC20Upgradeable public _underlying;
   IVaultController public _vaultController;
-  VotingVaultController public _votingVaultController;
 
   // in actual units
   uint256 public _cap;
@@ -34,20 +30,17 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   /// @param symbol_ symbol of capped token
   /// @param underlying_ the address of underlying
   /// @param vaultController_ the address of vault controller
-  /// @param votingVaultController_ the address of voting vault controller
   function initialize(
     string memory name_,
     string memory symbol_,
     address underlying_,
-    address vaultController_,
-    address votingVaultController_
+    address vaultController_
   ) public initializer {
     __Ownable_init();
     __ERC20_init(name_, symbol_);
     _underlying = ERC20Upgradeable(underlying_);
 
     _vaultController = IVaultController(vaultController_);
-    _votingVaultController = VotingVaultController(votingVaultController_);
   }
 
   /// @notice 18 decimal erc20 spec should have been written into the fucking standard
@@ -102,7 +95,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
     return _capped_to_underlying(super.balanceOf(account), _query_Underlying_Supply());
   }
 
-  ///@notice for withdrawals, 
+  ///@notice for withdrawals,
   ///@param amount is in UNDERLYING terms, not wrapper terms
   function transfer(address recipient, uint256 amount) public override returns (bool) {
     //get vault info
@@ -121,7 +114,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
     address /*recipient*/,
     uint256 /*amount*/
   ) public pure override returns (bool) {
-    // allowances are never granted, as the VotingVault does not grant allowances.
+    // allowances are never granted
     // this function is therefore always uncallable and so we will just return false
     return false;
   }

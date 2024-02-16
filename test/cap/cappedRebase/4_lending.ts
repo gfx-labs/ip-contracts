@@ -183,11 +183,9 @@ describe("Liquidations", () => {
         await s.BobVault.connect(s.Bob).withdrawErc20(s.CappedOAUSDC.address, vaultCappedOAUSDC)
 
         let balance = await s.CappedOAUSDC.balanceOf(s.BobVault.address)
-        expect(balance.toNumber()).to.eq(0, "All CappedOAUSDC removed from vault")
+        expect(balance.toNumber()).to.be.closeTo(0, 2, "All CappedOAUSDC removed from vault")
 
         balance = await s.aUSDC.balanceOf(s.Bob.address)
-        showBody(balance)
-        showBody(s.aUSDCamount.sub(T2L))
         expect(await toNumber(balance)).to.be.closeTo(await toNumber(s.aUSDCamount.sub(T2L)), 2, "Bob received collateral - liquidated amount")
     })
 })

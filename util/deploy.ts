@@ -19,8 +19,10 @@ export const DeployContractWithProxy = async (
         await con.initialize(...args)
         return mineBlock().then(() => { return con })
     }
-    const uVC = await factory.connect(deployer).deploy()
-    let vc = await new TransparentUpgradeableProxy__factory(deployer).connect(deployer).deploy(uVC.address, admin.address, "0x");
+    const uContract
+     = await factory.connect(deployer).deploy()
+    let vc = await new TransparentUpgradeableProxy__factory(deployer).connect(deployer).deploy(uContract
+        .address, admin.address, "0x");
     await mineBlock()
     await vc.deployed()
     await mineBlock()
@@ -36,9 +38,12 @@ export const DeployContractWithProxy = async (
 }
 
 export const DeployContract = async (factory: ContractFactory, deployer: Signer, ...args: any[]): Promise<any> => {
-    const uVC = await factory.connect(deployer).deploy(...args)
-    await uVC.deployed()
-    return factory.attach(uVC.address)
+    const uContract
+     = await factory.connect(deployer).deploy(...args)
+    await uContract
+    .deployed()
+    return factory.attach(uContract
+        .address)
 }
 
 

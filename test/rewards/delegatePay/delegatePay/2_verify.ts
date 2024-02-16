@@ -31,7 +31,7 @@ describe("Merkle Redeem", () => {
 
 
     let total = BN(0)
-    const week = 1011
+    const week = 1012
 
     let startingIPT: BigNumber
 
@@ -81,6 +81,9 @@ describe("Merkle Redeem", () => {
 
         showBody(s.IPT.address)
         await s.IPT.connect(s.DEPLOYER).approve(s.MerkleRedeem.address, total)
+        showBody("Merkle: ", s.MerkleRedeem.address)
+        showBody("Owner: ", await s.MerkleRedeem.owner())
+        showBody("Sender: ", s.DEPLOYER._address)
         await s.MerkleRedeem.connect(s.DEPLOYER).seedAllocations(
             week,
             s.ROOT,

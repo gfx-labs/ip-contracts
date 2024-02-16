@@ -1,106 +1,69 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import {
-    V3PositionValuator,
-    V3PositionValuator__factory,
-    Univ3CollateralToken__factory,
-    Univ3CollateralToken,
-    NftVaultController,
-    NftVaultController__factory,
-    VaultController__factory,
-    UsdcRelay__factory
+    CappedRebaseToken, CappedRebaseToken__factory, IOracleRelay, TransparentUpgradeableProxy__factory, UsdcStandardRelay__factory
 } from "../../../typechain-types"
-import { od } from "../../../util/addresser"
+import { oa, od } from "../../../util/addresser"
 import { currentBlock, resetCurrentOP } from "../../../util/block"
-import { DeployNewProxyContract } from "../../../util/deploy"
+import { DeployContract, DeployNewProxyContract } from "../../../util/deploy"
 import { network } from "hardhat"
 import hre from 'hardhat'
 const { ethers } = require("hardhat")
 
-const nfpManagerAddr = '0xC36442b4a4522E871399CD717aBDD847Ab11FE88'
-const FACTORY_V3_ADDR = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
+let CappedRebase: CappedRebaseToken
+let usdcStandardRelay: IOracleRelay
 
-let WrappedPosition: Univ3CollateralToken
-let PositionValuator: V3PositionValuator
-let NftVC: NftVaultController
-
-const deployOracles = async (deployer: SignerWithAddress) => {
-    PositionValuator = await DeployNewProxyContract(
-        new V3PositionValuator__factory(deployer),
-        deployer,
-        od.ProxyAdmin,
-        od.PositionValuatorImplementation,
-        nfpManagerAddr,
-        FACTORY_V3_ADDR
+const deployOracles = async (deployer: SignerWithAddress, mainnet: boolean) => {
+    usdcStandardRelay = await DeployContract(
+        new UsdcStandardRelay__factory(deployer),
+        deployer
     )
-    console.log("Deployed PositionValuator: ", PositionValuator.address)
-    return PositionValuator.address
+    await usdcStandardRelay.deployed()
+    console.log("Deployed usdcStandardRelay: ", usdcStandardRelay.address)
+
+    if(mainnet){
+        //await usdcStandardRelay.deployTransaction.wait(10)
+        console.log("Verifying...")
+        await hre.run("verify:verify", {
+            address: usdcStandardRelay.address
+        })
+        console.log("verified")
+    }
+
+    return usdcStandardRelay.address
 }
 
-const deployWrappedPosition = async (deployer: SignerWithAddress) => {
-    WrappedPosition = await DeployNewProxyContract(
-        new Univ3CollateralToken__factory(deployer),
-        deployer,
-        od.ProxyAdmin,
-        od.WrappedPositionImplementation,
-        "Wrapped Uniswap V3 Position",
-        "wPosition",
-        nfpManagerAddr,
-        od.VaultController,
-        od.NftController,
-        PositionValuator.address
-    )
-    console.log("Deployed WrappedPosition: ", WrappedPosition.address)
-    return WrappedPosition.address
-}
+const deployCappedRebase = async (deployer: SignerWithAddress, mainnet:boolean) => {
 
-const deployNftVaultController = async (deployer: SignerWithAddress) => {
-    NftVC = await DeployNewProxyContract(
-        new NftVaultController__factory(deployer),
+    CappedRebase = await DeployNewProxyContract(
+        new CappedRebaseToken__factory(deployer),
         deployer,
         od.ProxyAdmin,
-        od.NftControllerImplementation,
+        undefined,
+        "Capped Opt aUSDC",
+        "caOptUSDC",
+        oa.aOptUsdcAddress,
         od.VaultController
     )
-    console.log("Deployed Nft Controller: ", NftVC.address)
-    return NftVC.address
+    await CappedRebase.deployed()
+    console.log("Deployed CappedRebase: ", CappedRebase.address)
+    return CappedRebase.address
 }
 
-const deployNewVcImplentation = async (deployer: SignerWithAddress) => {
-    const implementation = await new VaultController__factory(deployer).deploy()
-    await implementation.deployed()
-    console.log("New Vault Controller Implementation Deployed: ", implementation.address)
-    return implementation.address
-}
-
-
-const deploy = async (deployer: SignerWithAddress) => {
+const deploy = async (deployer: SignerWithAddress, mainnet: boolean) => {
     console.log("Deploying")
+    //const oracleAddrs = await deployOracles(deployer, mainnet)
 
-    //deploy usdc relay
-    const usdcRelay = await new UsdcRelay__factory(deployer).deploy()
-    console.log("UDSC relay deployed: ", usdcRelay.address)
+    const CappedRebase = await deployCappedRebase(deployer, mainnet)
 
-    //const oracleAddrs = await deployOracles(deployer)
+    console.log("DONE")
 
-    //PositionValuator = V3PositionValuator__factory.connect(od.V3PositionValuator, deployer)
-    //const wrappedPosition = await deployWrappedPosition(deployer)
-
-    //const nftController = await deployNftVaultController(deployer)
-
-    //const newImp = await deployNewVcImplentation(deployer)
-
-    //console.log("DONE")
-
-    //return [oracleAddrs, wrappedPosition, nftController, od.VC_Implementation]
-
-}
-
-export const run = async (deployer: SignerWithAddress) => {
-    return await deploy(deployer)
+    //return [oracleAddrs, CappedRebase, nftController, od.VC_Implementation]
 
 }
 
 async function main() {
+    let mainnet: boolean = false
+
     //check for test network
     const networkName = hre.network.name
     if (networkName == "hardhat" || networkName == "localhost") {
@@ -109,6 +72,7 @@ async function main() {
         console.log("TEST DEPLOYMENT AT BLOCK: ", await (await currentBlock()).number)
     } else {
         console.log("DEPLOYING TO ", networkName)
+        mainnet = true
     }
 
 
@@ -116,7 +80,7 @@ async function main() {
     const deployer = accounts[0]
     console.log("Deployer: ", deployer.address)
 
-    await deploy(deployer)
+    await deploy(deployer, mainnet)
 
 }
 
@@ -128,11 +92,6 @@ main()
         process.exit(1)
     })
 
-
-/**
-Wrapped Position Implementation deployed:  0x833A17FA29bc2772e4302823B7d39eDd7C4bB79a
-Wrapped Position Initialized 0xe7101ec20E1bdfd1509369C026eaD532B17C04c1
-New Implementation Deployed:  0x68338eC08c8bA70230F8621effCb89b2BA45e80F
-Deployed Nft Controller:  0xec993a3C466F6876a79C0AE9E7954E3e0181097a
-New Vault Controller Implementation Deployed:  0x95c157Fe454AC1aDFA17dC9C3745bdBa992F9Caf
- */
+//usdc relay = 0x84be5d42712da1129019B4f43F226295ec47FcF9
+//capped rebase imp 0xd3451b8f2E8177Ee2BeCb842896289102544D89a
+//capped rebase 0x6F7A2f0d9DBd284E274f28a6Fa30e8760C25F9D2

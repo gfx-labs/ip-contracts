@@ -197,6 +197,11 @@ export class OptimisimDeploys {
     readonly SnxOracle: string = "0xd8284305b520FF5486ab718DBdfe46f18454aeDE"
     readonly UsdcRelay: string = "0xcEe78cE44e98d16f59C775494Be24E0D2cFF19A4"
 
+    //capped rebase token
+    readonly CappedRebasImplementatino: string = "0xd3451b8f2E8177Ee2BeCb842896289102544D89a"
+    readonly CappedOAUSDC: string = "0x6F7A2f0d9DBd284E274f28a6Fa30e8760C25F9D2"
+    readonly UsdcStandardRelay = "0x84be5d42712da1129019B4f43F226295ec47FcF9"//1e30
+
     //uni v3 positions
     readonly PositionValuatorImplementation: string = "0x5676e28f594A919F018e4888e43B432870b1856C"
     readonly V3PositionValuator: string = "0x5c69C9551E2fE670eDC82EC0288843c1956eE644" 

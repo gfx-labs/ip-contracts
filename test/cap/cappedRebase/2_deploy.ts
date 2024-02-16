@@ -46,10 +46,9 @@ describe("Deploy and register new capped rebase token", async () => {
       s.ProxyAdmin.address,
       undefined,
       "Capped OP aUSDC",
-      "caoUSDC",
+      "caOptUSDC",
       oa.aOptUsdcAddress,
-      od.VaultController,
-      od.VotingVaultController
+      od.VaultController
     )
     await s.CappedOAUSDC.deployed()
 
@@ -72,7 +71,7 @@ describe("Deploy and register new capped rebase token", async () => {
 
     await impersonateAccount(ownerAddr)
     const owner = ethers.provider.getSigner(ownerAddr)
-    await s.VotingVaultController.connect(owner).registerUnderlying(oa.aOptUsdcAddress, s.CappedOAUSDC.address)
+    //await s.VotingVaultController.connect(owner).registerUnderlying(oa.aOptUsdcAddress, s.CappedOAUSDC.address)
     await s.Oracle.connect(owner).setRelay(s.CappedOAUSDC.address, usdcStandardRelay.address)
     await s.VaultController.connect(owner).registerErc20(
       s.CappedOAUSDC.address,

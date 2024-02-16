@@ -95,7 +95,7 @@ export class TestScope extends MainnetAddresses {
     IP_OWNER = "0x266d1020a84b9e8b0ed320831838152075f8c4ca"
     owner = ethers.provider.getSigner(this.IP_OWNER)
 
-    IP_DEPLOYER = "0x958892b4a0512b28AaAC890FC938868BBD42f064"
+    IP_DEPLOYER = "0xe75358526Ef4441Db03cCaEB9a87F180fAe80eb9"
     DEPLOYER =  ethers.provider.getSigner(this.IP_DEPLOYER)
     
     MerkleRedeem!: MerkleRedeem
