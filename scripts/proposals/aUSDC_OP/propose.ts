@@ -21,7 +21,7 @@ const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 
 
 /*****************************CHANGE THESE/*****************************/
-const proposeFromScript = true //IF TRUE, PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
+const proposeFromScript = false //IF TRUE, PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
 const gasLimit = 1500000
 const proposerAddr = "0x4a470942dd7A44c6574666F8BDa47ce33c19A601"//"0xa6e8772af29b29B9202a073f8E36f447689BEef6"//"0xe75358526Ef4441Db03cCaEB9a87F180fAe80eb9"//"0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908"
 const LTV = BN("94e16")
