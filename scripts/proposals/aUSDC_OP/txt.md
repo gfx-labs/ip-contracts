@@ -8,7 +8,7 @@
 Underlying: [aOptUSDC](https://optimistic.etherscan.io/address/0x625e7708f30ca75bfd92586e17077590c60eb4cd)
 Wrapper address: [NEW IMPLEMENTATION TO BE DEPLOYED](https://gfx.cafe/ip/contracts/-/blob/master/contracts/lending/wrapper/CappedRebaseToken.sol?ref_type=heads)
 Cap: $200,000 USD
-LTV: 98%  
+LTV: 94%  
 Liquidation incentive: 5%  
 Primary Oracle: TO BE DEPLOYED - Simple oracle assumes value is 1, as USDI is backed by and pegged to USDC
 
@@ -18,6 +18,11 @@ Time: Deployed Mar-11-2022 01:49:48 PM +UTC
 Value: USDC
 Privileges: Controlled by Aave Protocol / Governance  
 Upgradability: Yes  
+
+## Housekeeping
+Reducing LTV for wrapped Uniswap V3 positions to 30% in order to account for volatility in pricing. 
+
+Switching oracle for Uniswap V3 Pool USDC/WETH to use a [USDC relay](https://optimistic.etherscan.io/address/0x84be5d42712da1129019b4f43f226295ec47fcf9) with the correct scaling. 
 
 ## Relevant References
 [Aave Docs](https://docs.aave.com/hub/)  

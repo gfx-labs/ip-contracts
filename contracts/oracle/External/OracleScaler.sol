@@ -3,8 +3,6 @@ pragma solidity 0.8.9;
 
 import "../IOracleRelay.sol";
 
-import "hardhat/console.sol";
-
 ///@notice this contract assumes usdc to be worth 1
 contract OracleScaler is IOracleRelay {
   IOracleRelay public referenceOracle;
@@ -18,8 +16,6 @@ contract OracleScaler is IOracleRelay {
   }
 
   function currentValue() external view override returns (uint256) {
-    console.log("Base Price: ", referenceOracle.currentValue());
-
     if (scaleUp) {
       return referenceOracle.currentValue() * scalingFactor;
     } else {

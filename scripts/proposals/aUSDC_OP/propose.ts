@@ -2,34 +2,45 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import {
     CrossChainAccount__factory,
     GovernorCharlieDelegate,
-    GovernorCharlieDelegate__factory, ILayer1Messenger__factory, OracleMaster__factory, V3PositionValuator__factory, VaultController__factory
+    GovernorCharlieDelegate__factory, ILayer1Messenger__factory, InterestProtocolTokenDelegate__factory, OracleMaster__factory, V3PositionValuator__factory, VaultController__factory
 } from "../../../typechain-types"
 import { ProposalContext } from "../suite/proposal"
 import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
 import { showBodyCyan } from "../../../util/format"
 import * as fs from 'fs'
 import path from 'path'
-import { currentBlock, fastForward, hardhat_mine, reset } from "../../../util/block"
+import { currentBlock, hardhat_mine, hardhat_mine_timed, resetCurrent } from "../../../util/block"
 import hre from 'hardhat'
-import { OptimisimAddresses, OptimisimDeploys, MainnetAddresses, od } from "../../../util/addresser"
+import { od, d, a } from "../../../util/addresser"
 import { getGas } from "../../../util/math"
 import { BN } from "../../../util/number"
-const a = new OptimisimAddresses()
-const d = new OptimisimDeploys()
-const m = new MainnetAddresses()
+
 const { ethers, network } = require("hardhat")
 
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 
 
 /*****************************CHANGE THESE/*****************************/
-const proposeFromScript = true //IF TRUE, PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
+const proposeFromScript = false //IF TRUE, PRIVATE KEY MUST BE IN .env as PERSONAL_PRIVATE_KEY=42bb...
 const gasLimit = 1500000
-const proposerAddr = "0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908"
-const LTV = BN("98e16")
+const proposerAddr = "0x4a470942dd7A44c6574666F8BDa47ce33c19A601"//"0xa6e8772af29b29B9202a073f8E36f447689BEef6"//"0xe75358526Ef4441Db03cCaEB9a87F180fAe80eb9"//"0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908"
+const LTV = BN("94e16")
+const newLTV = BN("3e17")//30% for wrapped v3 positions
+const wrappedPositionPenalty = BN("80000000000000000")//8%, current penalty for wrapped position
 const PENALTY = BN("5e16")
 
+const delegate = async (prop: SignerWithAddress) => {
+
+    const IPT = InterestProtocolTokenDelegate__factory.connect(d.IPT, prop)
+    await impersonateAccount(proposerAddr)
+    const signer = ethers.provider.getSigner(proposerAddr)
+    await IPT.connect(signer).delegate(proposerAddr)
+    await ceaseImpersonation(proposerAddr)
+
+}
+
 const makeProposal = async (proposer: SignerWithAddress) => {
+
     const proposal = new ProposalContext("")
 
     let gov: GovernorCharlieDelegate = new GovernorCharlieDelegate__factory(proposer).attach(
@@ -42,11 +53,11 @@ const makeProposal = async (proposer: SignerWithAddress) => {
             od.CappedOAUSDC,
             od.UsdcStandardRelay
         )
-    const setRelayForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
-        populateTransaction.forward(od.V3PositionValuator, setRelayData.data!)
+    const setRelayForward = await new CrossChainAccount__factory().attach(od.optimismMessenger).
+        populateTransaction.forward(od.Oracle, setRelayData.data!)
     console.log("Forward Data: ", setRelayForward)
-    const setRelay = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
-        populateTransaction.sendMessage(d.optimismMessenger, setRelayForward.data!, gasLimit)
+    const setRelay = await ILayer1Messenger__factory.connect(a.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(od.optimismMessenger, setRelayForward.data!, gasLimit)
 
     //register erc20
     const registerData = await new VaultController__factory(proposer).
@@ -56,21 +67,65 @@ const makeProposal = async (proposer: SignerWithAddress) => {
             od.CappedOAUSDC,
             PENALTY
         )
-    const registerForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
-        populateTransaction.forward(od.V3PositionValuator, registerData.data!)
+    const registerForward = await new CrossChainAccount__factory().attach(od.optimismMessenger).
+        populateTransaction.forward(od.VaultController, registerData.data!)
     console.log("Forward Data: ", registerForward)
-    const register = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
-        populateTransaction.sendMessage(d.optimismMessenger, registerForward.data!, gasLimit)
+    const register = await ILayer1Messenger__factory.connect(a.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(od.optimismMessenger, registerForward.data!, gasLimit)
+
+
+    //reduce LTV on uni positions
+    const updateData = await new VaultController__factory(proposer).
+        attach(od.VaultController).populateTransaction.updateRegisteredErc20(
+            od.WrappedPosition,
+            newLTV,
+            od.WrappedPosition,
+            wrappedPositionPenalty
+        )
+    const updateForward = await new CrossChainAccount__factory().attach(od.optimismMessenger).
+        populateTransaction.forward(od.VaultController, updateData.data!)
+    console.log("Forward Data: ", updateForward)
+    const update = await ILayer1Messenger__factory.connect(a.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(od.optimismMessenger, updateForward.data!, gasLimit)
+
+    //housekeeping - update scaling for usdc oracle used in Uni v3 position valuation
+    const registerPoolData = await new V3PositionValuator__factory(proposer).
+        attach(od.V3PositionValuator).populateTransaction.registerPool(
+            "0x85149247691df622eaF1a8Bd0CaFd40BC45154a9",
+            od.EthOracle,
+            od.UsdcRelay//we are simply toggleing this pool off in the first tx
+        )
+    const registerPoolForward = await new CrossChainAccount__factory().attach(od.optimismMessenger).
+        populateTransaction.forward(od.V3PositionValuator, registerPoolData.data!)
+    console.log("Forward Data: ", registerPoolForward)
+    const registerPool = await ILayer1Messenger__factory.connect(a.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(od.optimismMessenger, registerPoolForward.data!, gasLimit)
+
+    
+    //need a second step, as the first will only toggle this pool off
+    const registerPoolDataAgain = await new V3PositionValuator__factory(proposer).
+        attach(od.V3PositionValuator).populateTransaction.registerPool(
+            "0x85149247691df622eaF1a8Bd0CaFd40BC45154a9",
+            od.EthOracle,
+            od.UsdcStandardRelay//now we set the correct updated oracle as we toggle the pool back on
+        )
+    const registerPoolForwardAgain = await new CrossChainAccount__factory().attach(od.optimismMessenger).
+        populateTransaction.forward(od.V3PositionValuator, registerPoolDataAgain.data!)
+    console.log("Forward Data: ", registerPoolForwardAgain)
+    const registerPoolAgain = await ILayer1Messenger__factory.connect(a.OPcrossChainMessenger, proposer).
+        populateTransaction.sendMessage(od.optimismMessenger, registerPoolForwardAgain.data!, gasLimit)
 
     proposal.addStep(setRelay, "sendMessage(address,bytes,uint32)")
     proposal.addStep(register, "sendMessage(address,bytes,uint32)")
+    proposal.addStep(update, "sendMessage(address,bytes,uint32)")
+    proposal.addStep(registerPool, "sendMessage(address,bytes,uint32)")
+    proposal.addStep(registerPoolAgain, "sendMessage(address,bytes,uint32)")//need a second step, as the first will only toggle this pool off
 
     const out = proposal.populateProposal()
     const proposalText = fs.readFileSync(path.resolve(__dirname, "./txt.md"), 'utf8')
 
     if (proposeFromScript) {
-        //console.log("Sending proposal")
-        //console.log("Data: ", out)
+        console.log("Sending proposal...")
         const result = await gov.connect(proposer).propose(
             out.targets,
             out.values,
@@ -80,13 +135,13 @@ const makeProposal = async (proposer: SignerWithAddress) => {
             false
         )
         const receipt = await result.wait()
-        //console.log("Gas: ", await getGas(result))
         console.log("Proposal sent: ", receipt.transactionHash)
         const networkName = hre.network.name
         if (networkName == "hardhat" || networkName == "localhost") {
             //test execution if on test network 
             await quickTest(proposer, out)
         }
+
     } else {
         console.log("Populating proposal tx")
         const data = await gov.connect(proposer).populateTransaction.propose(
@@ -129,9 +184,9 @@ const quickTest = async (proposer: SignerWithAddress, out: any) => {
     await hardhat_mine(votingPeriod.toNumber())
 
     await gov.connect(prop).queue(proposal)
-
-    await fastForward(timelock.toNumber())
-
+    await hardhat_mine_timed(timelock.toNumber(), 1)
+    await hardhat_mine_timed(50, 2)
+    //await fastForward(timelock.toNumber())
     const result = await gov.connect(prop).execute(proposal)
     await result.wait()
     showBodyCyan("Gas to execute: ", await getGas(result))
@@ -150,12 +205,14 @@ async function main() {
         console.log("TEST PROPOSAL")
         await network.provider.send("evm_setAutomine", [true])
         //await resetCurrent()
-        await reset(18971281)
+        await resetCurrent()
         const block = await currentBlock()
         console.log("reset to block ", block.number)
+
+        proposer = ethers.provider.getSigner(proposerAddr)
+        await delegate(proposer)
         await impersonateAccount(proposerAddr)
         console.log("Impersonated ", proposerAddr)
-        proposer = ethers.provider.getSigner(proposerAddr)
 
     } else {
         const accounts = await ethers.getSigners()

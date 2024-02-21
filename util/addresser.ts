@@ -201,6 +201,7 @@ export class OptimisimDeploys {
     readonly CappedRebasImplementatino: string = "0xd3451b8f2E8177Ee2BeCb842896289102544D89a"
     readonly CappedOAUSDC: string = "0x6F7A2f0d9DBd284E274f28a6Fa30e8760C25F9D2"
     readonly UsdcStandardRelay = "0x84be5d42712da1129019B4f43F226295ec47FcF9"//1e30
+    
 
     //uni v3 positions
     readonly PositionValuatorImplementation: string = "0x5676e28f594A919F018e4888e43B432870b1856C"
@@ -209,7 +210,7 @@ export class OptimisimDeploys {
     readonly WrappedPosition: string = "0x7131FF92a3604966d7D96CCc9d596F7e9435195c"
     readonly NftControllerImplementation: string = "0x68338eC08c8bA70230F8621effCb89b2BA45e80F"
     readonly NftController: string = "0xd5832070A81d607E8932B524f507B47117564CD3"
-
+    readonly wbtcOracleScaler: string = "0xB626405c1E596eCF1c49a887f1ef4a46F39e1466"
     readonly VC_Implementation: string = "0x95c157Fe454AC1aDFA17dC9C3745bdBa992F9Caf"
 }
 
