@@ -91,9 +91,6 @@ const verifyUpgrade = async (sender: SignerWithAddress) => {
     //check borrow power
     const bp = await vc.vaultBorrowingPower(vaultId)
     //showBodyCyan(await toNumber(bp))
-
-
-
      */
 
     //test withdraw of position

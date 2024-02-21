@@ -14,6 +14,8 @@ import { currentBlock, resetCurrentOP } from "../../../util/block"
 import { DeployNewProxyContract } from "../../../util/deploy"
 import { network } from "hardhat"
 import hre from 'hardhat'
+import { IUniswapV3PoolActions__factory } from "../../../typechain-types/factories/contracts/_external/uniswap/pool"
+import { getGas } from "../../../util/math"
 const { ethers } = require("hardhat")
 
 const nfpManagerAddr = '0xC36442b4a4522E871399CD717aBDD847Ab11FE88'
@@ -72,13 +74,22 @@ const deployNewVcImplentation = async (deployer: SignerWithAddress) => {
     return implementation.address
 }
 
+const increaseObs = async (deployer: SignerWithAddress) => {
+    const pool = IUniswapV3PoolActions__factory.connect("0x85149247691df622eaF1a8Bd0CaFd40BC45154a9", deployer)
+    console.log("increase obs: ", await getGas(await pool.connect(deployer).increaseObservationCardinalityNext(1880)))
+
+
+}
+
 
 const deploy = async (deployer: SignerWithAddress) => {
     console.log("Deploying")
 
+    await increaseObs(deployer)
+
     //deploy usdc relay
-    const usdcRelay = await new UsdcRelay__factory(deployer).deploy()
-    console.log("UDSC relay deployed: ", usdcRelay.address)
+    //const usdcRelay = await new UsdcRelay__factory(deployer).deploy()
+    //console.log("UDSC relay deployed: ", usdcRelay.address)
 
     //const oracleAddrs = await deployOracles(deployer)
 
@@ -97,7 +108,6 @@ const deploy = async (deployer: SignerWithAddress) => {
 
 export const run = async (deployer: SignerWithAddress) => {
     return await deploy(deployer)
-
 }
 
 async function main() {
@@ -110,7 +120,6 @@ async function main() {
     } else {
         console.log("DEPLOYING TO ", networkName)
     }
-
 
     const accounts = await ethers.getSigners()
     const deployer = accounts[0]

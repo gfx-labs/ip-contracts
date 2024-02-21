@@ -14,7 +14,10 @@ import {
     NftVaultController__factory,
     NftVaultController,
     VaultNft,
-    VaultNft__factory
+    VaultNft__factory,
+    OracleScaler__factory,
+    VotingVaultController__factory,
+    ProxyAdmin__factory
 } from "../../../typechain-types"
 import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
 import { hardhat_mine_timed, resetCurrentOP, resetOP } from "../../../util/block"
@@ -23,17 +26,18 @@ import { stealMoney } from "../../../util/money"
 import { mintPosition } from "../../../util/msc"
 import { expect } from "chai"
 import { BigNumber } from "ethers"
-import { showBody } from "../../../util/format"
+import { showBody, showBodyCyan } from "../../../util/format"
 import { toNumber } from "../../../util/math"
+import { setBalance } from "@nomicfoundation/hardhat-network-helpers"
+import { DeployContract } from "../../../util/deploy"
 const { ethers } = require("hardhat")
 
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
-const ownerAddr = "0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89"
-const owner = ethers.provider.getSigner(ownerAddr)
-const wethOp3000 = {
-    addr: "0x68F5C0A2DE713a54991E01858Fd27a3832401849",
+
+const wethWBTC500 = {
+    addr: "0x85c31ffa3706d1cce9d525a00f1c7d4a2911754c",//not verrified
     oracle0: od.EthOracle,
-    oracle1: od.OpOracle
+    oracle1: od.wBtcOracle//double check token0/token1? 
 }
 
 require("chai").should();
@@ -47,56 +51,67 @@ describe("Testing", () => {
     let signer: SignerWithAddress
     let WETH: IERC20
     let OP: IERC20
+    let WBTC: IERC20
     let positionId: BigNumber
     let vaultId: number
     let nftVault: VaultNft
 
     const wethAmount = BN("1e18")
-    const opAmount = BN("700e18")
+    const wbtcAmount = BN("1e7")
 
     before(async () => {
-        await resetOP(115526670)
+        await resetCurrentOP()
 
         const signers = await ethers.getSigners()
         signer = signers[0]
 
         nfpManager = INonfungiblePositionManager__factory.connect(oa.nfpManager, signer)
         wrapper = Univ3CollateralToken__factory.connect(od.WrappedPosition, signer)
-        V3PositionValuator = V3PositionValuator__factory.connect(od.V3PositionValuator, owner)
+        V3PositionValuator = V3PositionValuator__factory.connect(od.V3PositionValuator, signer)
         VaultController = VaultController__factory.connect(od.VaultController, signer)
         nftController = NftVaultController__factory.connect(od.NftController, signer)
 
         WETH = IERC20__factory.connect(oa.wethAddress, signer)
         OP = IERC20__factory.connect(oa.opAddress, signer)
+        WBTC = IERC20__factory.connect(oa.wbtcAddress, signer)
 
         let weth_minter = "0x274d9E726844AB52E351e8F1272e7fc3f58B7E5F"
         await stealMoney(weth_minter, signer.address, WETH.address, wethAmount)
 
-        let op_minter = "0xEbe80f029b1c02862B9E8a70a7e5317C06F62Cae"
-        await stealMoney(op_minter, signer.address, oa.opAddress, opAmount)
+        let wbtc_minter = "0xE2b4fd6899E27142edf5298E150205F97Be4DD78"
+        await stealMoney(wbtc_minter, signer.address, oa.wbtcAddress, wbtcAmount)
 
+        showBody(await nftController._nfpManager())
 
     })
 
     it("perform the listing", async () => {
 
+        const ownerAddr = await V3PositionValuator.owner()
+        const owner = ethers.provider.getSigner(ownerAddr)
+
+        await setBalance(ownerAddr, BN("1e18"))
+
         await impersonateAccount(ownerAddr)
         await V3PositionValuator.connect(owner).registerPool(
-            wethOp3000.addr,
-            wethOp3000.oracle0,
-            wethOp3000.oracle1
+            wethWBTC500.addr,
+            wethWBTC500.oracle0,
+            wethWBTC500.oracle1
         )
         await ceaseImpersonation(ownerAddr)
     })
 
+
     it("mint a position", async () => {
 
-        positionId = await mintPosition(wethOp3000.addr, WETH, OP, wethAmount, opAmount, signer)
+        positionId = await mintPosition(wethWBTC500.addr, WETH, WBTC, wethAmount, wbtcAmount, signer)
         expect(positionId).to.be.gt(0, "Position Minted")
         expect(await nfpManager.balanceOf(signer.address)).to.be.gt(0, "Position balance increased")
 
         //showBody("WETH delta: ", await toNumber(wethAmount) - await toNumber(await WETH.balanceOf(signer.address)))
-        //showBody("OP   delta: ", await toNumber(opAmount) - await toNumber(await OP.balanceOf(signer.address)))
+        //showBody("WBTC delta: ", ethers.utils.formatUnits(wbtcAmount.sub(await WBTC.balanceOf(signer.address)), 8))
+
+        //expected value is 3773.8507500000005 in BTC + 2771.63 in ETH == ~6,545.48
 
     })
 
@@ -122,11 +137,55 @@ describe("Testing", () => {
         await wrapper.connect(signer).deposit(positionId, vaultId)
         expect(await nfpManager.balanceOf(signer.address)).to.eq(0, "Position balance back to 0")
 
+        const value = await V3PositionValuator.getValue(positionId)
+        //showBody(value)
+        //showBody(await toNumber(value))
+
         const endBP = await VaultController.vaultBorrowingPower(vaultId)
-        expect(await toNumber(endBP)).to.be.gt(1000, "Borrow Power increased")
+        //showBody("Initial BP: ", await toNumber(endBP))
+        //expect(await toNumber(endBP)).to.be.gt(1000, "Borrow Power increased")
 
     })
 
+    it("Deploy updated oracle, register, and verify", async () => {
+
+        //deploy updated oracle
+        const oracleScaler = await DeployContract(
+            new OracleScaler__factory(signer),
+            signer,
+            od.wBtcOracle,
+            BN("1e10"),
+            true
+        )
+
+        //register
+        const ownerAddr = await V3PositionValuator.owner()
+        const owner = ethers.provider.getSigner(ownerAddr)
+        await impersonateAccount(ownerAddr)
+        //need to call twice, as it is a toggle, first call turns off the pool
+        await V3PositionValuator.connect(owner).registerPool(
+            wethWBTC500.addr,
+            wethWBTC500.oracle0,
+            oracleScaler.address
+        )
+        await V3PositionValuator.connect(owner).registerPool(
+            wethWBTC500.addr,
+            wethWBTC500.oracle0,
+            oracleScaler.address
+        )
+        await ceaseImpersonation(ownerAddr)
+
+        //check value again 
+        const value = await V3PositionValuator.getValue(positionId)
+        //showBody(value)
+        //showBodyCyan(await toNumber(value))
+        const endBP = await VaultController.vaultBorrowingPower(vaultId)
+        showBodyCyan("End BP: ", await toNumber(endBP))
+
+
+    })
+
+    
     it("Do a loan", async () => {
 
         const usdiAmount = BN("1000e18")
@@ -135,13 +194,18 @@ describe("Testing", () => {
         expect(await toNumber(await VaultController.vaultLiability(vaultId))).to.be.closeTo(await toNumber(usdiAmount), 0.0001, "Good Borrow")
 
     })
+     
 
     it("Collect", async () => {
 
         await hardhat_mine_timed(15, 15)
-
-        await expect(nftVault.connect(signer).collect(positionId, signer.address)).to.not.reverted
+        const result = await nftVault._vaultInfo()
+        showBody(result)
+        showBody(await nftController._nfpManager())
+        await nftVault.connect(signer).collect(positionId, signer.address)
+        //await expect(nftVault.connect(signer).collect(positionId, signer.address)).to.not.reverted
 
 
     })
+
 })

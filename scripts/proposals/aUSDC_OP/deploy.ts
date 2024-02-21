@@ -1,16 +1,18 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import {
-    CappedRebaseToken, CappedRebaseToken__factory, IOracleRelay, TransparentUpgradeableProxy__factory, UsdcStandardRelay__factory
+    CappedRebaseToken, CappedRebaseToken__factory, IOracleRelay, OracleScaler__factory, TransparentUpgradeableProxy__factory, UsdcStandardRelay__factory
 } from "../../../typechain-types"
 import { oa, od } from "../../../util/addresser"
 import { currentBlock, resetCurrentOP } from "../../../util/block"
 import { DeployContract, DeployNewProxyContract } from "../../../util/deploy"
 import { network } from "hardhat"
 import hre from 'hardhat'
+import { BN } from "../../../util/number"
 const { ethers } = require("hardhat")
 
 let CappedRebase: CappedRebaseToken
 let usdcStandardRelay: IOracleRelay
+let wbtcOracleScaler: IOracleRelay
 
 const deployOracles = async (deployer: SignerWithAddress, mainnet: boolean) => {
     usdcStandardRelay = await DeployContract(
@@ -20,7 +22,7 @@ const deployOracles = async (deployer: SignerWithAddress, mainnet: boolean) => {
     await usdcStandardRelay.deployed()
     console.log("Deployed usdcStandardRelay: ", usdcStandardRelay.address)
 
-    if(mainnet){
+    if (mainnet) {
         //await usdcStandardRelay.deployTransaction.wait(10)
         console.log("Verifying...")
         await hre.run("verify:verify", {
@@ -32,7 +34,33 @@ const deployOracles = async (deployer: SignerWithAddress, mainnet: boolean) => {
     return usdcStandardRelay.address
 }
 
-const deployCappedRebase = async (deployer: SignerWithAddress, mainnet:boolean) => {
+const deployOracleScaler = async (deployer: SignerWithAddress, mainnet: boolean) => {
+    wbtcOracleScaler = await DeployContract(
+        new OracleScaler__factory(deployer),
+        deployer,
+        od.wBtcOracle,
+        BN("1e10"),
+        true
+    )
+    await wbtcOracleScaler.deployed()
+    console.log("Deployed wbtcOracleScaler: ", wbtcOracleScaler.address)
+
+    if (mainnet) {
+        await hre.run("verify:verify", {
+            address: wbtcOracleScaler.address,
+            constructorArguments: [
+                od.wBtcOracle,
+                BN("1e10"),
+                true
+            ]
+        })
+        console.log("verified")
+    }
+    return wbtcOracleScaler.address
+
+}
+
+const deployCappedRebase = async (deployer: SignerWithAddress, mainnet: boolean) => {
 
     CappedRebase = await DeployNewProxyContract(
         new CappedRebaseToken__factory(deployer),
@@ -53,7 +81,9 @@ const deploy = async (deployer: SignerWithAddress, mainnet: boolean) => {
     console.log("Deploying")
     //const oracleAddrs = await deployOracles(deployer, mainnet)
 
-    const CappedRebase = await deployCappedRebase(deployer, mainnet)
+    //const CappedRebase = await deployCappedRebase(deployer, mainnet)
+
+    const deployScaler = await deployOracleScaler(deployer,mainnet)
 
     console.log("DONE")
 
