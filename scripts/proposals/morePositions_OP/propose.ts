@@ -44,7 +44,7 @@ const wstethWeth100: poolData = {
 }
 const usdcWeth500: poolData = {
     addr: "0x1fb3cf6e48F1E7B10213E7b6d87D4c073C7Fdb7b",
-    oracle0: d.UsdcRelay,
+    oracle0: d.UsdcStandardRelay,
     oracle1: d.EthOracle
 }
 const wethOp500: poolData = {
@@ -60,12 +60,12 @@ const wethSnx3000: poolData = {
 const wethWBTC500: poolData = {
     addr: "0x85c31ffa3706d1cce9d525a00f1c7d4a2911754c",//not verrified
     oracle0: d.EthOracle,
-    oracle1: d.wBtcOracle//double check token0/token1? 
+    oracle1: d.wbtcOracleScaler//double check token0/token1? 
 }
 const wethUSDC3000: poolData = {
     addr: "0xB589969D38CE76D3d7AA319De7133bC9755fD840",//not verrified
     oracle0: d.EthOracle,
-    oracle1: d.UsdcRelay
+    oracle1: d.UsdcStandardRelay
 }
 
 const listings: poolData[] = [

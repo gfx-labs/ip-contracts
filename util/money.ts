@@ -2,6 +2,8 @@ import { BigNumber, BigNumberish } from "ethers";
 import { ethers, network } from "hardhat";
 import { IERC20__factory, IERC20 } from "../typechain-types";
 import { BigFromN } from "./stringn";
+import { setBalance } from "@nomicfoundation/hardhat-network-helpers";
+import { BN } from "./number";
 
 export const stealMoney = async (
     from: string,
@@ -9,6 +11,9 @@ export const stealMoney = async (
     tokenAddr: string,
     amount: BigNumberish
 ) => {
+    //fund with eth so we can steal from any addr that holds the token, including contracts
+    await setBalance(from, BN("1e18"))
+    
     await network.provider.request({
         method: "hardhat_impersonateAccount",
         params: [from],

@@ -127,8 +127,8 @@ export class OptimisimAddresses {
     //Tokens
     readonly wethAddress: string = "0x4200000000000000000000000000000000000006"
     readonly opAddress: string = "0x4200000000000000000000000000000000000042"
-    readonly usdcAddress: string = "0x7F5c764cBc14f9669B88837ca1490cCa17c31607"
-    readonly circleUSDCaddress: string = "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85"
+    readonly usdcAddress: string = "0x7F5c764cBc14f9669B88837ca1490cCa17c31607"//bridged from mainnet - USDC.e
+    readonly circleUSDCaddress: string = "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85"//Native USDC
     readonly wbtcAddress: string = "0x68f180fcCe6836688e9084f035309E29Bf0A2095"
     readonly aaveAddress: string = "0x76FB31fb4af56892A25e32cFC43De717950c9278"
     readonly uniAddress: string = "0x6fd9d7AD17242c41f7131d257212c54A0e816691"
