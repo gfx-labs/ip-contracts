@@ -17,13 +17,14 @@ import {
     VaultNft__factory,
     IV3Pool__factory,
     ISwapRouter__factory,
-    IUniswapV3Pool__factory
+    IUniswapV3Pool__factory,
+    IOracleRelay__factory
 } from "../../../typechain-types"
 import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
 import { currentBlock, hardhat_mine_timed, resetCurrentOP, resetCustom, resetOP } from "../../../util/block"
 import { OptimisimDeploys, oa, od } from "../../../util/addresser"
 import { stealMoney } from "../../../util/money"
-import { mintPosition } from "../../../util/msc"
+import { mintPosition, valueOwnedPosition, valuePosition } from "../../../util/msc"
 import { expect } from "chai"
 import { BigNumber, providers } from "ethers"
 import { showBody, showBodyCyan } from "../../../util/format"
@@ -59,16 +60,17 @@ describe("Testing", () => {
 
     const ethAmount = BN("5e17")
 
+    let positions: number[] = []
 
     before(async () => {
         //run with --network tenderly
         //https://docs.tenderly.co/forks/sending-transactions-to-forks
-        //https://rpc.tenderly.co/fork/1b2fe01e-066b-4541-9ef1-c0dad253bcca
+        //https://rpc.tenderly.co/fork/52e8b21e-4477-42e0-a2ff-0d4e6e972a23
         //await resetCustom("https://rpc.tenderly.co/fork/aa5229b9-09be-4887-ac17-f57339649b80")
         //await resetCurrentOP()
 
-        //reset to initial transaction
-        await ethers.provider.send("evm_revert", ["f206d04a-6e6c-40c7-8163-9ada39b48c0f"])
+        //reset to final proposal transaction from tenderly
+        await ethers.provider.send("evm_revert", ["cc43df76-8186-406d-81d8-8d88f1a4e807"])
 
 
         const signers = await ethers.getSigners()
@@ -99,7 +101,6 @@ describe("Testing", () => {
      * make position
      * check value both ways
      */
-
     it("setup balances", async () => {
 
         await ethers.provider.send('tenderly_addBalance', [
@@ -107,7 +108,7 @@ describe("Testing", () => {
             ethers.utils.hexValue(ethers.utils.parseUnits('10', 'ether').toHexString())
         ])
 
-        expect(await toNumber(await ethers.provider.getBalance(signer.address))).to.be.gt(10, "Ether had")
+        expect(await toNumber(await ethers.provider.getBalance(signer.address))).to.be.gt(9.999, "Ether had")
 
     })
 
@@ -123,18 +124,29 @@ describe("Testing", () => {
 
         showBodyCyan("Swapping eth for tokens...")
         for (let i = 0; i < listings.length; i++) {
+
             const pool = IUniswapV3Pool__factory.connect(listings[i].addr, signer)
 
-            let tokenIn: IERC20 = WETH
-            let tokenOut = await pool.token1()
+            let token0 = IERC20__factory.connect(await pool.token0(), signer)
+            let token1 = IERC20__factory.connect(await pool.token1(), signer)
 
-            if ((await pool.token0()).toString() != oa.wethAddress) {
-                tokenOut = await pool.token0()
+            let tokenIn: IERC20
+            let tokenOut: IERC20
+
+            let zf1 = true
+
+            if ((await pool.token0()).toString() == oa.wethAddress) {
+                tokenIn = token0
+                tokenOut = token1
+            } else {
+                tokenIn = token1
+                tokenOut = token0
+                zf1 = false
             }
 
             const EIS_Params: ExactInputSingleParams = {
                 tokenIn: tokenIn.address,
-                tokenOut: tokenOut,
+                tokenOut: tokenOut.address,
                 fee: await pool.fee(),
                 recipient: signer.address,
                 deadline: (await currentBlock()).timestamp + 120,
@@ -146,45 +158,53 @@ describe("Testing", () => {
             await tokenIn.connect(signer).approve(router.address, EIS_Params.amountIn)
             await router.connect(signer).exactInputSingle(EIS_Params)
 
+            let amount0: BigNumber
+            let amount1: BigNumber
+
+            if (zf1) {
+                amount0 = ethAmount
+                amount1 = await token1.balanceOf(signer.address)
+            } else {
+                amount0 = await token0.balanceOf(signer.address)
+                amount1 = ethAmount
+            }
+
             //mint positions
-            /**
             const pid = await mintPosition(
-                listings[i].addr, 
-                IERC20__factory.connect(await pool.token0(), signer),
-                IERC20__factory.connect(await pool.token1(), signer),
-                ethAmount,
-                await 
-                )
-             */
-
-
-
-
+                listings[i].addr,
+                token0,
+                token1,
+                amount0,
+                amount1,
+                signer
+            )
+            positions.push(Number(pid))
+            console.log("Finished ", i)
         }
-
-
-
+        showBodyCyan("Done")
     })
 
+    it("Compare pool value", async () => {
 
+        showBodyCyan("Testing Values.....")
+        for (let i = 0; i < positions.length; i++) {
+            expect(await V3PositionValuator.registeredPools(listings[i].addr)).to.eq(true, "Pool registered")
 
-    /**
-    it("Check for registered pools", async () => {
-        showBodyCyan(await V3PositionValuator.owner())
-        for (const pool of listings) {
-            //expect(await V3PositionValuator.registeredPools(pool.addr)).to.eq(true, "Pool Registered")
-            showBody(await V3PositionValuator.registeredPools(pool.addr))
+            const valuation = await V3PositionValuator.getValue(positions[i])
+            
+            //this also liquidates the position
+            const actual = await valueOwnedPosition(
+                Number(positions[i]),
+                IOracleRelay__factory.connect(listings[i].oracle0, signer),
+                IOracleRelay__factory.connect(listings[i].oracle1, signer),
+                nfpManager,
+                signer
+            )
+
+            expect(await toNumber(valuation)).to.be.closeTo(await toNumber(actual), 5, "Accurate")
+
+            const data = await nfpManager.positions(Number(positions[i]))
+            expect(data.liquidity).to.eq(0, `Position ${positions[i]} closed`)
         }
     })
-
-    it("Check for position value", async () => {
-        const pool = IV3Pool__factory.connect("0xB589969D38CE76D3d7AA319De7133bC9755fD840", signer)
-        showBody("T0: ", await pool.token0())
-        showBody("T1: ", await pool.token1())
-
-    })
-     */
-
-
-
 })

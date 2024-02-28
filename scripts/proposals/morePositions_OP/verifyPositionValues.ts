@@ -35,7 +35,6 @@ const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 const ownerAddr = "0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89"
 const owner = ethers.provider.getSigner(ownerAddr)
 
-let swapAmounts: number[] = []
 let positions: number[] = []
 
 require("chai").should();
@@ -177,7 +176,6 @@ describe("Testing", () => {
  
              //get actual value
              const rawValue = await valuePosition(
-                 pool.addr,
                  payload[i].token_id,
                  IOracleRelay__factory.connect(pool.oracle0, signer),
                  IOracleRelay__factory.connect(pool.oracle1, signer),
@@ -230,7 +228,6 @@ describe("Testing", () => {
 
         const valuation = await V3PositionValuator.getValue(testPosition)
         const actual = await valuePosition(
-            listings[0].addr,
             testPosition,
             IOracleRelay__factory.connect(listings[0].oracle0, signer),
             IOracleRelay__factory.connect(listings[0].oracle1, signer),
@@ -249,7 +246,6 @@ describe("Testing", () => {
             const valuation = await V3PositionValuator.getValue(positions[i])
             //this also liquidates the position
             const actual = await valuePosition(
-                listings[i].addr,
                 Number(positions[i]),
                 IOracleRelay__factory.connect(listings[i].oracle0, signer),
                 IOracleRelay__factory.connect(listings[i].oracle1, signer),
@@ -259,7 +255,7 @@ describe("Testing", () => {
 
             expect(await toNumber(valuation)).to.be.closeTo(await toNumber(actual), 5, "Accurate")
 
-            const data = await nfpManager.positions(Number(positions[0]))
+            const data = await nfpManager.positions(Number(positions[i]))
             expect(data.liquidity).to.eq(0, `Position ${positions[i]} closed`)
 
         }
@@ -314,7 +310,6 @@ describe("Testing", () => {
             const valuation = await V3PositionValuator.getValue(positions[i])
             //this also liquidates the position
             const actual = await valuePosition(
-                listings[i].addr,
                 Number(positions[i]),
                 IOracleRelay__factory.connect(listings[i].oracle0, signer),
                 IOracleRelay__factory.connect(listings[i].oracle1, signer),

@@ -29,7 +29,7 @@ const config: HardhatUserConfig = {
     },
     tenderly: {
       chainId: 10,
-      url: "https://rpc.tenderly.co/fork/1b2fe01e-066b-4541-9ef1-c0dad253bcca"
+      url: "https://rpc.tenderly.co/fork/52e8b21e-4477-42e0-a2ff-0d4e6e972a23"
     },
     mainnet: {
       url: process.env.MAINNET_URL ? process.env.MAINNET_URL : zaddr,
