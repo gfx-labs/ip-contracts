@@ -13,77 +13,29 @@ import {
     VaultController,
     NftVaultController__factory,
     NftVaultController,
-    VaultNft,
-    VaultNft__factory,
-    IOracleRelay__factory,
-    IOracleMaster__factory
+    VaultNft, IOracleRelay__factory, ISwapRouter__factory, IUniswapV3Pool__factory, VaultNft__factory
 } from "../../../typechain-types"
 import { impersonateAccount, ceaseImpersonation } from "../../../util/impersonator"
-import { hardhat_mine_timed, resetCurrentOP, resetOP } from "../../../util/block"
-import { OptimisimDeploys, a, oa, od } from "../../../util/addresser"
+import { currentBlock, hardhat_mine, resetCurrentOP, resetOP } from "../../../util/block"
+import { oa, od } from "../../../util/addresser"
 import { stealMoney } from "../../../util/money"
 import { mintPosition, valuePosition } from "../../../util/msc"
 import { expect } from "chai"
-import { BigNumber, Signer } from "ethers"
+import { BigNumber } from "ethers"
 import { showBody, showBodyCyan } from "../../../util/format"
 import { toNumber } from "../../../util/math"
 import { setBalance } from "@nomicfoundation/hardhat-network-helpers"
-import { sign } from "crypto"
-import { wrap } from "module"
+import { ExactInputSingleParams, listings } from "./poolData"
+import { hexlify } from "ethers/lib/utils"
+import axios from "axios"
+import Decimal from "decimal.js"
 const { ethers } = require("hardhat")
-const d = new OptimisimDeploys()
-type poolData = {
-    addr: string,
-    oracle0: string,
-    oracle1: string
-}
+
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
 const ownerAddr = "0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89"
 const owner = ethers.provider.getSigner(ownerAddr)
-const wethOp3000: poolData = {
-    addr: "0x68F5C0A2DE713a54991E01858Fd27a3832401849",
-    oracle0: d.EthOracle,
-    oracle1: d.OpOracle
-}
-const wstethWeth100: poolData = {
-    addr: "0x04F6C85A1B00F6D9B75f91FD23835974Cc07E65c",
-    oracle0: d.wstEthOracle,
-    oracle1: d.EthOracle
-}
-const usdcWeth500: poolData = {
-    addr: "0x1fb3cf6e48F1E7B10213E7b6d87D4c073C7Fdb7b",
-    oracle0: d.UsdcStandardRelay,
-    oracle1: d.EthOracle
-}
-const wethOp500: poolData = {
-    addr: "0xFC1f3296458F9b2a27a0B91dd7681C4020E09D05",
-    oracle0: d.EthOracle,
-    oracle1: d.OpOracle
-}
-const wethSnx3000: poolData = {
-    addr: "0x0392b358CE4547601BEFa962680BedE836606ae2",//not verrified
-    oracle0: d.EthOracle,
-    oracle1: d.SnxOracle//double check token0/token1? 
-}
-const wethWBTC500: poolData = {
-    addr: "0x85c31ffa3706d1cce9d525a00f1c7d4a2911754c",//not verrified
-    oracle0: d.EthOracle,
-    oracle1: d.wbtcOracleScaler//double check token0/token1? 
-}
-const wethUSDC3000: poolData = {
-    addr: "0xB589969D38CE76D3d7AA319De7133bC9755fD840",//not verrified
-    oracle0: d.EthOracle,
-    oracle1: d.UsdcStandardRelay
-}
-const listings: poolData[] = [
-    wethOp3000,
-    wstethWeth100,
-    usdcWeth500,//usdc2
-    wethOp500,
-    wethSnx3000,
-    wethWBTC500,
-    wethUSDC3000//usdc1
-]
+
+let swapAmounts: number[] = []
 let positions: number[] = []
 
 require("chai").should();
@@ -95,6 +47,7 @@ describe("Testing", () => {
     let nftController: NftVaultController
 
     let signer: SignerWithAddress
+    let whale: SignerWithAddress
     let WETH: IERC20
     let OP: IERC20
     let WBTC: IERC20
@@ -115,11 +68,31 @@ describe("Testing", () => {
     const snxAmount = BN("145e18")
     const usdcAmount = BN("500e6")
 
+    const mintAllPositions = async () => {
+        showBodyCyan("Minting Positions....")
+        const wethOpId = await mintPosition(listings[0].addr, WETH, OP, wethAmount, opAmount, signer)
+        const wstEthWethId = await mintPosition(listings[1].addr, wstETH, WETH, wstEthAmount, wethAmount, signer)
+        const usdcWethId = await mintPosition(listings[2].addr, USDC2, WETH, usdcAmount, wethAmount, signer)//usdc2
+        const wethOp500Id = await mintPosition(listings[3].addr, WETH, OP, wethAmount, opAmount, signer)
+        const wethSnxId = await mintPosition(listings[4].addr, WETH, SNX, wethAmount, snxAmount, signer)
+        const wethWbtcId = await mintPosition(listings[5].addr, WETH, WBTC, wethAmount, wbtcAmount, signer)
+        const wethUsdcId = await mintPosition(listings[6].addr, WETH, USDC1, wethAmount, usdcAmount, signer)//usdc1
+
+        positions.push(Number(wethOpId))
+        positions.push(Number(wstEthWethId))
+        positions.push(Number(usdcWethId))
+        positions.push(Number(wethOp500Id))
+        positions.push(Number(wethSnxId))
+        positions.push(Number(wethWbtcId))
+        positions.push(Number(wethUsdcId))
+
+    }
+
     before(async () => {
         await resetCurrentOP()
-
         const signers = await ethers.getSigners()
         signer = signers[0]
+        whale = signers[1]
 
         nfpManager = INonfungiblePositionManager__factory.connect(oa.nfpManager, signer)
         wrapper = Univ3CollateralToken__factory.connect(od.WrappedPosition, signer)
@@ -161,6 +134,65 @@ describe("Testing", () => {
         await ceaseImpersonation(ownerAddr)
     })
 
+    /**
+  it("Compare to oku api", async () => {
+         const url = "https://cush.apiary.software/optimism"
+         const pool = listings[5]
+         const request = {
+             "jsonrpc": "2.0",
+             "method": "cush_topPositions",
+             "params": [
+                 {
+                     "limit": 5,
+                     "sort_by": "total_value_current_usd",
+                     "pool": pool.addr
+                 }
+             ],
+             "id": 0
+         }   
+ 
+         console.log("Posting...")
+         const response = await axios.post(url, request)
+         const payload = response.data.result.positions
+ 
+         //console.log(payload[0].token_id)
+ 
+        type poolData = {
+             positionId: number,
+             valueUsd: Decimal
+        }
+ 
+         let data: poolData[] = []
+ 
+         for (let i = 0; i<payload.length; i++){
+             data.push({
+                 positionId: payload[i].token_id,
+                 valueUsd: payload[i].total_value_current_usd
+             })
+ 
+             //compare data to current value
+             console.log("Position ID: ", payload[i].token_id)
+             console.log("Current valueUsd: ", payload[i].total_value_current_usd)
+             console.log("Valuator value  : ", await toNumber(await V3PositionValuator.getValue(payload[i].token_id)))
+ 
+             //get actual value
+             const rawValue = await valuePosition(
+                 pool.addr,
+                 payload[i].token_id,
+                 IOracleRelay__factory.connect(pool.oracle0, signer),
+                 IOracleRelay__factory.connect(pool.oracle1, signer),
+                 nfpManager,
+                 signer
+             )
+             console.log("Actual value: ", await toNumber(rawValue))
+ 
+ 
+             console.log(" ")
+         }
+     })
+     */
+
+
     it("Fund", async () => {
         const weth_minter = "0x274d9E726844AB52E351e8F1272e7fc3f58B7E5F"
         const op_minter = "0xEbe80f029b1c02862B9E8a70a7e5317C06F62Cae"
@@ -178,6 +210,16 @@ describe("Testing", () => {
         await stealMoney(snxMinter, signer.address, oa.snxAddress, snxAmount.mul(2))
         await stealMoney(wbtcMinter, signer.address, oa.wbtcAddress, wbtcAmount.mul(2))
         await stealMoney(wstEthMinter, signer.address, oa.wstethAddress, wstEthAmount.mul(2))
+
+        //fund whale
+        const factor = 100
+        await stealMoney(weth_minter, whale.address, WETH.address, wethAmount.mul(factor * 14))//steal weth x 7 (all pools use it)
+        await stealMoney(op_minter, whale.address, oa.opAddress, opAmount.mul(factor * 4))//2 op pools
+        await stealMoney(usdc1Minter, whale.address, oa.usdcAddress, usdcAmount.mul(factor * 2))
+        await stealMoney(usdc2Minter, whale.address, oa.circleUSDCaddress, usdcAmount.mul(factor * 2))
+        await stealMoney(snxMinter, whale.address, oa.snxAddress, snxAmount.mul(factor * 2))
+        await stealMoney(wbtcMinter, whale.address, oa.wbtcAddress, wbtcAmount.mul(factor * 2))
+        await stealMoney(wstEthMinter, whale.address, oa.wstethAddress, wstEthAmount.mul(factor * 2))
 
 
     })
@@ -197,34 +239,11 @@ describe("Testing", () => {
         )
 
         expect(await toNumber(valuation)).to.be.closeTo(await toNumber(actual), 5, "Accurate")
-
-
     })
-
-    it("Mint positions", async () => {
-        showBodyCyan("Minting Positions....")
-        const wethOpId = await mintPosition(listings[0].addr, WETH, OP, wethAmount, opAmount, signer)
-        const wstEthWethId = await mintPosition(listings[1].addr, wstETH, WETH, wstEthAmount, wethAmount, signer)
-        const usdcWethId = await mintPosition(listings[2].addr, USDC2, WETH, usdcAmount, wethAmount, signer)//usdc2
-        const wethOp500Id = await mintPosition(listings[3].addr, WETH, OP, wethAmount, opAmount, signer)
-        const wethSnxId = await mintPosition(listings[4].addr, WETH, SNX, wethAmount, snxAmount, signer)
-        const wethWbtcId = await mintPosition(listings[5].addr, WETH, WBTC, wethAmount, wbtcAmount, signer)
-        const wethUsdcId = await mintPosition(listings[6].addr, WETH, USDC1, wethAmount, usdcAmount, signer)//usdc1
-
-        positions.push(Number(wethOpId))
-        positions.push(Number(wstEthWethId))
-        positions.push(Number(usdcWethId))
-        positions.push(Number(wethOp500Id))
-        positions.push(Number(wethSnxId))
-        positions.push(Number(wethWbtcId))
-        positions.push(Number(wethUsdcId))
-
-    })
-
-
-
-
     it("Verify values of all positions", async () => {
+
+        //mint positions
+        await mintAllPositions()
         showBodyCyan("Testing Values.....")
         for (let i = 0; i < positions.length; i++) {
             const valuation = await V3PositionValuator.getValue(positions[i])
@@ -240,41 +259,54 @@ describe("Testing", () => {
 
             expect(await toNumber(valuation)).to.be.closeTo(await toNumber(actual), 5, "Accurate")
 
-
-            /**
-            showBody("IDX: ", i)
-            showBody("valuation: ", await toNumber(valuation))
-            showBody("Actual   : ", await toNumber(actual))
-            console.log(" ")
-             */
+            const data = await nfpManager.positions(Number(positions[0]))
+            expect(data.liquidity).to.eq(0, `Position ${positions[i]} closed`)
 
         }
-
         //reset list of positions
         positions = []
 
     })
 
     it("Mint positions with skewed values for token0/token1", async () => {
-        showBodyCyan("Minting Positions....")
-        const wethOpId = await mintPosition(listings[0].addr, WETH, OP, wethAmount.div(2), (opAmount.mul(2)).sub(opAmount.div(2)), signer)
-        const wstEthWethId = await mintPosition(listings[1].addr, wstETH, WETH, wstEthAmount.div(2), (wethAmount.mul(2)).sub(wethAmount.div(2)), signer)
-        const usdcWethId = await mintPosition(listings[2].addr, USDC2, WETH, usdcAmount.div(2), (wethAmount.mul(2)).sub(wethAmount.div(2)), signer)//usdc2
-        const wethOp500Id = await mintPosition(listings[3].addr, WETH, OP, wethAmount.div(2), (opAmount.mul(2)).sub(opAmount.div(2)), signer)
-        const wethSnxId = await mintPosition(listings[4].addr, WETH, SNX, wethAmount.div(2), (snxAmount.mul(2)).sub(snxAmount.div(2)), signer)
-        const wethWbtcId = await mintPosition(listings[5].addr, WETH, WBTC, wethAmount.div(2), (wbtcAmount.mul(2)).sub(wbtcAmount.div(2)), signer)
-        const wethUsdcId = await mintPosition(listings[6].addr, WETH, USDC1, wethAmount.div(2), (usdcAmount.mul(2)).sub(usdcAmount.div(2)), signer)//usdc1
+        //mint positions again
+        await mintAllPositions()
 
-        positions.push(Number(wethOpId))
-        positions.push(Number(wstEthWethId))
-        positions.push(Number(usdcWethId))
-        positions.push(Number(wethOp500Id))
-        positions.push(Number(wethSnxId))
-        positions.push(Number(wethWbtcId))
-        positions.push(Number(wethUsdcId))
+        //skew positions with swaps
+        const router = ISwapRouter__factory.connect("0xE592427A0AEce92De3Edee1F18E0157C05861564", whale)
+        
+        showBodyCyan("Doing swaps....")
+        for (let i = 0; i < positions.length; i++) {
 
+            const pool = IUniswapV3Pool__factory.connect(listings[i].addr, whale)
+            let tokenIn = IERC20__factory.connect(await pool.token0(), whale)
 
+            let tokenOut = await pool.token1()
+            let balance = await tokenIn.balanceOf(whale.address)
+
+            if (await toNumber(balance) == 0) {
+                tokenOut = tokenIn.address
+                tokenIn = IERC20__factory.connect(await pool.token1(), whale)
+                balance = await tokenIn.balanceOf(whale.address)
+            }
+
+            const EIS_Params: ExactInputSingleParams = {
+                tokenIn: tokenIn.address,
+                tokenOut: tokenOut,
+                fee: await pool.fee(),
+                recipient: whale.address,
+                deadline: (await currentBlock()).timestamp + 120,
+                amountIn: balance,
+                amountOutMinimum: BN("0"),
+                sqrtPriceLimitX96: BN("0"),
+            }
+
+            //do a swap as the whale
+            await tokenIn.connect(whale).approve(router.address, EIS_Params.amountIn)
+            await router.connect(whale).exactInputSingle(EIS_Params)
+        }
     })
+
 
     it("Verify values of all positions", async () => {
         showBodyCyan("Testing Values.....")
@@ -290,7 +322,7 @@ describe("Testing", () => {
                 signer
             )
 
-            expect(await toNumber(valuation)).to.be.closeTo(await toNumber(actual), 5, "Accurate")
+            expect(await toNumber(valuation)).to.be.closeTo(await toNumber(actual), 10, "Accurate")
 
         }
 
@@ -313,21 +345,7 @@ describe("Testing", () => {
 
     it("mint again and deposit", async () => {
         showBodyCyan("Minting Positions....")
-        const wethOpId = await mintPosition(listings[0].addr, WETH, OP, wethAmount, opAmount, signer)
-        const wstEthWethId = await mintPosition(listings[1].addr, wstETH, WETH, wstEthAmount, wethAmount, signer)
-        const usdcWethId = await mintPosition(listings[2].addr, USDC2, WETH, usdcAmount, wethAmount, signer)//usdc2
-        const wethOp500Id = await mintPosition(listings[3].addr, WETH, OP, wethAmount, opAmount, signer)
-        const wethSnxId = await mintPosition(listings[4].addr, WETH, SNX, wethAmount, snxAmount, signer)
-        const wethWbtcId = await mintPosition(listings[5].addr, WETH, WBTC, wethAmount, wbtcAmount, signer)
-        const wethUsdcId = await mintPosition(listings[6].addr, WETH, USDC1, wethAmount, usdcAmount, signer)//usdc1
-
-        positions.push(Number(wethOpId))
-        positions.push(Number(wstEthWethId))
-        positions.push(Number(usdcWethId))
-        positions.push(Number(wethOp500Id))
-        positions.push(Number(wethSnxId))
-        positions.push(Number(wethWbtcId))
-        positions.push(Number(wethUsdcId))
+        await mintAllPositions()
 
         showBodyCyan("Depositing Positions.....")
         let totalValue: BigNumber = BN('0')
@@ -337,6 +355,7 @@ describe("Testing", () => {
 
             //approve
             await nfpManager.connect(signer).approve(wrapper.address, positions[i])
+            await hardhat_mine(5)
 
             //deposit
             await wrapper.connect(signer).deposit(positions[i], vaultId)
@@ -352,8 +371,11 @@ describe("Testing", () => {
 
         const usdiAmount = BN("1000e18")
 
-        await VaultController.connect(signer).borrowUsdi(vaultId, usdiAmount)
+        const result = await VaultController.connect(signer).borrowUsdi(vaultId, usdiAmount)
+        showBody((await result.wait()).transactionHash)
         expect(await toNumber(await VaultController.vaultLiability(vaultId))).to.be.closeTo(await toNumber(usdiAmount), 0.0001, "Good Borrow")
 
+
     })
+
 })

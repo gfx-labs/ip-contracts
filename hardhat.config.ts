@@ -7,6 +7,7 @@ import "hardhat-gas-reporter";
 import "@nomiclabs/hardhat-etherscan";
 import "hardhat-docgen";
 //import "@tenderly/hardhat-tenderly";
+//require('@tenderly/hardhat-tenderly');
 
 import { HardhatUserConfig } from "hardhat/types";
 import * as dotenv from "dotenv";
@@ -28,7 +29,7 @@ const config: HardhatUserConfig = {
     },
     tenderly: {
       chainId: 10,
-      url: "https://rpc.tenderly.co/fork/5b75ab39-e152-416e-99ae-683c2c60b996"
+      url: "https://rpc.tenderly.co/fork/1b2fe01e-066b-4541-9ef1-c0dad253bcca"
     },
     mainnet: {
       url: process.env.MAINNET_URL ? process.env.MAINNET_URL : zaddr,
@@ -88,6 +89,9 @@ const config: HardhatUserConfig = {
     },
     localhost: {
       url: "http://localhost:8545",
+    },
+    local: {
+      url: 'http://127.0.0.1:8545'
     },
   },
   solidity: {

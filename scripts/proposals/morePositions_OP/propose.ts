@@ -11,11 +11,10 @@ import * as fs from 'fs'
 import path from 'path'
 import { currentBlock, fastForward, hardhat_mine, reset } from "../../../util/block"
 import hre from 'hardhat'
-import { OptimisimAddresses, OptimisimDeploys, MainnetAddresses, od } from "../../../util/addresser"
+import { OptimisimAddresses, OptimisimDeploys, MainnetAddresses, od, d, a } from "../../../util/addresser"
 import { getGas } from "../../../util/math"
-const a = new OptimisimAddresses()
-const d = new OptimisimDeploys()
-const m = new MainnetAddresses()
+import { listings } from "./poolData"
+
 const { ethers, network } = require("hardhat")
 
 const govAddress = "0x266d1020A84B9E8B0ed320831838152075F8C4cA"
@@ -32,52 +31,6 @@ const gasLimit = 1500000
 
 const proposerAddr = "0x3Df70ccb5B5AA9c300100D98258fE7F39f5F9908"
 
-const wethOp3000: poolData = {
-    addr: "0x68F5C0A2DE713a54991E01858Fd27a3832401849",
-    oracle0: d.EthOracle,
-    oracle1: d.OpOracle
-}
-const wstethWeth100: poolData = {
-    addr: "0x04F6C85A1B00F6D9B75f91FD23835974Cc07E65c",
-    oracle0: d.wstEthOracle,
-    oracle1: d.EthOracle
-}
-const usdcWeth500: poolData = {
-    addr: "0x1fb3cf6e48F1E7B10213E7b6d87D4c073C7Fdb7b",
-    oracle0: d.UsdcStandardRelay,
-    oracle1: d.EthOracle
-}
-const wethOp500: poolData = {
-    addr: "0xFC1f3296458F9b2a27a0B91dd7681C4020E09D05",
-    oracle0: d.EthOracle,
-    oracle1: d.OpOracle
-}
-const wethSnx3000: poolData = {
-    addr: "0x0392b358CE4547601BEFa962680BedE836606ae2",//not verrified
-    oracle0: d.EthOracle,
-    oracle1: d.SnxOracle//double check token0/token1? 
-}
-const wethWBTC500: poolData = {
-    addr: "0x85c31ffa3706d1cce9d525a00f1c7d4a2911754c",//not verrified
-    oracle0: d.EthOracle,
-    oracle1: d.wbtcOracleScaler//double check token0/token1? 
-}
-const wethUSDC3000: poolData = {
-    addr: "0xB589969D38CE76D3d7AA319De7133bC9755fD840",//not verrified
-    oracle0: d.EthOracle,
-    oracle1: d.UsdcStandardRelay
-}
-
-const listings: poolData[] = [
-    wethOp3000,
-    wstethWeth100,
-    usdcWeth500,
-    wethOp500,
-    wethSnx3000,
-    wethWBTC500,
-    wethUSDC3000
-]
-
 const generate = async (listings: poolData[], proposer: SignerWithAddress) => {
 
     const proposal = new ProposalContext("Uni V3 listings")
@@ -91,11 +44,11 @@ const generate = async (listings: poolData[], proposer: SignerWithAddress) => {
                 pool.oracle0,
                 pool.oracle1
             )
-        const registerPoolForward = await new CrossChainAccount__factory().attach(d.optimismMessenger).
+        const registerPoolForward = await new CrossChainAccount__factory().attach(od.optimismMessenger).
             populateTransaction.forward(od.V3PositionValuator, registerPoolData.data!)
         console.log("Forward Data: ", registerPoolForward)
-        const registerPool = await ILayer1Messenger__factory.connect(m.OPcrossChainMessenger, proposer).
-            populateTransaction.sendMessage(d.optimismMessenger, registerPoolForward.data!, gasLimit)
+        const registerPool = await ILayer1Messenger__factory.connect(a.OPcrossChainMessenger, proposer).
+            populateTransaction.sendMessage(od.optimismMessenger, registerPoolForward.data!, gasLimit)
 
         proposal.addStep(registerPool, "sendMessage(address,bytes,uint32)")
     }

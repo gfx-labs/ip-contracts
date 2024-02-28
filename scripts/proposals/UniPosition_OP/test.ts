@@ -118,7 +118,7 @@ describe("Testing", () => {
     it("Test actual value", async () => {
         const wethOracle = IOracleRelay__factory.connect(od.EthOracle, signer)
 
-        const positionId = 498192
+        const positionId = 495963
         const value = await V3PositionValuator.getValue(positionId)
         showBodyCyan("Valueator value: ", await toNumber(value))
         const ownerAddr = await nfpManager.ownerOf(positionId)

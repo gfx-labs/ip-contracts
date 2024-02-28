@@ -1,10 +1,61 @@
 account_id: 538b7441-2864-4df9-988c-345ba4b529d2
 exports:
   hardhat:
+    chain_config:
+      berlin_block: 0
+      byzantium_block: 0
+      constantinople_block: 0
+      eip150_block: 0
+      eip150_hash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+      eip155_block: 0
+      eip158_block: 0
+      homestead_block: 0
+      istanbul_block: 0
+      london_block: 0
+      petersburg_block: 0
+    forked_network: Mainnet
     project_slug: getty/ip-debug
+    protocol: ""
+    rpc_address: 127.0.0.1:8545
+  opprop:
+    chain_config:
+      berlin_block: 0
+      byzantium_block: 0
+      constantinople_block: 0
+      eip150_block: 0
+      eip150_hash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+      eip155_block: 0
+      eip158_block: 0
+      homestead_block: 0
+      istanbul_block: 0
+      london_block: 0
+      petersburg_block: 0
+    forked_network: Optimistic
+    project_slug: getty/ip
+    protocol: ""
+    rpc_address: http://localhost:8545
+  opproposal:
+    chain_config:
+      berlin_block: 0
+      byzantium_block: 0
+      constantinople_block: 0
+      eip150_block: 0
+      eip150_hash: "0x0000000000000000000000000000000000000000000000000000000000000000"
+      eip155_block: 0
+      eip158_block: 0
+      homestead_block: 0
+      istanbul_block: 0
+      london_block: 0
+      petersburg_block: 0
+    forked_network: Optimistic
+    project_slug: getty/ip
+    protocol: ""
+    rpc_address: 127.0.0.1:8545
+  test:
+    project_slug: getty/test
     rpc_address: 127.0.0.1:8545
     protocol: ""
-    forked_network: Mainnet
+    forked_network: Optimistic
     chain_config:
       homestead_block: 0
       eip150_block: 0

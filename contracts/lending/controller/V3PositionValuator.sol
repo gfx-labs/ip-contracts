@@ -14,8 +14,6 @@ import "../../_external/IERC20.sol";
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 
-import "hardhat/console.sol";
-
 contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   address public FACTORY_V3;
   INonfungiblePositionManager public nfpManager;
@@ -53,7 +51,6 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
   ///@notice this is called by the custom balanceOf logic on the cap token
   ///@notice returns the value of the position in USDi
   function getValue(uint256 tokenId) external view returns (uint256) {
-    console.log("Get value");
     VerifyData memory vData = verifyPool(tokenId);
     PoolData memory data = poolDatas[vData.pool];
 
@@ -118,15 +115,6 @@ contract V3PositionValuator is Initializable, OwnableUpgradeable, IOracleRelay {
     //modify price by units
     p0 = data.token0Oracle.currentValue() / (1e18 / data.UNIT_0);
     p1 = data.token1Oracle.currentValue() / (1e18 / data.UNIT_1);
-
-    console.log("price 0: ", data.token0Oracle.currentValue());
-    console.log("price 1: ", data.token1Oracle.currentValue());
-
-    console.log("scaling factor 0: ", 1e18 / data.UNIT_0);
-    console.log("scaling factor 1: ", 1e18 / data.UNIT_1);
-
-    console.log("p0: ", p0);
-    console.log("p1: ", p1);
 
     uint256 numerator = _mul(_mul(p0, data.UNIT_1), (1 << 96));
     uint256 denominator = _mul(p1, data.UNIT_0);
