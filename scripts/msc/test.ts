@@ -362,8 +362,8 @@ async function main() {
     const networkName = hre.network.name
     if (networkName == "hardhat" || networkName == "localhost") {
         await network.provider.send("evm_setAutomine", [true])
-        await resetOP(117458674)
-        //await resetCurrentOP()
+        //await resetOP(117458674)
+        await resetCurrentOP()
         console.log("TEST AT BLOCK: ", await (await currentBlock()).number)
         //await impersonateAccount(owner._address)
         //deployer = owner
