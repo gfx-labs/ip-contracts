@@ -10,6 +10,12 @@ import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
 
+import "hardhat/console.sol";
+
+interface aToken {
+  function scaledBalanceOf(address) external view returns (uint256);
+}
+
 /// @title Capped Rebase Token
 /// @notice handles all minting/burning of underlying rebasing token
 /// @dev extends ierc20 upgradable
@@ -23,7 +29,8 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   uint256 public _cap;
 
   /// @notice This must remain constant for conversions to work, the cap is separate
-  uint256 public constant MAX_SUPPLY = 10000000 * (10 ** 18); // 10 M
+  uint256 public constant MAX_SUPPLY = 10000000 * (10 ** 18); // 10 M 10000000 9965660 9500000
+  //                                  10000000
 
   /// @notice initializer for contract
   /// @param name_ name of capped token
@@ -82,7 +89,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
     uint256 allowance = _underlying.allowance(_msgSender(), address(this));
     require(allowance >= amount, "Insufficient Allowance");
     //calculate the amount of wrapper tokens to mint to the standard vault
-    uint256 wrappedAmount = _underlying_to_capped(amount, _underlying.totalSupply());
+    uint256 wrappedAmount = _underlying_to_capped(amount, _query_Underlying_Supply());
     //take tokens and wrap
     _deposit(_msgSender(), address(vault), amount, wrappedAmount);
   }
@@ -92,7 +99,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   /// To get the wrapper balance, we can plug the underlying balance into
   /// function underlyingToWrapper(<underlying balance>)
   function balanceOf(address account) public view override returns (uint256 balance) {
-    return _capped_to_underlying(super.balanceOf(account), _query_Underlying_Supply());
+    return (_capped_to_underlying(super.balanceOf(account), _query_Underlying_Supply()));
   }
 
   ///@notice for withdrawals,
@@ -103,7 +110,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
     // only vaults will ever send this. only vaults will ever hold this token.
     require(vault.id() > 0, "only vaults");
     //calculate the amount of wrapper tokens to burn from the standard vault
-    uint256 wraperAmount = _underlying_to_capped(amount, _underlying.totalSupply());
+    uint256 wraperAmount = _underlying_to_capped(amount, _query_Underlying_Supply());
     //burn and unwrap
     _withdraw(address(vault), recipient, amount, wraperAmount);
     return true;
@@ -135,12 +142,39 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   /// @param underlyingAmount The amount of underlyingAmount to withdraw.
   /// @param cappedTokenAmount The amount of cappedTokenAmount to burn.
   function _withdraw(address from, address to, uint256 underlyingAmount, uint256 cappedTokenAmount) private {
+    console.log("Burning: ", cappedTokenAmount);
+    console.log("Burning: ", super.balanceOf(from));
     _burn(from, cappedTokenAmount);
     _underlying.safeTransfer(to, underlyingAmount);
   }
 
+  ///@notice scale previously unscaled accounts for compatability with Aave a token scaled balances
+  function scaleAccounts(address[] calldata accounts) external onlyOwner {
+    //calculate factor
+    aToken token = aToken(address(_underlying));
+    uint256 factor = divide(
+      _underlying.balanceOf(address(this)),
+      token.scaledBalanceOf(address(this)),
+      _underlying.decimals()
+    );
+
+    uint8 decimals = _underlying.decimals();
+
+    for (uint16 i = 0; i < accounts.length; i++) {
+      uint256 currenWrapperBalance = super.balanceOf(accounts[i]);
+      uint256 scaledBalance = (currenWrapperBalance * factor) / (10 ** decimals);
+      int256 delta = int256(scaledBalance) - int256(currenWrapperBalance);
+
+      if (delta > 0) {
+        _mint(accounts[i], uint256(delta));
+      } else {
+        _burn(accounts[i], uint256(delta));
+      }
+    }
+  }
+
   ///////////////////////// VIEW FUNCTIONS /////////////////////////
-  /// @return The address of the underlying "wrapped" token ie) usdi.
+  /// @return The address of the underlying "wrapped" token ie) Underlying.
   function underlying() external view returns (address) {
     return address(_underlying);
   }
@@ -151,39 +185,83 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   }
 
   /// @param owner The account address.
-  /// @return The usdi balance redeemable by the owner.
+  /// @return The Underlying balance redeemable by the owner.
   function balanceOfUnderlying(address owner) external view returns (uint256) {
     return _capped_to_underlying(super.balanceOf(owner), _query_Underlying_Supply());
   }
 
-  /// @param underlyingAmount The amount of usdi tokens.
-  /// @return The amount of wUSDI tokens exchangeable.
+  /// @param underlyingAmount The amount of Underlying tokens.
+  /// @return The amount of wUnderlying tokens exchangeable.
   function underlyingToWrapper(uint256 underlyingAmount) external view returns (uint256) {
-    return _underlying_to_capped(underlyingAmount, _query_Underlying_Supply());
+    return _underlying_to_capped(scaleBalance(underlyingAmount), _query_Underlying_Supply());
   }
 
-  /// @param cappedAmount The amount of wUSDI tokens.
-  /// @return The amount of usdi tokens exchangeable.
+  /// @param cappedAmount The amount of wUnderlying tokens.
+  /// @return The amount of Underlying tokens exchangeable.
   function wrapperToUnderlying(uint256 cappedAmount) external view returns (uint256) {
     return _capped_to_underlying(cappedAmount, _query_Underlying_Supply());
   }
 
   ///////////////////////// CONVERSION MATH /////////////////////////
 
+  function deScaleBalance(uint256 unscaledBalance) private view returns (uint256 scaledBalance) {
+    console.log("Scaling...");
+
+    aToken token = aToken(address(_underlying));
+    console.log("BalanceOf underlying: ", _underlying.balanceOf(address(this)));
+    console.log("Scaled balance of   : ", token.scaledBalanceOf(address(this)));
+
+    uint256 factor = divide(
+      _underlying.balanceOf(address(this)),
+      token.scaledBalanceOf(address(this)),
+      _underlying.decimals()
+    ); //_underlying.balanceOf(address(this)) / token.scaledBalanceOf(address(this));
+
+    console.log("Factor: ", factor);
+
+    scaledBalance = (unscaledBalance * factor) / (10 ** _underlying.decimals());
+    console.log("scaledBalance: ", scaledBalance);
+  }
+
+  function scaleBalance(uint256 scaledBalance) private view returns (uint256 unscaledBalance) {
+    console.log("Descaling...");
+    aToken token = aToken(address(_underlying));
+
+    uint256 factor = divide(
+      token.scaledBalanceOf(address(this)),
+      _underlying.balanceOf(address(this)),
+      _underlying.decimals()
+    ); //_underlying.balanceOf(address(this)) / token.scaledBalanceOf(address(this));
+
+    console.log("Factor: ", factor);
+
+    unscaledBalance = (scaledBalance * factor) / (10 ** _underlying.decimals());
+    console.log("scaledBalance: ", unscaledBalance);
+  }
+
+  ///@notice floating point division at @param factor scale
+  function divide(uint256 numerator, uint256 denominator, uint256 factor) internal pure returns (uint256 result) {
+    uint256 q = (numerator / denominator) * 10 ** factor;
+    uint256 r = ((numerator * 10 ** factor) / denominator) % 10 ** factor;
+
+    return q + r;
+  }
+
   /// @dev Queries the current total supply of underlying rebase token.
   function _query_Underlying_Supply() private view returns (uint256) {
     return _underlying.totalSupply();
+    //return aToken(address(_underlying)).scaledTotalSupply();
   }
 
   /// @notice assumes underlying is decimal 18
   function _underlying_to_capped(
     uint256 underlyingAmount,
     uint256 underlyingTotalSupply
-  ) private pure returns (uint256) {
-    return (underlyingAmount * MAX_SUPPLY) / underlyingTotalSupply;
+  ) private view returns (uint256) {
+    return (scaleBalance(underlyingAmount) * MAX_SUPPLY) / underlyingTotalSupply;
   }
 
-  function _capped_to_underlying(uint256 cappedAmount, uint256 underlyingTotalSupply) private pure returns (uint256) {
-    return (cappedAmount * underlyingTotalSupply) / MAX_SUPPLY;
+  function _capped_to_underlying(uint256 cappedAmount, uint256 underlyingTotalSupply) private view returns (uint256) {
+    return (deScaleBalance(cappedAmount) * underlyingTotalSupply) / MAX_SUPPLY;
   }
 }
