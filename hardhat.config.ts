@@ -13,6 +13,9 @@ import { HardhatUserConfig } from "hardhat/types";
 import * as dotenv from "dotenv";
 
 dotenv.config();
+
+const tenderlyRPC = "https://rpc.tenderly.co/fork/ceffe1b7-ce3c-4193-a26f-1d72eac45e9a"
+
 const zaddr =
   "0000000000000000000000000000000000000000000000000000000000000000";
 const config: HardhatUserConfig = {
@@ -29,7 +32,7 @@ const config: HardhatUserConfig = {
     },
     tenderly: {
       chainId: 10,
-      url: "https://rpc.tenderly.co/fork/52e8b21e-4477-42e0-a2ff-0d4e6e972a23"
+      url: tenderlyRPC
     },
     mainnet: {
       url: process.env.MAINNET_URL ? process.env.MAINNET_URL : zaddr,

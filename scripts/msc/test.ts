@@ -145,7 +145,7 @@ const withdraw = async () => {
 
 const increseObs = async (signer: SignerWithAddress) => {
     console.log("Increase Obsv")
-    const oracle:IOracleRelay = IOracleRelay__factory.connect(od.EthOracle, signer)
+    const oracle: IOracleRelay = IOracleRelay__factory.connect(od.EthOracle, signer)
     //console.log(await oracle.currentValue())
     const poolAddr = "0x85149247691df622eaF1a8Bd0CaFd40BC45154a9"
 
@@ -168,7 +168,7 @@ const increseObs = async (signer: SignerWithAddress) => {
     const result = await opPool.increaseObservationCardinalityNext(observations)
     const gas = await getGas(result)
     console.log(`Set OP pool observations to ${observations}, gas: `, gas)
-    
+
     console.log(await oracle.currentValue())
 
 }
@@ -182,7 +182,7 @@ const executeSwap = async (signer: SignerWithAddress) => {
     const weth = IERC20__factory.connect(oa.wethAddress, signer)
 
     //const swapper = ethers.provider.getSigner("0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89")
-   // await impersonateAccount(swapper._address)
+    // await impersonateAccount(swapper._address)
     const amount = BN("580000000000000")
     await weth.connect(signer).approve(router.address, amount)
 
@@ -205,26 +205,42 @@ const executeSwap = async (signer: SignerWithAddress) => {
 
 const upgrade = async (signer: SignerWithAddress) => {
 
-    const proxy = ProxyAdmin__factory.connect(od.ProxyAdmin, signer)
-    const ownerAddr = await proxy.owner()   
-    await setBalance(ownerAddr, BN("1e18"))
 
-    //deploy imp
-    const imp = await DeployContract(
-        new CappedRebaseToken__factory(signer), 
-        signer,
-    )
+    const proxy = ProxyAdmin__factory.connect(od.ProxyAdmin, signer)
+    const ownerAddr = await proxy.owner()
+    await setBalance(ownerAddr, BN("1e18"))
 
     await impersonateAccount(ownerAddr)
     const owner = ethers.provider.getSigner(ownerAddr)
 
-    await proxy.connect(owner).upgrade(od.CappedOAUSDC, imp.address)
-    //console.log("UPGRADED")
+    await proxy.connect(owner).upgrade(od.CappedOAUSDC, od.TempImplementation)
+    console.log("UPGRADED")
 
     await ceaseImpersonation(ownerAddr)
 
-    
-    
+
+}
+
+const sweep = async () => {
+
+    const ctOwnerAddr = "0x085909388fc0cE9E5761ac8608aF8f2F52cb8B89"
+    const ctOwner = ethers.provider.getSigner(ctOwnerAddr)
+
+    const CappedOAUSDC = CappedRebaseToken__factory.connect(od.CappedOAUSDC, ctOwner)
+    const aUSDC = IERC20__factory.connect(oa.aOptUsdcAddress, ctOwner)
+
+    await impersonateAccount(ctOwnerAddr)
+    let balance = await aUSDC.balanceOf(CappedOAUSDC.address)
+
+    const data = await CappedOAUSDC.populateTransaction.sweep(oa.aOptUsdcAddress, ctOwnerAddr, balance)
+    console.log(data)
+
+    await CappedOAUSDC.connect(ctOwner).sweep(oa.aOptUsdcAddress, ctOwnerAddr, balance)
+    let received = await aUSDC.balanceOf(ctOwnerAddr)
+    await ceaseImpersonation(ctOwnerAddr)
+
+    console.log(balance)
+    console.log(received)
 
 }
 
@@ -249,31 +265,42 @@ const msc = async (signer: SignerWithAddress) => {
     const ctOwner = ethers.provider.getSigner(ctOwnerAddr)
 
     let balance = await CappedOAUSDC.balanceOf(vault.address)
-    showBody("Balance: ", ethers.utils.formatUnits(balance, 6))
+    let bou = await CappedOAUSDC.balanceOfUnderlying(vault.address)
+    let supply = await CappedOAUSDC.totalSupply()
+    const factor = await toNumber(balance) / await toNumber(supply)
+    const totalPool = balance
+    const entitlement = factor * Number(ethers.utils.formatUnits(totalPool, 6))
+
+    showBody("Balance: ", await toNumber(balance))//ethers.utils.formatUnits(balance, 18))
+    showBody("Cap Spl: ", await toNumber(supply))
+    showBody("entitlement: ", entitlement)
+
+    //showBody("Total S: ", Number(ethers.utils.formatUnits(await aUSDC.totalSupply(), 6)))
+    //showBody("Percentage: ", await toNumber(balance) / Number(ethers.utils.formatUnits(await aUSDC.totalSupply(), 6)))
+    //showBody("BalanceOfUnderlying: ", ethers.utils.formatUnits(bou, 6))
 
     await impersonateAccount(ctOwnerAddr)
 
-    await CappedOAUSDC.connect(ctOwner).scaleAccounts([vault.address])
+    //await CappedOAUSDC.connect(ctOwner).scaleAccounts([vault.address])
+    //await CappedOAUSDC.connect(ctOwner).scaleAccounts([vault.address])
 
     await ceaseImpersonation(ctOwnerAddr)
 
-    balance = await CappedOAUSDC.balanceOf(vault.address)
-    showBody("Balance: ", ethers.utils.formatUnits(balance, 6))
+    //balance = await CappedOAUSDC.balanceOf(vault.address)
+    //showBody("Balance: ", ethers.utils.formatUnits(balance, 18))
 
-
-    
     //console.log("Vault: ", vault.address)
     //let balance = await CappedOAUSDC.balanceOf(vault.address)
     //showBody("Balance: ", ethers.utils.formatUnits(balance, 6))
 
-    
+
 
     /**
     //await hardhat_mine_timed(15768000, 2)//1 year w/ 2 second block time
     //balance = await CappedOAUSDC.balanceOf(vault.address)
     //showBody("Balance: ", ethers.utils.formatUnits(balance, 6))
 
-    showBody("Actual: ", await aUSDC.balanceOf(CappedOAUSDC.address))
+    showBody("Actual: ", balance)
     //steal enough to repay
     const usdcAmount = BN("28000e6")
     await stealMoney("0x86Bb63148d17d445Ed5398ef26Aa05Bf76dD5b59", man, oa.usdcAddress, usdcAmount)
@@ -327,23 +354,10 @@ const msc = async (signer: SignerWithAddress) => {
      */
 
 
-const newTest = async (signer: SignerWithAddress) => {
-
-    //reset to block
-    
-    //upgrade
-
-    //deposit 
-
-    //fast forward to current block ish
-
-    //compare
-
-}
 
 const amplSply = async (signer: SignerWithAddress) => {
     //await reset(14427700)
-    await resetCurrent()
+    //await resetCurrent()
     const ampl = IERC20__factory.connect("0xD46bA6D942050d489DBd938a2C909A5d5039A161", signer)
     showBodyCyan("AMPL SPLY: ", ethers.utils.formatUnits(await ampl.totalSupply(), 9))
 }
@@ -381,7 +395,8 @@ async function main() {
     //await hardhat_mine_timed(5000, 15)
     //await withdraw()
     await upgrade(deployer)
-    await msc(deployer)
+    await sweep()
+    //await msc(deployer)
 
 }
 

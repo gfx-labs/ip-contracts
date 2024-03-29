@@ -6,28 +6,17 @@ import "../IVault.sol";
 
 import "../../_external/IERC20Metadata.sol";
 import "../../_external/openzeppelin/ERC20Upgradeable.sol";
-import "../../_external/openzeppelin/IERC20Upgradeable.sol";
-
-
 import "../../_external/openzeppelin/OwnableUpgradeable.sol";
 import "../../_external/openzeppelin/Initializable.sol";
 import "../../_external/openzeppelin/SafeERC20Upgradeable.sol";
-
-interface IaToken is IERC20Upgradeable{
-  function scaledBalanceOf(address) external view returns (uint256);
-  function scaledTotalSupply() external view returns (uint256);
-  function decimals() external view returns (uint8);
-}
-
 
 /// @title Capped Rebase Token
 /// @notice handles all minting/burning of underlying rebasing token
 /// @dev extends ierc20 upgradable
 contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeable {
   using SafeERC20Upgradeable for ERC20Upgradeable;
-  using SafeERC20Upgradeable for *;
 
-  IaToken public _underlying;
+  ERC20Upgradeable public _underlying;
   IVaultController public _vaultController;
 
   // in actual units
@@ -49,7 +38,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   ) public initializer {
     __Ownable_init();
     __ERC20_init(name_, symbol_);
-    _underlying = IaToken(underlying_);
+    _underlying = ERC20Upgradeable(underlying_);
 
     _vaultController = IVaultController(vaultController_);
   }
@@ -65,6 +54,11 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
     return _cap;
   }
 
+  ///@notice refund any tokens stuck on the contract
+  function sweep(ERC20Upgradeable token, address recipient, uint256 amount) external onlyOwner {
+    token.safeTransfer(recipient, amount);
+  }
+
   /// @notice set the Cap
   /// @notice NOTE cap is in underlying terms NOT IN WRAPPED TERMS
   function setCap(uint256 cap_) external onlyOwner {
@@ -76,7 +70,7 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   /// to determine if cap has been reached
   /// NOTE @param amount_ is in underlying terms NOT WRAPPED TERMS
   function checkCap(uint256 amount_) internal view {
-    require(_underlying.scaledBalanceOf(address(this)) + amount_ <= _cap, "cap reached");
+    require(_underlying.balanceOf(address(this)) + amount_ <= _cap, "cap reached");
   }
 
   /// @notice deposit _underlying to mint CappedToken
@@ -148,38 +142,6 @@ contract CappedRebaseToken is Initializable, OwnableUpgradeable, ERC20Upgradeabl
   function _withdraw(address from, address to, uint256 underlyingAmount, uint256 cappedTokenAmount) private {
     _burn(from, cappedTokenAmount);
     _underlying.safeTransfer(to, underlyingAmount);
-  }
-
-  ///@notice scale previously unscaled accounts for compatability with Aave a token scaled balances
-  function scaleAccounts(address[] calldata accounts) external onlyOwner {
-    //calculate factor
-    uint256 factor = divide(
-      _underlying.balanceOf(address(this)),
-      _underlying.scaledBalanceOf(address(this)),
-      _underlying.decimals()
-    );
-
-    uint8 decimals = _underlying.decimals();
-
-    for (uint16 i = 0; i < accounts.length; i++) {
-      uint256 currenWrapperBalance = super.balanceOf(accounts[i]);
-      uint256 scaledBalance = (currenWrapperBalance * factor) / (10 ** decimals);
-      int256 delta = int256(scaledBalance) - int256(currenWrapperBalance);
-
-      if (delta > 0) {
-        _mint(accounts[i], uint256(delta));
-      } else {
-        _burn(accounts[i], uint256(delta));
-      }
-    }
-  }
-
-  ///@notice floating point division at @param factor scale
-  function divide(uint256 numerator, uint256 denominator, uint256 factor) internal pure returns (uint256 result) {
-    uint256 q = (numerator / denominator) * 10 ** factor;
-    uint256 r = ((numerator * 10 ** factor) / denominator) % 10 ** factor;
-
-    return q + r;
   }
 
   ///////////////////////// VIEW FUNCTIONS /////////////////////////

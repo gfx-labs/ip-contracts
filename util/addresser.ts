@@ -196,9 +196,11 @@ export class OptimisimDeploys {
     readonly CappedSNX: string = "0x45b265c7919D7FD8a0D673D7ACaA8F5A7abb430D"
     readonly SnxOracle: string = "0xd8284305b520FF5486ab718DBdfe46f18454aeDE"
     readonly UsdcRelay: string = "0xcEe78cE44e98d16f59C775494Be24E0D2cFF19A4"
+    readonly IPT: string = "0xa211E25F7246950E0cCe054e3161C7c0b6379485"
 
     //capped rebase token
-    readonly CappedRebasImplementatino: string = "0xd3451b8f2E8177Ee2BeCb842896289102544D89a"
+    readonly CappedRebasImplementation: string = "0xd3451b8f2E8177Ee2BeCb842896289102544D89a"
+    readonly TempImplementation: string = "0xB800ECAA2fDE79eA991eDfb836F0166FE77cC5eC"
     readonly CappedOAUSDC: string = "0x6F7A2f0d9DBd284E274f28a6Fa30e8760C25F9D2"
     readonly UsdcStandardRelay = "0x84be5d42712da1129019B4f43F226295ec47FcF9"//1e30
     
